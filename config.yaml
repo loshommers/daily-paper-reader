@@ -25,3 +25,38 @@ subscriptions:
     stage: A
     diff_threshold_pct: 15
   keyword_recall_mode: or
+  intent_profiles:
+    - tag: MU CE
+      description: 查找关于机器遗忘（Machine Unlearning）和概念擦除（Concept Erasure）的相关论文
+      enabled: true
+      keywords:
+        - keyword: Machine Unlearning
+          keyword_cn: 机器遗忘
+          query: Machine unlearning techniques and algorithms in deep learning
+        - keyword: Concept Erasure
+          keyword_cn: 概念擦除
+          query: Concept erasure and removal from pre-trained models
+        - keyword: Data Removal
+          keyword_cn: 数据移除
+          query: Efficient data removal from trained machine learning models
+        - keyword: Model Editing
+          keyword_cn: 模型编辑
+          query: Model editing for knowledge update and correction
+        - keyword: Selective Forgetting
+          keyword_cn: 选择性遗忘
+          query: Selective forgetting in neural networks
+        - keyword: Privacy-preserving ML
+          keyword_cn: 隐私保护机器学习
+          query: Privacy-preserving machine learning and the right to be forgotten
+      intent_queries:
+        - query: State of the art methods for machine unlearning and concept erasure
+          query_cn: 机器遗忘与概念擦除的最先进方法
+          enabled: true
+          source: manual
+          note: ''
+        - query: Algorithms for removing sensitive information from neural networks
+          query_cn: 从神经网络中移除敏感信息的算法
+          enabled: true
+          source: manual
+          note: ''
+      updated_at: '2026-03-19T08:40:58.962Z'
