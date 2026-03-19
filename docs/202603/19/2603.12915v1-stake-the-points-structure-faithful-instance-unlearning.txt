@@ -1,0 +1,530 @@
+Title: Stake the Points: Structure-Faithful Instance Unlearning
+
+URL Source: https://arxiv.org/pdf/2603.12915v1
+
+Published Time: Mon, 16 Mar 2026 00:54:06 GMT
+
+Number of Pages: 13
+
+Markdown Content:
+# Stake the Points: Structure-Faithful Instance Unlearning 
+
+## Kiseong Hong Chung-Ang University 
+
+ghdrltjd@cau.ac.kr 
+
+## JungKyoo Shin Chung-Ang University 
+
+neo293@cau.ac.kr 
+
+## Eunwoo Kim *
+
+## Chung-Ang University 
+
+eunwoo@cau.ac.kr 
+
+## Abstract 
+
+Machine unlearning (MU) addresses privacy risks in pre-trained models. The main goal of MU is to remove the in-fluence of designated data while preserving the utility of re-tained knowledge. Achieving this goal requires preserving semantic relations among retained instances, which exist-ing studies often overlook. We observe that without such preservation, models suffer from progressive structural col-lapse, undermining both the deletion–retention balance. In this work, we propose a novel structure-faithful framework that introduces stakes, i.e., semantic anchors that serve as reference points to maintain the knowledge structure. By leveraging these anchors, our framework captures and sta-bilizes the semantic organization of knowledge. Specifi-cally, we instantiate the anchors from language-driven at-tribute descriptions encoded by a semantic encoder (e.g., CLIP). We enforce preservation of the knowledge structure via structure-aware alignment and regularization: the for-mer aligns the organization of retained knowledge before and after unlearning around anchors, while the latter regu-lates updates to structure-critical parameters. Results from image classification, retrieval, and face recognition show average gains of 32.9%, 22.5%, and 19.3% in performance, balancing the deletion–retention trade-off and enhancing generalization. 
+
+## 1. Introduction 
+
+Requests to erase sensitive or personally related learned information are rising due to stronger data protection reg-ulations [35]. A straightforward solution is to retrain from scratch without the designated data [4]. However, this is often impractical due to limited data access and the high cost of large-scale retraining [4, 5]. These challenges fuel the rapid growth of machine unlearning (MU), which aims to selectively remove the influence of designated data while preserving the utility of retained knowledge [12, 19, 31, 33]. Research on MU advances from exact retraining ap- 
+
+> *Corresponding author. Unlearning step
+> Preservation!
+> Update
+> Collapse!
+> Update
+> Oscillation Distortion
+> Stake Deletion instance
+> Instance -to -instance relation
+> Anchor -to -instance relation
+> Initial structure
+
+Figure 1. Conceptual illustration of structural collapse and our structure-faithful remedy in MU. Existing works delete the desig-nated instance but ignore semantic relations between retained in-stances. During unlearning, model updates induce oscillations in the representation space. Without relational awareness, these os-cillations distort the instance-level semantic relations (e.g., a mon-key embedding drifting toward grape while moving away from ba-nana), collapsing the original knowledge organization. We intro-duce semantic anchors (i.e., stakes) that preserve key relational constraints by keeping the relative positions between anchors and retained instances (i.e., anchor-to-instance relations). 
+
+proaches [4, 13, 36] to more efficient approximate methods [6, 17, 22, 31]. To improve efficiency, these approximate methods update parameters affected by the forget set [10], leverage weight saliency [9], or apply selective perturba-tions [12], avoiding full retraining. Recently, growing at-tention has been devoted toward instance-level unlearning [6, 31], as real-world deletion requests typically involve specific individuals rather than entire categories [24, 34]. Despite these advances, the core challenge of MU lies in preserving structure, particularly the semantic organization among the retained instances. This is because knowledge in deep models is encoded not in isolated knowledge but in the semantic relations that contextualize them [3, 15, 42]. How-ever, existing methods [6, 12] largely neglect this aspect. As shown in Figure 1, removing an instance (e.g., apple) can distort the semantic relations between other instances (e.g., banana or grape). Such distortion through the representa-tion space disrupts coherence, leading to progressive struc-tural collapse. This highlights the necessity of structure-preserving unlearning to maintain relational structure. 
+
+> arXiv:2603.12915v1 [cs.CV] 13 Mar 2026 final
+
+(a) Structural collapse (b) Collapse vs. trade-off balance          
+
+> Figure 2. Structural collapse and its impact on the dele-tion–retention balance on CIFAR-100 (256 designated instances). (a) We observe structural collapse during unlearning in prior MU studies (Neg [12], Adv [6], and L2UL [6]). We quantify it as the change in affinities between retained-instance embeddings and an-chors before and during unlearning. Larger values indicate greater semantic shift. (b) We compare average structural collapse (mean over unlearning steps) with the trade-off accuracy defined as the retention–deletion accuracy gap. Each dot denotes a random trial; Neg lies along the x-axis, with accuracy below 5%.
+
+Furthermore, we empirically observe that structural col-lapse is closely associated with the deletion–retention trade-off. The existing works (orange, green, and blue in Fig-ure 2 (a)) [6, 12] progressively exhibit structural collapse as unlearning proceeds. This collapse arises from drastic embedding shifts, which make it difficult to preserve their semantic connections. As illustrated in Figure 2 (b), the average structural collapse is negatively correlated with ac-curacy. Notably, reducing structural collapse mitigates rep-resentational drift, enabling the model to retain meaningful semantic relations throughout unlearning. This highlights that structural preservation plays a decisive role for MU. In this work, we propose a novel structure-faithful un-learning framework. The core idea is to introduce seman-tic anchors, which prevent retained instances from drifting during unlearning by binding each instance to these anchors (i.e., stakes). This preserves semantic organization and pre-vents structural collapse (see Figure 1). Specifically, the semantic anchors are instantiated from the class attributes, such as texture, shape, or typical context. These attributes are used to prompt a large language model, which gen-erates human-interpretable descriptions [26]. The result-ing descriptions are encoded with a semantic encoder (e.g., CLIP) to form anchors. Based on these anchors, we de-fine structure as the affinities between embeddings of re-tained instances and semantic anchors (as illustrated by the anchor–instance relations in Figure 1). Our objective is to ensure that this structure remains preserved throughout unlearning. To this end, we intro-duce two complementary constraints. The first enforces structure-aware alignment to maintain structural consis-tency before and after unlearning, thereby ensuring seman-tic consistency among retained instances. The second ap-plies structure-aware regularization, which penalizes model updates in proportion to their structural importance. This prioritizes the preservation of parameters most critical to se-mantic consistency. While existing methods neglect struc-ture preservation, our framework explicitly stabilizes this organization and avoids collapse by jointly aligning repre-sentations and regularizing updates. To evaluate the effectiveness of ours, we conduct experi-ments on three tasks: image classification, face recognition, and image-to-image retrieval. Across all tasks, our method consistently outperforms existing methods, with the margin widening as the number of instances to unlearn increases. The results show that retaining semantic structure during unlearning not only mitigates structural collapse but also enhances deletion–retention balance and performance. The main contributions of this work are as follows: • We conceptualize structural preservation in instance un-learning and observe that it plays a decisive role in im-proving the deletion–retention balance. • We propose a structure-faithful unlearning framework that leverages semantic anchors to preserve the semantic organization of knowledge. • We present two constraints that retain the relational struc-ture between embeddings and anchors and regularize up-dates to structure-sensitive model parameters. • Extensive experimental results show that our method con-sistently improves both deletion–retention balance and generalization performance across diverse tasks. 
+
+## 2. Related Work 
+
+Machine unlearning (MU) removes the influence of specified data while preserving performance on the remain-der [4]. The literature falls into two lines of research: exact unlearning [4, 13, 36] and approximate unlearning [6, 10, 12]. Exact MU [4, 13, 36] aims to produce a model that behaves as if the deleted samples were never used, typ-ically by retraining on data excluding those samples. Al-though this guarantees complete removal, it is computation-ally expensive and requires access to retained data, which limits its practicality [4, 5]. In contrast, approximate MU [17, 22, 31] seeks to remove the residual influence of the forget set without full retraining. This approach, which also includes ours, can be categorized based on various charac-teristics, as summarized in Table 1 and discussed below. 
+
+Goal. The goal of approximate MU can be divided into two directions: undoing [25, 43] and misclassifica-tion [6, 37]. Undoing aims to reproduce the model that would result from retraining from scratch without using the forget set. Misclassification seeks to remove targeted in-formation by enforcing incorrect predictions on designated forget instances. Note that undoing is inherently limited: the retrained model used as a reference still classifies for-get instances and varies across runs [11], making it diffi-Table 1. Comparison of MU methods. SP denotes whether struc-tural preservation is considered, while TG and DA indicate target granularity and data availability, respectively.                             
+
+> Method Goal TG DA SP
+> Selective Forget [12] undo instance ✓n/a UNSIR [32] undo class ✓n/a Boundary [7] undo class ✗n/a L2UL [6] misclassify instance ✗n/a LoTUS [31] undo instance ✓n/a Ours misclassify instance ✗✓
+
+cult both to guarantee information removal and to serve as a reliable evaluation baseline. A key observation motivating our work concerns whether removing undesirable knowl-edge inevitably disrupts the structure of retained knowl-edge. We find that preserving the structure of representa-tions among retained instances is essential for achieving a strong deletion–retention balance (see Figure 2). Thus, we remove targeted information while keeping the structure of retained knowledge, called structure-preserving unlearning, and adopt misclassification as the deletion criterion. 
+
+Target Granularity. Approximate MU can also be dis-tinguished by its target granularity: class-level [32, 38, 39] or instance-level [6, 12, 18, 25, 31]. Class-level unlearning removes all samples of a class while maintaining perfor-mance on the remaining classes. Instance-level unlearning removes specific samples, which can be distributed across multiple classes. Deletion requests usually target individu-als rather than entire classes, making instance-level unlearn-ing both realistic and challenging [6, 34]. For these reasons, we focus on instance-level unlearning. 
+
+Data Availability. Some studies assume access to the re-tention dataset during unlearning [12, 25, 31], whereas oth-ers prohibit such access [6, 17, 22]. The latter is more prac-tical, since original training data are often unavailable at the time of deletion due to policy restrictions, storage regula-tions, or capacity limitations [29, 44]. We assume that the retention set is inaccessible, and only the pre-trained model and the requested forget data are available. 
+
+## 3. Structure-Faithful Instance Unlearning 
+
+We define the training set as Dtrain = {(xi, y i)}Ni=1 ,where each input xi ∈ X has its corresponding label 
+
+yi ∈ Y , and N is the total number of instances. We denote the forget set by Df = {(xif , y if )}Nf
+
+> i=1
+
+, which is a subset of 
+
+Dtrain . The retention set is defined as Dr := Dtrain \ Df .We denote the pretrained model as f ori  
+
+> θ
+
+(·) = hori 
+
+> ϕ
+
+ gori  
+
+> ψ
+
+(·),where gori  
+
+> ψ
+
+and hori  
+
+> ϕ
+
+are the feature extractor and classifier, respectively. The model is parameterized by θ = {ψ, ϕ },where ψ and ϕ represent the sets of parameters of the fea-ture extractor and classifier, respectively. We aim to obtain an unlearned model f unl  
+
+> θ
+
+by updating the pretrained model 
+
+f ori  
+
+> θ
+
+. f unl  
+
+> θ
+
+should eliminate the influence of Df while pre-serving performance on Dr . We adopt a realistic regime: during unlearning, we have access only to the pretrained model f ori  
+
+> θ
+
+and the forget set Df .As shown in Figure 2 (a), existing MU approaches [6, 12] suffer from progressive structural collapse. Such collapse indicates that performance degradation arises from a compromised representation structure, underscoring the need for structure-preserving MU. To this end, we propose a structure-faithful MU framework. We introduce semantic anchors, which serve as reference points linking retention instances and preserving the overall structure. To preserve this structure, we propose two constraints: a structure-aware alignment that upholds the distribution of semantic relation-ships between retained instances and the anchors, thereby maintaining their relative positions, and a regularization that prevents model updates from disrupting them, as detailed in Section 3.3. The overall framework is shown in Figure 3. 
+
+3.1. Anchor Generation 
+
+We aim to remove designated instances while preserv-ing the common semantic relational structure of the re-tained ones using semantic anchors. Motivated by finding that interpretable semantic descriptions provide stable ref-erence cues across instances [26], we define an attribute set for each class c, Ec = {ec,j }Mc
+
+> j=1
+
+, by prompting a large language model with a class-aware query [26]. We concatenate the attributes into a single description dc =concat( ec, 1, . . . , e c,M c ). A frozen semantic encoder T (·)
+
+maps dc to the class anchor ac. We assemble the ( ℓ2 nor-malized) anchors into A = {ac}c∈Y ∈ Rb×d, where b is the number of classes and d is the embedding dimension. Dur-ing unlearning, A remains fixed as a stable and data-frugal reference independent of Dr , as illustrated in Figure 3. 
+
+3.2. Definition of Structure 
+
+We define structure as the semantic relations linking an-chors and embeddings, inspired by prior studies on rela-tional organization in knowledge [1, 23]. Specifically, we compute affinities that represent the degree of semantic re-latedness between anchors A and the embeddings of reten-tion instances produced by the feature extractor. Since mea-suring these affinities requires Dr , when unavailable, we approximate its embeddings by generating adversarial vari-ants 1 from the forget inputs that are pushed toward target-class features [16]. This produces a surrogate probe set 
+
+Ds = {(x is , y is )}Ns
+
+> i=1
+
+, taking the role of Dr [6]. Let V ori = norm( gori  
+
+> ψ
+
+(xs)) ∈ RNs×d denote the em-beddings from the original pretrained model f ori  
+
+> θ
+
+, where 
+
+norm( ·) is a normalization operator. We define the original structure Sori , which represents the state before unlearning, as V ori · A⊤ ∈ RNs×b, encoding how the pretrained model         
+
+> 1Generating Nadv adversarial examples for each xif,Ns=Nf×Nadv .Feature extractor
+
+𝑔 𝜓 
+
+> Projector
+
+𝑝 𝜔 
+
+> Classifier
+
+ℎ𝜙  
+
+> Input
+> Output
+> “Propulsion via electric motor”
+> “Human transport artifact”
+> Attribute generator
+> Semantic space
+> Q: What are useful visual features
+> for distinguishing a {
+> class } in a photo?
+> Attributes
+> Semantic encoder
+
+𝑇  
+
+> 0.6 0.2
+> 0.2
+> 0.7
+
+𝑉 ori 
+
+𝑣 1
+
+𝑣 2
+
+𝑣 𝑁 𝑠   
+
+> 0.6 0.2
+> 0.2
+> 0.7
+> Forget
+> sample
+> Original structure
+
+𝑺 𝐨𝐫𝐢  
+
+> Follow the structure!
+> Unlearned structure
+
+𝑺 𝐮𝐧𝐥  
+
+> 0.1
+> 0.2 0.4
+> 0.6
+
+𝑉 unl 
+
+𝑣 1
+
+𝑣 2   
+
+> 0.2 0.4
+> 0.6
+> 0.1
+> Frozen Tuned
+
+A𝑎 1 𝑎 2 𝑎 𝑏 
+
+A𝑎 1 𝑎 2 𝑎 𝑏 
+
+A𝑎 1 𝑎 2 𝑎 𝑏  
+
+> A: There are several useful visual features
+> to tell there is a {
+> class } in a photo:
+
+𝑣 𝑁 𝑠 Figure 3. An illustration of the proposed structure-faithful unlearning framework. The left side illustrates the unlearning process, where we aim to preserve the original structure, Sori , defined by the affinities between visual embeddings V and semantic anchors A, by ensuring that these affinities remain consistent in the unlearned structure Sunl . The right side shows the procedure for collecting class-wise anchors: a large language model generates attribute descriptions, which are embedded into anchor vectors via a frozen semantic encoder T .
+
+organizes knowledge relative to A. Each element of Sori 
+
+represents the relevance between an instance and an anchor. Let vori  
+
+> i
+
+and aj denote the i-th and j-th rows of V ori and A,respectively, then Sori  
+
+> i,j
+
+= ⟨vori  
+
+> i
+
+, a j ⟩. Note that Sori remains unchanged throughout unlearning. 
+
+Unlearned Structure. During unlearning, the original structure may shift into an updated relational state due to representation drift. We quantify this change by measur-ing the affinities between A and the embeddings obtained during unlearning. The resulting relational configuration, which we term the unlearned structure, captures how the un-derlying knowledge organization evolves through unlearn-ing. Let V unl denote the embeddings obtained during un-learning, defined as norm  pω (gunl  
+
+> ψ
+
+(xs))  ∈ RNs×d, where 
+
+pω : Rd → Rd is a learnable projector parameterized by 
+
+ω that bridges the feature extractor gunl  
+
+> ψ
+
+(·) and the semantic encoder T (·) to calibrate embeddings for structural preser-vation. This projection embeds unlearned features in a se-mantically coherent space, yielding semantically grounded representations [40]. We define the unlearned structure as 
+
+Sunl = V unl · A⊤ ∈ RNs×b. (1) While Sori captures the relational pattern learned by the pre-trained model with respect to the anchors, Sunl quantifies the updated affinities between embeddings and semantic an-chors, revealing the structural changes relative to Sori .
+
+3.3. Structure Preservation 
+
+To preserve the structure of retained knowledge during unlearning, we ensure that the semantic relations between the retained instances and the anchors remain consistent with those observed before unlearning. To achieve this, we propose structure-aware alignment. It enforces consistency between the original and unlearned structures by minimiz-ing their distributional divergence: 
+
+Lalign = − 1
+
+b
+
+> b
+
+X
+
+> i=1
+
+cos  Sori  
+
+> i
+
+, S unl 
+
+> i
+
+. (2) By maximizing the average cosine similarity between Sori 
+
+and Sunl , our alignment preserves relative patterns across anchors and instances. Empirically, cosine-based alignment yields more stable structural preservation than other mea-sures, such as KL-divergence [21] or Wasserstein distance [2], as discussed in Section 4.3. While structure-aware alignment provides distributional alignment, it does not account for how model updates affect structural preservation. Consequently, unregulated model updates can alter structure-critical parameters and weaken semantic consistency. To complement this, we introduce structure-aware regularization, which restricts model up-dates to safeguard the semantic information underlying Sori :
+
+Lreg = 12
+
+X
+
+> i
+
+Ii ·  ψunl  
+
+> i
+
+− ψori 
+
+> i
+
+2 , (3) where 
+
+Ii = 1
+
+Ns
+
+X
+
+> xs∈Ds
+
+∂Lalign (xs)
+
+∂ψ unl 
+
+> i
+
+. (4) Table 2. Results of the image classification tasks on CIFAR-10, CIFAR-100, and ImageNet-1K. Atest and Ar represent the accuracies on the test set and the retention set, respectively, evaluated under each value of k. Af represents the accuracy on the forget set, and we report it as 100 − A f , where a higher value indicates more effective unlearning. The best performance is highlighted in bold.                                                                                                                                                                                                                                                                                                                             
+
+> Method CIFAR-10 CIFAR-100 ImageNet-1K
+> k= 16 k= 64 k= 128 k= 256 k= 16 k= 64 k= 128 k= 256 k= 16 k= 64 k= 128 k= 256
+> Atest (↑)
+> BEFORE 92.59 92.59 92.59 92.59 77.10 77.10 77.10 77.10 69.79 69.79 69.79 69.79 ORACLE 90.21 91.01 89.44 38.59 64.41 67.06 66.88 65.31 63.92 59.16 48.18 43.35 FISHER 17.10 14.97 17.20 15.09 6.25 4.69 2.86 1.18 53.62 48.63 1.44 1.70 NEGGRAD 15.87 9.28 7.11 6.47 48.07 21.11 10.19 1.71 53.48 43.11 30.74 2.09 RAWP 63.10 35.47 12.91 9.12 50.99 14.41 2.79 1.12 20.66 14.28 4.47 2.07 ADV 65.14 62.23 49.47 36.69 63.17 57.43 53.89 46.45 63.44 57.96 49.01 21.27 L2UL 79.65 67.08 50.82 45.44 63.69 62.83 58.44 48.71 63.92 59.89 53.86 31.19 STRUCTGUARD 84.38 69.47 58.40 56.32 66.27 65.07 62.33 56.91 65.53 62.57 57.59 41.15
+> Ar(↑)
+> BEFORE 99.60 99.60 99.60 99.60 99.98 99.98 99.98 99.98 79.18 79.18 79.18 79.18 ORACLE 98.74 99.72 98.97 39.90 99.96 96.17 96.74 96.43 72.58 66.37 52.88 46.43 FISHER 17.82 15.07 17.43 15.05 5.31 4.27 2.89 1.01 60.30 54.87 1.56 1.84 NEGGRAD 15.79 9.22 7.11 6.34 66.97 26.20 11.64 1.70 60.07 48.05 34.11 2.13 RAWP 67.15 37.32 13.28 9.12 72.44 17.39 2.82 1.12 23.48 16.45 5.10 2.38 ADV 69.70 66.97 53.49 39.33 89.18 81.07 76.28 65.67 72.00 64.88 53.90 23.43 L2UL 85.75 72.77 54.51 48.95 89.81 89.48 82.86 67.60 72.56 67.28 59.81 35.02 STRUCTGUARD 91.43 76.32 64.28 61.67 92.98 92.93 89.55 83.30 74.62 70.56 65.01 44.91
+> Af(↑)
+> BEFORE 0.00 0.62 0.47 0.62 0.00 0.00 0.00 0.00 0.00 18.75 17.97 19.54 ORACLE 100.00 100.00 100.00 99.37 100.00 100.00 100.00 100.00 100.00 100.00 100.00 100.00 FISHER 81.25 84.38 78.91 83.59 93.75 95.31 98.44 98.83 43.75 29.69 98.44 97.66 NEGGRAD 100.00 100.00 100.00 96.17 100.00 100.00 100.00 100.00 100.00 100.00 100.00 100.00 RAWP 100.00 100.00 95.94 93.83 100.00 100.00 100.00 100.00 100.00 100.00 100.00 100.00 ADV 100.00 100.00 100.00 100.00 100.00 100.00 100.00 100.00 100.00 100.00 100.00 100.00 L2UL 100.00 100.00 100.00 100.00 100.00 100.00 100.00 100.00 100.00 100.00 100.00 100.00 STRUCTGUARD 100.00 100.00 100.00 100.00 100.00 100.00 100.00 100.00 100.00 100.00 100.00 100.00
+
+Ii quantifies the structural importance of the i-th parame-ter in the feature extractor. This suppresses large updates to crucial parameters while allowing moderate changes in less important ones. Our regularization is distinguished from a recent approach [6] in that it constrains parameters crucial for preserving structure, whereas the prior work targets pa-rameters sensitive to the forget samples. To ensure structural integrity while balancing retention and deletion, we jointly optimize the structure-preserving constraints (i.e., Lalign and Lreg ) with the corresponding objectives. The retention objective encourages predic-tion of retained instances via the projector to preserve semantic relationships among representations: Lret =
+
+CE  hunl  
+
+> ϕ
+
+(pω (gunl  
+
+> ψ
+
+(xs))) , y s
+
+, where CE is the cross-entropy loss. Conversely, the deletion objective bypasses the projec-tor for effective erasing: Ldel = −CE  hunl  
+
+> ϕ
+
+(gunl  
+
+> ψ
+
+(xf )) , y f
+
+.The total loss is the sum of the above losses and is mini-mized over ˜θ = {ψ, ω, ϕ }.
+
+## 4. Experiments 
+
+4.1. Setup 
+
+Scenarios and Datasets. To evaluate our method termed STRUCTGUARD , we adopted the instance-level unlearning scenario, where misclassification is used as the unlearn-ing criterion [6]. We conducted experiments across three distinct tasks: image classification, face recognition, and image-to-image retrieval. For image classification, we used CIFAR-10 [20], CIFAR-100 [20], and ImageNet-1K [8]. For face recognition, we evaluated on Lacuna-10 [12], and for image-to-image retrieval, we utilized CIFAR-10 [20]. In each dataset, we constructed the forget set Df by randomly selecting k samples from the training data. Specifically, following [6] for image classification and image-to-image retrieval, we used k ∈ { 16 , 64 , 128 , 256 }, while for face recognition, we adopted k ∈ { 3, 7, 9, 12 , 64 }. The remain-ing samples were treated as the set Dr [6]. 
+
+Compared Methods. We evaluated our method against es-tablished unlearning baselines. BEFORE denotes the pre-trained model before unlearning, while O RACLE denotes a retrained reference model optimized with positive gradients from Dr and negative gradients from Df . Our compari-son also includes diverse unlearning methods, F ISHER [12], NEGGRAD [12], R AWP [37], A DV [6], and L2UL [6]. We report classification accuracy on the test set Dtest , retention set Dr , and forget set Df . Further details on comparison methods are available in the supplementary material A. 
+
+Implementation Details. We followed the training details and adversarial sample generation procedure from [6]. As the feature extractor, we used ResNet-18 [14] for CIFAR-10 and Lacuna-10, and ResNet-50 [14] for CIFAR-100 and ImageNet-1K. The projector, pω , comprised two linear lay-ers with a ReLU activation. For attribute description gener-ation, we adopted GPT-4o to produce class-level attributes [26], with the prompting method and sample descriptions provided in supplementary material E. Each class was as-sociated with a single anchor, encoded using a ViT-B/32 semantic encoder [27]. An analysis with alternative seman-tic encoders is included in the supplementary material C. To stabilize the classifier hunl  
+
+> ϕ
+
+, we applied the elastic net penalty [45] as classifier regularization, as discussed in Section 4.3. 
+
+4.2. Main Results 
+
+Image Classification. We evaluated S TRUCTGUARD on CIFAR-10, CIFAR-100, and ImageNet-1K for image clas-sification, as presented in Table 2. Most methods achieve 
+
+Af to 100.00% across all k, except F ISHER , which keeps incomplete deletion for every k, and N EGGRAD and R AWP 
+
+on CIFAR-10 at k = 256 . For CIFAR-10, ours achieves the highest accuracy on both Atest and Ar across all k. No-tably, at k = 256 , it surpasses O RACLE by 17.73% on Atest 
+
+and 21.77% on Ar , demonstrating robust knowledge preser-vation without a retention set. FISHER , N EGGRAD , and RAWP deteriorate rapidly as k increases, since forgetting more samples without a retention set leads to cumulative representation drift. We achieve average gains of 13.76% and 16.05% over A DV on Atest and Ar , respectively, and 6.39% and 7.93% over L2UL, averaged across different values of k. These gains show that structure-preserving im-proves deletion–retention balance and generalization. For CIFAR-100, our method consistently outperforms all baselines across all k. As k increases, F ISHER , N EG -
+
+> GRAD
+
+, and R AWP exhibit a consistent decline on both Atest 
+
+and Ar , and the degradation becomes more pronounced when the model must handle a larger number of classes than CIFAR-10. Compared with the strongest baseline, L2UL, ours achieves average gains of 4.22% on Atest and 7.25% on Ar across k. Notably, at k = 256 , our retention accu-racy exceeds L2UL by 15.70%, demonstrating the benefit of structure preservation. Furthermore, while L2UL suf-fers a 22.21% drop on Ar when k increases from 16 to 256, ours degrades by only 9.68%, indicating enhanced stability under larger deletion instances. For ImageNet-1K, across all k, our method outperforms all baselines by an average of 21.57% on Atest and 25.91% on Ar . Notably, compared with L2UL, while its aver-age performance drops by 10.91% and 12.51% for Atest 
+
+and Ar , respectively, ours shows smaller declines of 8.12% and 9.90%. These results show that ours remains effective on large-scale datasets, underscoring the need to preserve structure for reliable instance unlearning. We present class-level unlearning results for image classification in the sup-plementary material B. 
+
+Face Recognition. To validate the generality of S TRUCT -
+
+> GUARD
+
+, we conducted instance unlearning on a face recog-nition task. We used the Lacuna-10 dataset, which is de-rived from VGG-Faces [5], following the procedure in [12]. As shown in Table 3, except for F ISHER at k = 9 and 
+
+k = 64 , all methods, including S TRUCTGUARD , success-
+
+Table 3. Results of the face recognition task on Lacuna-10.                                                                                                                                     
+
+> Method Lacuna-10
+> k= 3 k= 7 k= 9 k= 12 k= 64
+> Atest (↑)BEFORE 94.34 94.34 94.34 94.34 94.34 ORACLE 91.36 91.47 92.00 91.89 86.78 FISHER 23.02 15.24 21.42 19.82 23.24 NEGGRAD 61.51 46.05 45.09 44.88 10.02 RAWP 72.94 66.84 59.91 41.36 10.66 ADV 72.28 59.48 55.62 51.81 9.27 L2UL 75.37 69.08 64.81 58.42 12.26 STRUCTGUARD 77.29 70.36 70.14 64.07 27.71
+> Ar(↑)BEFORE 100.00 100.00 100.00 100.00 100.00 ORACLE 99.19 99.54 99.43 99.52 98.44 FISHER 19.84 13.73 23.50 16.97 22.66 NEGGRAD 68.14 45.94 43.74 40.86 9.57 RAWP 81.82 76.60 66.64 48.01 11.82 ADV 80.38 64.33 58.49 55.68 11.31 L2UL 83.60 76.67 70.01 64.83 14.66 STRUCTGUARD 84.82 77.01 77.17 66.98 29.97
+> Af(↑)BEFORE 0.00 0.00 0.00 0.00 0.00 ORACLE 100.00 100.00 100.00 100.00 100.00 FISHER 100.00 100.00 66.67 100.00 75.00 NEGGRAD 100.00 100.00 100.00 100.00 100.00 RAWP 100.00 100.00 100.00 100.00 100.00 ADV 100.00 100.00 100.00 100.00 100.00 L2UL 100.00 100.00 100.00 100.00 100.00 STRUCTGUARD 100.00 100.00 100.00 100.00 100.00
+
+Forget 
+
+Before  L2UL  Ours 
+
+Retention 
+
+Ours L2UL Before 
+
+Figure 4. Grad-CAM visualizations on Lacuna-10. Red boxes de-note forget instances, and green boxes denote retention instances. 
+
+fully remove the designated instances. Across all k, our method maintains stable recognition performance, achiev-ing gains of 5.92% and 5.23% over the strongest baseline, L2UL, on Atest and Ar , respectively. These results show that ours achieves a strong deletion–retention balance and superior generalization, as further evidenced by the Grad-CAM [30] results provided in Figure 4. 
+
+Image-to-Image Retrieval. To extend the evaluation be-yond classification, we applied our method to an image-to-image retrieval task as shown in Figure 5. We used the unlearned model under k = 256 from Table 2. We con-sider two cases: (i) both the query and retrieved samples belong to the retention set (green), and (ii) the query comes from the forget set while the retrieved samples come from the retention set (red). The first evaluates knowledge re-tention quality, while the second examines whether erased instances are isolated in embedding space. Figure 5. Qualitative and quantitative results of the image-to-image retrieval task on CIFAR-10. The left side shows top-5 retrieval examples given query images. Green-bordered queries correspond to retained samples, while red-bordered queries denote forgotten ones. For each query, retrieved images with correct matches are marked with check marks, and incorrect ones with crosses. The right bar plots report the quantitative retrieval performance in terms of R@1, R@5, R@10, and mAP, comparing our method with L2UL. 
+
+In the first case, our method retrieves same-class sam-ples, while L2UL occasionally returns semantically related but incorrect classes (e.g., airplane or ship for a car ), sug-gesting class confusion. In the second case, ours retrieves only different-class samples for all forgotten queries (with the supplementary material D providing a Streisand effect [12] analysis), while L2UL still retrieves same-class sam-ples, implying incomplete deletion. These results show that ours precisely removes forgotten instances while maintain-ing feature alignment for retained data. Quantitatively, Fig-ure 5 (right) shows that ours achieves higher Recall and mAP for case (i) and lower scores for case (ii), indicating both reliable retention and effective forgetting. 
+
+4.3. Analyses 
+
+Representation Consistency. To assess how unlearning al-ters the retained representations, we examined their consis-tency with B EFORE , as shown in Figure 6. Representation consistency is quantified by estimating the kernel density of cosine similarities between the embeddings of identical retained samples from B EFORE and post-unlearning mod-els, where higher similarity indicates smaller deviation from BEFORE . Across both datasets, N EGGRAD shows a broad distribution skewed toward low similarity values, showing substantial representation drift. Both A DV and L2UL yield a higher proportion of samples with high similarity scores than N EGGRAD , yet their distributions stay dispersed, with mid-range similarities still appearing on CIFAR-10 and high-similarity values spread widely on CIFAR-100. Such dispersion indicates inconsistency in the retained represen-tations. In contrast, ours shows a remarkable result: a sharp peak near 1.0 (unchanged retained representation), indicat-ing that retained features remain well aligned with B EFORE .These results show that ours effectively removes target in-formation while retaining the consistency of retained repre-sentations with B EFORE .
+
+Anchor Type. To evaluate the role of semantic anchors in CIFAR -10  CIFAR -100                                   
+
+> Figure 6. Representation consistency between B EFORE and each unlearning method under k= 256 .Table 4. Comparison of different anchor designs under k= 256 .
+> Method CIFAR-10 ImageNet-1K
+> Atest (↑)Ar(↑)Af(↑)Atest (↑)Ar(↑)Af(↑)L2UL 45.44 48.95 100.00 31.19 35.02 100.00 Ours-vis 48.78 54.23 100.00 40.95 42.12 100.00 Ours 56.32 61.67 100.00 41.15 44.91 100.00
+
+preserving structure, we replaced them with visual proto-types obtained by averaging retention embeddings per class, without linguistic guidance. As shown in Table 4, while the visual-anchor variant (Ours-vis) substantially outper-forms the non-anchor baseline L2UL on both datasets, se-mantic anchors (Ours) yield further improvements, increas-ing Atest and Ar by 7.84% and 7.44% on CIFAR-10, and by 0.20% and 2.79% on ImageNet-1K compared to Ours-vis. These results indicate that although anchors are cru-cial for structural preservation, semantic anchors addition-ally enhance feature alignment by providing semantically grounded guidance. 
+
+Anchor-Guided Structure Preservation. To investigate whether semantic anchors guide structure preservation, we examined the affinities between randomly selected CIFAR-10 test samples and anchors at k=256 , as shown in Fig-ure 7. For both instances, our method yields affinities closely aligned with B EFORE , showing stable semantic as-sociations after unlearning. In contrast, A DV and L2UL exhibit noticeable shifts in semantic relations and reduced correspondence to the original anchors, showing structural Figure 7. Comparison of how the relational structure in B EFORE changes under each unlearning method. Greater radial extent indicates stronger association with the anchor (A i corresponds to the i-th anchor). We present the top-3 anchors of the highest affinities along with their corresponding attribute descriptions. Table 5. Ablation study on CIFAR-10 and CIFAR-100.                                           
+
+> SA SR CR CIFAR-10 CIFAR-100
+> Atest (↑)Ar(↑)Af(↑)Atest (↑)Ar(↑)Af(↑)
+> ✓✓37.75 42.36 100.00 51.49 80.52 100.00
+> ✓✓55.01 60.67 100.00 55.86 82.33 100.00
+> ✓✓54.08 59.83 100.00 56.42 82.96 100.00
+> ✓✓✓56.32 61.67 100.00 56.91 83.30 100.00
+
+drift due to the absence of semantic guidance. We observe strong connections to the anchors corresponding to their re-spective classes (Anchor 1 for the left and Anchor 2 for the right). This reflects that semantic anchors, which encode visual attributes, serve effectively as reference points that support coherent and interpretable structure preservation. 
+
+Ablation Study. We conducted an ablation study to analyze the contribution of each component in S TRUCTGUARD :Structure-aware Alignment (SA), Structure-aware Regular-ization (SR), and Classifier Regularization (CR), with re-sults in Table 5. Removing SA causes the largest perfor-mance drop on both datasets, indicating that alignment is the key factor in keeping structural consistency. On CIFAR-10, the larger performance drop from CR than SR suggests that improvement mainly depends on refining the classifier rather than constraining model updates. On CIFAR-100, SR becomes more influential than CR as the number of classes increases. Overall, SA drives structure preservation, while SR and CR enhance stability by regulating model updates and classifier behavior across different class scales. 
+
+Structural Alignment Loss. To validate the design of the structure-aware alignment loss, we compared cosine simi-larity (CS) against other measures, such as Mean Squared Error (MSE), Maximum Mean Discrepancy (MMD), Kull-back–Leibler (KL) divergence, and Wasserstein distance (WD), as shown in Table 6. By enforcing directional consis-
+
+Table 6. Comparison of different loss functions for structure-aware alignment under k = 256 .                                         
+
+> Loss CIFAR-10 CIFAR-100
+> Atest (↑)Ar(↑)Af(↑)Atest (↑)Ar(↑)Af(↑)MSE 43.80 49.67 100.00 54.50 79.72 100.00 MMD 43.58 47.99 100.00 55.52 80.74 100.00 KL 47.41 52.13 100.00 55.46 80.35 100.00 WD 53.16 58.73 100.00 55.51 80.73 100.00 CS (Ours) 56.32 61.67 100.00 56.91 83.30 100.00
+
+tency between features and anchors, CS preserves seman-tic relationships and maintains structural integrity during unlearning. On CIFAR-10, CS improves Atest and Ar by an average of 9.33% and 9.54% over other losses, and it maintains consistently strong performance on CIFAR-100. These results show that CS provides a simple and effective alignment objective for structure-faithful unlearning. 
+
+## 5. Conclusion 
+
+We have proposed S TRUCTGUARD , a novel method that removes designated information while preserving the in-tegrity of retained knowledge. We introduce anchors con-structed from attribute sets generated by a language model and encoded with a semantic encoder. These anchors act as reference points to preserve representation structure, cap-turing the semantic relationships between anchors and the embeddings of retained instances. To maintain structure, we propose two constraints: structure-aware alignment, which aligns the structure before and after unlearning, and structure-aware regularization, which limits changes to pa-rameters critical to structural integrity. Experiments on di-verse tasks show that our method achieves superior dele-tion–retention balance and generalization over baselines. Acknowledgements. This work was supported by the Insti-tute of Information & Communications Technology Plan-ning & Evaluation (IITP) grant funded by the Korea gov-ernment (MSIT) [RS-2021-II211341, Artificial Intelligence Graduate School Program (Chung-Ang University)]. 
+
+## References 
+
+[1] John R Anderson. A spreading activation theory of memory. 
+
+Journal of verbal learning and verbal behavior , 22(3):261– 295, 1983. 3 [2] Martin Arjovsky, Soumith Chintala, and L´ eon Bottou. Wasserstein generative adversarial networks. In Interna-tional conference on machine learning , pages 214–223. PMLR, 2017. 4 [3] Kurt Bollacker, Colin Evans, Praveen Paritosh, Tim Sturge, and Jamie Taylor. Freebase: a collaboratively created graph database for structuring human knowledge. In Proceed-ings of the 2008 ACM SIGMOD international conference on Management of data , pages 1247–1250, 2008. 1 [4] Lucas Bourtoule, Varun Chandrasekaran, Christopher A Choquette-Choo, Hengrui Jia, Adelin Travers, Baiwu Zhang, David Lie, and Nicolas Papernot. Machine unlearning. In 
+
+2021 IEEE symposium on security and privacy (SP) , pages 141–159. IEEE, 2021. 1, 2 [5] Yinzhi Cao and Junfeng Yang. Towards making systems for-get with machine unlearning. In 2015 IEEE symposium on security and privacy , pages 463–480. IEEE, 2015. 1, 2, 6 [6] Sungmin Cha, Sungjun Cho, Dasol Hwang, Honglak Lee, Taesup Moon, and Moontae Lee. Learning to unlearn: Instance-wise unlearning for pre-trained classifiers. In Pro-ceedings of the AAAI conference on artificial intelligence ,pages 11186–11194, 2024. 1, 2, 3, 5, 11 [7] Min Chen, Weizhuo Gao, Gaoyang Liu, Kai Peng, and Chen Wang. Boundary unlearning: Rapid forgetting of deep net-works via shifting the decision boundary. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 7766–7775, 2023. 3 [8] Jia Deng, Wei Dong, Richard Socher, Li-Jia Li, Kai Li, and Li Fei-Fei. Imagenet: A large-scale hierarchical image database. In 2009 IEEE conference on computer vision and pattern recognition , pages 248–255. Ieee, 2009. 5 [9] Chongyu Fan, Jiancheng Liu, Yihua Zhang, Eric Wong, Den-nis Wei, and Sijia Liu. Salun: Empowering machine unlearn-ing via gradient-based weight saliency in both image classi-fication and generation. arXiv preprint arXiv:2310.12508 ,2023. 1 [10] Jack Foster, Stefan Schoepf, and Alexandra Brintrup. Fast machine unlearning without retraining through selective synaptic dampening. In Proceedings of the AAAI conference on artificial intelligence , pages 12043–12051, 2024. 1, 2 [11] Shashwat Goel, Ameya Prabhu, Amartya Sanyal, Ser-Nam Lim, Philip Torr, and Ponnurangam Kumaraguru. To-wards adversarial evaluations for inexact machine unlearn-ing. arXiv preprint arXiv:2201.06640 , 2022. 2 [12] Aditya Golatkar, Alessandro Achille, and Stefano Soatto. Eternal sunshine of the spotless net: Selective forgetting in deep networks. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 9304– 9312, 2020. 1, 2, 3, 5, 6, 7, 11, 12 [13] Laura Graves, Vineel Nagisetty, and Vijay Ganesh. Amne-siac machine learning. In Proceedings of the AAAI Confer-ence on Artificial Intelligence , pages 11516–11524, 2021. 1, 2[14] Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun. Deep residual learning for image recognition. In Proceed-ings of the IEEE conference on computer vision and pattern recognition , pages 770–778, 2016. 5 [15] Kiseong Hong, Gyeong-hyeon Kim, and Eunwoo Kim. Rainbowprompt: Diversity-enhanced prompt-evolving for continual learning. In Proceedings of the IEEE/CVF Inter-national Conference on Computer Vision , pages 1130–1140, 2025. 1 [16] Andrew Ilyas, Shibani Santurkar, Dimitris Tsipras, Logan Engstrom, Brandon Tran, and Aleksander Madry. Adversar-ial examples are not bugs, they are features. Advances in neural information processing systems , 32, 2019. 3 [17] Hyoseo Kim, Dongyoon Han, and Junsuk Choe. Negmerge: Consensual weight negation for strong machine unlearning. 
+
+arXiv preprint arXiv:2410.05583 , 2024. 1, 2, 3 [18] Junyaup Kim and Simon S Woo. Efficient two-stage model retraining for machine unlearning. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 4361–4369, 2022. 3 [19] Pang Wei Koh and Percy Liang. Understanding black-box predictions via influence functions. In International confer-ence on machine learning , pages 1885–1894. PMLR, 2017. 1[20] Alex Krizhevsky, Geoffrey Hinton, et al. Learning multiple layers of features from tiny images.(2009), 2009. 5 [21] Solomon Kullback and Richard A Leibler. On information and sufficiency. The annals of mathematical statistics , 22(1): 79–86, 1951. 4 [22] Tae-Young Lee, Sundong Park, Minwoo Jeon, Hyoseok Hwang, and Gyeong-Moon Park. Esc: Erasing space concept for knowledge deletion. In Proceedings of the Computer Vi-sion and Pattern Recognition Conference , pages 5010–5019, 2025. 1, 2, 3, 11 [23] Hugo Liu and Push Singh. Conceptnet—a practical com-monsense reasoning tool-kit. BT technology journal , 22(4): 211–226, 2004. 3 [24] Ninareh Mehrabi, Fred Morstatter, Nripsuta Saxena, Kristina Lerman, and Aram Galstyan. A survey on bias and fairness in machine learning. ACM computing surveys (CSUR) , 54 (6):1–35, 2021. 1 [25] Ronak Mehta, Sourav Pal, Vikas Singh, and Sathya N Ravi. Deep unlearning via randomized conditionally independent hessians. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 10422– 10431, 2022. 2, 3 [26] Sachit Menon and Carl Vondrick. Visual classification via description from large language models. arXiv preprint arXiv:2210.07183 , 2022. 2, 3, 5, 12 [27] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry, Amanda Askell, Pamela Mishkin, Jack Clark, et al. Learning transferable visual models from natural language supervi-sion. In International conference on machine learning , pages 8748–8763. PmLR, 2021. 6 [28] Nils Reimers and Iryna Gurevych. Sentence-bert: Sentence embeddings using siamese bert-networks. arXiv preprint arXiv:1908.10084 , 2019. 11 [29] Sara Rosenbaum. Data governance and stewardship: de-signing data stewardship entities and advancing data access. 
+
+Health services research , 45(5p2):1442–1455, 2010. 3 [30] Ramprasaath R Selvaraju, Michael Cogswell, Abhishek Das, Ramakrishna Vedantam, Devi Parikh, and Dhruv Batra. Grad-cam: Visual explanations from deep networks via gradient-based localization. In Proceedings of the IEEE in-ternational conference on computer vision , pages 618–626, 2017. 6 [31] Christoforos N Spartalis, Theodoros Semertzidis, Efstratios Gavves, and Petros Daras. Lotus: Large-scale machine un-learning with a taste of uncertainty. In Proceedings of the Computer Vision and Pattern Recognition Conference , pages 10046–10055, 2025. 1, 2, 3 [32] Ayush K Tarun, Vikram S Chundawat, Murari Mandal, and Mohan Kankanhalli. Fast yet effective machine unlearning. 
+
+IEEE Transactions on Neural Networks and Learning Sys-tems , 35(9):13046–13055, 2023. 3 [33] Anvith Thudi, Gabriel Deza, Varun Chandrasekaran, and Nicolas Papernot. Unrolling sgd: Understanding factors in-fluencing machine unlearning. In 2022 IEEE 7th European Symposium on Security and Privacy (EuroS&P) , pages 303– 319. IEEE, 2022. 1 [34] Eleni Triantafillou, Fabian Pedregosa, Isabelle Guyon, Ser-gio Escalera, Julio C. S. Jacques Junior, Gintare Karolina Dziugaite, Peter Triantafillou, Vincent Dumoulin, Ioan-nis Mitliagkas, Lisheng Sun Hosoya, Meghdad Kurmanji, Kairan Zhao, Jun Wan, and Peter Kairouz. Neurips 2023 machine unlearning challenge. https://unlearning-challenge.github.io/ , 2023. 1, 3 [35] Paul Voigt and Axel Von dem Bussche. The eu general data protection regulation (gdpr). A practical guide, 1st ed., Cham: Springer International Publishing , 10(3152676):10– 5555, 2017. 1 [36] Junxiao Wang, Song Guo, Xin Xie, and Heng Qi. Federated unlearning via class-discriminative pruning. In Proceedings of the ACM web conference 2022 , pages 622–632, 2022. 1, 2[37] Dongxian Wu, Shu-Tao Xia, and Yisen Wang. Adversarial weight perturbation helps robust generalization. Advances in neural information processing systems , 33:2958–2969, 2020. 2, 5, 11 [38] Jingwen Ye, Yifang Fu, Jie Song, Xingyi Yang, Songhua Liu, Xin Jin, Mingli Song, and Xinchao Wang. Learning with re-coverable forgetting. In European Conference on Computer Vision , pages 87–103. Springer, 2022. 3 [39] Youngsik Yoon, Jinhwan Nam, Hyojeong Yun, Jaeho Lee, Dongwoo Kim, and Jungseul Ok. Few-shot unlearning by model inversion. arXiv preprint arXiv:2205.15567 , 2022. 3 [40] Lu Yu, Haoyu Han, Zhe Tao, Hantao Yao, and Changsheng Xu. Language guided concept bottleneck models for inter-pretable continual learning. In Proceedings of the Computer Vision and Pattern Recognition Conference , pages 14976– 14986, 2025. 4 [41] Xiaohua Zhai, Basil Mustafa, Alexander Kolesnikov, and Lucas Beyer. Sigmoid loss for language image pre-training. In Proceedings of the IEEE/CVF international conference on computer vision , pages 11975–11986, 2023. 11 [42] Yizhen Zhang, Kuan Han, Robert Worth, and Zhongming Liu. Connecting concepts in the brain by mapping cortical representations of semantic relations. Nature communica-tions , 11(1):1877, 2020. 1 [43] Yu Zhou, Dian Zheng, Qijie Mo, Renjie Lu, Kun-Yu Lin, and Wei-Shi Zheng. Decoupled distillation to erase: A general unlearning method for any class-centric tasks. In Proceed-ings of the Computer Vision and Pattern Recognition Con-ference , pages 20350–20359, 2025. 2 [44] Ligeng Zhu, Zhijian Liu, and Song Han. Deep leakage from gradients. Advances in neural information processing sys-tems , 32, 2019. 3 [45] Hui Zou and Trevor Hastie. Regularization and variable se-lection via the elastic net. Journal of the Royal Statistical Society Series B: Statistical Methodology , 67(2):301–320, 2005. 6 Supplementary Material A. Baselines 
+
+We compared our method, S TRUCTGUARD , with repre-sentative unlearning approaches [6, 12, 37] aligned with the misclassification objective and the instance-level unlearning scenario: • FISHER [12]: Estimates the importance of parameters for the forget set and suppresses influential weights accord-ing to their effect. • NEGGRAD [12]: Applies gradient reversal on the forget data to directly drive the model away from the forgotten information. • RAWP (a variant of A WP [37]): Repeatedly perturbs model weights using forget data to induce misclassifica-tion by destabilizing weights linked to forgotten content. • L2UL [6]: Uses adversarial variants of the forget sam-ples to prevent representation-level forgetting, and con-strain parameters sensitive to the forget samples through parameter-level forgetting. • ADV (a variant of L2UL [6]): Performs gradient ascent on the forget set and incorporates adversarial examples generated from it to maintain the retained representations. 
+
+## B. Class-level Unlearning 
+
+Although our focus is on instance-level unlearning sce-narios, we also evaluated whether the proposed method ex-tends to class-level deletion. Following prior studies [22], we designated 10% of the entire set of classes as the forget set and conducted experiments on CIFAR-10 and CIFAR-100. The results are summarized in Table 7. All methods successfully remove the designated classes on both datasets, except for F ISHER on CIFAR-10. In particular, F ISHER and NEGGRAD exhibit unstable performance on both datasets, because class-level deletion requires removing all samples belonging to the designated classes, which intensifies struc-tural collapse and hinders retention. R AWP maintains per-formance on CIFAR-10 but struggles on CIFAR-100 as the number of forgotten classes grows. A DV demonstrates stronger retention than R AWP on CIFAR-100, due to its use of adversarial samples for retention. L2UL consis-tently outperforms all baselines on both datasets, making it the strongest baseline for class-level deletion. Notably, compared to L2UL, our approach achieves average im-provements of 10.45% on the test-set accuracy Atest and 12.28% on the retention-set accuracy Ar , averaged across both datasets. These noticeable performance gaps reflect the greater structural collapse caused by representation dis-tortion under class-level deletion, underscoring that pre-serving the relational structure of the retained knowledge becomes even more critical. 
+
+Table 7. Results of the class-level unlearning scenario.                                                     
+
+> Method CIFAR-10 CIFAR-100
+> Atest (↑)BEFORE 92.59 77.10 ORACLE 79.14 57.44 FISHER 11.84 1.92 NEGGRAD 13.77 20.82 RAWP 59.31 28.14 ADV 62.20 42.53 L2UL 64.56 43.38 STRUCTGUARD 78.20 50.65
+> Ar(↑)BEFORE 99.63 99.98 ORACLE 93.06 87.66 FISHER 12.62 1.03 NEGGRAD 14.94 26.60 RAWP 69.14 39.98 ADV 74.22 63.38 L2UL 75.79 64.32 STRUCTGUARD 93.48 71.19
+> Af(↑)BEFORE 0.00 0.00 ORACLE 100.00 100.00 FISHER 93.68 100.00 NEGGRAD 100.00 100.00 RAWP 100.00 100.00 ADV 100.00 100.00 L2UL 100.00 100.00 STRUCTGUARD 100.00 100.00
+
+Table 8. Comparison of different semantic encoders under k =256 .                             
+
+> Encoder CIFAR-10 CIFAR-100
+> Atest (↑)Ar(↑)Af(↑)Atest (↑)Ar(↑)Af(↑)SBERT 47.22 52.64 100.00 56.66 82.63 100.00 SigLIP 53.99 59.03 100.00 56.90 82.75 100.00 CLIP (ours) 56.32 61.67 100.00 56.91 83.30 100.00
+
+## C. Semantic Encoder 
+
+We conducted an analysis to examine how the choice of a semantic encoder influences unlearning. We selected two representative alternatives to CLIP: Sentence-BERT (SBERT) [28] and SigLIP [41]. SBERT is a language-only model that generates sentence embeddings, allowing us to test whether anchors derived solely from linguistic seman-tics can still guide structure preservation. SigLIP is a multi-modal encoder trained with a sigmoid-based contrastive ob-jective, serving as a counterpart to CLIP. As shown in Table 8, SBERT shows the weakest perfor-mance among the alternatives, as it lacks alignment with visual information. Furthermore, SigLIP achieves higher performance than SBERT on both datasets and reaches per-formance close to CLIP on CIFAR-100. Because SigLIP is trained on paired image–text data, its anchors are more closely aligned with the visual representations, which fa-cilitates structure preservation, especially when the classes exhibit rich and diverse semantics. Among the semantic en-coders, CLIP provides the strongest performance within our framework. This is because the global contrastive training 𝒌 = 𝟏𝟐𝟖  𝒌 = 𝟐𝟓𝟔 Figure 8. Confusion matrices on CIFAR-10 under k = 128 and    
+
+> k= 256 . Each matrix shows post-unlearning predictions on Df,with color brightness proportional to prediction frequency for each label pair.
+
+objective used in CLIP produces representations that align more naturally with the anchor–instance relational struc-ture. Notably, across all semantic encoders, ours main-tains a favorable deletion–retention trade-off and general-izes well, consistently outperforming all the alternatives; the baseline results are reported in Table 2 in the main paper. 
+
+## D. Misclassification 
+
+To test whether our method induces the Streisand ef-fect [12], referring to the unintended exposure of informa-tion that should have been forgotten, we examined whether forgotten samples exhibit specific prediction tendencies, as shown in Figure 8. We visualized the prediction tendencies of the unlearned model on the forget set Df using confu-sion matrices at k = 128 and k = 256 to capture how its outputs deviate from the true labels. In both confusion ma-trices, no consistent pattern emerges; the predictions do not form any meaningful arrangement, and this becomes even less organized at k = 256 , indicating no usable regularity that could expose forgotten information. These results show that our method prevents information leakage of forgotten instances and avoids predictable misclassification, thereby strengthening privacy. 
+
+## E. Attribute Generation 
+
+Following the previous work [26], we employed prompts in a question and an answer format, as shown in Table 9. These prompts were crafted to obtain concise and distinc-tive attribute descriptions for each category, which served as the basis for our semantic anchors. For each dataset, we queried GPT-4o using the question and answer prompts to obtain class-wise attribute descriptions, which are sum-marized in Table 10. Each prompt instructed GPT-4o to describe the visual or contextual traits of a given category, including elements such as shape, texture, or common en-vironment. Prior work [26] reported that list formatting be-comes more reliable when one or two examples are pro-vided, and we included two short examples in each prompt 
+
+> Table 9. Question–answer prompts used for generating attributes.
+
+Dataset Prompts 
+
+CIFAR-10 CIFAR-100 ImageNet-1K 
+
+Q: What are useful features for dis-tinguishing a {category name } in a photo? 
+
+A: There are several useful visual features to tell there is a {category name } in a photo: Lacuna-10 
+
+Q: What are useful features for dis-tinguishing the face of {category name } in a photo? 
+
+A: There are several useful visual features that help identify the face of 
+
+{category name } in a photo, espe-cially in celebrity recognition:  
+
+> Figure 9. Sensitivity analysis on CIFAR-10 ( k= 256 ).
+
+to encourage structured and coherent outputs. The result-ing class-wise attributes (shown in Table 10) were then en-coded with the semantic encoder to construct class-level an-chors. This process produces attribute representations that are semantically coherent and consistently organized, en-abling anchor-based structure preservation across datasets. 
+
+## F. Sensitivity 
+
+Since our anchors are derived from semantic priors pro-vided by an external large language model, assessing the stability of the anchor generation process is important. To this end, we conducted a sensitivity analysis on (a) the LLM prompt template, (b) the LLM model, (c) the number of at-tribute descriptions per class, and (d) the number of anchors per class. The results are summarized in Figure 9, where accuracy denotes the average of Atest and Ar . Across all variations, the proposed method consistently achieves sta-ble performance, demonstrating robustness to the choice of anchor generation components. This robustness indicates that semantic anchors provide reliable references for pre-serving representation structure during unlearning. Table 10. Examples of attribute descriptions for randomly selected categories. 
+
+Dataset Category Attributes 
+
+CIFAR-10 airplane “wings extending from the sides”, “tail fin at the back”, “jet engines under the wings or on the tail”, “cockpit win-dows at the front”, “landing gear”, “airline logos or mark-ings”, “propellers if it’s a propeller plane” cat “furry body”, “pointed ears”, “whiskers”, “tail”, “round eyes, often green or yellow”, “claws”, “variety of colors and patterns, including solid, striped, and spotted” CIFAR-100 aquarium fish “fins and tail”, “scales”, “gills”, “small size”, “often found in water or an aquarium setting”, “may be seen swimming with other fish”, “may have unique patterns or markings on their bodies” pickup truck “front cab with two or four doors”, “a large, open cargo area in the back”, “a tailgate at the rear of the cargo area”, “a front grille and headlights”, “side mirrors”, “a license plate”, “a truck bed liner or cover (optional)” ImageNet-1K suspension bridge “a large structure spanning a body of water or other gap”, “typically has two towers or piers supporting the main span”, “the main span is suspended by cables or chains”, “may have a deck for pedestrians, vehicles, or trains”, “may have decorative elements such as lights or flags” dust jacket “a book cover”, “made of paper or cloth”, “has a front and a back”, “usually has a printed design or image”, “may have text on the front and/or back”, “may be brightly col-ored or have a pattern” Lacuna-10 Alexis S´ anchez “intense dark brown eyes and closely shaved eyebrows”, “cropped black hair, often styled in a skin fade or taper”, “tan skin with high cheekbones and athletic facial lines”, “clenched jaw or focused game-time expression”, “muscu-lar build, sometimes captured mid-action”, “often seen in athletic wear, particularly a football jersey” Alesha Dixon “almond-shaped dark brown eyes with defined lashes”, “glowing medium-brown skin tone”, “wears bold makeup styles, often with shimmering eye shadow and statement lip colors”, “charismatic smile and dynamic expressions on stage or red carpet”

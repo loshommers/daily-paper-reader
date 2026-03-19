@@ -1,0 +1,637 @@
+Title: TINA: Text-Free Inversion Attack for Unlearned Text-to-Image Diffusion Models
+
+URL Source: https://arxiv.org/pdf/2603.17828v1
+
+Published Time: Thu, 19 Mar 2026 01:26:28 GMT
+
+Number of Pages: 16
+
+Markdown Content:
+# TINA: Text-Free Inversion Attack for Unlearned Text-to-Image Diffusion Models 
+
+# Qianlong Xiang 1,2,3, Miao Zhang 1,†
+
+# , Haoyu Zhang 1,4, Kun Wang 5, Junhui Hou 2, Liqiang Nie 1,3,†
+
+> 1
+
+# Harbin Institute of Technology (Shenzhen) 2City University of Hong Kong 3Shenzhen Loop Area Institute 
+
+> 4
+
+# Peng Cheng Laboratory 5Shandong University 
+
+https://github.com/qianlong0502/TINA 
+
+# Abstract 
+
+Although text-to-image diffusion models exhibit remarkable generative power, concept erasure techniques are essential for their safe deployment to prevent the creation of harmful content. This has fostered a dynamic interplay between the development of erasure defenses and the adversarial probes designed to bypass them, and this co-evolution has pro-gressively enhanced the efficacy of erasure methods. How-ever, this adversarial co-evolution has converged on a nar-row, text-centric paradigm that equates erasure with sev-ering the text-to-image mapping, ignoring that the underly-ing visual knowledge related to undesired concepts still per-sist. To substantiate this claim, we investigate from a visual perspective, leveraging DDIM inversion to probe whether a generative pathway for the erased concept can still be found. However, identifying such a visual generative path-way is challenging because standard text-guided DDIM in-version is actively resisted by text-centric defenses within the erased model. To address this, we introduce TINA, a novel Text-free INversion Attack, which enforces this visual-only probe by operating under a null-text condition, thereby avoiding existing text-centric defenses. Moreover, TINA in-tegrates an optimization procedure to overcome the accu-mulating approximation errors that arise when standard in-version operates without its usual textual guidance. Our experiments demonstrate that TINA regenerates erased con-cepts from models treated with state-of-the-art unlearning. The success of TINA proves that current methods merely ob-scure concepts, highlighting an urgent need for paradigms that operate directly on internal visual knowledge. 
+
+# 1. Introduction 
+
+With the rapid development of deep learning [16–18, 40– 45, 53–55], generative artificial intelligence, particularly Text-to-Image (T2I) diffusion models such as Stable Dif-fusion is fundamentally reshaping the landscape of digital 
+
+> †Corresponding authors
+
+Initial Noise Undesired Concept 
+
+𝑥 !              
+
+> Unsafe Generation
+> Concept Erasure
+> Previous Attack
+> Text -Free Inversion
+> Deterministic Sampling
+> 𝑆 𝑆 ∅Unsafe Text Condition Adversarial Text Condition Empty Text Condition
+> 𝑆 ∅
+> 𝑆
+> 𝑆
+
+𝑥 "" 𝑆 ∅
+
+𝑥 " ~  
+
+> 𝒩 (0,𝐼 )Find
+> 𝑆 ∗
+> 𝑆 ∗
+> Find
+
+Figure 1. Conceptual overview of text-centric erasure vulnerabili-ties and our TINA attack. Concept Erasure usually severs the link between a specific text condition and the undesired concept. Pre-vious Attacks remain text-centric, finding adversarial text condi-tion to reactivate the concept. Our TINA bypasses the text path-way entirely. Using an empty text condition, it finds a noise to regenerate the concept, proving the visual knowledge persists in the existing erased models. 
+
+content creation [24, 28, 30, 32, 49]. Their remarkable ca-pacity for creative synthesis has catalyzed countless appli-cations, from art and design to entertainment and media. However, since these models are typically trained on mas-sive, unfiltered datasets scraped from the Internet [35], their proliferation brings a turbulent undercurrent of ethical and safety challenges. The same models that generate breath-taking art can be misused to create deepfakes that violate personal privacy [2], imitate artistic styles that infringe on copyright [13, 31, 36], and produce harmful Not-Safe-For-Work (NSFW) imagery [12, 34, 57], posing significant risks to intellectual property and societal well-being. To address these challenges, the field has converged on the paradigm of Concept Erasure , a specialized form of Ma-chine Unlearning [50]. This paradigm aims to mitigate risks by directly modifying model parameters. For instance, ap-proaches such as Erasing Stable Diffusion (ESD) and Ablat-ing Concepts (AC) retrain specific model layers to remap a forbidden concept representation to that of a neutral or null 1
+
+> arXiv:2603.17828v1 [cs.CV] 18 Mar 2026
+
+concept, thereby severing the explicit link between a text prompt and its corresponding visual output [6, 15]. Other methods like Forget-Me-Not (FMN) minimize the attention maps corresponding to the target concept [52], while Uni-fied Concept Editing (UCE) applies efficient, closed-form edits to the cross-attention weights [7]. Despite their dis-tinct mechanisms, these approaches share a common, text-centric operational principle, equating erasure with merely severing its text-image mapping .The text-centric paradigm, as conceptualized in Figure 1, has consequently guided adversarial attacks almost exclu-sively to the textual domain. Initial red-teaming efforts in-volve prompt-level manipulations, attempting to find alter-native phrasings or complex prompts that reactivate the tar-get concept [4, 39, 57]. Moreover, the more sophisticated embedding-space attacks, which move beyond discrete to-kens, remain fundamentally dependent on the textual con-ditioning pathway [27]. Generally, these red-teaming meth-ods aim to discover new token embeddings [27] or opti-mize an adversarial text prompt [57] that serves as a proxy for the erased concept. In response to this threat, an in-terplay between text-based attacks and defenses has driven the subsequent development of more resilient safeguards, such as AdvUnlearn [56] and STEREO [38]. This adver-sarial co-evolution has produced defenses that demonstrate increasing efficacy, thereby fostering an appearance of ro-bust model security. However, in this work, we contend that this competitive co-evolution of text-centric methods rests on a fundamen-tal and fatal assumption. Specifically, existing paradigm mistakenly equates the erasure of a text-to-image link with the far more complex task of eliminating the underlying vi-sual knowledge from the parameter space. Consequently, existing methods critically ignore the fact that even if tex-tual inputs can no longer induce the target concept, the cor-responding visual knowledge may still persist, untapped, within the model. To challenge this dominant paradigm and substantiate our claim, we introduce a core hypothesis: 
+
+A deterministic generative pathway for an erased con-cept persists within the model, even after its text-image mappings are removed, allowing for its regeneration in a completely text-free manner. 
+
+To validate this hypothesis from a purely visual perspec-tive, thereby challenging the efficacy of these text-centric defenses, we introduce TINA, a Text-free INversion At-tack. Unlike prior embedding-space attacks that seek a new textual proxy for the erased concept [27], TINA is a novel framework designed to completely bypass the textual con-ditioning pathway. To achieve this, TINA leverages Denois-ing Diffusion Implicit Models (DDIM) [37] inversion as a visual probe (illustrated in Figure 1), allowing us to inves-tigate the visual knowledge embedded within the model di-rectly. However, identifying such a generative pathway is challenging because standard DDIM inversion relies heav-ily on textual guidance. Operating under the null-text con-dition necessary to evade defenses consequently introduces significant imprecision. To address this imprecision, TINA incorporates a novel optimization procedure that corrects for the compounding errors of standard inversion, allow-ing it to precisely map a target image back to a latent noise vector. Serving as the specific initial noise for the determin-istic DDIM sampling process, this resulting latent vector can lead an erased model to regenerate the forbidden con-tent through a deterministic generative trajectory, entirely bypassing the text-conditioning mechanism. The success of this text-free reconstruction provides compelling evidence that current erasure methods merely obscure concepts by severing text-image links, rather than truly expunging the underlying visual knowledge embedded deep within the model parameters. These findings serve as a critical alert for the AI safety community, highlighting the urgent need for more robust unlearning paradigms that operate directly on the internal visual representations within T2I models. To sum up, our contributions are as follows. • To our knowledge, we are the first to identify the funda-mental, text-centric vulnerability in the current paradigm of concept erasure for T2I diffusion models. • We propose TINA, a new text-free attack paradigm that employs an optimization-based inversion to identify the underlying generative trajectory for a supposedly erased concept, from a purely visual perspective. • Experiments demonstrate that our TINA can rediscover erased concepts from models unlearned by state-of-the-art methods, thereby exposing a fundamental flaw need-ing urgent attention. 
+
+# 2. Related Work 
+
+2.1. Text-to-Image Diffusion Models 
+
+The advent of Text-to-Image (T2I) diffusion models, such as Stable Diffusion [30], DALL-E 2 [29], and Imagen [32], has marked a paradigm shift in digital content generation. These models operate through a two-stage process: a for-ward diffusion process that incrementally adds noise to an image, and a learned reverse process that denoises a random vector back into a coherent image [11]. To achieve com-putational efficiency, models like Stable Diffusion perform this process in a lower-dimensional latent space [30]. Criti-cally, their generative process is guided by textual prompts, typically encoded and injected into the denoising network via a cross-attention mechanism [40]. This tight coupling between text and image synthesis is the source of their remarkable controllability, but also the root of significant safety and ethical concerns, as the models can be prompted to produce NSFW imagery [34, 57], imitate copyrighted styles [13, 36], or violate personal privacy [2]. 22.2. Concept Erasure in Diffusion Models 
+
+To address the misuse of T2I models, concept erasure has emerged as a critical field. While methods like SLD [34] fo-cus on inference-time interventions, the dominant paradigm involves fine-tuning-based methods that modify model pa-rameters. This paradigm originated with foundational works like ESD [6] and AC [15], which retrained mod-els to break associations with specific text prompts. Sub-sequently, this was followed by more efficient and tar-geted techniques, such as FMN [52], UCE [7], MACE [20], and the adapter-based SPM [21], often focusing on cross-attention layers. Concurrently, general unlearning frame-works like SalUn [5], Scissorhands [47], and EraseDiff [48] were proposed for the concept erasure task. As text-based attacks began to bypass these initial erasure methods, ad-vanced adversarially robust methods were developed, in-cluding RECE [8], AdvUnlearn [56], and STEREO [38]. These methods usually integrate attack considerations into their design to defend against adversarial prompts and em-beddings. Ultimately, this co-evolution of text-based at-tacks and defenses has solidified a dominant, text-centric paradigm: most of them operate by identifying or severing the text-to-image mapping , rather than addressing the un-derlying visual knowledge. 
+
+2.3. Adversarial Attacks on Concept Erasure 
+
+The prevailing text-centric assumption of erasure methods has consequently shaped the landscape of adversarial at-tacks, which primarily seek to circumvent these textual defenses. These attacks can be classified by their opera-tional domain. The most straightforward approaches op-erate in the discrete token space, employing circumven-tion strategies to find alternative phrases that trigger the erased concept, such as P4D [4], RAB [39], MMA [51], and UDA [57]. A more sophisticated class of attacks operates in the continuous embedding space. These methods aim to find a novel token embedding that acts as a proxy for the for-bidden concept, effectively creating a new activation path-way to the visual knowledge. For instance, CCE [27] lever-ages textual inversion to discover surrogate embeddings for erased concepts. Critically, despite their varying levels of sophistication, from simple phrasings to optimized vectors, these existing attacks share a fundamental limitation: most of them pre-suppose that the generative capabilities of the model must be accessed via its text-conditioning pathway. They fo-cus on finding a new textual or embedding-space vector to bypass modified controls. In stark contrast, our work, TINA, challenges this entire paradigm. We pivot to a fun-damentally different attack surface by postulating that vi-sual knowledge persists independently of any textual con-trol. Accordingly, we propose an attack that circumvents the text-conditioning mechanism entirely, identifying and exploiting a deterministic, non-textual generative trajectory to regenerate forbidden content without textual guidance. 
+
+# 3. Method 
+
+3.1. Preliminaries 
+
+Latent Diffusion Models. Latent Diffusion Models (LDMs) [30] generate images by reversing a T -step diffu-sion process in a compressed latent space. An image x is first encoded into its latent z0 = E(x) by a VAE encoder. The forward process creates a sequence of noised latents 
+
+{z1, . . . , z T }. A denoising U-Net ϵθ learns to reverse this process. At each timestep t, it predicts the noise ϵ in zt,guided by a textual condition c. This condition is produced by a text encoder Ttext from a prompt y and integrated via cross-attention. The training objective minimizes the noise prediction error: 
+
+L = Ez0,y,ϵ,t 
+
+h
+
+∥ϵ − ϵθ (zt, t, c )∥22
+
+i
+
+.
+
+This objective trains ϵθ to denoise zt back towards z0 in a manner faithful to the condition c. The final image is re-trieved using the VAE decoder D.
+
+DDIM Sampling. Denoising Diffusion Implicit Models (DDIM) [37] enable deterministic generative sampling from LDMs. This is achieved by formulating the reverse process as a non-Markovian, discretized Probability Flow Ordinary Differential Equation (PF-ODE) with zero variance. Con-sequently, for a fixed model θ and condition c, any initial noise zT ∼ N (0 , I) maps to a unique generated latent z0.This deterministic path is defined by an iterative update rule. Given the latent zt, the model first predicts the clean latent ˆz0(zt):
+
+ˆz0(zt) = zt − √1 − αtϵθ (zt, t, c )
+
+√αt
+
+. (1) The preceding latent zt−1 is then computed as: 
+
+zt−1 = √αt−1 ˆz0(zt) + p1 − αt−1 · ϵθ (zt, t, c ), (2) where {αt}Tt=1 are the fixed noise schedule parameters. 
+
+DDIM Inversion. Building upon the deterministic nature of DDIM sampling, DDIM inversion provides a mechanism to reverse the generative process. Its objective is to map a given image, represented by its initial latent z0, back to the unique starting noise vector zT from which it can be deterministically generated. This capability is crucial for applications like real image editing and analysis. Ideally, the inversion would be a perfect algebraic rever-sal of the sampling step in Eq. (2), which can be expressed as: 
+
+zt = C1(t)zt−1 + C2(t) · ϵθ (zt, t, c ), (3) 3𝑧 !"#              
+
+> 𝑧 $𝑧 %
+> ∗
+> 𝑓 !(𝑧 "#$,𝑡 ,𝑐 %&'' )
+> L2 Loss
+> Optimization -based Inversion
+> 𝑧 !
+> 𝜃
+> 𝜃
+> 𝜃
+> 𝑧 !"#𝑧 !
+> 𝑓 !
+> ∗(𝑧 ",𝑧 "#$,𝑡 ,𝑐 %&'' )
+> 𝜃
+> 𝜃
+> 𝜃
+> 𝑧 $
+> '
+> Deterministic Sampling
+> 𝑧 !
+> '𝑧 !"#
+> '
+> 𝑧 !"#
+> '
+> 𝜃
+> DDIM Sampler
+> 𝜖 (
+> 𝑧 !
+> '𝑐 )*++
+
+(a) Text -Free Inversion Attack (b) Deterministic Concept Regeneration Figure 2. The TINA (Text-free INversion Attack) framework. (a) Text-Free Inversion Attack: An optimization-based, null-text ( cnull )inversion finds the unique initial noise z∗ 
+
+> T
+
+corresponding to a target image z0. This optimization corrects the errors from standard inversion. (b) Deterministic Concept Regeneration: The same sanitized model θ uses z∗ 
+
+> T
+
+and cnull to deterministically regenerate the target concept 
+
+z′
+
+> 0
+
+, proving the visual knowledge persists despite erasure. 
+
+where 
+
+C1(t) = 
+
+√αt
+
+√αt−1
+
+, (4) 
+
+C2(t) = √1 − αt −
+
+s
+
+αt(1 − αt−1)
+
+αt−1
+
+. (5) However, a practical challenge emerges: computing the la-tent zt requires a noise prediction ϵθ (zt, t, c ), which itself depends on zt, as shown in Eq. (3). To break this circular dependency, standard DDIM inversion employs a key ap-proximation: it estimates the required noise using the latent from the previous step, zt−1, at timestep t − 1. This results in the following iterative formula to approximate zt from 
+
+zt−1:
+
+zt ≈ fθ (zt−1, t, c ), (6) where 
+
+fθ (zt−1, t, c ) = C1(t)zt−1 + C2(t) · ϵθ (zt−1, t − 1, c ). (7) Starting from the clean image latent z0, this equation is ap-plied sequentially for t = 1 , . . . , T to trace the trajectory back to an approximate initial noise ˆzT . This vector serves as an estimate of the true starting point in the noise space required for reconstructing the original image. 
+
+3.2. TINA: Text-free INversion Attack 
+
+In this section, we introduce our TINA framework, start-ing with the attack pipeline (Section 3.2.1), then analyzing why the naive standard inversion fails to meet the objec-tive in the pipeline (Section 3.2.2), and finally detailing our optimization-based solution (Section 3.2.3). 
+
+3.2.1. The TINA Attack Pipeline 
+
+The central hypothesis of TINA is that even within a model subjected to concept erasure, deterministic generative tra-jectories persist that are entirely independent of textual con-ditioning. Our framework is designed to expose and exploit this vulnerability through a two-phase attack pipeline, as il-lustrated in Figure 2. The process begins with a concept-erased model ϵθ and a target image x representing the erased concept. As il-lustrated in Figure 2, the attack first performs a Text-Free Inversion to find the precise initial noise vector z∗ 
+
+> T
+
+that cor-responds to the target image latent z0. This inversion phase uses only the sanitized model ϵθ and a null-text condition 
+
+cnull . Following this, in the Deterministic Regeneration 
+
+phase, this optimized z∗ 
+
+> T
+
+is fed back into the same erased model ϵθ . A standard deterministic DDIM sampling pro-cess is then executed, crucially starting from this specific 
+
+z∗ 
+
+> T
+
+and operating entirely under the null-text condition cnull .The successful reconstruction of the target concept x′
+
+serves as definitive proof that the visual knowledge persists, independent of textual controls. The deterministic regener-ation step is a standard DDIM sampling procedure; the core technical challenge lies in the initial inversion step: accu-rately identifying the starting noise vector z∗ 
+
+> T
+
+for a target image x representing the erased concept. 
+
+3.2.2. Limitations of Standard Inversion 
+
+A naive approach to finding z∗ 
+
+> T
+
+would be to apply the stan-dard DDIM inversion process to the target image latent z0.However, this method is fundamentally flawed and fails in two distinct ways, as illustrated in Figure 3. First, if the in-version is attempted using the text condition c of the target concept (e.g., “Van Gogh style”), the sanitized model ϵθ ac-tively counteracts this prompt, leading to a complete failure 4Noise                
+
+> :Inversion :Sampling :Result of DDIM Inversion
+> 𝑆 𝑆 𝑆 ∅𝑆 ∅
+> 𝑆 ∅:Null Text 𝑆 :Enclosed Field with Rising Sun by Vincent van Gogh
+
+Figure 3. Standard DDIM inversion fails to find the generative tra-jectory. The text-guided path ( S) is blocked by the erasure, while the null-text path ( S∅) drifts due to approximation errors, failing to restore the target concept. 
+
+in reconstruction. This confirms that text-centric defenses are indeed working against text-guided processes. Second, we could attempt the inversion under a null-text condition ( c = cnull ) to bypass this textual defense. This approach also fails, but in a more subtle way. As shown in Figure 3 (right), the resulting image is visually closer to the original than the text-conditioned attempt, yet it still fails to regenerate the specific target concept (i.e., the artis-tic style). This partial failure stems from the standard in-version formula (Eq. (6)), which relies on a critical approx-imation: it uses the noise prediction from the previous step, 
+
+ϵθ (zt−1, t − 1, c ), to estimate the next latent zt. This ap-proximation is heavily dependent on a meaningful text con-dition c to guide the noise prediction. In the absence of such guidance ( cnull ), the predictions become unconstrained, and the small error introduced at each step rapidly compounds across the entire trajectory. Consequently, the final com-puted noise ˆzT drifts sufficiently from the true required noise z∗ 
+
+> T
+
+to lose the high-fidelity details of the target con-cept, rendering it incapable of an accurate reconstruction. This demonstrates that standard inversion is an inadequate tool for identifying text-free generative paths. 
+
+3.2.3. Optimization-Based Text-Free Inversion 
+
+To overcome the imprecision of approximative inversion, TINA reframes the search for the generative trajectory as an optimization problem. We discard the flawed approx-imation in Eq. (6) and instead derive the ideal inversion relationship directly from the DDIM sampling equation (Eq. (2)). By algebraically rearranging the sampling step, we can express the exact, non-approximative relationship between zt and zt−1:
+
+zt = C1(t)zt−1 + C2(t) · ϵθ (zt, t, c ). (8) 
+
+Algorithm 1 TINA: Text-Free Inversion  
+
+> 1:
+
+Input: Sanitized denoising model ϵθ , target image la-tent z0, DDIM steps T , null-text condition cnull , max optimization iterations K, learning rate η. 
+
+> 2:
+
+Output: Optimized initial noise z∗ 
+
+> T
+
+. 
+
+> 3:
+
+for t ← 1 to T do  
+
+> 4:
+
+Get initial ˜zt from zt−1 using Eq. (6) with cnull . 
+
+> 5:
+
+zt ← ˜zt. 
+
+> 6:
+
+for k ← 1 to K do  
+
+> 7:
+
+Lt ← ∥ f ∗ 
+
+> θ
+
+(zt, z t−1, t, c null ) − zt∥22 ▷ Eq. (10)  
+
+> 8:
+
+zt ← zt − η∇zt Lt 
+
+> 9:
+
+end for  
+
+> 10:
+
+end for  
+
+> 11:
+
+z∗ 
+
+> T
+
+← zT 
+
+> 12:
+
+return z∗
+
+> T
+
+This equation establishes an implicit consistency constraint that must hold at every step of a true generative trajectory. We can therefore cast the exact inversion at step t as a fixed-point problem . In particular, for fixed zt−1, t, and c, any exact latent zt on the DDIM trajectory must satisfy a self-consistency relation of the form zt = f ∗ 
+
+> θ
+
+(zt, z t−1, t, c ), i.e., 
+
+zt is a fixed point of the induced mapping f ∗ 
+
+> θ
+
+[1, 25]. Let us define f ∗ 
+
+> θ
+
+as: 
+
+f ∗ 
+
+> θ
+
+(zt, z t−1, t, c ) = C1(t)zt−1 + C2(t) · ϵθ (zt, t, c ). (9) Our key innovation is to enforce this self-consistency constraint at each step of the inversion process through op-timization, rather than relying on the approximative closed-form update. For each timestep t from 1 to T , given the pre-viously computed zt−1, we seek a latent zt whose induced denoising prediction is consistent with the exact DDIM re-lation under a null-text condition. We formulate this as the following loss function: 
+
+Lt(zt) = ∥f ∗ 
+
+> θ
+
+(zt, z t−1, t, c null ) − zt∥22 , (10) where zt is initialized as ˜zt = fθ (zt−1, t, c null ) before the optimization. Instead of accepting the erroneous result from the stan-dard formula, we employ an inner optimization loop at each inversion step t. We first obtain an initial estimate for zt us-ing the conventional DDIM inversion step (Eq. 6) under the null-text condition. This estimate then serves as the starting point for an iterative refinement process where we perform gradient descent on zt to minimize the objective defined in Eq. (10). In this sense, our optimization can be viewed as seeking a numerically self-consistent point, rather than directly trusting the approximative inversion formula [25]. This optimization forces each latent zt along the inversion path to be consistent with the internal dynamics of the san-itized model ϵθ in a text-free setting. The inner loop is exe-5cuted for a fixed number of iterations. By iteratively apply-ing this optimization-based refinement for t = 1 , . . . , T , we trace a highly accurate path back to the true initial noise z∗ 
+
+> T
+
+,which is now completely decoupled from any textual influ-ence. The complete procedure for this text-free inversion is formally detailed in Algorithm 1. 
+
+# 4. Experiments 
+
+4.1. Experimental Setup 
+
+Unlearned DMs to be attacked. The field of machine unlearning for diffusion models is advancing at a rapid pace. For our evaluation, we select target unlearning meth-ods based on two criteria: the public availability of their source code and the reproducibility of their reported results. Specifically, our evaluation targets twelve prominent, open-source unlearning methods: (1) ESD (erased stable diffu-sion) [6], (2) FMN (Forget-Me-Not) [52], (3) AC (ablat-ing concepts) [15], (4) UCE (unified concept editing) [7], (5) EraseDiff [48], (6) Scissorhands [47], (7) MACE (Mass Concept Erasure) [20], (8) SPM (concept-SemiPermeable Membrane) [21], (9) RECE [8], (10) AdvUnlearn [56], (11) SalUn (saliency unlearning) [5], (12) STEREO [38]. We note that these unlearning methods are often specialized for specific domains (e.g., nudity) rather than being universal. Consequently, our evaluation is contextualized, assessing each method only on its intended unlearning tasks. 
+
+Baseline Attack Methods. We evaluate the attack perfor-mance of TINA against five prevailing baseline attack meth-ods: (1) MMA [51], (2) Prompting4Debugging (P4D) [4], (3) UnlearnDiffAtk (UDA) [57], (4) Ring-A-Bell (RAB) [39], and (5) CCE [27]. The fundamental characteristic and shared limitation of all these baselines is their text-centric nature. They exclusively target the textual input pathway in an attempt to circumvent textual defenses. These ap-proaches range from black-box jailbreaking techniques that discover alternative text prompts (e.g., MMA, RAB) to white-box attacks that leverage model access to optimize for adversarial text conditions (e.g., P4D, UDA, CCE). Crit-ically, all these existing attacks remain tethered to the text-conditioning mechanism, a pathway that TINA is designed to bypass entirely. As summarized in Table 3, not all base-line attacks are designed for every type of concept (e.g., MMA and RAB are not applicable to style or object era-sure). Therefore, our comparative analysis is conducted on a per-task basis, aligning with the intended application of each attack method. The implementing details of these baselines can be found in Appendix. 6. 
+
+Image Setup. Our method requires a set of representa-tive images, each exemplifying a concept targeted for era-sure. We obtain these images by adopting the generation setup established in the UnlearnDiffAtk (UDA) study [57]. This process involves using the original Stable Diffusion v1.4 model, which is the pre-trained checkpoint before any unlearning methods were applied, to generate a collection of ground-truth images. The generation is guided by text prompts sourced from the same standard benchmarks used to evaluate the baseline attacks. Specifically, for nudity concepts, we use prompts from the I2P dataset [34]. For artistic styles, we focus our experiments on the Van Gogh style, using art-related prompts from the ESD evaluation setup [6]. For objects, we concentrate on the tench class, using prompts generated via GPT-4 corresponding to this Imagenette class, following the methodology in [57]. 
+
+Implementation Details. All experiments are built upon the Stable Diffusion v1.4 checkpoint. For all generative processes, we employ a linear multistep scheduler with 
+
+T = 50 inference steps and a standard Classifier-Free Guid-ance (CFG [10]) scale of 7.5. For our proposed TINA, the optimization-based inversion (detailed in Section 3.2 and Algorithm 1) is also configured with T = 50 total steps. Within the inner optimization loop at each timestep t, we perform K = 25 refinement iterations to minimize the fixed-point loss (Eq. 10). This inner optimization uses the AdamW [19] with a learning rate of η = 0 .001 . All experi-ments were conducted on a single NVIDIA A100 GPU. 
+
+Evaluation Metrics. Our evaluation methodology is pri-marily aligned with the protocol established by UnlearnDif-fAtk (UDA) [57]. To quantitatively measure attack efficacy, we report the Attack Success Rate ( ASR ), defined as the percentage of generated images that are successfully iden-tified by a post-generation classifier as containing the for-bidden concept, thereby indicating a successful bypass of the unlearning safeguard. We employ a suite of specialized classifiers corresponding to each unlearning task. For harm-ful concept unlearning, we utilize NudeNet to detect nudity. For style unlearning, we adopt the 129-class ViT-base style classifier [46, 57], which was pre-trained on ImageNet, fine-tuned on the WikiArt dataset [33]. For object unlearning, we employ a standard ImageNet-pretrained ResNet-50 [9] for generated image classification. 
+
+4.2. Experiment Results 
+
+We now empirically validate the efficacy of TINA. Our ex-periments are designed to test the ability of TINA to bypass a wide spectrum of unlearning defenses, from foundational methods to the current state-of-the-art, and compare its per-formance directly against existing text-centric attacks. The results for nudity, style, and object erasure are summarized in Tables 1, 2, and 4, respectively. Qualitative comparisons and an ablation study are provided in Figure 4, Section 11, and Appendix 7. 6P4D                  
+
+> ESD
+> (a) Attack on Nudity Erasure
+> UDA
+> (Ours)
+> (b) Attack on Style Erasure (Van Gogh)
+> RECE AdvUnlearn SalUn STEREO FMN MACE AdvUnlearn STEREO ESD
+> *****
+> *
+> *
+> TINA Figure 4. Qualitative comparison of attack performance on (a) Nudity Erasure and (b) Style Erasure (Van Gogh). Images with a red border
+> indicate a successful attack. Our TINA (bottom row) consistently regenerates the forbidden concepts, bypassing most of defenses, while text-centric attacks fail against robust methods. Sensitive content is redacted.
+
+ESD [6] FMN [52] UCE [7] MACE [20] RECE [8] AdvUnlearn [56] SalUn [5] STEREO [38] 
+
+MMA [51] 13.10 67.00 32.60 6.00 22.80 1.70 1.70 5.50 
+
+P4D [4] 69.01 97.89 76.06 75.35 66.20 18.31 15.49 24.65 
+
+UDA [57] 76.05 97.89 78.87 81.69 63.38 23.24 13.38 25.35 
+
+RAB [39] 50.53 97.89 29.47 6.32 10.53 2.11 0.00 8.42 
+
+CCE [27] 74.65 54.93 49.30 50.00 66.90 76.76 2.82 16.90 
+
+TINA 82.39 97.89 82.39 92.96 80.28 78.87 71.13 80.99   
+
+> Table 1. Quantitative comparison of Attack Success Rates (ASR, in %) on the nudity erasure task. We evaluate our TINA against five baselines across eight prominent unlearning defenses. Bold indicates the best-performing attack.
+
+Evaluation on Erased Models in Nudity Erasure. Ta-ble 1 demonstrates comprehensive success of TINA in the nudity erasure task. TINA achieves the highest ASR across all eight defenses. It reaches 82 .39% against ESD and 92 .96% against MACE, significantly outperforming all baselines. The most critical finding is the performance of TINA against defenses designed to be robust, such as AdvUnlearn, SalUn, and STEREO. Against these targets, text-based attacks are largely mitigated (e.g., UDA scores 
+
+23 .24% on AdvUnlearn, RAB scores 0.00% on SalUn). In contrast, TINA maintains high ASRs ( 78 .87% , 71 .13% , and 
+
+80 .99% ), proving it exploits a vulnerability that these de-fenses do not account for. This quantitative success is visu-ally corroborated in Figure 4 (a). The bottom row shows TINA consistently regenerating the target content across all defenses. In contrast, text-centric attacks like P4D and UDA visibly fail against robust methods such as AdvUn-learn and STEREO, producing neutral or unrelated images. 
+
+Evaluation on Erased Models in Style Erasure. The re-sults for artistic style erasure (Table 2) further reinforce this trend. TINA robustly bypasses the majority of defenses. Its 
+
+70 .0% ASR against ESD starkly contrasts with the 32 .0% 
+
+from UDA and 8.0% from CCE. Furthermore, TINA shows dominant performance against robust methods like AdvUn-learn ( 70 .0% ) and STEREO ( 44 .0% ), where text-based at-tacks remain weak or ineffective. This finding demon-strates that even for abstract concepts like style, a deter-ministic, non-textual generative trajectory persists after era-sure, which TINA successfully identifies and exploits. Fig-ure 4 (b) provides the qualitative evidence for this trend. It clearly demonstrates the ability of TINA to restore the “Van Gogh” style, bypassing defenses like MACE and AdvUn-learn where text-based attacks fail to regenerate the artistic features. 
+
+Evaluation on Erased Models in Object Erasure. The object erasure evaluation in Table 4 delivers the most com-pelling results. This task highlights the failure of text-centric unlearning against our text-free attack. Against modern defenses like Scissorhands and STEREO, all text-based attacks (P4D, UDA, and CCE) fail catastrophically, 7ESD [6] FMN [52] AC [15] MACE [20] SPM [21] RECE [8] AdvUnlearn [56] STEREO [38] 
+
+P4D [4] 30.0 54.0 68.0 42.0 78.0 62.0 0.0 0.0 
+
+UDA [57] 32.0 56.0 77.0 56.0 88.0 64.0 2.0 0.0 
+
+CCE [27] 8.0 18.0 14.0 26.0 36.0 40.0 44.0 4.0 
+
+TINA 70.0 72.0 74.0 72.0 80.0 74.0 70.0 44.0 
+
+Table 2. Comparison of Attack Success Rates (ASR, in %) on the artistic style erasure task. We report the performance of our TINA against three baselines across eight unlearning methods. Bold denotes the highest ASR, while underlined denotes the second highest. 
+
+MMA P4D UDA RAB CCE Nudity ✓ ✓ ✓ ✓ ✓
+
+Style ✗ ✓ ✓ ✗ ✓
+
+Object ✗ ✓ ✓ ✗ ✓
+
+Table 3. Applicability of baseline attack methods to different tasks. ✓ denotes applicability, while ✗ denotes non-applicability. 
+
+P4D UDA CCE TINA ESD [6] 32.0 46.0 40.0 70.0 EraseDiff [48] 8.0 2.0 34.0 68.0 SalUn [5] 18.0 12.0 58.0 72.0 Scissorhands [47] 6.0 6.0 0.0 78.0 STEREO [38] 0.0 2.0 2.0 72.0 
+
+Table 4. Attack Success Rates (ASR, in %) for object erasure. Our TINA bypasses modern defenses where text-centric attacks fail. 
+
+with ASRs in the single digits. While P4D and UDA also fail against EraseDiff and SalUn, the embedding-space at-tack CCE retains partial efficacy (34.0% and 58.0%, respec-tively). This pattern confirms that while robust defenses are patching textual vulnerabilities, TINA remains unaffected. It achieves uniformly high ASRs across all targets, includ-ing 68.0% (EraseDiff), 78.0% (Scissorhands), and 72.0% (STEREO). This finding confirms our central hypothesis: current SOTA methods merely sever text-image links, not the underlying visual knowledge, which TINA can deter-ministically access without any textual guidance. 
+
+4.3. Latent Embedding Analysis 
+
+To further understand the generative pathway identified by TINA, we visualize the learned noise embeddings z∗ 
+
+> T
+
+for four erased concepts (Tench, Church, Parachute, Garbage Truck) using a t-SNE projection. Specifically, for each concept, we collect 50 optimized noise vectors generated by targeting the corresponding ESD-sanitized model. We then feed these optimized noises into the UNet under a null-text condition and extract their intermediate represen-tations through a forward inference. For the visualization, we apply t-SNE (perplexity 30, with PCA initialization) 2 1 0 1 2 3  
+
+> 0
+> 1
+> 2
+> 3
+> 4
+> (a) Optimized Noises
+> tench
+> church
+> parachute
+> garbage_truck
+> 10 010
+> 15
+> 10
+> 5
+> 0
+> 5
+> 10
+> (b) Feature
+> tench
+> church
+> parachute
+> garbage_truck
+
+Figure 5. t-SNE visualization of (a) the optimized initial noises z∗
+
+> T
+
+and (b) their corresponding deep UNet activations (extracted from the mid block ) for four erased concepts. 
+
+to both the flattened noise vectors and the global average pooled features extracted from the last ResNet block of the 
+
+mid block in the UNet model. As shown in Figure 5, the optimized noises themselves (left) exhibit little concept-wise separation in the latent space, which is consistent with their noise-like nature. However, their corresponding in-ternal UNet activations (right) become clearly separable by concept, forming distinct clusters. This demonstrates that although the optimized z∗ 
+
+> T
+
+remains indistinguishable from random noise, it successfully elicits concept-specific inter-nal responses within the erased diffusion model. This con-firms that the forbidden visual knowledge persists and is deterministically activated by our text-free attack. 
+
+# 5. Conclusion 
+
+We exposed a fundamental flaw in the text-centric paradigm of concept erasure: severing text-image links is insufficient and offers a false sense of security. We introduced TINA, a novel text-free attack that substantiates this claim by com-pletely bypassing textual controls. TINA identifies a deter-ministic, null-text generative trajectory to regenerate forbid-den content. Our experiments show that TINA consistently restores erased concepts from models sanitized by existing defenses. This proves current methods merely obscure vi-sual knowledge rather than erasing it, mandating a shift to-wards unlearning techniques that operate directly on inter-nal visual representations. 8References 
+
+[1] Stefan Banach. Sur les op´ erations dans les ensembles ab-straits et leur application aux ´ equations int´ egrales. Funda-menta mathematicae , 3(1):133–181, 1922. 5 [2] Nicolas Carlini, Jamie Hayes, Milad Nasr, Matthew Jagiel-ski, Vikash Sehwag, Florian Tramer, Borja Balle, Daphne Ip-polito, and Eric Wallace. Extracting training data from diffu-sion models. In 32nd USENIX security symposium (USENIX Security 23) , pages 5253–5270, 2023. 1, 2 [3] Junsong Chen, Jincheng YU, Chongjian GE, Lewei Yao, Enze Xie, Zhongdao Wang, James Kwok, Ping Luo, Huchuan Lu, and Zhenguo Li. Pixart-$ \alpha$: Fast training of diffusion transformer for photorealistic text-to-image syn-thesis. In The Twelfth International Conference on Learning Representations , 2024. 14 [4] Zhi-Yi Chin, Chieh-Ming Jiang, Ching-Chun Huang, Pin-Yu Chen, and Wei-Chen Chiu. Prompting4debugging: Red-teaming text-to-image diffusion models by finding problem-atic prompts. arXiv preprint arXiv:2309.06135 , 2023. 2, 3, 6, 7, 8, 12 [5] Chongyu Fan, Jiancheng Liu, Yihua Zhang, Eric Wong, Den-nis Wei, and Sijia Liu. Salun: Empowering machine unlearn-ing via gradient-based weight saliency in both image classi-fication and generation. arXiv preprint arXiv:2310.12508 ,2023. 3, 6, 7, 8, 13 [6] Rohit Gandikota, Joanna Materzynska, Jaden Fiotto-Kaufman, and David Bau. Erasing concepts from diffusion models. In Proceedings of the IEEE/CVF international con-ference on computer vision , pages 2426–2436, 2023. 2, 3, 6, 7, 8, 13, 14 [7] Rohit Gandikota, Hadas Orgad, Yonatan Belinkov, Joanna Materzy´ nska, and David Bau. Unified concept editing in diffusion models. In Proceedings of the IEEE/CVF Win-ter Conference on Applications of Computer Vision , pages 5111–5120, 2024. 2, 3, 6, 7 [8] Chao Gong, Kai Chen, Zhipeng Wei, Jingjing Chen, and Yu-Gang Jiang. Reliable and efficient concept erasure of text-to-image diffusion models. In European Conference on Com-puter Vision , pages 73–88. Springer, 2024. 3, 6, 7, 8 [9] Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun. Deep residual learning for image recognition. In Proceed-ings of the IEEE conference on computer vision and pattern recognition , pages 770–778, 2016. 6 [10] Jonathan Ho and Tim Salimans. Classifier-free diffusion guidance. arXiv preprint arXiv:2207.12598 , 2022. 6 [11] Jonathan Ho, Ajay Jain, and Pieter Abbeel. Denoising dif-fusion probabilistic models. Advances in neural information processing systems , 33:6840–6851, 2020. 2 [12] Tatum Hunter. Ai porn is easy to make now. for women, that’s a nightmare. The Washington Post , pages NA–NA, 2023. 1 [13] Harry H Jiang, Lauren Brown, Jessica Cheng, Mehtab Khan, Abhishek Gupta, Deja Workman, Alex Hanna, Johnathan Flowers, and Timnit Gebru. Ai art and its impact on artists. In Proceedings of the 2023 AAAI/ACM Conference on AI, Ethics, and Society , pages 363–374, 2023. 1, 2 [14] Xuan Ju, Ailing Zeng, Yuxuan Bian, Shaoteng Liu, and Qiang Xu. Pnp inversion: Boosting diffusion-based editing with 3 lines of code. In The Twelfth International Conference on Learning Representations , 2023. 13 [15] Nupur Kumari, Bingliang Zhang, Sheng-Yu Wang, Eli Shechtman, Richard Zhang, and Jun-Yan Zhu. Ablating con-cepts in text-to-image diffusion models. In Proceedings of the IEEE/CVF International Conference on Computer Vi-sion , pages 22691–22702, 2023. 2, 3, 6, 8 [16] Zaijing Li, Yuquan Xie, Rui Shao, Gongwei Chen, Weili Guan, Dongmei Jiang, Yaowei Wang, and Liqiang Nie. Optimus-3: Dual-router aligned mixture-of-experts agent with dual-granularity reasoning-aware policy optimization. 
+
+arXiv preprint arXiv:2506.10357 , 2025. 1 [17] Zaijing Li, Bing Hu, Rui Shao, Gongwei Chen, Dongmei Jiang, Pengwei Xie, Jianye Hao, and Liqiang Nie. Global prior meets local consistency: Dual-memory augmented vision-language-action model for efficient robotic manipu-lation. arXiv preprint arXiv:2602.20200 , 2026. [18] Fan Liu, Yaqi Liu, Huilin Chen, Zhiyong Cheng, Liqiang Nie, and Mohan Kankanhalli. Understanding before recom-mendation: Semantic aspect-aware review exploitation via large language models. ACM Transactions on Information Systems , 43(2):1–26, 2025. 1 [19] Ilya Loshchilov and Frank Hutter. Decoupled weight decay regularization. arXiv preprint arXiv:1711.05101 , 2017. 6 [20] Shilin Lu, Zilan Wang, Leyang Li, Yanzhu Liu, and Adams Wai-Kin Kong. Mace: Mass concept erasure in diffu-sion models. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 6430– 6440, 2024. 3, 6, 7, 8 [21] Mengyao Lyu, Yuhong Yang, Haiwen Hong, Hui Chen, Xuan Jin, Yuan He, Hui Xue, Jungong Han, and Guiguang Ding. One-dimensional adapter to rule them all: Concepts diffusion models and erasing applications. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 7559–7568, 2024. 3, 6, 8 [22] Daiki Miyake, Akihiro Iohara, Yu Saito, and Toshiyuki Tanaka. Negative-prompt inversion: Fast image inversion for editing with text-guided diffusion models. In 2025 IEEE/CVF Winter Conference on Applications of Computer Vision (WACV) , pages 2063–2072. IEEE, 2025. 13 [23] Ron Mokady, Amir Hertz, Kfir Aberman, Yael Pritch, and Daniel Cohen-Or. Null-text inversion for editing real im-ages using guided diffusion models. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 6038–6047, 2023. 13 [24] Alex Nichol, Prafulla Dhariwal, Aditya Ramesh, Pranav Shyam, Pamela Mishkin, Bob McGrew, Ilya Sutskever, and Mark Chen. Glide: Towards photorealistic image generation and editing with text-guided diffusion models. arXiv preprint arXiv:2112.10741 , 2021. 1 [25] James M Ortega and Werner C Rheinboldt. Iterative solution of nonlinear equations in several variables . SIAM, 2000. 5 [26] William Peebles and Saining Xie. Scalable diffusion models with transformers. In Proceedings of the IEEE/CVF inter-national conference on computer vision , pages 4195–4205, 2023. 14 
+
+9[27] Minh Pham, Kelly O Marshall, Niv Cohen, Govind Mit-tal, and Chinmay Hegde. Circumventing concept erasure methods for text-to-image generative models. arXiv preprint arXiv:2308.01508 , 2023. 2, 3, 6, 7, 8, 12 [28] Aditya Ramesh, Mikhail Pavlov, Gabriel Goh, Scott Gray, Chelsea Voss, Alec Radford, Mark Chen, and Ilya Sutskever. Zero-shot text-to-image generation. In International confer-ence on machine learning , pages 8821–8831. Pmlr, 2021. 1 [29] Aditya Ramesh, Prafulla Dhariwal, Alex Nichol, Casey Chu, and Mark Chen. Hierarchical text-conditional image gener-ation with clip latents. arXiv preprint arXiv:2204.06125 , 1 (2):3, 2022. 2 [30] Robin Rombach, Andreas Blattmann, Dominik Lorenz, Patrick Esser, and Bj¨ orn Ommer. High-resolution image synthesis with latent diffusion models. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 10684–10695, 2022. 1, 2, 3 [31] Kevin Roose. An ai-generated picture won an art prize. artists aren’t happy. New York Times , 16(01):2025, 2022. 1[32] Chitwan Saharia, William Chan, Saurabh Saxena, Lala Li, Jay Whang, Emily L Denton, Kamyar Ghasemipour, Raphael Gontijo Lopes, Burcu Karagol Ayan, Tim Salimans, et al. Photorealistic text-to-image diffusion models with deep language understanding. Advances in neural information processing systems , 35:36479–36494, 2022. 1, 2 [33] Babak Saleh and Ahmed Elgammal. Large-scale classifica-tion of fine-art paintings: Learning the right metric on the right feature. arXiv preprint arXiv:1505.00855 , 2015. 6 [34] Patrick Schramowski, Manuel Brack, Bj¨ orn Deiseroth, and Kristian Kersting. Safe latent diffusion: Mitigating inappro-priate degeneration in diffusion models. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 22522–22531, 2023. 1, 2, 3, 6, 12 [35] Christoph Schuhmann, Romain Beaumont, Richard Vencu, Cade Gordon, Ross Wightman, Mehdi Cherti, Theo Coombes, Aarush Katta, Clayton Mullis, Mitchell Worts-man, et al. Laion-5b: An open large-scale dataset for training next generation image-text models. Advances in neural in-formation processing systems , 35:25278–25294, 2022. 1 [36] Gowthami Somepalli, Vasu Singla, Micah Goldblum, Jonas Geiping, and Tom Goldstein. Diffusion art or digital forgery? investigating data replication in diffusion models. In Pro-ceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 6048–6058, 2023. 1, 2 [37] Jiaming Song, Chenlin Meng, and Stefano Ermon. Denoising diffusion implicit models. arXiv preprint arXiv:2010.02502 , 2020. 2, 3, 13 [38] Koushik Srivatsan, Fahad Shamshad, Muzammal Naseer, Vishal M Patel, and Karthik Nandakumar. Stereo: A two-stage framework for adversarially robust concept erasing from text-to-image diffusion models. In Proceedings of the Computer Vision and Pattern Recognition Conference , pages 23765–23774, 2025. 2, 3, 6, 7, 8, 13, 14 [39] Yu-Lin Tsai, Chia-Yi Hsu, Chulin Xie, Chih-Hsun Lin, Jia-You Chen, Bo Li, Pin-Yu Chen, Chia-Mu Yu, and Chun-Ying Huang. Ring-a-bell! how reliable are concept removal meth-ods for diffusion models? arXiv preprint arXiv:2310.10012 ,2023. 2, 3, 6, 7, 12 [40] Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszko-reit, Llion Jones, Aidan N Gomez, Łukasz Kaiser, and Illia Polosukhin. Attention is all you need. Advances in neural information processing systems , 30, 2017. 1, 2 [41] Kun Wang, Hao Liu, Lirong Jie, Zixu Li, Yupeng Hu, and Liqiang Nie. Explicit granularity and implicit scale corre-spondence learning for point-supervised video moment lo-calization. In Proceedings of the 32nd ACM International Conference on Multimedia , pages 9214–9223, 2024. [42] Kun Wang, Yupeng Hu, Hao Liu, Lirong Jie, and Liqiang Nie. Redundancy mitigation: Towards accurate and efficient image-text retrieval. IEEE Transactions on Circuits and Sys-tems for Video Technology , 2025. [43] Kun Wang, Yupeng Hu, Hao Liu, Jiang Shao, and Liqiang Nie. Cross-modal representation shift refinement for point-supervised video moment retrieval. ACM Transactions on Information Systems , 44(3):1–30, 2026. [44] Xiaolei Wang, Tianhong Dai, Huihui Bai, Yao Zhao, and Jimin Xiao. Unifying reconstruction and density estimation via invertible contraction mapping in one-class classification. In The Thirty-ninth Annual Conference on Neural Informa-tion Processing Systems , 2025. [45] Xiaolei Wang, Xiaoyang Wang, Huihui Bai, Eng Gee Lim, and Jimin Xiao. Decad: Decoupling anomalies in latent space for multi-class unsupervised anomaly detection. In 
+
+Proceedings of the IEEE/CVF International Conference on Computer Vision , pages 21568–21577, 2025. 1 [46] Bichen Wu, Chenfeng Xu, Xiaoliang Dai, Alvin Wan, Peizhao Zhang, Zhicheng Yan, Masayoshi Tomizuka, Joseph Gonzalez, Kurt Keutzer, and Peter Vajda. Visual transform-ers: Token-based image representation and processing for computer vision. arXiv preprint arXiv:2006.03677 , 2020. 6[47] Jing Wu and Mehrtash Harandi. Scissorhands: Scrub data in-fluence via connection sensitivity in networks. In European Conference on Computer Vision , pages 367–384. Springer, 2024. 3, 6, 8, 13 [48] Jing Wu, Trung Le, Munawar Hayat, and Mehrtash Harandi. Erasediff: Erasing data influence in diffusion models. arXiv preprint arXiv:2401.05779 , 2024. 3, 6, 8, 13 [49] Qianlong Xiang, Miao Zhang, Yuzhang Shang, Jianlong Wu, Yan Yan, and Liqiang Nie. Dkdm: Data-free knowledge dis-tillation for diffusion models with any architecture. In Pro-ceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 2955–2965, 2025. 1 [50] Heng Xu, Tianqing Zhu, Lefeng Zhang, Wanlei Zhou, and Philip S. Yu. Machine unlearning: A survey. ACM Comput. Surv. , 56(1), 2023. 1 [51] Yijun Yang, Ruiyuan Gao, Xiaosen Wang, Tsung-Yi Ho, Nan Xu, and Qiang Xu. Mma-diffusion: Multimodal attack on diffusion models. In Proceedings of the IEEE/CVF Con-ference on Computer Vision and Pattern Recognition , pages 7737–7746, 2024. 3, 6, 7, 12 [52] Gong Zhang, Kai Wang, Xingqian Xu, Zhangyang Wang, and Humphrey Shi. Forget-me-not: Learning to for-get in text-to-image diffusion models. In Proceedings of 
+
+10 the IEEE/CVF conference on computer vision and pattern recognition , pages 1755–1764, 2024. 2, 3, 6, 7, 8 [53] Haoyu Zhang, Meng Liu, Yuhong Li, Ming Yan, Zan Gao, Xiaojun Chang, and Liqiang Nie. Attribute-guided collab-orative learning for partial person re-identification. IEEE Transactions on Pattern Analysis and Machine Intelligence ,45(12):14144–14160, 2023. 1 [54] Haoyu Zhang, Meng Liu, Zixin Liu, Xuemeng Song, Yaowei Wang, and Liqiang Nie. Multi-factor adaptive vision se-lection for egocentric video question answering. In Forty-first International Conference on Machine Learning , pages 59310–59328, 2024. [55] Haoyu Zhang, Meng Liu, Zaijing Li, Haokun Wen, Weili Guan, Yaowei Wang, and Liqiang Nie. Spatial understanding from videos: Structured prompts meet simulation data. In 
+
+Advances in Neural Information Processing Systems , pages 1–16, 2025. 1 [56] Yimeng Zhang, Xin Chen, Jinghan Jia, Yihua Zhang, Chongyu Fan, Jiancheng Liu, Mingyi Hong, Ke Ding, and Sijia Liu. Defensive unlearning with adversarial training for robust concept erasure in diffusion models. Advances in neu-ral information processing systems , 37:36748–36776, 2024. 2, 3, 6, 7, 8 [57] Yimeng Zhang, Jinghan Jia, Xin Chen, Aochuan Chen, Yi-hua Zhang, Jiancheng Liu, Ke Ding, and Sijia Liu. To gener-ate or not? safety-driven unlearned diffusion models are still easy to generate unsafe images... for now. In European Con-ference on Computer Vision , pages 385–403. Springer, 2024. 1, 2, 3, 6, 7, 8, 12 [58] Ziyue Zhang, Mingbao Lin, Shuicheng YAN, and Rongrong Ji. Easyinv: Toward fast and better ddim inversion. In 
+
+Forty-second International Conference on Machine Learn-ing , 2025. 13 
+
+11 TINA: Text-Free Inversion Attack for Unlearned Text-to-Image Diffusion Models 
+
+# Supplementary Material 
+
+# 6. Baseline Attack Setup 
+
+We evaluate the robustness of the proposed method against five existing attack methods: MMA [51], Prompt-ing4Debugging (P4D) [4], UnlearnDiffAtk (UDA) [57], Ring-A-Bell (RAB) [39] and CCE [27]. The details are pre-sented below. • MMA [51]: This method provides a publicly available set of 1,000 adversarial prompts, curated to bypass safe-guards and generate nudity content, specifically targeting Stable Diffusion v1.5. Given that these prompts are de-signed for NSFW generation, we employ this dataset as a black-box attack to evaluate robustness on the nudity erasure task. For each unlearned diffusion model, our protocol involves using these 1,000 prompts as text con-ditions to generate 1,000 corresponding images. A fixed random seed is used for each generation to ensure repro-ducibility. The resulting images are subsequently eval-uated using NudeNet to detect nudity and calculate the Attack Success Rate (ASR). • UDA (UnlearnDiffAtk) [57]: This white-box attack aims to find a prompt that minimizes the denoising error of the sanitized model with respect to images containing the for-bidden concepts. To ensure a fair comparison, we strictly follow the original attack setup. For the nudity task, we use 142 prompts from the I2P dataset [34] and set the number of optimized tokens to N = 5 . For the artis-tic style (Van Gogh) and object (tench) tasks, we use 50 prompts each, with N = 3 optimized tokens. In all tasks, the adversarial perturbations are optimized for 40 iterations over 50 diffusion timesteps, using the AdamW optimizer with a 0.01 learning rate, consistent with the methodology in [57]. • P4D (Prompting4Debugging) [4]: This white-box attack requires access to both the original vanilla model and the target sanitized model. Its objective is to optimize an ad-versarial prompt c′ that forces the sanitized model’s noise prediction to match the original prediction of the model under the forbidden prompt c. To ensure a fair compar-ison, our P4D implementation strictly follows the exper-imental setup of UDA, using the identical prompt sets, the same number of optimized tokens ( N = 5 for nudity, 
+
+N = 3 for style/object), and the same optimization pa-rameters (40 iterations, AdamW optimizer, 0.01 learning rate). • RAB (Ring-A-Bell) [39]: This attack method is specif-ically designed to generate adversarial prompts for by-passing nudity safeguards. Therefore, we evaluate this attack exclusively on the nudity erasure task. We employ the 95 adversarial prompts released by the official RAB implementation. As detailed in the original paper [39], this set of 95 prompts is generated by modifying the base I2P nudity prompts using the recommended hyperparam-eters for this task: a length of prompts ( K) of 16 and a weight of empirical concept ( η) of 3. For our evalua-tion, we generate one image for each of these 95 adver-sarial prompts, using the fixed seeds provided by RAB for reproducibility. The resulting images are subsequently evaluated using NudeNet to calculate the ASR. • CCE [27]: This white-box attack employs Textual Inver-sion to optimize a new embedding vector ( v∗
+
+> a
+
+) that serves as a proxy for the erased concept. For the Nudity task, to ensure a fair comparison with other baselines, we use the same 142 images from our UDA setup as the training set to optimize v∗ 
+
+> a
+
+on each sanitized model. For evaluation, we then prepend the learned v∗ 
+
+> a
+
+to the 142 corresponding prompts. For the Artistic Style (Van Gogh) task, we fol-low the original CCE protocol [27], using 6 images gen-erated from “A painting in the style of Van Gogh” as the training set. We then evaluate by generating 50 images using the prompt “a painting in the style of v∗
+
+> a
+
+”. For the Object (tench) task, we again adhere to the original CCE protocol, using 30 images of the object as the training set. Evaluation is then performed by generating 50 images us-ing the prompt “A photo of v∗
+
+> a
+
+”, aligning with the evalua-tion scale of other baselines. All inversion optimizations are trained for 1,000 steps with a learning rate of 0.005. 
+
+# 7. Ablation Study 
+
+To validate the necessity of our optimization procedure, we conduct an ablation study comparing our full TINA framework against two baselines (Figure 6): (1) a stan-dard, text-guided DDIM inversion ( Standard Inv. )and (2) a variant of TINA with insufficient optimization steps ( TINA-Less ). The results clearly demonstrate the importance of sufficient optimization. The text-guided 
+
+Standard Inv. fails (30% ASR), as the erasure method actively counteracts the textual prompt. TINA-Less ,which lacks sufficient optimization iterations to correct cu-mulative approximation errors, also performs poorly (46% ASR), producing distorted reconstructions. In contrast, our full TINA, which applies adequate optimization iterations to refine each inversion step, achieves high-fidelity recon-struction and a 70% ASR. This 24-point ASR improvement over TINA-Less demonstrates that a sufficient number of optimization steps is critical for accurately identifying la-tent generative trajectories, confirming the necessity of our 12 TINA -Less TINA      
+
+> [ASR: 46%] [ASR: 70%]
+> Standard Inv.
+> [ASR: 30%]
+> Undesired
+> Concept
+
+Figure 6. Ablation study of attack results on the ESD method for tench object erasure. From left to right: target concept, Standard Inv. (standard text-guided inversion), 
+
+TINA-Less (with insufficient optimization), and our full TINA method. 
+
+iterative refinement procedure. Figure 7 provides a complementary visual perspective on the role of optimization. When the text condition is directly set to null, the resulting inversion can still recover the coarse layout of the target image, but the reconstructed results often exhibit blurred local structures and weakened style-specific textures. This behavior indicates that the naive null-text DDIM inversion does not reliably trace a sufficiently precise generative trajectory for faithful concept recovery. By contrast, the optimization procedure in TINA yields re-constructions with sharper local patterns and more coherent stylistic cues, showing that its benefit lies not only in re-covering the concept at a coarse semantic level, but also in preserving the fine-grained visual details that define the tar-get concept. 
+
+# 8. Comparison with DDIM-Based Reconstruc-tion Methods 
+
+To further contextualize the performance of TINA, we com-pare it against a recent state-of-the-art DDIM-based re-construction method, EasyInv [58], which has been shown to outperform vanilla DDIM Inversion [37], Null-Text In-version [23], Negative-Prompt Inversion [22], PnP Inver-sion [14], and others. To ensure a fair comparison, we con-figure EasyInv to operate under the same text-free condi-tion as TINA. As shown in Table 5, our TINA significantly outperforms EasyInv across all five unlearning defenses on the tench object erasure task. This substantial performance gap demonstrates that general-purpose DDIM-based recon-DDIM w/ nul condition      
+
+> (TINA w/o Optimization) TINA w/ Optimization
+
+Figure 7. Visual comparison between naive null-text DDIM inver-sion and our optimized TINA inversion on the Van Gogh style era-sure task. While the naive null-text DDIM inversion can roughly recover the global composition, it often fails to preserve fine-grained stylistic details, such as brushstroke textures and local structures. In contrast, TINA produces reconstructions with no-ticeably richer and more faithful visual details. 
+
+EasyInv [58] TINA ESD [6] 24.0 70.0 EraseDiff [48] 26.0 68.0 SalUn [5] 30.0 72.0 Scissorhands [47] 34.0 78.0 STEREO [38] 24.0 72.0 
+
+Table 5. Attack Success Rates (ASR, in %) comparison between EasyInv and our TINA on the tench object erasure task. Both methods operate under a text-free condition. Bold indicates the best-performing method. 
+
+struction methods, even state-of-the-art ones, are insuffi-cient for the concept recovery task, further validating the necessity of our tailored optimization-based inversion ap-proach. 
+
+# 9. Generalization to DiT-Based Architectures 
+
+While the main experiments focus on UNet-based diffusion models ( e.g ., Stable Diffusion v1.4), an important ques-13 [ESD]    
+
+> [TINA]
+> ASR: 70%
+> Erased
+> Attacked
+> Concept: 0% Figure 8. Generalization of TINA to a DiT-based architecture (PixArt-XL-2-512x512 ). We erase the “Parachute” concept using ESD and then apply TINA. While the erased model fails to generate parachutes, TINA successfully recovers the concept, demonstrating architecture-agnostic generalizability.
+
+tion is whether TINA generalizes to fundamentally different model architectures. To investigate this, we evaluate TINA on a Diffusion Transformer (DiT) [26]-based text-to-image model, specifically PixArt-XL-2-512x512 [3], which replaces the UNet backbone with a transformer architecture. Since PixArt-XL-2-512x512 cannot generate the “Tench” concept used in our main experiments, we instead conduct this evaluation on the “Parachute” concept. Addi-tionally, as there are no publicly available erased versions of this DiT model, we first apply the ESD [6] method to erase the parachute concept from the model, and then perform our TINA attack on the resulting erased model. As shown in Figure 8, the erased DiT model is no longer able to generate the parachute concept under nor-mal sampling conditions. However, our TINA method suc-cessfully recovers the erased concept, producing recogniz-able parachute images from the erased model. This result demonstrates that the vulnerability exposed by TINA is not limited to UNet-based architectures, but extends to DiT-based models as well, confirming the broad generalizability of our attack. 
+
+# 10. Failure Cases 
+
+While TINA consistently achieves the highest ASR across all evaluated defenses, its performance is not uniform. As reported in Table 2, TINA’s ASR against STEREO [38] on the artistic style erasure task is 44 .0% , which, despite being the best among all evaluated attacks, is notably lower than its 70 .0% –80 .0% ASR against other defenses. This indi-cates that adversarially robust erasure methods can partially resist our text-free inversion attack. To provide a concrete illustration, Figure 9 presents sev-eral failure cases drawn from the STEREO style erasure set-ting. In these examples, images reconstructed by TINA pre-serve the overall spatial structure and composition of the tar-get, yet fail to recover the distinctive characteristics of Van Gogh style, such as the expressive brushwork, bold color palette, and textural impasto. We attribute this partial failure to two factors. First, the adversarial training procedure of 
+
+> Figure 9. Failure cases of TINA on the STEREO style erasure (Van Gogh) task. While TINA preserves the spatial composition of the target images, the reconstructed results fail to recover the distinc-tive artistic style, indicating that the adversarial training procedure of STEREO partially disrupts the style-specific visual knowledge.
+
+STEREO not only fortifies the text-image mapping against adversarial prompts but may also perturb the internal visual representations, making the stylistic knowledge harder to reactivate via a text-free trajectory. Second, unlike concrete objects or explicit content, artistic style is a high-level, dis-tributed visual attribute whose encoding in the parameter space is inherently more diffuse and thus more susceptible to robust erasure. This also explains the discrepancy with the object erasure task, where TINA still achieves 72 .0% 
+
+ASR against the same STEREO defense (Table 4). Nevertheless, these failure cases do not undermine our central thesis. Even in the most challenging setting, a 44 .0% 
+
+ASR of TINA demonstrates that a substantial portion of the visual knowledge persists within the erased model. More-over, all text-centric baselines are entirely neutralized by STEREO on style erasure ( 0.0% for both P4D and UDA), whereas TINA still succeeds in a significant fraction of cases. These results suggest that while adversarially robust methods like STEREO represent a meaningful step forward, they still fall short of fully eliminating visual knowledge, reinforcing the need for erasure paradigms that operate di-rectly on internal visual representations. 
+
+# 11. More Visual Results 
+
+We provide expanded qualitative comparisons in Figure 10 and Figure 11 to further demonstrate the fundamental vul-nerability exposed by TINA. Figure 10 presents a comprehensive matrix of attack results for the nudity erasure task. These visualizations visually substantiate our quantitative findings. A clear trend emerges for text-centric baselines (P4D, UDA, RAB, and CCE): while they show varying degrees of success against simpler defenses, their efficacy diminishes signif-icantly against more advanced, adversarially-aware meth-14 FMN UCE MACE RECE ESD 
+
+## P4D 
+
+## UDA 
+
+## RAB 
+
+## CCE 
+
+## AdvUnlearn SalUn STEREO 
+
+## TINA 
+
+## ***
+
+## *
+
+## *
+
+## *
+
+## ****** *
+
+## *
+
+## *
+
+## **
+
+## *
+
+## *
+
+## *
+
+## *
+
+## *
+
+## *
+
+## *Figure 10. Qualitative comparison of attack methods on the nudity erasure task. Each row corresponds to an attack method, and each column corresponds to an unlearning defense. Sensitive content is redacted. 
+
+ods. Specifically, against robust defenses such as AdvUn-learn, SalUn, and STEREO, these attacks are almost en-tirely mitigated, producing neutral or unrelated imagery. In stark contrast, the bottom row shows that our TINA con-sistently bypasses all defenses, successfully uncovering the generative process to regenerate the forbidden content. Figure 11 details the results for the Van Gogh style era-sure. This figure not only reinforces the failure of text-based attacks (P4D, UDA) against robust defenses (AdvUnlearn, STEREO) but also reveals a critical flaw in embedding-space attacks. As shown in the third row, the CCE at-tack conflates the concept of “Van Gogh’s style” with “Van Gogh’s likeness.” Consequently, it predominantly gener-ates portraits of Van Gogh himself, rather than applying the distinct artistic style to a general concept. TINA, however, does not suffer from this ambiguity. Operating indepen-dently of the text-conditioning path, TINA (bottom row) successfully isolates and reactivates the underlying gener-ative trajectory for the style itself, proving that this visual knowledge persists even after robust erasure. 15 FMN AC MACE SPM ESD 
+
+## P4D 
+
+## UDA 
+
+## CCE 
+
+## TINA 
+
+## RECE AdvUnlearn STEREO Figure 11. Qualitative comparison of attack methods on the “Van Gogh” style erasure task. Each row represents an attack, and each column represents a specific unlearning defense. 
+
+16

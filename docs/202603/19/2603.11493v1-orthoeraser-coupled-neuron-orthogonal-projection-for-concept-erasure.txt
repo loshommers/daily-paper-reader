@@ -1,0 +1,449 @@
+Title: OrthoEraser: Coupled-Neuron Orthogonal Projection for Concept Erasure
+
+URL Source: https://arxiv.org/pdf/2603.11493v1
+
+Published Time: Fri, 13 Mar 2026 00:25:43 GMT
+
+Number of Pages: 17
+
+Markdown Content:
+# ORTHO ERASER : C OUPLED -N EURON ORTHOGONAL PROJECTION FOR CONCEPT ERASURE 
+
+Chuancheng Shi 
+
+University of Sydney Sydney, Australia 
+
+Wenhua Wu 
+
+University of Sydney Sydney, Australia 
+
+Fei Shen †
+
+National University of Singapore Singapore, Singapore 
+
+Xiaogang Zhu 
+
+Adelaide University Adelaide, Australia 
+
+Kun Hu 
+
+Edith Cowan University Perth, Australia 
+
+Zhiyong Wang 
+
+University of Sydney Sydney, Australia 
+
+## ABSTRACT 
+
+Text-to-image (T2I) models face significant safety risks from adversarial induction, yet current concept erasure methods often cause collateral damage to benign attributes when suppressing se-lected neurons entirely. This occurs because sensitive and benign semantics exhibit non-orthogonal superposition, sharing activation subspaces where their respective vectors are inherently entangled. To address this issue, we propose OrthoEraser, which leverages sparse autoencoders (SAE) to achieve high-resolution feature disentanglement and subsequently redefines erasure as an analytical orthog-onalization projection that preserves the benign manifold’s invariance. OrthoEraser first employs SAE to decompose dense activations and segregate sensitive neurons. It then uses coupled neuron detection to identify non-sensitive features vulnerable to intervention. The key novelty lies in an analytical gradient orthogonalization strategy that projects erasure vectors onto the null space of the coupled neurons. This orthogonally decouples the sensitive concepts from the identified critical benign subspace, effectively preserving non-sensitive semantics. Experimental results on safety demonstrate that OrthoEraser achieves high erasure precision, effectively removing harmful content while preserving the integrity of the generative manifold, and significantly outperforming SOTA baselines. WARNING: This paper contains results of unsafe models. 
+
+Keywords Generative Model Safety · Feature Disentanglement · Orthogonal Projection · Manifold Preservation 
+
+## 1 Introduction 
+
+The widespread deployment of text-to-image (T2I) models [ 1 , 2, 3 , 4, 5 ] is confronted with severe safety challenges, particularly their susceptibility to generating sexually explicit and violent content under adversarial induction [ 6 , 7]. Recently, although existing neuron suppression-based concept-erasure methods [ 8 , 9, 10 ] have achieved high precision in localizing sensitive concepts, they remain plagued by the critical issue of collateral damage [ 11 ]. Constrained by feature entanglement, pervasive in deep neural networks, targeted sensitive concepts often share activation subspaces with non-sensitive or benign semantic features. Consequently, merely suppressing the magnitude of specific neurons inevitably erodes the generative manifold of non-target regions. Such an intervention, while successfully mitigating the generation of illicit content, degrades overall generation quality. Thus, achieving more precise erasure of sensitive concepts while maximally decoupling and preserving the model’s general generative capabilities has emerged as a critical challenge demanding immediate resolution in the field of safety alignment. Current internal interventions typically focus on suppressing specific features or neurons, operating under the assumption that sensitive semantics are spatially isolated within the representation space. However, this assumption is fundamentally challenged by the pervasive phenomenon of feature entanglement, where targeted sensitive concepts often share activation subspaces with non-sensitive semantic features. Consequently, merely suppressing the magnitude of these 
+
+> arXiv:2603.11493v1 [cs.CV] 12 Mar 2026
+
+OrthoEraser: Coupled-Neuron Orthogonal Projection for Concept Erasure (a) Existing Methods  (a) OrthoEraser (Our Method)                     
+
+> Original Generation Model
+> Remove sensitive neurons
+> Modified Generation Model Original Generation Model
+> Gradient orthogonalization
+> Modified Generation Model
+> It effectively suppresses sensitive information, but could also
+> harm other information.
+> It not only effectively suppresses sensitive information, but
+> also greatly preserves other information.
+> Suppression Neuron Sensitive Neuron Coupled Neuron Completely Suppressed Neuron
+
+Figure 1: Comparison of concept erasure strategies between (a) existing methods and (b) our method, OrthoEraser. 
+
+(a) Existing methods typically treat sensitive concepts as spatially isolated. (b) OrthoEraser decouples entangled features via gradient orthogonalization, selectively removing sensitive components to preserve non-sensitive generation capabilities. "localized" neurons inevitably perturbs the generative manifold of non-target regions (See Fig.1 a). Such coarse-grained interventions, while mitigating illicit content, inevitably lead to the degradation of overall generation quality. Building upon the aforementioned observations, we hypothesize that the prevalent collateral damage in concept erasure is fundamentally a geometric consequence of feature entanglement. Specifically, we propose that a significant portion of collateral damage arises from the geometric nature of feature superposition, where the sensitive concept vector tends to be non-orthogonal to the tangent space of the benign semantic manifold. Under this condition, naive linear interventions risk introducing non-zero negative projections onto safe attributes, potentially leading to signal leakage and distorting unrelated semantic anchors. To resolve this conflict, we propose OrthoEraser, a novel framework that rethinks concept erasure as a geometric projection problem within a disentangled feature space. Specifically, OrthoEraser operates through a dual-phase mechanism (See Fig.1 b). First, we employ sparse autoencoders (SAEs) [ 12 ] to decompose dense polysemantic activations into a high-dimensional sparse basis, thereby explicitly separating sensitive from non-sensitive neurons. Subsequently, to pinpoint the non-sensitive features most vulnerable to collateral damage, we execute a coupled neuron detection step: by temporarily zero-ablating the sensitive neurons, we measure the resulting activation shifts to identify the coupled neurons. Crucially, distinct from prior methods that bluntly truncate targeted units, OrthoEraser introduces a gradient orthogonalization strategy during inference. We mathematically project the raw sensitive vector onto its null space. This operation mathematically severs the propagation path of the intervention signal to these critical semantic anchors, rendering the elimination of sensitive concepts and the preservation of non-sensitive semantics mutually independent. Consequently, this approach effectively "steers" the model away from sensitive concepts without triggering the collapse of the shared semantic manifold. We highlight the following contributions: • We propose OrthoEraser , a framework that rethinks concept erasure as a geometric projection problem within a disentangled latent space, significantly mitigating the collateral damage caused by feature entanglement. • We introduce an analytical gradient orthogonalization strategy. By projecting intervention vectors onto the null space of dominant non-sensitive features during inference, it mitigates the interference between sensitive concept elimination and the preservation of non-sensitive semantics. • OrthoEraser achieves high precision in selective concept erasure. Experiments demonstrate that it effectively removes sensitive concepts while preserving the integrity of the shared semantic manifold. 
+
+## 2 Related Work 
+
+Concept Erasure. As T2I models [ 2 , 1, 3, 13 , 14 ] gain widespread adoption, the need to remove harmful or copyrighted concepts has become a critical research focus [ 15 , 16 ]. Early methodologies primarily focused on fine-tuning model parameters to redirect outputs. For instance, ESD [ 9] utilizes negative guidance to fine-tune the model, while UCE [ 10 ]2OrthoEraser: Coupled-Neuron Orthogonal Projection for Concept Erasure A photo depicting a woman standing                  
+
+> calmly in the frame.
+> …
+> A photo depicting a naked woman
+> standing calmly in the frame.
+> …
+> Non -Sensitive Prompts
+> Sensitive Prompts
+> Text
+> Enc.
+> Text
+> Enc. Sensitive Score
+> Sensitive Layer  SAE
+> Enc.
+> SAE
+> Enc. Top -K Neurons
+> Sensitive Neurons
+> §3.1 Sensitive Neurons Detection
+> man and woman by jc
+> leyendecker !!!!!!
+> Sensitive Prompt
+> SAE
+> Enc.
+> Text  Embedding
+> Sensitive  Layer
+> Feature
+> §3.2 Coupled Neurons Detection
+> Zero -Ablation
+> Sensitive Neurons
+> Coupled Neurons
+> §3.3 Sensitive Information Suppression
+> Gradient
+> Orthogonalization
+> SAE
+> Dec. Suppression
+> Neurons
+> Diffusion Model
+> Gradient Orthogonalization
+> Original Model
+> Result Image
+
+Figure 2: Overall framework of our proposed OrthoEraser, which consists of three key components: (i) sensitive neuron detection with sparse autoencoders (SAE) [ 12 ], (ii) coupled neuron detection via zero-ablation, and (iii) sensitive information suppression with gradient orthogonalization which projects intervention vectors onto the null space of these coupled neurons, ensuring precise concept erasure. 
+
+Figure 3: Layer-wise Localization and Sensitive Neuron Identification. (Left) sensitive score (SS) distribution across layers used to identify target sensitive layers. (Right) ∆W F S values of the top-50 neurons in sensitive layers, representing the core feature units contributing to the sensitive concept in the SAE space. introduces a closed-form solution for simultaneous multi-concept editing [ 17 , 18 , 19 , 20 , 21 ]. However, traditional fine-tuning methods often incur significant "collateral damage," where the elimination of target concepts inadvertently degrades benign semantics [ 22 , 23 ]. SNCE [ 24 ] identifies that this stems from excessive shifts in model weights and demonstrates that precise erasure can be achieved by intervening in only a single or a few critical neurons. While SNCE improves erasure precision, they still face challenges in complex scenarios where features are highly entangled. Even sparse interventions [ 8] can leak into non-target semantic subspaces, leading to the distortion of unrelated attributes [25, 26, 27, 28]. 
+
+Feature Disentanglement. Feature disentanglement aims to isolate independent factors of variation within neural representations, a pursuit that has evolved from early variational constraints in β-VAE [ 29 ] and InfoGAN [ 30 ] to struc-tural manipulations in modern T2I models. Previously, research primarily focused on attention-based disentanglement, leveraging cross-attention maps to spatially isolate semantic tokens [ 31 , 32 ] or to identify linear "concept directions" in the latent space [ 33 , 34 , 35 ]. However, these methods struggle in deep layers where multiple concepts are subject to superposition, rendering them inseparable via coarse-grained linear filters. Consequently, traditional techniques, including simple linear projections [ 36 ], fail to capture inter-feature dependencies within a shared subspace. Our proposed OrthoEraser addresses this by identifying coupled neurons and ensuring the intervention vector resides strictly in the null space of the protected manifold. In contrast, recent advances use SAEs [ 12 ] to decompose dense activations into an overcomplete set of monosemantic features, providing a high-resolution map of how concepts are encoded [ 37 ]. Nevertheless, effectively leveraging these sparse features [ 38 ] to achieve precise erasure while avoiding unintended interference in shared geometric subspaces remains a significant challenge. 3OrthoEraser: Coupled-Neuron Orthogonal Projection for Concept Erasure 
+
+## 3 Proposed Method 
+
+As shown in Fig.2, to achieve precise concept erasure without collateral damage, OrthoEraser operates via a three-stage geometric framework. First, it identifies the optimal intervention layer via a sensitive score (SS) and decomposes its activations using SAEs to pinpoint sensitive neurons (Sec. 3.1). Next, it detects coupled neurons that are semantically entangled by analyzing activation deviations under zero-ablation (Sec. 3.2). Finally, OrthoEraser employs gradient orthogonalization to project interventions into a null space, effectively decoupling sensitive concept elimination from benign semantic preservation (Sec. 3.3). 
+
+3.1 Sensitive Neuron Detection 
+
+To maximize the efficacy of our geometric projection, we must first identify the model layer where the separation between sensitive and benign semantics is most pronounced. We employ an attention-based metric to identify the layer with significant attention divergence, which serves as the optimal depth for intervention. Let Tsens and Tn denote the sets of sensitive modifier tokens and target entity noun tokens, respectively. If a layer l
+
+strongly encodes sensitive semantics, the sensitive prompt should induce prominent attention flow from modifiers to the target entity. We define the sensitive attention ( SA ) at layer l for a prompt P as the mean attention weight from Tsens to 
+
+Tn:
+
+SA( P, l ) = 
+
+P|Tsens |
+
+> i=1
+
+P|Tn| 
+
+> j=1
+
+¯A(l)
+
+> i,j
+
+|Tsens || Tn| , (1) where ¯A(l) ∈ RT ×T denotes the head-averaged attention matrix at layer l. Here, i and j index sensitive modifier tokens and target entity tokens, respectively. However, raw attention scores may fluctuate due to global distribution shifts induced by prompt variations. To filter out such background noise, we measure the contextual disturbance ( CD ) over non-target tokens Tnon between a sensitive prompt Psens and its non-sensitive counterpart Pnon-sens :
+
+CD( l) = 1
+
+|Tnon |
+
+> |Tnon |
+
+X
+
+> t=1
+
+ˆA(l) 
+
+> Psens
+
+(t) − ˆA(l) 
+
+> Pnon-sens
+
+(t) 1
+
+, (2) where ˆA(l) represents the row-normalized attention matrix. We then define the sensitive score ( SS ) at layer l as the differential signal strength: 
+
+SS( l) = 1
+
+N
+
+> N
+
+X
+
+> k=1
+
+h
+
+SA k(Psens , l ) − CD k(l)
+
+i
+
+, (3) where N denotes the total number of prompt pairs. By monitoring SS( l) across all layers, we select the layer l∗
+
+corresponding to the global maximum of SS . This layer represents the processing stage where sensitive concepts are most distinctly attended to those relative to the background context, making it the ideal locus for our sparse decomposition and orthogonal projection. As illustrated on the left of Fig. 3, the 10 th layer is identified as the target sensitive layer, corresponding to the global peak of the SS metric. Upon determining the target layer l∗, we employ an SAE to disentangle its dense activations into a set of human-interpretable features. To precisely construct the set of sensitive neurons Nsens for OrthoEraser, we evaluate each SAE neuron m using a weighted frequency score ( WFS ) [24], defined as 
+
+WFS( m) = f (m) · μ(m), (4) combining activation frequency f and mean magnitude μ. To distinguish neurons specifically triggered by sensitive concepts from those responding to general linguistic patterns, we calculate the sensitivity rank based on differential activation: 
+
+∆ WFS( m) = WFS sens (m) − WFS non-sens (m), (5) where WFS sens and WFS non-sens are computed over sensitive and non-sensitive prompt sets, respectively. We formally define sensitive neurons (Nsens ) as the set of SAE feature units that primarily encode harmful semantics. Specifically, neurons exhibiting the highest ∆W F S (Top-K) are identified as (Nsens ), as illustrated on the right of Fig. 3. These neurons serve as the specific targets for our subsequent zero-ablation and orthogonal projection processes, ensuring that the intervention is strictly confined to harmful semantic directions. 4OrthoEraser: Coupled-Neuron Orthogonal Projection for Concept Erasure 
+
+3.2 Coupled Neuron Detection 
+
+Identifying sensitive neurons is only half the battle. Due to the non-orthogonal nature of the feature space, sensitive concepts are often structurally entangled with benign semantics. Simply erasing sensitive neurons ( Nsens ) without taking into account this entanglement can inadvertently suppress coupled benign features, thereby degrading the realism quality of generated images. To prevent this, we propose a detection mechanism based on zero-ablation analysis to identify these coupled neurons. We detect coupled neurons by measuring their activation shift when sensitive features are suppressed. For a sensitive prompt, let h be the original dense latent and z be its sparse features. We construct an ablated latent state h′ by removing the contribution of sensitive neurons: 
+
+h′ = h − X
+
+> i∈N sens
+
+ziwdec i , (6) where zi denotes the activation coefficient of the i-th sensitive neuron, and wdec i represents its corresponding decoder weight vector in the SAE. Due to the non-orthogonal nature of the SAE basis, this subtraction inevitably alters the projection of other features. We re-encode h′ using the SAE encoder to obtain the shifted activations z′ = Enc (h′).The coupling strength of a benign neuron j is quantified as its expected activation shift over the sensitive prompt set: 
+
+δj = E[|zj − z′ 
+
+> j
+
+|]. (7) A large δj indicates that neuron j relies heavily on the subspace removed by Nsens . To characterize the geometric entanglement, we define Coupled Neurons (C) as benign features whose activation states are non-orthogonal to the sensitive subspace. Formally, we define the coupled set C as the Top-k benign neurons with the largest activation shift 
+
+δj (where k is a hyperparameter), which serve as the geometric constraints for our subsequent projection. By identifying these coupled neurons, our framework seeks to align the subsequent projection with the estimated null space of critical functional pathways. This selection process is intended to mitigate unintended shifts within the benign semantic manifold, thereby helping to maintain the model’s general generative performance. Detailed empirical evaluations regarding this preservation effect are discussed in Section 4.1 and Section 4.2. 
+
+3.3 Sensitive Information Suppression 
+
+To protect the coupled neurons C (see Sec. 3.2), we must preserve their spanned subspace. We extract their corresponding decoder weights WC ∈ Rd×|C| and compute an orthonormal basis Q via QR decomposition: 
+
+WC = QR. (8) The projection matrix onto this protected subspace is P = QQ ⊤. The raw sensitive direction is defined simply as the aggregated contribution of active sensitive neurons: 
+
+draw = X
+
+> i∈N sens
+
+ziwdec  
+
+> i
+
+. (9) To eliminate interference with protected features, we project draw onto the null space of P , isolating the component orthogonal to the protected subspace, d∗:
+
+d∗ = ( I − P )draw . (10) which represents the "pure" sensitive direction that contains zero information about the coupled concepts. We erase sensitive concepts by subtracting this orthogonalized direction from the latent state h. The final safe activation ˜h is obtained as: ˜h = h − λd ∗. (11) This ensures that the projection of ˜h onto the identified protected subspace remains invariant, thereby maximally preserving the core benign semantics. 
+
+## 4 Experiments and Discussions 
+
+Datasets. Following SNCE [ 24 ], we evaluate standard safety via I2P [ 40 ], assess adversarial robustness through P4D [44] and Ring-A-Bell [6], and measure generation fidelity using MS COCO [45]. 
+
+Metrics. Following SNCE [ 24 ], we evaluate OrthoEraser across three dimensions. (i) Erasure effectiveness: We assess nudity erasure by reporting NudeNet [ 46 ] detection counts across eight anatomical categories, and violence erasure by 5OrthoEraser: Coupled-Neuron Orthogonal Projection for Concept Erasure Table 1: Comparison of nudity detection performance using NudeNet on I2P and content preservation on MS COCO. F: Female. M: Male. The underline represents the 2nd place.                                                                                                                                                                                                                        
+
+> Number of nudity detected on I2P (Detected Quantity) COCO Method Breast(F) Genitalia(F) Breast(M) Genitalia(M) Buttocks Feet Belly Armpits Total ↓CS ↑FID ↓
+> SD1.4 [1] 183 21 46 10 44 42 171 129 646 31.34 –ESD [9] 14 (-169) 1(-20) 8(-38) 5(-5) 5(-39) 24 (-18) 31 (-140) 33 (-96) 121 (-525) 30.90 (-0.44) 16.88 UCE [10] 31 (-152) 6(-15) 19 (-27) 8(-2) 11 (-33) 20 (-22) 55 (-116) 36 (-93) 186 (-460) 29.92 (-1.42) 22.87 CA [39] 6(-177) 1(-20) 9(-37) 10 (0) 4(-40) 14 (-28) 28 (-143) 23 (-106) 95 (-551) 31.21 (-0.13) 21.55 SLD-Med [40] 47 (-136) 72 (+51) 3(-43) 21 (+11) 39 (-5) 1(-41) 26 (-145) 3(-126) 212 (-434) 30.65 (-0.69) 19.53 SPM [41] 4(-179) 0(-21) 0(-46) 5(-5) 9(-35) 12 (-30) 4(-167) 22 (-107) 56 (-590) 31.01 (-0.33) 16.64 RECE [42] 8(-175) 0(-21) 6(-40) 4(-6) 0(-44) 8(-34) 23 (-148) 17 (-112) 66 (-580) 30.95 (-0.39) 18.25 DuMo [43] 1(-182) 4(-17) 0(-46) 6(-4) 2(-42) 7(-35) 6(-165) 8(-121) 34 (-612) 30.87 (-0.47) –SNCE [24] 3(-180) 1(-20) 4(-42) 0(-10) 0(-44) 0(-42) 6(-165) 3(-126) 17 (-629) 30.87 (-0.47) 16.64
+> OrthoEraser 3(-180) 1(-20) 0(-46) 0(-10) 0(-44) 0(-42) 1(-170) 0(-129) 5(-641) 31.33 (-0.01) 1.15
+
+Table 2: Layer-wise ablation. Impact of layer selection on nudity detection performance on the I2P dataset. Values in parentheses denote the increase in detections relative to the optimal layer. Strategy Layer Index I2P Detections ( ↓)SD1.4 (Baseline) – 646 Similar Sensitive Score Layer 9 17 (−629) 
+
+First Sensitivity Peak Layer 3 24 (−632) 
+
+Global Optimal Layer (Ours) 10 5 (−641) 
+
+measuring the attack success rate (ASR) via the Q16 framework [ 47 ]. (ii) Generation fidelity: We utilize FID [ 48 ] to quantify the visual distribution shift between our model and the original Stable Diffusion [ 1]. (iii) Semantic alignment: We employ CLIP Score (CS) [49] to measure the cosine similarity between generated images and text prompts. 
+
+Hyperparameters. We evaluate our method on Stable Diffusion 1.4 [ 1]. Furthermore, to verify the architectural universality of our approach, we conduct additional experiments on FLUX.1 Dev [ 2 ] and Show-o2 [ 50 ]. For the purpose of precise feature disentanglement, we specifically trained a Top-K SAE [ 12 ] on the intermediate feature representations. This SAE is configured with an expansion factor of 4 (hidden dimension of 3072) and is optimized via Adam (lr= 4e−4,batch=4096) using MSE reconstruction loss. All experiments are conducted on a single NVIDIA A6000 GPU. 
+
+4.1 Quantitative Comparison with SOTA Methods Erasure Precision. We evaluated OrthoEraser’s efficacy in removing inappropriate attributes via a nudity-detection experiment on the I2P dataset using NudeNet. OrthoEraser achieved an SOTA safety level, detecting only 5 instances, a significant reduction compared to the ESD baseline (121) and the recent SNCE (17) (See Table 1). Notably, our method reached zero or industry-lowest detections in five subcategories, including "Breast (M/F)" and "Buttocks". These results validate that precise neuron localization effectively precludes the generation of sensitive content. 
+
+Fidelity Maintenance and Semantic Integrity. To rigorously quantify the "collateral damage" on general generative capabilities post-erasure, we set up a fidelity assessment on the MS COCO-30K dataset, utilizing CLIP Score (CS) and FID to evaluate semantic alignment and distribution quality. The results show that OrthoEraser preserves the benign generative manifold with unprecedented accuracy (See Table 1), achieving precise erasure with minimal degradation to the generative capabilities. Specifically, OrthoEraser’s CLIP Score reaches 31.33, nearly identical to the original SD1.4 (31.34), and significantly superior to UCE (29.92). Impressively, our method achieves an FID of 1.15, marking an order-of-magnitude improvement over the next-best-performing method (16.64). Therefore, this provides empirical evidence that the analytical orthogonalization projection successfully decouples sensitive concept removal from benign feature preservation, ensuring the structural integrity of the underlying generative manifold and latent space. 
+
+4.2 Qualitative Comparison with SOTA Methods 
+
+To intuitively evaluate OrthoEraser’s precision in neutralizing harmful concepts while preserving the original image structure, we conducted a qualitative comparison with various baseline methods using sensitive prompts. As shown 6OrthoEraser: Coupled-Neuron Orthogonal Projection for Concept Erasure Original SD  ESD  UCE  CA  SLD  RECE  SPM  SNCE  Ours 
+
+Figure 4: Qualitative comparison with SOTA methods. Qualitative comparison of various safety guidance methods on the I2P dataset. 
+
+Figure 5: Neuron-Level ablation. Comparison between random neuron suppression and our targeted selection on the I2P. 
+
+Figure 6: Causal validation. "Amplification" refers to increasing the activation values of neurons. in Fig. 4, OrthoEraser substantially suppresses sensitive content while maintaining an exceptionally high level of consistency with the original SD1.4 generation. Specifically, while methods such as ESD and UCE often exhibit structural collapse, color distortion, or background corruption post-erasure, the images generated by OrthoEraser remain nearly identical to the original SD outputs in non-sensitive regions, including facial identity, background composition, and lighting distribution. Therefore, the qualitative comparison confirms that OrthoEraser provides a precise intervention with minimal modifications, effectively circumventing the semantic drift common to traditional methods. 
+
+4.3 Ablation Study Layer-Wise. To verify the impact of precise layer localization on erasure effectiveness, we set the ablation experiment targeting layers with different sensitivity characteristics (See Table 2). The results show that selecting the global optimal layer is crucial for thorough concept erasure. Specifically, when intervening at Layer 9, which has a sensitivity score nearly identical to the optimal layer, the total detections on I2P increase from 5 to 17; meanwhile, applying erasure at the first sensitivity peak results in a further drop to 24 detections. Therefore, this experiment demonstrates the necessity and precision of OrthoEraser in locating the critical layer to achieve precise concept erasure. 
+
+Neuron-Level. To verify the functional specificity of identified neurons, we compared our targeted set against a random set of the same size (See Fig. 5). The results show that only precise suppression yields significant erasure. While the baseline yields 646 detections, random suppression reduces this only marginally to 598, likely due to generic structural 7OrthoEraser: Coupled-Neuron Orthogonal Projection for Concept Erasure Table 3: Analysis of feature entanglement. We evaluate the impact of different geometric intervention strategies on generative fidelity.                         
+
+> Intervention Strategy I2P Det. ↓CS ↑FID ↓
+> SD1.4 (Baseline) 646 31.34 -Direct Sensitive Suppression 17 (−629 )30.87 (−0.47 )16.64 Coupled-Aligned Suppression 12 (−634 )26.31 (−5.03 )23.95
+> OrthoEraser (Ours) 5(−641 )31.33 (−0.01 )1.15
+
+Table 4: Ablation study on intervention strategies. We demonstrate the trade-off between erasure effectiveness and manifold preservation.                          
+
+> Intervention Strategy I2P Det. ↓CS ↑FID ↓
+> SD1.4 (Baseline) 646 31.34 -Only Sensitive Suppression 17 (−629 )30.87 (−0.47 )16.64 Only Coupled Suppression 604 (−42 )29.95 (−1.39 )25.86
+> OrthoEraser (Ours) 5(−641 )31.33 (−0.01 )1.15 (a) Nudity (b) Violence
+
+Figure 7: Visualizing feature entanglement. We visualize the distribution of neuron activation shifts ( ∆activation )across three categories. disruption. In stark contrast, our targeted neurons reduce the number of detections to 5. This validates that the neurons identified by OrthoEraser are the primary latent carriers of sensitive semantics, making their elimination indispensable for precise erasure without degrading the generative manifold. 
+
+Causal Validation. To verify the direct causal link between the identified neurons and the sensitive semantics, we conducted an activation amplification experiment in which the activation values of the targeted neurons were intentionally boosted (See Fig. 6). The results show that enhancing these specific neurons significantly increases the probability of the model generating sensitive content, further confirming their role as the core carriers of the concept. Specifically, compared with the 5 detections achieved after OrthoEraser erasure and the 646 detections in the baseline model, amplifying activation of the identified key neurons further increases the detection count to 691. Therefore, this reverse-verification experiment provides strong causal evidence that the neurons identified by our method act as critical switches controlling sensitive information, thereby justifying their selection for precise erasure. 
+
+4.4 More Results and Analysis Feature Entanglement. To quantify internal entanglement, we perform a neuron activation-shift analysis (Fig. 7). Sensitive neurons exhibit predominantly positive ∆activation, indicating they carry the target harmful concept. Coupled neurons show large-magnitude, long-tailed shifts, revealing substantial collateral perturbations on benign semantics, while other neurons remain tightly centered near zero. These observations imply that naive suppression is prone to collateral damage, motivating analytical orthogonalization projection to enforce interventions orthogonal to the protected benign subspace. We further compare geometric intervention strategies in Table 3. Direct sensitive suppression degrades shared semantics (FID 16.64), and coupled-aligned suppression collapses both fidelity (FID 23.95) and alignment (CS 26.31). Ablations in Table 4 confirm the failure modes: suppressing only sensitive units leaves residual detections (17), while suppressing only coupled units severely harms the manifold (FID 25.86) yet fails to remove harmful content (604 detections). In contrast, OrthoEraser achieves strong fidelity and alignment (FID 1.15, CS 31.33) by analytically isolating the sensitive direction and projecting it onto the null space of benign features, enabling precise erasure under entanglement. 
+
+Benign Fidelity. To assess whether erasure harms general generation, we evaluate image quality on MS-COCO (Fig. 8). Due to entanglement, prior methods often introduce collateral artifacts under benign prompts, including semantic drift, structural distortion, and texture degradation. In contrast, OrthoEraser preserves the original model’s fidelity, fine-grained details, and text alignment, consistent with the stable FID and CLIP scores in Table 1. We further visualize 8OrthoEraser: Coupled-Neuron Orthogonal Projection for Concept Erasure Table 5: Quantitative evaluation of generalization (I2P-Violence) and adversarial robustness (Ring-A-Bell, P4D). 
+
+Best results are highlighted in bold .
+
+Standard Safety (%) Adversarial Robustness (%) Method I2P Violence ↓ P4D ↓ Ring-A-Bell ↓
+
+SD 1.4 [1] 40.1 98.7 83.1 ESD [9] 16.7 (-23.4) 63.3 (-35.4) 69.7 (-13.4) 
+
+UCE [10] 23.3 (-16.8) 80.2 (-18.5) 33.1 (-50.0) 
+
+SLD-Med [40] 19.7 (-20.4) 77.5 (-21.2) 66.2 (-16.9) 
+
+RECE [42] 14.2 (-25.9) 64.7 (-34.0) 13.4 (-69.7) 
+
+SPM [41] – 80.8 (-17.9) 34.2 (-48.9) 
+
+SNCE [24] 17.7 (-22.4) 42.6 (-56.1) 6.3 (-76.8) 
+
+OrthoEraser 15.6 (-24.5) 34.6 (-64.1) 2.7 (-80.4) Original SD  ESD  UCE  CA  SLD  RECE  SPM  SNCE  Ours 
+
+Figure 8: Qualitative results on the MS COCO. We compare the image generation performance of OrthoEraser with other baseline methods using normal prompts. collateral damage using pixel-wise difference maps (Fig. 9). For benign prompts (top row), baseline residuals spread broadly and blur normal structures, while OrthoEraser yields near-zero differences. For sensitive prompts (bottom row), baseline edits spill into backgrounds and non-target content, whereas OrthoEraser localizes changes to the targeted sensitive regions and preserves surrounding attributes (e.g., faces and background textures). Together, these results indicate that analytical orthogonalization projection enables precise, high-fidelity safety intervention with minimal collateral damage. 
+
+Generalization and Adversarial Robustness. To verify the framework’s generalization beyond nudity, we performed quantitative evaluations on the I2P-Violence dataset (See Table 5 Standard Safety). The results indicate that OrthoEraser effectively extends to non-sexual unsafe concepts, consistently achieving superior safety metrics. Specifically, our method reduced the violence detection rate from 40.1% (SD 1.4) at the baseline to 15.6%, surpassing SOTA baselines such as ESD (16.7%) and SNCE (17.7%). This confirms that analytical orthogonalization projection serves as a versatile framework for eliminating diverse harmful semantics across different modalities. Then, to evaluate the model’s robustness against malicious adversarial attacks and jailbreak prompts, we set up attack success rate (ASR) tests on two challenging adversarial datasets, Ring-A-Bell and P4D (See Table 5 Adversarial Robustness). The results show that OrthoEraser exhibits superior resistance to adversarial induction, maintaining high safety standards even under aggressive attacks. Specifically, on the highly challenging Ring-A-Bell benchmark, our method reduced ASR from 98.7% to 2.7%, and on P4D from 83.1% to 34.6%. Therefore, by mathematically severing the activation 9OrthoEraser: Coupled-Neuron Orthogonal Projection for Concept Erasure Original SD                 
+
+> Result Diff.
+> ESD UCE CA SLD RECE SPM SNCE Ours
+> Original SD ESD UCE CA SLD RECE SPM SNCE Ours
+> Result Diff.
+> Non -Sensitive Sensitive
+
+Figure 9: Visualizing precision via residuals. The heatmaps illustrate the intensity of pixel shifts during the concept erasure process for both safe prompts (Top) and sensitive prompts (Bottom). λ = 0 λ = 1 λ = 2 λ = 3 λ = 4 λ = 5
+
+Figure 10: Visual ablation of scaling factor λ. We illustrate the impact of varying the path-level suppression factor λ.paths of sensitive concepts via geometric projection, OrthoEraser ensures exceptional robustness against adversarial manipulation. 
+
+Hyperparameter Sensitivity. To investigate the impact of the scaling factor λ on the trade-off between erasure completeness and semantic preservation, we conducted a sensitivity analysis by varying λ while monitoring safety performance and image fidelity (See Fig.10). The results demonstrate a distinct threshold effect, where λ governs the critical transition from "under-erasure" to "semantic drift." Specifically, when λ < 3, the magnitude of the projected intervention vector is insufficient to fully counteract sensitive activations, resulting in residual leakage of harmful content; conversely, once λ reaches 3, the erasure effect stabilizes and becomes comprehensive. However, as λ increases beyond this optimal point, we observe a noticeable semantic drift in the generated images, indicating that excessive intervention strength begins to perturb the generative manifold. Therefore, we select λ = 3 as the optimal equilibrium, achieving robust erasure while avoiding unnecessary capability loss. 
+
+Cross-Model Universality. To verify universality, we evaluated OrthoEraser across diverse architectures, including the flow-matching-based FLUX.1 Dev, multilingual AltDiffusion, and multimodal Show-o2 (See Fig.11). Despite structural differences, all models exhibited significant safety vulnerabilities that our method effectively addressed. Specifically, OrthoEraser reduced nudity detections by 213 (FLUX.1 Dev), 183 (AltDiffusion), and 76 (Show-o2). Crucially, the impact on general utility was negligible, with CLIP Score decreases ranging only from 0.02 to 0.03. These results demonstrate that OrthoEraser is a robust, architecture-agnostic solution for safe foundation model alignment. 10 OrthoEraser: Coupled-Neuron Orthogonal Projection for Concept Erasure (A)  Universal Sensitive -Instance Mitigation (lower is better)  (B)  General -Utility Preservation (the smaller the gap, the better) 
+
+Figure 11: Cross-Model Universality. The left panel shows the number of detected instances for specific body parts, while the right panel evaluates whether the model’s general capabilities degrade after neuron correction. 
+
+## 5 Conclusion 
+
+This paper presents OrthoEraser, a concept erasure framework that reduces collateral damage via analytical orthogonal-ization projection. By using sparse autoencoders (SAEs) to localize sensitive directions and constructing a protected subspace from coupled benign features, OrthoEraser enforces orthogonality between the suppressed and the preserved semantic manifolds, enabling precise erasure under feature disentanglement. Extensive experiments on several datasets show that OrthoEraser consistently achieves a better safety–fidelity trade-off than prior baselines, delivering strong safety gains while maintaining image quality, text alignment, and an output distribution close to the base model on benign prompts. It is also observed that OrthoEraser localizes modifications to target regions rather than inducing global semantic drift. 
+
+## References 
+
+[1] Robin Rombach, Andreas Blattmann, Dominik Lorenz, Patrick Esser, and Björn Ommer. High-resolution image synthesis with latent diffusion models. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 10684–10695, 2022. [2] Black Forest Labs. black-forest-labs/flux github page, 2024. [3] Fulong Ye, Guang Liu, Xinya Wu, and Ledell Wu. Altdiffusion: A multilingual text-to-image diffusion model. In 
+
+Proceedings of the AAAI conference on artificial intelligence , volume 38, pages 6648–6656, 2024. [4] Jiteng Mu, Michaël Gharbi, Richard Zhang, Eli Shechtman, Nuno Vasconcelos, Xiaolong Wang, and Taesung Park. Editable image elements for controllable synthesis. In European Conference on Computer Vision , pages 39–56. Springer, 2024. [5] Chuancheng Shi, Yixiang Chen, Burong Lei, and Jichao Chen. Fashionpose: Text to pose to relight image generation for personalized fashion visualization. arXiv preprint arXiv:2507.13311 , 2025. [6] Yu-Lin Tsai, Chia-Yi Hsu, Chulin Xie, Chih-Hsun Lin, Jia-You Chen, Bo Li, Pin-Yu Chen, Chia-Mu Yu, and Chun-Ying Huang. Ring-a-bell! how reliable are concept removal methods for diffusion models? arXiv preprint arXiv:2310.10012 , 2023. [7] Yuchen Yang, Bo Hui, Haolin Yuan, Neil Gong, and Yinzhi Cao. Sneakyprompt: Jailbreaking text-to-image generative models. In 2024 IEEE symposium on security and privacy (SP) , pages 897–912. IEEE, 2024. [8] Gong Zhang, Kai Wang, Xingqian Xu, Zhangyang Wang, and Humphrey Shi. Forget-me-not: Learning to forget in text-to-image diffusion models. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 1755–1764, 2024. [9] Rohit Gandikota, Joanna Materzynska, Jaden Fiotto-Kaufman, and David Bau. Erasing concepts from diffusion models. In Proceedings of the IEEE/CVF international conference on computer vision , pages 2426–2436, 2023. [10] Rohit Gandikota, Hadas Orgad, Yonatan Belinkov, Joanna Materzy´ nska, and David Bau. Unified concept editing in diffusion models. In Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision ,pages 5111–5120, 2024. 11 OrthoEraser: Coupled-Neuron Orthogonal Projection for Concept Erasure [11] Chi-Pin Huang, Kai-Po Chang, Chung-Ting Tsai, Yung-Hsuan Lai, Fu-En Yang, and Yu-Chiang Frank Wang. Receler: Reliable concept erasing of text-to-image diffusion models via lightweight erasers. In European Conference on Computer Vision , pages 360–376. Springer, 2024. [12] Hoagy Cunningham, Aidan Ewart, Logan Riggs, Robert Huben, and Lee Sharkey. Sparse autoencoders find highly interpretable features in language models. arXiv preprint arXiv:2309.08600 , 2023. [13] Chuancheng Shi, Shangze Li, Shiming Guo, Simiao Xie, Wenhua Wu, Jingtong Dou, Chao Wu, Canran Xiao, Cong Wang, Zifeng Cheng, et al. Where culture fades: Revealing the cultural gap in text-to-image generation. 
+
+arXiv preprint arXiv:2511.17282 , 2025. [14] William Peebles and Saining Xie. Scalable diffusion models with transformers. In Proceedings of the IEEE/CVF international conference on computer vision , pages 4195–4205, 2023. [15] Masane Fuchi and Tomohiro Takagi. Erasing concepts from text-to-image diffusion models with few-shot unlearning. In BMVC , 2024. [16] Yongliang Wu, Shiji Zhou, Mingzhuo Yang, Lianzhe Wang, Heng Chang, Wenbo Zhu, Xinting Hu, Xiao Zhou, and Xu Yang. Unlearning concepts in diffusion model via concept domain correction and concept preserving gradient. In Proceedings of the AAAI Conference on Artificial Intelligence , volume 39, pages 8496–8504, 2025. [17] Shilin Lu, Zilan Wang, Leyang Li, Yanzhu Liu, and Adams Wai-Kin Kong. Mace: Mass concept erasure in diffusion models. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition ,pages 6430–6440, 2024. [18] Seunghoo Hong, Juhun Lee, and Simon S Woo. All but one: Surgical concept erasing with model preservation in text-to-image diffusion models. In Proceedings of the AAAI Conference on Artificial Intelligence , volume 38, pages 21143–21151, 2024. [19] Hao Pham, Duy Truong, Khanh Duy Dinh, Dien Hy Ngo, Anh Tuan Bui, et al. A concept is more than a word: Diversified unlearning in text-to-image diffusion models. [20] Shristi Das Biswas, Arani Roy, and Kaushik Roy. Cure: Concept unlearning via orthogonal representation editing in diffusion models. In The Thirty-ninth Annual Conference on Neural Information Processing Systems , 2025. [21] Byung Hyun Lee, Sungjin Lim, and Se Young Chun. Localized concept erasure for text-to-image diffusion models using training-free gated low-rank adaptation. In Proceedings of the Computer Vision and Pattern Recognition Conference , pages 18596–18606, 2025. [22] Kartik Thakral, Tamar Glaser, Tal Hassner, Mayank Vatsa, and Richa Singh. Fine-grained erasure in text-to-image diffusion-based foundation models. In Proceedings of the Computer Vision and Pattern Recognition Conference ,pages 9121–9130, 2025. [23] Shaswati Saha, Sourajit Saha, Manas Gaur, and Tejas Gokhale. Side effects of erasing concepts from diffusion models. arXiv preprint arXiv:2508.15124 , 2025. [24] Qinqin He, Jiaqi Weng, Jialing Tao, and Hui Xue. A single neuron works: Precise concept erasure in text-to-image diffusion models. arXiv preprint arXiv:2509.21008 , 2025. [25] Justin Lee, Zheda Mai, Jinsu Yoo, Chongyu Fan, Cheng Zhang, and Wei-Lun Chao. Continual unlearning for text-to-image diffusion models: A regularization perspective. arXiv preprint arXiv:2511.07970 , 2025. [26] Minh Pham, Kelly O Marshall, Niv Cohen, Govind Mittal, and Chinmay Hegde. Circumventing concept erasure methods for text-to-image generative models. arXiv preprint arXiv:2308.01508 , 2023. [27] Lucas Beerens, Alex D Richardson, Kaicheng Zhang, and Dongdong Chen. On the vulnerability of concept erasure in diffusion models. arXiv e-prints , pages arXiv–2502, 2025. [28] Xun Yuan, Zilong Zhao, Jiayu Li, Aryan Pasikhani, Prosanta Gope, and Biplab Sikdar. Towards irreversible machine unlearning for diffusion models. arXiv preprint arXiv:2512.03564 , 2025. [29] Irina Higgins, Loic Matthey, Arka Pal, Christopher Burgess, Xavier Glorot, Matthew Botvinick, Shakir Mohamed, and Alexander Lerchner. beta-vae: Learning basic visual concepts with a constrained variational framework. In 
+
+International conference on learning representations , 2017. [30] Xi Chen, Yan Duan, Rein Houthooft, John Schulman, Ilya Sutskever, and Pieter Abbeel. Infogan: Interpretable representation learning by information maximizing generative adversarial nets. Advances in neural information processing systems , 29, 2016. [31] Amir Hertz, Ron Mokady, Jay Tenenbaum, Kfir Aberman, Yael Pritch, and Daniel Cohen-Or. Prompt-to-prompt image editing with cross attention control. arXiv preprint arXiv:2208.01626 , 2022. 12 OrthoEraser: Coupled-Neuron Orthogonal Projection for Concept Erasure [32] Narek Tumanyan, Michal Geyer, Shai Bagon, and Tali Dekel. Plug-and-play diffusion features for text-driven image-to-image translation. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 1921–1930, 2023. [33] Andrey Voynov and Artem Babenko. Unsupervised discovery of interpretable directions in the gan latent space. In International conference on machine learning , pages 9786–9796. PMLR, 2020. [34] Mingi Kwon, Jaeseok Jeong, and Youngjung Uh. Diffusion models already have a semantic latent space. arXiv preprint arXiv:2210.10960 , 2022. [35] Rohit Gandikota, Joanna Materzy´ nska, Tingrui Zhou, Antonio Torralba, and David Bau. Concept sliders: Lora adaptors for precise control in diffusion models. In European Conference on Computer Vision , pages 172–188. Springer, 2024. [36] Yujun Shen and Bolei Zhou. Closed-form factorization of latent semantics in gans. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 1532–1540, 2021. [37] Bartosz Cywi´ nski and Kamil Deja. Saeuron: Interpretable concept unlearning in diffusion models with sparse autoencoders. arXiv preprint arXiv:2501.18052 , 2025. [38] Leo Gao, Tom Dupré la Tour, Henk Tillman, Gabriel Goh, Rajan Troll, Alec Radford, Ilya Sutskever, Jan Leike, and Jeffrey Wu. Scaling and evaluating sparse autoencoders. arXiv preprint arXiv:2406.04093 , 2024. [39] Nupur Kumari, Bingliang Zhang, Sheng-Yu Wang, Eli Shechtman, Richard Zhang, and Jun-Yan Zhu. Ablating concepts in text-to-image diffusion models. In Proceedings of the IEEE/CVF International Conference on Computer Vision , pages 22691–22702, 2023. [40] Patrick Schramowski, Manuel Brack, Björn Deiseroth, and Kristian Kersting. Safe latent diffusion: Mitigating inappropriate degeneration in diffusion models. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 22522–22531, 2023. [41] Mengyao Lyu, Yuhong Yang, Haiwen Hong, Hui Chen, Xuan Jin, Yuan He, Hui Xue, Jungong Han, and Guiguang Ding. One-dimensional adapter to rule them all: Concepts diffusion models and erasing applications. In 
+
+Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 7559–7568, 2024. [42] Chao Gong, Kai Chen, Zhipeng Wei, Jingjing Chen, and Yu-Gang Jiang. Reliable and efficient concept erasure of text-to-image diffusion models. In European Conference on Computer Vision , pages 73–88. Springer, 2024. [43] Feng Han, Kai Chen, Chao Gong, Zhipeng Wei, Jingjing Chen, and Yu-Gang Jiang. Dumo: Dual encoder modulation network for precise concept erasure. In Proceedings of the AAAI Conference on Artificial Intelligence ,volume 39, pages 3320–3328, 2025. [44] Zhi-Yi Chin, Chieh-Ming Jiang, Ching-Chun Huang, Pin-Yu Chen, and Wei-Chen Chiu. Prompting4debugging: Red-teaming text-to-image diffusion models by finding problematic prompts. arXiv preprint arXiv:2309.06135 ,2023. [45] Tsung-Yi Lin, Michael Maire, Serge Belongie, James Hays, Pietro Perona, Deva Ramanan, Piotr Dollár, and C Lawrence Zitnick. Microsoft coco: Common objects in context. In European conference on computer vision ,pages 740–755. Springer, 2014. [46] P Bedapudi. Nudenet: Neural nets for nudity classification, detection and selective censoring. https://github. com/notAI-tech/NudeNet , 2019. [47] Patrick Schramowski, Christopher Tauchmann, and Kristian Kersting. Can machines help us answering question 16 in datasheets, and in turn reflecting on inappropriate content? In Proceedings of the 2022 ACM conference on fairness, accountability, and transparency , pages 1350–1361, 2022. [48] Martin Heusel, Hubert Ramsauer, Thomas Unterthiner, Bernhard Nessler, and Sepp Hochreiter. Gans trained by a two time-scale update rule converge to a local nash equilibrium. Advances in neural information processing systems , 30, 2017. [49] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry, Amanda Askell, Pamela Mishkin, Jack Clark, et al. Learning transferable visual models from natural language supervision. In International conference on machine learning , pages 8748–8763. PmLR, 2021. [50] Jinheng Xie, Zhenheng Yang, and Mike Zheng Shou. Show-o2: Improved native unified multimodal models. 
+
+arXiv preprint arXiv:2506.15564 , 2025. 13 OrthoEraser: Coupled-Neuron Orthogonal Projection for Concept Erasure 
+
+## Supplementary Material 
+
+The appendices provide supplementary material and theoretical foundations that support the main paper’s findings. Appendix A delivers a formal theoretical justification for the OrthoEraser framework, including a closed-form mathe-matical derivation of the analytical null-space projection via the method of Lagrange multipliers and a computational complexity analysis. Appendix B provides an extended discussion addressing critical aspects of the framework, such as the scalability constraints in dense multi-concept erasure, the potential for adaptive thresholding, and the challenges of intervening across distributed semantic representations. Appendix C details the limitations of the current approach and outlines future work, specifically analyzing the framework’s inherent dependence on the dictionary capacity, resolution, and feature disentanglement quality of the underlying sparse autoencoders (SAEs). 
+
+## A Theoretical Analysis 
+
+In this section, we provide a formal mathematical derivation for the gradient orthogonalization strategy proposed in OrthoEraser. We demonstrate that our method is the closed-form solution to a constrained optimization problem that minimizes linear interference with the semantic subspace of coupled neurons while maximizing the erasure of sensitive concepts. 
+
+A.1 Problem Formulation 
+
+Let h ∈ Rd be the dense latent activation vector at the identified sensitive layer l∗. Our goal is to find an optimal intervention direction d∗ to subtract from h, yielding a safe latent representation ˜h = h − λd ∗, where λ is the scalar suppression strength. We can formally define two opposing objectives for this intervention direction. First is the Erasure Objective : the direction d∗ should align as closely as possible with the raw sensitive direction draw , where draw = P 
+
+> i∈N sens
+
+ziwdec i .Second is the Preservation Constraint : the intervention must not perturb the structurally entangled benign concepts. Specifically, for the set of coupled neurons C identified via zero-ablation (Sec. 3.2), the projection of the new latent state ˜h onto their corresponding decoder weights WC ∈ Rd×|C| must identically match the projection of the original latent state h.Mathematically, the preservation constraint requires that: 
+
+W ⊤C ˜h = W ⊤C h (12) Substituting ˜h = h − λd ∗, we obtain: 
+
+W ⊤C (h − λd ∗) = W ⊤C h =⇒ λW ⊤C d∗ = 0 (13) Assuming a non-zero intervention strength ( λ > 0), this simplifies to the geometric requirement that the intervention direction must be orthogonal to the coupled benign features: W ⊤C d∗ = 0 . We formulate the search for the optimal concept erasure direction as the following constrained least-squares optimization problem: 
+
+d∗ = arg min   
+
+> d∈Rd, W ⊤Cd=0
+
+12 ∥d − draw ∥22. (14) 
+
+A.2 Closed-Form Derivation via Method of Lagrange Multipliers 
+
+To solve this optimization problem, we introduce a vector of Lagrange multipliers ν ∈ R|C| and define the Lagrangian functional L:
+
+L(d, ν ) = 12 ∥d − draw ∥22 + ν⊤W ⊤C d. (15) To find the minimum, we set the gradient of L with respect to the direction d to zero: 
+
+∇dL = ( d − draw ) + WC ν = 0 , (16) 
+
+d = draw − WC ν. (17) To find ν, we substitute this expression back into our orthogonality constraint ( W ⊤C d = 0 ): 
+
+W ⊤C (draw − WC ν) = 0 , (18) 14 OrthoEraser: Coupled-Neuron Orthogonal Projection for Concept Erasure 
+
+W ⊤C WC ν = W ⊤C draw . (19) Assuming the coupled decoder weights in WC are linearly independent (a standard property of sparse bases learned by SAEs), the Gram matrix (W ⊤C WC ) is invertible. We then solve for ν:
+
+ν = ( W ⊤C WC )−1W ⊤C draw . (20) Substituting the optimal ν back into the equation for the optimal direction d∗:
+
+d∗ = draw − WC
+
+ (W ⊤C WC )−1W ⊤C draw 
+
+
+
+= I − WC (W ⊤C WC )−1W ⊤C
+
+ draw . (21) 
+
+A.3 Equivalence to OrthoEraser’s QR Projection 
+
+We now demonstrate that the bracketed term is mathematically equivalent to the projection mechanism utilized in OrthoEraser. Let us define the matrix Pf ull as: 
+
+Pf ull = WC (W ⊤C WC )−1W ⊤C . (22) By definition, Pf ull is the standard orthogonal projection matrix onto the column space of WC .In Sec 3.3, OrthoEraser computes an orthonormal basis Q for the column space of WC via QR decomposition: 
+
+WC = QR , where Q⊤Q = I. Substituting QR for WC in the definition of Pf ull :
+
+Pf ull = ( QR )(( QR )⊤QR )−1(QR )⊤
+
+= QR (R⊤Q⊤QR )−1R⊤Q⊤
+
+= QR (R⊤R)−1R⊤Q⊤
+
+= QRR −1(R⊤)−1R⊤Q⊤
+
+= Q(I)( I)Q⊤ = QQ ⊤. (23) This strictly matches our definition of P = QQ ⊤. Therefore, the optimal intervention vector ∆h simplifies to: 
+
+∆h = −λ(I − P )draw . (24) Defining the orthogonalized pure sensitive direction as d∗ = ( I − P )draw , we arrive at the final update rule: 
+
+˜h = h + ∆ h = h − λd ∗. (25) This derivation proves that OrthoEraser’s update rule is the exact closed-form solution to minimizing sensitive features while theoretically eliminating linear interference with the coupled benign semantics. 
+
+A.4 Theoretical Assumptions and Boundaries 
+
+While the closed-form solution provides a rigorous mathematical foundation for OrthoEraser, it is crucial to articulate the foundational assumptions that bound this theoretical optimality. Our formulation operates under three primary approximations. 
+
+Local Linear Approximation of Non-linear Manifolds. The constraint W ⊤C ∆h = 0 eliminates interference strictly within the linear subspace spanned by the coupled neurons C at the specific intervention layer l∗. Because T2I models consist of deep, highly non-linear transformations across subsequent layers, perfectly decoupling concepts at the final image-pixel level is analytically intractable. Therefore, our null-space projection should be interpreted as a first-order linear approximation of manifold preservation. By geometrically severing the activation path at the most sensitive layer, we effectively minimize the downstream propagation of the intervention signal. 
+
+Linear Independence of Sparse Basis. The derivation relies on the invertibility of the Gram matrix (W ⊤C WC ). This assumes that the decoder weight vectors of the coupled benign neurons WC are linearly independent. In practice, SAEs naturally encourage near-orthogonal or linearly independent bases for highly active features. If multi-collinearity were to occur among the coupled neurons, the Moore-Penrose pseudo-inverse (W ⊤C WC )+ could be seamlessly substituted to compute the projection matrix P , ensuring the optimization problem remains well-posed. 
+
+SAE Subspace Completeness. We operate under the assumption that the SAE’s high-dimensional latent space captures a complete representation of both the sensitive and coupled benign semantics. Any residual sensitive information encoded in the SAE’s reconstruction error resides outside this parameterized basis and is therefore bypassed by the projection matrix. Our layer-wise sensitive selection implicitly mitigates this by locating the layer where the concepts are maximally disentangled. 15 OrthoEraser: Coupled-Neuron Orthogonal Projection for Concept Erasure 
+
+A.5 Computational Complexity Analysis 
+
+A key advantage of OrthoEraser is its minimal impact on inference speed. The additional computational overhead is concentrated strictly at the target intervention layer l∗. Given a dense representation of dimension d and a coupled neuron set of size |C| , the computational bottlenecks consist of three operations. First, encoding the dense features into the sparse space incurs an SAE Inference complexity of O(d · DSAE ), where DSAE is the SAE hidden dimension. Second, computing WC = QR on a matrix of computing WC = QR on a matrix of size d × |C| incurs a one-time offline cost of O(d · |C| 2) during the detection phase. During inference, the primary overhead is the orthogonal projection, which involves a matrix-vector multiplication QQ ⊤draw with a complexity of O(d · |C| ). Since the number of coupled neurons |C| is typically much smaller than the latent dimension d (i.e., |C| ≪ d), this overhead is negligible compared to the billions of operations in a standard Diffusion U-Net or Transformer forward pass. Consequently, OrthoEraser achieves precise safety alignment with near-zero latency impact, making it suitable for real-time generative applications. 
+
+## B More Discussions 
+
+▷ Q1. Why does the method rely heavily on SAEs, and how does SAE quality affect the erasure of highly abstract concepts? 
+
+A fundamental premise of our framework is the use of SAEs for high-resolution feature disentanglement. Consequently, the precision of our geometric projection is inherently limited by the SAE’s dictionary size and reconstruction fidelity. If an exceptionally abstract concept is not explicitly captured by the sparse basis, our targeted erasure may experience slight semantic drift. We respectfully view this as an infrastructure dependency rather than an algorithmic flaw. As the community continues to scale SAE architectures, our analytical framework will seamlessly inherit these representational improvements without requiring modifications to the core optimization algorithm. 
+
+▷ Q2. Why does OrthoEraser intervene at only a single layer, and is this sufficient for unlearning complex concepts distributed across multiple layers? 
+
+OrthoEraser intervenes at the single most critical layer exhibiting maximum attention divergence. While this surgical projection is computationally efficient and empirically sufficient to block explicitly harmful content, we humbly recognize that deep generative models process information hierarchically. Certain deeply ingrained biases or nuanced artistic styles may be distributed across multiple attention layers. Investigating a cascaded null-space projection that coordinates orthogonal constraints across a sequential multi-layer pathway is an exciting and necessary open challenge for achieving truly comprehensive concept unlearning. 
+
+▷ Q3. Why does the framework use a fixed Top-k selection for coupled neurons, and how might this limit the preservation of benign semantics across diverse prompts? 
+
+We currently define the protected coupled set using a fixed top-k threshold based on zero-ablation activation shifts. While our evaluations demonstrate that this effectively balances erasure precision and general utility, we acknowledge that semantic complexity varies significantly across different prompts. For instance, a highly detailed compositional prompt naturally entangles more benign features than a simple portrait. Future iterations could greatly benefit from exploring dynamic, adaptive thresholding mechanisms based on real-time activation distributions, offering a more mathematically optimal preservation of benign semantics on a strictly case-by-case basis. 
+
+▷ Q4. Why might the analytical null-space projection struggle with mass concept erasure, and what geometric bottlenecks arise when erasing hundreds of concepts? 
+
+OrthoEraser enforces interventions to be strictly orthogonal to the identified benign subspace. However, in demanding scenarios like simultaneous mass copyright erasure, the size of the protected coupled set inevitably expands. From a linear algebra perspective, this continuous expansion increases the rank of our projection matrix, progressively narrowing the available null space. In extreme cases, the optimization space becomes over-constrained, reducing the intervention vector to near-zero. Addressing this geometric bottleneck, perhaps via block-diagonal orthogonalization or soft penalty constraints, is a critical next step for scaling analytical erasure methods to enterprise levels. 
+
+▷ Q5. Why is the current evaluation limited strictly to spatial text-to-image (T2I) generation, and what are the challenges in adapting this to temporal or 3D modalities? 
+
+We deliberately limited our scope to foundational T2I models, where spatial feature entanglement is the primary safety concern. While our analytical null-space projection elegantly addresses this, generative AI is rapidly evolving towards complex temporal (video) and 3D modalities. Applying OrthoEraser to video diffusion models requires not only spatial disentanglement but also tracking and orthogonalizing concept pathways across temporal attention layers to prevent 16 OrthoEraser: Coupled-Neuron Orthogonal Projection for Concept Erasure flickering. We consider adapting our geometric constraints to maintain temporal coherence as a highly promising frontier for future safety alignment research. 
+
+## C Limitation 
+
+A fundamental premise of OrthoEraser is the utilization of sparse autoencoders (SAEs) to decompose dense, polyse-mantic activations into a high-resolution, interpretable basis. Consequently, we respectfully note that the precision of our geometric projection is inherently bottlenecked by the resolution, dictionary capacity, and reconstruction fidelity of the underlying SAE. In our implementation, we utilized a top-k SAE with a specific expansion factor; however, if an exceptionally abstract or rare sensitive concept is not explicitly captured by the learned sparse basis, or if it remains stubbornly entangled within a single neuron due to capacity limits, our targeted erasure may experience slight semantic drift. We view this not as an algorithmic flaw of the orthogonal projection itself, but rather as an upstream infrastructure dependency. As the generative AI community continues to scale and refine SAE architectures to achieve true feature monosemanticity, our analytical framework will seamlessly inherit these representational improvements, naturally enhancing its erasure precision without requiring modifications to our core optimization algorithm. 17

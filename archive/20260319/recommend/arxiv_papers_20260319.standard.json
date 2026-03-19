@@ -1,0 +1,1096 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-03-19T19:56:34.666818+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 22,
+    "deep_cap": 6,
+    "deep_selected": 22,
+    "quick_candidates": 7,
+    "quick_skim_target": 11,
+    "quick_selected": 7
+  },
+  "deep_dive": [
+    {
+      "id": "2603.10445v1",
+      "title": "Unlearning the Unpromptable: Prompt-free Instance Unlearning in Diffusion Models",
+      "abstract": "Machine unlearning aims to remove specific outputs from trained models, often at the concept level, such as forgetting all occurrences of a particular celebrity or filtering content via text prompts. However, many undesired outputs, such as an individual's face or generations culturally or factually misinterpreted, cannot often be specified by text prompts. We address this underexplored setting of instance unlearning for outputs that are undesired but unpromptable, where the goal is to forget target outputs selectively while preserving the rest. To this end, we introduce an effective surrogate-based unlearning method that leverages image editing, timestep-aware weighting, and gradient surgery to guide trained diffusion models toward forgetting specific outputs. Experiments on conditional (Stable Diffusion 3) and unconditional (DDPM-CelebA) diffusion models demonstrate that our prompt-free method uniquely unlearns unpromptable outputs, such as faces and culturally inaccurate depictions, with preserved integrity, unlike prompt-based and prompt-free baselines. Our proposed method would serve as a practical hotfix for diffusion model providers to ensure privacy protection and ethical compliance.",
+      "authors": [
+        "Kyungryeol Lee",
+        "Kyeonghyun Lee",
+        "Seongmin Hong",
+        "Byung Hyun Lee",
+        "Se Young Chun"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.CV"
+      ],
+      "published": "2026-03-11T06:00:46+00:00",
+      "link": "https://arxiv.org/pdf/2603.10445v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "instance unlearning for unpromptable outputs in diffusion models",
+      "llm_evidence_cn": "扩散模型中不可提示输出的实例遗忘",
+      "llm_evidence": "扩散模型中不可提示输出的实例遗忘",
+      "canonical_evidence": "扩散模型中不可提示输出的实例遗忘",
+      "llm_tldr_en": "Proposes a method to unlearn specific visual instances in diffusion models without needing text prompts.",
+      "llm_tldr_cn": "提出一种无需文本提示即可擦除扩散模型中特定视觉实例的机器遗忘方法。",
+      "llm_tldr": "提出一种无需文本提示即可擦除扩散模型中特定视觉实例的机器遗忘方法。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Machine unlearning techniques and algorithms in deep learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.10445v2",
+      "title": "Unlearning the Unpromptable: Prompt-free Instance Unlearning in Diffusion Models",
+      "abstract": "Machine unlearning aims to remove specific outputs from trained models, often at the concept level, such as forgetting all occurrences of a particular celebrity or filtering content via text prompts. However, many undesired outputs, such as an individual's face or generations culturally or factually misinterpreted, cannot often be specified by text prompts. We address this underexplored setting of instance unlearning for outputs that are undesired but unpromptable, where the goal is to forget target outputs selectively while preserving the rest. To this end, we introduce an effective surrogate-based unlearning method that leverages image editing, timestep-aware weighting, and gradient surgery to guide trained diffusion models toward forgetting specific outputs. Experiments on conditional (Stable Diffusion 3) and unconditional (DDPM-CelebA) diffusion models demonstrate that our prompt-free method uniquely unlearns unpromptable outputs, such as faces and culturally inaccurate depictions, with preserved integrity, unlike prompt-based and prompt-free baselines. Our proposed method would serve as a practical hotfix for diffusion model providers to ensure privacy protection and ethical compliance.",
+      "authors": [
+        "Kyungryeol Lee",
+        "Kyeonghyun Lee",
+        "Seongmin Hong",
+        "Byung Hyun Lee",
+        "Se Young Chun"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.CV"
+      ],
+      "published": "2026-03-11T06:00:46+00:00",
+      "link": "https://arxiv.org/pdf/2603.10445v2",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "instance unlearning for unpromptable outputs in diffusion models",
+      "llm_evidence_cn": "扩散模型中不可提示输出的实例遗忘",
+      "llm_evidence": "扩散模型中不可提示输出的实例遗忘",
+      "canonical_evidence": "扩散模型中不可提示输出的实例遗忘",
+      "llm_tldr_en": "Introduces a method for selective instance unlearning in diffusion models when targets cannot be specified by text.",
+      "llm_tldr_cn": "针对无法通过文本指定的扩散模型目标，提出了一种选择性实例遗忘方法。",
+      "llm_tldr": "针对无法通过文本指定的扩散模型目标，提出了一种选择性实例遗忘方法。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Machine unlearning techniques and algorithms in deep learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.11210v1",
+      "title": "Reference-Guided Machine Unlearning",
+      "abstract": "Machine unlearning aims to remove the influence of specific data from trained models while preserving general utility. Existing approximate unlearning methods often rely on performance-degradation heuristics, such as loss maximization or random labeling. However, these signals can be poorly conditioned, leading to unstable optimization and harming the model's generalization. We argue that unlearning should instead prioritize distributional indistinguishability, aligning the model's behavior on forget data with its behavior on truly unseen data. Motivated by this, we propose Reference-Guided Unlearning (ReGUn), a framework that leverages a disjoint held-out dataset to provide a principled, class-conditioned reference for distillation. We demonstrate across various model architectures, natural image datasets, and varying forget fractions that ReGUn consistently outperforms standard approximate baselines, achieving a superior forgetting-utility trade-off.",
+      "authors": [
+        "Jonas Mirlach",
+        "Sonia Laguna",
+        "Julia E. Vogt"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-03-11T18:27:05+00:00",
+      "link": "https://arxiv.org/pdf/2603.11210v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "machine unlearning framework for removing data influence",
+      "llm_evidence_cn": "用于消除数据影响的机器遗忘框架",
+      "llm_evidence": "用于消除数据影响的机器遗忘框架",
+      "canonical_evidence": "用于消除数据影响的机器遗忘框架",
+      "llm_tldr_en": "Proposes ReGUn, a framework for machine unlearning that aligns model behavior with unseen data distributions.",
+      "llm_tldr_cn": "提出ReGUn框架，通过对齐未见数据分布来实现更稳定的机器遗忘。",
+      "llm_tldr": "提出ReGUn框架，通过对齐未见数据分布来实现更稳定的机器遗忘。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Machine unlearning techniques and algorithms in deep learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.11493v1",
+      "title": "OrthoEraser: Coupled-Neuron Orthogonal Projection for Concept Erasure",
+      "abstract": "Text-to-image (T2I) models face significant safety risks from adversarial induction, yet current concept erasure methods often cause collateral damage to benign attributes when suppressing selected neurons entirely. This occurs because sensitive and benign semantics exhibit non-orthogonal superposition, sharing activation subspaces where their respective vectors are inherently entangled. To address this issue, we propose OrthoEraser, which leverages sparse autoencoders (SAE) to achieve high-resolution feature disentanglement and subsequently redefines erasure as an analytical orthogonalization projection that preserves the benign manifold's invariance. OrthoEraser first employs SAE to decompose dense activations and segregate sensitive neurons. It then uses coupled neuron detection to identify non-sensitive features vulnerable to intervention. The key novelty lies in an analytical gradient orthogonalization strategy that projects erasure vectors onto the null space of the coupled neurons. This orthogonally decouples the sensitive concepts from the identified critical benign subspace, effectively preserving non-sensitive semantics. Experimental results on safety demonstrate that OrthoEraser achieves high erasure precision, effectively removing harmful content while preserving the integrity of the generative manifold, and significantly outperforming SOTA baselines. This paper contains results of unsafe models.",
+      "authors": [
+        "Chuancheng Shi",
+        "Wenhua Wu",
+        "Fei Shen",
+        "Xiaogang Zhu",
+        "Kun Hu",
+        "Zhiyong Wang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI",
+        "cs.CY"
+      ],
+      "published": "2026-03-12T03:25:53+00:00",
+      "link": "https://arxiv.org/pdf/2603.11493v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "orthogonal projection for concept erasure using sparse autoencoders",
+      "llm_evidence_cn": "利用稀疏自编码器进行正交投影以实现概念擦除",
+      "llm_evidence": "利用稀疏自编码器进行正交投影以实现概念擦除",
+      "canonical_evidence": "利用稀疏自编码器进行正交投影以实现概念擦除",
+      "llm_tldr_en": "Uses sparse autoencoders and orthogonal projection to erase concepts while preserving benign model performance.",
+      "llm_tldr_cn": "利用稀疏自编码器和正交投影在保留良性性能的同时擦除特定概念。",
+      "llm_tldr": "利用稀疏自编码器和正交投影在保留良性性能的同时擦除特定概念。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Concept erasure and removal from pre-trained models",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.12677v1",
+      "title": "MetaKE: Meta-learning Aligned Knowledge Editing via Bi-level Optimization",
+      "abstract": "Knowledge editing (KE) aims to precisely rectify specific knowledge in Large Language Models (LLMs) without disrupting general capabilities. State-of-the-art methods suffer from an open-loop control mismatch. We identify a critical \"Semantic-Execution Disconnect\": the semantic target is derived independently without feedback from the downstream's feasible region. This misalignment often causes valid semantic targets to fall within the prohibited space, resulting in gradient truncation and editing failure. To bridge this gap, we propose MetaKE (Meta-learning Aligned Knowledge Editing), a new framework that reframes KE as a bi-level optimization problem. Departing from static calculation, MetaKE treats the edit target as a learnable meta-parameter: the upper-level optimizer seeks a feasible target to maximize post-edit performance, while the lower-level solver executes the editing. To address the challenge of differentiating through complex solvers, we derive a Structural Gradient Proxy, which explicitly backpropagates editability constraints to the target learning phase. Theoretical analysis demonstrates that MetaKE automatically aligns the edit direction with the model's feasible manifold. Extensive experiments confirm that MetaKE significantly outperforms strong baselines, offering a new perspective on knowledge editing.",
+      "authors": [
+        "Shuxin Liu",
+        "Ou Wu"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI"
+      ],
+      "published": "2026-03-13T05:47:00+00:00",
+      "link": "https://arxiv.org/pdf/2603.12677v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "knowledge editing via bi-level optimization to rectify specific knowledge",
+      "llm_evidence_cn": "通过双层优化进行知识编辑以纠正特定知识",
+      "llm_evidence": "通过双层优化进行知识编辑以纠正特定知识",
+      "canonical_evidence": "通过双层优化进行知识编辑以纠正特定知识",
+      "llm_tldr_en": "Proposes MetaKE to align semantic targets with feasible execution regions for precise knowledge editing in LLMs.",
+      "llm_tldr_cn": "提出MetaKE框架，通过双层优化解决大模型知识编辑中的语义与执行不匹配问题。",
+      "llm_tldr": "提出MetaKE框架，通过双层优化解决大模型知识编辑中的语义与执行不匹配问题。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Model editing for knowledge update and correction",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.12677v2",
+      "title": "MetaKE: Meta-learning Aligned Knowledge Editing via Bi-level Optimization",
+      "abstract": "Knowledge editing (KE) aims to precisely rectify specific knowledge in Large Language Models (LLMs) without disrupting general capabilities. State-of-the-art methods suffer from an open-loop control mismatch. We identify a critical \"Semantic-Execution Disconnect\": the semantic target is derived independently without feedback from the downstream's feasible region. This misalignment often causes valid semantic targets to fall within the prohibited space, resulting in gradient truncation and editing failure. To bridge this gap, we propose MetaKE (Meta-learning Aligned Knowledge Editing), a new framework that reframes KE as a bi-level optimization problem. Departing from static calculation, MetaKE treats the edit target as a learnable meta-parameter: the upper-level optimizer seeks a feasible target to maximize post-edit performance, while the lower-level solver executes the editing. To address the challenge of differentiating through complex solvers, we derive a Structural Gradient Proxy, which explicitly backpropagates editability constraints to the target learning phase. Theoretical analysis demonstrates that MetaKE automatically aligns the edit direction with the model's feasible manifold. Extensive experiments confirm that MetaKE significantly outperforms strong baselines, offering a new perspective on knowledge editing.",
+      "authors": [
+        "Shuxin Liu",
+        "Ou Wu"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI"
+      ],
+      "published": "2026-03-13T05:47:00+00:00",
+      "link": "https://arxiv.org/pdf/2603.12677v2",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "Knowledge editing via bi-level optimization",
+      "llm_evidence_cn": "通过双层优化进行知识编辑",
+      "llm_evidence": "通过双层优化进行知识编辑",
+      "canonical_evidence": "通过双层优化进行知识编辑",
+      "llm_tldr_en": "Introduces MetaKE to align semantic targets with feasible regions for more effective knowledge editing.",
+      "llm_tldr_cn": "引入 MetaKE 框架，通过双层优化对齐语义目标，提升大模型的知识编辑效果。",
+      "llm_tldr": "引入 MetaKE 框架，通过双层优化对齐语义目标，提升大模型的知识编辑效果。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Model editing for knowledge update and correction",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.12915v1",
+      "title": "Stake the Points: Structure-Faithful Instance Unlearning",
+      "abstract": "Machine unlearning (MU) addresses privacy risks in pretrained models. The main goal of MU is to remove the influence of designated data while preserving the utility of retained knowledge. Achieving this goal requires preserving semantic relations among retained instances, which existing studies often overlook. We observe that without such preservation, models suffer from progressive structural collapse, undermining both the deletion-retention balance. In this work, we propose a novel structure-faithful framework that introduces stakes, i.e., semantic anchors that serve as reference points to maintain the knowledge structure. By leveraging these anchors, our framework captures and stabilizes the semantic organization of knowledge. Specifically, we instantiate the anchors from language-driven attribute descriptions encoded by a semantic encoder (e.g., CLIP). We enforce preservation of the knowledge structure via structure-aware alignment and regularization: the former aligns the organization of retained knowledge before and after unlearning around anchors, while the latter regulates updates to structure-critical parameters. Results from image classification, retrieval, and face recognition show average gains of 32.9%, 22.5%, and 19.3% in performance, balancing the deletion-retention trade-off and enhancing generalization.",
+      "authors": [
+        "Kiseong Hong",
+        "JungKyoo Shin",
+        "Eunwoo Kim"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-03-13T11:40:21+00:00",
+      "link": "https://arxiv.org/pdf/2603.12915v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "Structure-faithful instance unlearning to remove influence of designated data",
+      "llm_evidence_cn": "结构忠实实例遗忘，用于移除指定数据的影响",
+      "llm_evidence": "结构忠实实例遗忘，用于移除指定数据的影响",
+      "canonical_evidence": "结构忠实实例遗忘，用于移除指定数据的影响",
+      "llm_tldr_en": "Proposes a framework using semantic anchors to maintain knowledge structure during machine unlearning.",
+      "llm_tldr_cn": "提出了一种利用语义锚点在机器遗忘过程中维持知识结构的框架。",
+      "llm_tldr": "提出了一种利用语义锚点在机器遗忘过程中维持知识结构的框架。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Machine unlearning techniques and algorithms in deep learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.12977v1",
+      "title": "Exact Federated Continual Unlearning for Ridge Heads on Frozen Foundation Models",
+      "abstract": "Foundation models are commonly deployed as frozen feature extractors with a small trainable head to adapt to private, user-generated data in federated settings. The ``right to be forgotten'' requires removing the influence of specific samples or users from the trained model on demand. Existing federated unlearning methods target general deep models and rely on approximate reconstruction or selective retraining, making exactness costly or elusive. We study this problem in a practically relevant but under-explored regime: a frozen foundation model with a ridge-regression head. The exact optimum depends on the data only through two additive sufficient statistics, which we turn into a communication protocol supporting an arbitrary stream of \\emph{add} and \\emph{delete} requests via fixed-size messages. The server maintains a head that is, in exact arithmetic, \\emph{pointwise identical} to centralized retraining after every request. We provide deterministic retrain-equivalence guarantees, order and partition invariance, two server-side variants, and a Bayesian certificate of zero KL divergence. Experiments on four benchmarks confirm the guarantees: both variants match centralized ridge retraining to within $10^{-9}$ relative Frobenius error and complete each request at orders-of-",
+      "authors": [
+        "Yijun Quan",
+        "Wentai Wu",
+        "Giovanni Montana"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-03-13T13:24:35+00:00",
+      "link": "https://arxiv.org/pdf/2603.12977v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "Exact federated unlearning for the right to be forgotten",
+      "llm_evidence_cn": "针对被遗忘权的精确联邦遗忘技术",
+      "llm_evidence": "针对被遗忘权的精确联邦遗忘技术",
+      "canonical_evidence": "针对被遗忘权的精确联邦遗忘技术",
+      "llm_tldr_en": "Proposes an exact unlearning protocol for ridge heads on foundation models in federated settings.",
+      "llm_tldr_cn": "提出了一种在联邦学习环境下针对基础模型脊回归层的精确遗忘协议。",
+      "llm_tldr": "提出了一种在联邦学习环境下针对基础模型脊回归层的精确遗忘协议。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Privacy-preserving machine learning and the right to be forgotten",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.12977v2",
+      "title": "Exact Federated Continual Unlearning for Ridge Heads on Frozen Foundation Models",
+      "abstract": "Foundation models are commonly deployed as frozen feature extractors with a small trainable head to adapt to private, user-generated data in federated settings. The ``right to be forgotten'' requires removing the influence of specific samples or users from the trained model on demand. Existing federated unlearning methods target general deep models and rely on approximate reconstruction or selective retraining, making exactness costly or elusive. We study this problem in a practically relevant but under-explored regime: a frozen foundation model with a ridge-regression head. The exact optimum depends on the data only through two additive sufficient statistics, which we turn into a communication protocol supporting an arbitrary stream of add and delete requests via fixed-size messages. The server maintains a head that is, in exact arithmetic, pointwise identical to centralized retraining after every request. We provide deterministic retrain-equivalence guarantees, order and partition invariance, two server-side variants, and a Bayesian certificate of zero KL divergence. Experiments on four benchmarks confirm the guarantees: both variants match centralized ridge retraining to within $10^{-9}$ relative Frobenius error and complete each request at orders-of-magnitude lower cost than federated retraining baselines.",
+      "authors": [
+        "Yijun Quan",
+        "Wentai Wu",
+        "Giovanni Montana"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-03-13T13:24:35+00:00",
+      "link": "https://arxiv.org/pdf/2603.12977v2",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "exact federated unlearning for the right to be forgotten",
+      "llm_evidence_cn": "针对被遗忘权的精确联邦遗忘",
+      "llm_evidence": "针对被遗忘权的精确联邦遗忘",
+      "canonical_evidence": "针对被遗忘权的精确联邦遗忘",
+      "llm_tldr_en": "Provides an exact unlearning protocol for ridge-regression heads on frozen foundation models in federated settings.",
+      "llm_tldr_cn": "针对联邦学习场景下的冻结基础模型，提供了一种精确的岭回归头部遗忘协议。",
+      "llm_tldr": "针对联邦学习场景下的冻结基础模型，提供了一种精确的岭回归头部遗忘协议。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Privacy-preserving machine learning and the right to be forgotten",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.13795v1",
+      "title": "Computation and Communication Efficient Federated Unlearning via On-server Gradient Conflict Mitigation and Expression",
+      "abstract": "Federated Unlearning (FUL) aims to remove specific participants' data contributions from a trained Federated Learning model, thereby ensuring data privacy and compliance with regulatory requirements. Despite its potential, progress in FUL has been limited due to several challenges, including the cross-client knowledge inaccessibility and high computational and communication costs. To overcome these challenges, we propose Federated On-server Unlearning (FOUL), a novel framework that comprises two key stages. The learning-to-unlearn stage serves as a preparatory learning phase, during which the model identifies and encodes the key features associated with the forget clients. This stage is communication-efficient and establishes the basis for the subsequent unlearning process. Subsequently, on-server knowledge aggregation phase aims to perform the unlearning process at the server without requiring access to client data, thereby preserving both efficiency and privacy. We introduce a new data setting for FUL, which enables a more transparent and rigorous evaluation of unlearning. To highlight the effectiveness of our approach, we propose a novel evaluation metric termed time-to-forget, which measures how quickly the model achieves optimal unlearning performance. Extensive experiments conducted on three datasets under various unlearning scenarios demonstrate that FOUL outperforms the Retraining in FUL. Moreover, FOUL achieves competitive or superior results with significantly reduced time-to-forget, while maintaining low communication and computation costs.",
+      "authors": [
+        "Minh-Duong Nguyen",
+        "Senura Hansaja",
+        "Le-Tuan Nguyen",
+        "Quoc-Viet Pham",
+        "Ken-Tye Yong",
+        "Nguyen H. Tran",
+        "Dung D. Le"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-03-14T07:02:22+00:00",
+      "link": "https://arxiv.org/pdf/2603.13795v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "efficient federated unlearning to remove participant data contributions",
+      "llm_evidence_cn": "高效联邦遗忘以移除参与者数据贡献",
+      "llm_evidence": "高效联邦遗忘以移除参与者数据贡献",
+      "canonical_evidence": "高效联邦遗忘以移除参与者数据贡献",
+      "llm_tldr_en": "Introduces a communication-efficient framework for removing specific client data from federated models.",
+      "llm_tldr_cn": "引入一种通信高效的框架，用于从联邦模型中移除特定客户端的数据。",
+      "llm_tldr": "引入一种通信高效的框架，用于从联邦模型中移除特定客户端的数据。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Efficient data removal from trained machine learning models",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.14185v1",
+      "title": "Relationship-Aware Safety Unlearning for Multimodal LLMs",
+      "abstract": "Generative multimodal models can exhibit safety failures that are inherently relational: two benign concepts can become unsafe when linked by a specific action or relation (e.g., child-drinking-wine). Existing unlearning and concept-erasure approaches often target isolated concepts or image-text pairs, which can cause collateral damage to benign uses of the same objects and relations. We propose relationship-aware safety unlearning: a framework that explicitly represents unsafe object-relation-object (O-R-O) tuples and applies targeted parameter-efficient edits (LoRA) to suppress unsafe tuples while preserving object marginals and safe neighboring relations. We include CLIP-based experiments and robustness evaluation under paraphrase, contextual, and out-of-distribution image attacks.",
+      "authors": [
+        "Vishnu Narayanan Anilkumar",
+        "Abhijith Sreesylesh Babu",
+        "Trieu Hai Vo",
+        "Mohankrishna Kolla",
+        "Alexander Cuneo"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-03-15T02:22:26+00:00",
+      "link": "https://arxiv.org/pdf/2603.14185v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "relationship-aware safety unlearning and concept erasure",
+      "llm_evidence_cn": "关系感知的安全遗忘与概念擦除",
+      "llm_evidence": "关系感知的安全遗忘与概念擦除",
+      "canonical_evidence": "关系感知的安全遗忘与概念擦除",
+      "llm_tldr_en": "Proposes a framework to erase unsafe relational concepts in multimodal LLMs while preserving benign knowledge.",
+      "llm_tldr_cn": "提出一种框架，在保留良性知识的同时擦除多模态大模型中的不安全关系概念。",
+      "llm_tldr": "提出一种框架，在保留良性知识的同时擦除多模态大模型中的不安全关系概念。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Concept erasure and removal from pre-trained models",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.14819v1",
+      "title": "RAZOR: Ratio-Aware Layer Editing for Targeted Unlearning in Vision Transformers and Diffusion Models",
+      "abstract": "Transformer based diffusion and vision-language models have achieved remarkable success; yet, efficiently removing undesirable or sensitive information without retraining remains a central challenge for model safety and compliance. We introduce Ratio-Aware Zero/One-step Optimized Retentive unlearning (RAZOR), a lightweight, model-agnostic unlearning framework that generalizes forgetting updates to coordinated multi-layer and multi-head edits within transformer backbones. RAZOR identifies the most important layers and attention heads by measuring how much they contribute to forgetting the target data while preserving useful knowledge. Then, it updates these parts of the model using a carefully regularized rule to avoid harming overall performance. The set of edited components grows gradually, ensuring precise unlearning without over-editing or damaging unrelated capabilities. We evaluate RAZOR on CLIP, Stable Diffusion, and vision-language models (VLMs) using widely adopted unlearning benchmarks covering identity, style, and object erasure tasks. Our results show that RAZOR achieves highly accurate and stable forgetting, even under quantization. This approach offers stronger retention and better efficiency than prior methods. Notably, it also operates significant faster than conventional techniques. These results demonstrate that RAZOR is a practical and scalable solution for safe, adaptive unlearning in transformer-based vision models.",
+      "authors": [
+        "Ravi Ranjan",
+        "Utkarsh Grover",
+        "Xiaomin Lin",
+        "Agoritsa Polyzou"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-03-16T04:47:37+00:00",
+      "link": "https://arxiv.org/pdf/2603.14819v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "lightweight model-agnostic unlearning framework for transformers",
+      "llm_evidence_cn": "针对Transformer的轻量级模型无关遗忘框架",
+      "llm_evidence": "针对Transformer的轻量级模型无关遗忘框架",
+      "canonical_evidence": "针对Transformer的轻量级模型无关遗忘框架",
+      "llm_tldr_en": "RAZOR enables efficient targeted unlearning in transformers by identifying and editing key layers and attention heads.",
+      "llm_tldr_cn": "RAZOR通过识别和编辑关键层与注意力头，实现了Transformer模型中高效的目标遗忘。",
+      "llm_tldr": "RAZOR通过识别和编辑关键层与注意力头，实现了Transformer模型中高效的目标遗忘。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Machine unlearning techniques and algorithms in deep learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.15033v1",
+      "title": "Rethinking Machine Unlearning: Models Designed to Forget via Key Deletion",
+      "abstract": "Machine unlearning is rapidly becoming a practical requirement, driven by privacy regulations, data errors, and the need to remove harmful or corrupted training samples. Despite this, most existing methods tackle the problem purely from a post-hoc perspective. They attempt to erase the influence of targeted training samples through parameter updates that typically require access to the full training data. This creates a mismatch with real deployment scenarios where unlearning requests can be anticipated, revealing a fundamental limitation of post-hoc approaches. We propose \\textit{unlearning by design}, a novel paradigm in which models are directly trained to support forgetting as an inherent capability. We instantiate this idea with Machine UNlearning via KEY deletion (MUNKEY), a memory augmented transformer that decouples instance-specific memorization from model weights. Here, unlearning corresponds to removing the instance-identifying key, enabling direct zero-shot forgetting without weight updates or access to the original samples or labels. Across natural image benchmarks, fine-grained recognition, and medical datasets, MUNKEY outperforms all post-hoc baselines. Our results establish that unlearning by design enables fast, deployment-oriented unlearning while preserving predictive performance.",
+      "authors": [
+        "Sonia Laguna",
+        "Jorge da Silva Goncalves",
+        "Moritz Vandenhirtz",
+        "Alain Ryser",
+        "Irene Cannistraci",
+        "Julia E. Vogt"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-03-16T09:33:29+00:00",
+      "link": "https://arxiv.org/pdf/2603.15033v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "unlearning by design for efficient data removal via key deletion",
+      "llm_evidence_cn": "通过键删除实现高效数据移除的遗忘设计",
+      "llm_evidence": "通过键删除实现高效数据移除的遗忘设计",
+      "canonical_evidence": "通过键删除实现高效数据移除的遗忘设计",
+      "llm_tldr_en": "Introduces a paradigm where models are pre-trained to support efficient sample removal through key deletion.",
+      "llm_tldr_cn": "引入一种“设计即遗忘”范式，使模型在预训练阶段就具备通过键删除快速移除样本的能力。",
+      "llm_tldr": "引入一种“设计即遗忘”范式，使模型在预训练阶段就具备通过键删除快速移除样本的能力。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Efficient data removal from trained machine learning models",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.16489v1",
+      "title": "Unlearning for One-Step Generative Models via Unbalanced Optimal Transport",
+      "abstract": "Recent advances in one-step generative frameworks, such as flow map models, have significantly improved the efficiency of image generation by learning direct noise-to-data mappings in a single forward pass. However, machine unlearning for ensuring the safety of these powerful generators remains entirely unexplored. Existing diffusion unlearning methods are inherently incompatible with these one-step models, as they rely on a multi-step iterative denoising process. In this work, we propose UOT-Unlearn, a novel plug-and-play class unlearning framework for one-step generative models based on the Unbalanced Optimal Transport (UOT). Our method formulates unlearning as a principled trade-off between a forget cost, which suppresses the target class, and an $f$-divergence penalty, which preserves overall generation fidelity via relaxed marginal constraints. By leveraging UOT, our method enables the probability mass of the forgotten class to be smoothly redistributed to the remaining classes, rather than collapsing into low-quality or noise-like samples. Experimental results on CIFAR-10 and ImageNet-256 demonstrate that our framework achieves superior unlearning success (PUL) and retention quality (u-FID), significantly outperforming baselines.",
+      "authors": [
+        "Hyundo Choi",
+        "Junhyeong An",
+        "Jinseong Park",
+        "Jaewoong Choi"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-03-17T13:19:04+00:00",
+      "link": "https://arxiv.org/pdf/2603.16489v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "class unlearning framework for one-step generative models",
+      "llm_evidence_cn": "针对单步生成模型的类别遗忘框架",
+      "llm_evidence": "针对单步生成模型的类别遗忘框架",
+      "canonical_evidence": "针对单步生成模型的类别遗忘框架",
+      "llm_tldr_en": "Develops a novel unlearning framework for one-step generative models using Unbalanced Optimal Transport.",
+      "llm_tldr_cn": "利用不平衡最优传输为单步生成模型开发了一种新型遗忘框架。",
+      "llm_tldr": "利用不平衡最优传输为单步生成模型开发了一种新型遗忘框架。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Machine unlearning techniques and algorithms in deep learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.11239v1",
+      "title": "Reversible Lifelong Model Editing via Semantic Routing-Based LoRA",
+      "abstract": "The dynamic evolution of real-world necessitates model editing within Large Language Models. While existing methods explore modular isolation or parameter-efficient strategies, they still suffer from semantic drift or knowledge forgetting due to continual updating. To address these challenges, we propose SoLA, a Semantic routing-based LoRA framework for lifelong model editing. In SoLA, each edit is encapsulated as an independent LoRA module, which is frozen after training and mapped to input by semantic routing, allowing dynamic activation of LoRA modules via semantic matching. This mechanism avoids semantic drift caused by cluster updating and mitigates catastrophic forgetting from parameter sharing. More importantly, SoLA supports precise revocation of specific edits by removing key from semantic routing, which restores model's original behavior. To our knowledge, this reversible rollback editing capability is the first to be achieved in existing literature. Furthermore, SoLA integrates decision-making process into edited layer, eliminating the need for auxiliary routing networks and enabling end-to-end decision-making process. Extensive experiments demonstrate that SoLA effectively learns and retains edited knowledge, achieving accurate, efficient, and reversible lifelong model editing.",
+      "authors": [
+        "Haihua Luo",
+        "Xuming Ran",
+        "Tommi Kärkkäinen",
+        "Zhonghua Chen",
+        "Jiangrong Shen",
+        "Qi Xu",
+        "Fengyu Cong"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-03-11T19:04:59+00:00",
+      "link": "https://arxiv.org/pdf/2603.11239v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "lifelong model editing and precise revocation of specific edits",
+      "llm_evidence_cn": "终身模型编辑和特定编辑的精确撤销",
+      "llm_evidence": "终身模型编辑和特定编辑的精确撤销",
+      "canonical_evidence": "终身模型编辑和特定编辑的精确撤销",
+      "llm_tldr_en": "Proposes a LoRA-based framework for lifelong model editing that supports precise revocation of specific knowledge.",
+      "llm_tldr_cn": "提出一种基于LoRA的终身模型编辑框架，支持对特定知识编辑的精确撤销。",
+      "llm_tldr": "提出一种基于LoRA的终身模型编辑框架，支持对特定知识编辑的精确撤销。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Model editing for knowledge update and correction",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.11610v1",
+      "title": "Federated Learning and Unlearning for Recommendation with Personalized Data Sharing",
+      "abstract": "Federated recommender systems (FedRS) have emerged as a paradigm for protecting user privacy by keeping interaction data on local devices while coordinating model training through a central server. However, most existing federated recommender systems adopt a one-size-fits-all assumption on user privacy, where all users are required to keep their data strictly local. This setting overlooks users who are willing to share their data with the server in exchange for better recommendation performance. Although several recent studies have explored personalized user data sharing in FedRS, they assume static user privacy preferences and cannot handle user requests to remove previously shared data and its corresponding influence on the trained model. To address this limitation, we propose FedShare, a federated learn-unlearn framework for recommender systems with personalized user data sharing. FedShare not only allows users to control how much interaction data is shared with the server, but also supports data unsharing requests by removing the influence of the unshared data from the trained model. Specifically, FedShare leverages shared data to construct a server-side high-order user-item graph and uses contrastive learning to jointly align local and global representations. In the unlearning phase, we design a contrastive unlearning mechanism that selectively removes representations induced by the unshared data using a small number of historical embedding snapshots, avoiding the need to store large amounts of historical gradient information as required by existing federated recommendation unlearning methods. Extensive experiments on three public datasets demonstrate that FedShare achieves strong recommendation performance in both the learning and unlearning phases, while significantly reducing storage overhead in the unlearning phase compared with state-of-the-art baselines.",
+      "authors": [
+        "Liang Qu",
+        "Jianxin Li",
+        "Wei Yuan",
+        "Shangfei Zheng",
+        "Lu Chen",
+        "Chengfei Liu",
+        "Hongzhi Yin"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR"
+      ],
+      "published": "2026-03-12T07:05:02+00:00",
+      "link": "https://arxiv.org/pdf/2603.11610v1",
+      "tags": [
+        "keyword:MU CE"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "federated unlearning for removing previously shared data influence",
+      "llm_evidence_cn": "联邦遗忘学习以消除先前共享数据的影响",
+      "llm_evidence": "联邦遗忘学习以消除先前共享数据的影响",
+      "canonical_evidence": "联邦遗忘学习以消除先前共享数据的影响",
+      "llm_tldr_en": "Addresses the challenge of removing shared data and its influence from federated recommendation models.",
+      "llm_tldr_cn": "解决了从联邦推荐模型中移除已共享数据及其影响的挑战。",
+      "llm_tldr": "解决了从联邦推荐模型中移除已共享数据及其影响的挑战。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Efficient data removal from trained machine learning models",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.13186v1",
+      "title": "Learnability and Privacy Vulnerability are Entangled in a Few Critical Weights",
+      "abstract": "Prior approaches for membership privacy preservation usually update or retrain all weights in neural networks, which is costly and can lead to unnecessary utility loss or even more serious misalignment in predictions between training data and non-training data. In this work, we observed three insights: i) privacy vulnerability exists in a very small fraction of weights; ii) however, most of those weights also critically impact utility performance; iii) the importance of weights stems from their locations rather than their values. According to these insights, to preserve privacy, we score critical weights, and instead of discarding those neurons, we rewind only the weights for fine-tuning. We show that, through extensive experiments, this mechanism exhibits outperforming resilience in most cases against Membership Inference Attacks while maintaining utility.",
+      "authors": [
+        "Xingli Fang",
+        "Jung-Eun Kim"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI",
+        "cs.CR"
+      ],
+      "published": "2026-03-13T17:20:12+00:00",
+      "link": "https://arxiv.org/pdf/2603.13186v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "removing sensitive information by rewinding critical weights for privacy",
+      "llm_evidence_cn": "通过重置关键权重移除敏感信息以保护隐私",
+      "llm_evidence": "通过重置关键权重移除敏感信息以保护隐私",
+      "canonical_evidence": "通过重置关键权重移除敏感信息以保护隐私",
+      "llm_tldr_en": "Identifies critical weights for privacy and uses weight rewinding to preserve membership privacy with low utility loss.",
+      "llm_tldr_cn": "识别影响隐私的关键权重，通过权重回溯在极低性能损失下保护成员隐私。",
+      "llm_tldr": "识别影响隐私的关键权重，通过权重回溯在极低性能损失下保护成员隐私。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Algorithms for removing sensitive information from neural networks",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.14185v2",
+      "title": "Relationship-Aware Safety Unlearning for Multimodal LLMs",
+      "abstract": "Generative multimodal models can exhibit safety failures that are inherently relational: two benign concepts can become unsafe when linked by a specific action or relation (e.g., child-drinking-wine). Existing unlearning and concept-erasure approaches often target isolated concepts or image-text pairs, which can cause collateral damage to benign uses of the same objects and relations. We propose relationship-aware safety unlearning: a framework that explicitly represents unsafe object-relation-object (O-R-O) tuples and applies targeted parameter-efficient edits (LoRA) to suppress unsafe tuples while preserving object marginals and safe neighboring relations. We include CLIP-based experiments and robustness evaluation under paraphrase, contextual, and out-of-distribution image attacks.",
+      "authors": [
+        "Vishnu Narayanan Anilkumar",
+        "Abhijith Sreesylesh Babu",
+        "Trieu Hai Vo",
+        "Mohankrishna Kolla",
+        "Alexander Cuneo"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-03-15T02:22:26+00:00",
+      "link": "https://arxiv.org/pdf/2603.14185v2",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "relationship-aware safety unlearning via targeted parameter edits",
+      "llm_evidence_cn": "通过针对性参数编辑实现关系感知的安全遗忘",
+      "llm_evidence": "通过针对性参数编辑实现关系感知的安全遗忘",
+      "canonical_evidence": "通过针对性参数编辑实现关系感知的安全遗忘",
+      "llm_tldr_en": "Applies targeted edits to suppress unsafe relational concepts in multimodal LLMs while preserving benign ones.",
+      "llm_tldr_cn": "对多模态大模型进行针对性编辑，以抑制不安全的关系概念并保留良性概念。",
+      "llm_tldr": "对多模态大模型进行针对性编辑，以抑制不安全的关系概念并保留良性概念。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Model editing for knowledge update and correction",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.14484v1",
+      "title": "Unlearning-based sliding window for continual learning under concept drift",
+      "abstract": "Traditional machine learning assumes a stationary data distribution, yet many real-world applications operate on nonstationary streams in which the underlying concept evolves over time. This problem can also be viewed as task-free continual learning under concept drift, where a model must adapt sequentially without explicit task identities or task boundaries. In such settings, effective learning requires both rapid adaptation to new data and forgetting of outdated information. A common solution is based on a sliding window, but this approach is often computationally demanding because the model must be repeatedly retrained from scratch on the most recent data. We propose a different perspective based on machine unlearning. Instead of rebuilding the model each time the active window changes, we remove the influence of outdated samples using unlearning and then update the model with newly observed data. This enables efficient, targeted forgetting while preserving adaptation to evolving distributions. To the best of our knowledge, this is the first work to connect machine unlearning with concept drift mitigation for task-free continual learning. Empirical results on image stream classification across multiple drift scenarios demonstrate that the proposed approach offers a competitive and computationally efficient alternative to standard sliding-window retraining. Our implementation can be found at \\hrehttps://anonymous.4open.science/r/MUNDataStream-60F3}{https://anonymous.4open.science/r/MUNDataStream-60F3}.",
+      "authors": [
+        "Michal Wozniak",
+        "Marek Klonowski",
+        "Maciej Maczynski",
+        "Bartosz Krawczyk"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-03-15T17:03:41+00:00",
+      "link": "https://arxiv.org/pdf/2603.14484v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "unlearning-based sliding window for forgetting outdated information",
+      "llm_evidence_cn": "基于机器遗忘的滑动窗口方法用于遗忘过时信息",
+      "llm_evidence": "基于机器遗忘的滑动窗口方法用于遗忘过时信息",
+      "canonical_evidence": "基于机器遗忘的滑动窗口方法用于遗忘过时信息",
+      "llm_tldr_en": "Proposes a machine unlearning approach to efficiently forget outdated data in continual learning settings.",
+      "llm_tldr_cn": "提出一种基于机器遗忘的方法，用于在持续学习中高效遗忘过时数据。",
+      "llm_tldr": "提出一种基于机器遗忘的方法，用于在持续学习中高效遗忘过时数据。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Machine unlearning techniques and algorithms in deep learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.14517v1",
+      "title": "Learning to Forget: Sleep-Inspired Memory Consolidation for Resolving Proactive Interference in Large Language Models",
+      "abstract": "Large language models (LLMs) suffer from proactive interference (PI): outdated information in the context window disrupts retrieval of current values. This interference degrades retrieval accuracy log-linearly as stale associations accumulate, a bottleneck that persists regardless of context length and resists prompt-engineering mitigations. Biological brains resolve an analogous challenge through sleep-dependent memory consolidation: synaptic downscaling, selective replay, and targeted forgetting. We propose SleepGate, a biologically inspired framework that augments transformer-based LLMs with a learned sleep cycle over the key-value (KV) cache. SleepGate introduces three mechanisms: (1) a conflict-aware temporal tagger detecting when new entries supersede old ones; (2) a lightweight forgetting gate trained to selectively evict or compress stale cache entries; and (3) a consolidation module that merges surviving entries into compact summaries. These components activate periodically during inference in sleep micro-cycles, governed by an adaptive entropy-based trigger. We formalize a dual-phase training objective jointly optimizing language modeling during the wake phase and post-consolidation retrieval during the sleep phase. Theoretical analysis shows SleepGate reduces the interference horizon from O(n) to O(log n). In experiments with a small-scale transformer (4 layers, 793K parameters), SleepGate achieves 99.5% retrieval accuracy at PI depth 5 and 97.0% at depth 10, while all five baselines -- full KV cache, sliding window, H2O, StreamingLLM, and decay-only ablation -- remain below 18%. Our framework offers an architecture-level solution that prompt engineering cannot address.",
+      "authors": [
+        "Ying Xie"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-03-15T17:54:43+00:00",
+      "link": "https://arxiv.org/pdf/2603.14517v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Targeted forgetting to resolve proactive interference",
+      "llm_evidence_cn": "通过有针对性的遗忘解决前摄干扰",
+      "llm_evidence": "通过有针对性的遗忘解决前摄干扰",
+      "canonical_evidence": "通过有针对性的遗忘解决前摄干扰",
+      "llm_tldr_en": "Uses sleep-inspired targeted forgetting to remove outdated information from LLM KV caches.",
+      "llm_tldr_cn": "受睡眠启发，通过有针对性的遗忘机制清除大模型缓存中的过时信息。",
+      "llm_tldr": "受睡眠启发，通过有针对性的遗忘机制清除大模型缓存中的过时信息。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Selective forgetting in neural networks",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.15226v1",
+      "title": "SCAN: Sparse Circuit Anchor Interpretable Neuron for Lifelong Knowledge Editing",
+      "abstract": "Large Language Models (LLMs) often suffer from catastrophic forgetting and collapse during sequential knowledge editing. This vulnerability stems from the prevailing dense editing paradigm, which treats models as black boxes and relies on coarse-grained parameter interventions that inevitably disrupt preserved knowledge. To address this, we propose SCAN (a sparse editing framework based on Sparse Circuit Anchored Neuron) which transforms editing into a mechanism-aware manipulation by constructing a knowledge circuit via Sparse Transcoders. Experiments on Gemma2, Qwen3, and Llama3.1 across CounterFact, ZsRE and WikiFactDiff demonstrate that SCAN achieves a superior performance, maintaining model integrity on benchmarks like MMLU and GSM8K even after 3,000 sequential edits, whereas other existing methods deteriorate progressively as editing accumulates, eventually resulting in model collapse.",
+      "authors": [
+        "Yuhuan Liu",
+        "Haitian Zhong",
+        "Xinyuan Xia",
+        "Qiang Liu",
+        "Shu Wu",
+        "Liang Wang"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-03-16T13:04:09+00:00",
+      "link": "https://arxiv.org/pdf/2603.15226v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "lifelong knowledge editing and preventing catastrophic forgetting",
+      "llm_evidence_cn": "终身知识编辑与防止灾难性遗忘",
+      "llm_evidence": "终身知识编辑与防止灾难性遗忘",
+      "canonical_evidence": "终身知识编辑与防止灾难性遗忘",
+      "llm_tldr_en": "SCAN uses sparse circuits for mechanism-aware knowledge editing to update LLMs without disrupting preserved knowledge.",
+      "llm_tldr_cn": "SCAN利用稀疏电路进行机制感知的知识编辑，在不破坏原有知识的情况下更新大模型。",
+      "llm_tldr": "SCAN利用稀疏电路进行机制感知的知识编辑，在不破坏原有知识的情况下更新大模型。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Model editing for knowledge update and correction",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.17828v1",
+      "title": "TINA: Text-Free Inversion Attack for Unlearned Text-to-Image Diffusion Models",
+      "abstract": "Although text-to-image diffusion models exhibit remarkable generative power, concept erasure techniques are essential for their safe deployment to prevent the creation of harmful content. This has fostered a dynamic interplay between the development of erasure defenses and the adversarial probes designed to bypass them, and this co-evolution has progressively enhanced the efficacy of erasure methods. However, this adversarial co-evolution has converged on a narrow, text-centric paradigm that equates erasure with severing the text-to-image mapping, ignoring that the underlying visual knowledge related to undesired concepts still persist. To substantiate this claim, we investigate from a visual perspective, leveraging DDIM inversion to probe whether a generative pathway for the erased concept can still be found. However, identifying such a visual generative pathway is challenging because standard text-guided DDIM inversion is actively resisted by text-centric defenses within the erased model. To address this, we introduce TINA, a novel Text-free INversion Attack, which enforces this visual-only probe by operating under a null-text condition, thereby avoiding existing text-centric defenses. Moreover, TINA integrates an optimization procedure to overcome the accumulating approximation errors that arise when standard inversion operates without its usual textual guidance. Our experiments demonstrate that TINA regenerates erased concepts from models treated with state-of-the-art unlearning. The success of TINA proves that current methods merely obscure concepts, highlighting an urgent need for paradigms that operate directly on internal visual knowledge.",
+      "authors": [
+        "Qianlong Xiang",
+        "Miao Zhang",
+        "Haoyu Zhang",
+        "Kun Wang",
+        "Junhui Hou",
+        "Liqiang Nie"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-18T15:25:03+00:00",
+      "link": "https://arxiv.org/pdf/2603.17828v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "probing visual knowledge persistence in unlearned diffusion models",
+      "llm_evidence_cn": "探测已遗忘扩散模型中视觉知识的残留",
+      "llm_evidence": "探测已遗忘扩散模型中视觉知识的残留",
+      "canonical_evidence": "探测已遗忘扩散模型中视觉知识的残留",
+      "llm_tldr_en": "Investigates the persistence of visual concepts in diffusion models after concept erasure via inversion attacks.",
+      "llm_tldr_cn": "通过反转攻击研究扩散模型在概念擦除后视觉概念的残留问题。",
+      "llm_tldr": "通过反转攻击研究扩散模型在概念擦除后视觉概念的残留问题。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Concept erasure and removal from pre-trained models",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2603.11526v1",
+      "title": "CFD-HAR: User-controllable Privacy through Conditional Feature Disentanglement",
+      "abstract": "Modern wearable and mobile devices are equipped with inertial measurement units (IMUs). Human Activity Recognition (HAR) applications running on such devices use machine-learning-based, data-driven techniques that leverage such sensor data. However, sensor-data-driven HAR deployments face two critical challenges: protecting sensitive user information embedded in sensor data in accordance with users' privacy preferences and maintaining high recognition performance with limited labeled samples. This paper proposes a technique for user-controllable privacy through feature disentanglement-based representation learning at the granular level for dynamic privacy filtering. We also compare the efficacy of our technique against few-shot HAR using autoencoder-based representation learning. We analyze their architectural designs, learning objectives, privacy guarantees, data efficiency, and suitability for edge Internet of Things (IoT) deployment. Our study shows that CFD-based HAR provides explicit, tunable privacy protection controls by separating activity and sensitive attributes in the latent space, whereas autoencoder-based few-shot HAR offers superior label efficiency and lightweight adaptability but lacks inherent privacy safeguards. We further examine the security implications of both approaches in continual IoT settings, highlighting differences in susceptibility to representation leakage and embedding-level attacks. The analysis reveals that neither paradigm alone fully satisfies the emerging requirements of next-generation IoT HAR systems. We conclude by outlining research directions toward unified frameworks that jointly optimize privacy preservation, few-shot adaptability, and robustness for trustworthy IoT intelligence.",
+      "authors": [
+        "Alex Gn",
+        "Fan Li",
+        "S Kuniyilh",
+        "Ada Axan"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-03-12T04:29:18+00:00",
+      "link": "https://arxiv.org/pdf/2603.11526v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "privacy filtering through feature disentanglement to remove sensitive info",
+      "llm_evidence_cn": "通过特征解耦进行隐私过滤以移除敏感信息",
+      "llm_evidence": "通过特征解耦进行隐私过滤以移除敏感信息",
+      "canonical_evidence": "通过特征解耦进行隐私过滤以移除敏感信息",
+      "llm_tldr_en": "Proposes feature disentanglement to filter sensitive user information from sensor-based activity recognition.",
+      "llm_tldr_cn": "提出特征解耦技术，从基于传感器的活动识别中过滤敏感用户信息。",
+      "llm_tldr": "提出特征解耦技术，从基于传感器的活动识别中过滤敏感用户信息。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Algorithms for removing sensitive information from neural networks",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2603.10771v1",
+      "title": "Word Recovery in Large Language Models Enables Character-Level Tokenization Robustness",
+      "abstract": "Large language models (LLMs) trained with canonical tokenization exhibit surprising robustness to non-canonical inputs such as character-level tokenization, yet the mechanisms underlying this robustness remain unclear. We study this phenomenon through mechanistic interpretability and identify a core process we term word recovery. We first introduce a decoding-based method to detect word recovery, showing that hidden states reconstruct canonical word-level token identities from character-level inputs. We then provide causal evidence by removing the corresponding subspace from hidden states, which consistently degrades downstream task performance. Finally, we conduct a fine-grained attention analysis and show that in-group attention among characters belonging to the same canonical token is critical for word recovery: masking such attention in early layers substantially reduces both recovery scores and task performance. Together, our findings provide a mechanistic explanation for tokenization robustness and identify word recovery as a key mechanism enabling LLMs to process character-level inputs.",
+      "authors": [
+        "Zhipeng Yang",
+        "Shu Yang",
+        "Lijie Hu",
+        "Di Wang"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-03-11T13:49:14+00:00",
+      "link": "https://arxiv.org/pdf/2603.10771v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "removing subspace from hidden states to study robustness",
+      "llm_evidence_cn": "从隐藏状态中移除子空间以研究鲁棒性",
+      "llm_evidence": "从隐藏状态中移除子空间以研究鲁棒性",
+      "canonical_evidence": "从隐藏状态中移除子空间以研究鲁棒性",
+      "llm_tldr_en": "Uses subspace removal to causally analyze word recovery mechanisms in LLMs.",
+      "llm_tldr_cn": "利用子空间移除技术对大模型中的单词恢复机制进行因果分析。",
+      "llm_tldr": "利用子空间移除技术对大模型中的单词恢复机制进行因果分析。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Concept erasure and removal from pre-trained models",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2603.12163v1",
+      "title": "A Quantitative Characterization of Forgetting in Post-Training",
+      "abstract": "Continual post-training of generative models is widely used, yet a principled understanding of when and why forgetting occurs remains limited. We develop theoretical results under a two-mode mixture abstraction (representing old and new tasks), proposed by Chen et al. (2025) (arXiv:2510.18874), and formalize forgetting in two forms: (i) mass forgetting, where the old mixture weight collapses to zero, and (ii) old-component drift, where an already-correct old component shifts during training. For equal-covariance Gaussian modes, we prove that forward-KL objectives trained on data from the new distribution drive the old weight to zero, while reverse-KL objectives converge to the true target (thereby avoiding mass forgetting) and perturb the old mean only through overlap-gated misassignment probabilities controlled by the Bhattacharyya coefficient, yielding drift that decays exponentially with mode separation and a locally well-conditioned geometry with exponential convergence. We further quantify how replay interacts with these objectives. For forward-KL, replay must modify the training distribution to change the population optimum; for reverse-KL, replay leaves the population objective unchanged but prevents finite-batch old-mode starvation through bounded importance weighting. Finally, we analyze three recently proposed near-on-policy post-training methods, SDFT (arxiv:2601.19897), TTT-Discover (arxiv:2601.16175), and OAPL (arxiv:2602.19362), via the same lens and derive explicit conditions under which each retains old mass and exhibits overlap-controlled drift. Overall, our results show that forgetting can by precisely quantified based on the interaction between divergence direction, geometric behavioral overlap, sampling regime, and the visibility of past behavior during training.",
+      "authors": [
+        "Krishnakumar Balasubramanian",
+        "Shiva Prasad Kasiviswanathan"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI",
+        "math.ST",
+        "stat.ML"
+      ],
+      "published": "2026-03-12T17:00:16+00:00",
+      "link": "https://arxiv.org/pdf/2603.12163v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Characterization of forgetting in post-training",
+      "llm_evidence_cn": "后训练阶段遗忘现象的特征化研究",
+      "llm_evidence": "后训练阶段遗忘现象的特征化研究",
+      "canonical_evidence": "后训练阶段遗忘现象的特征化研究",
+      "llm_tldr_en": "Provides theoretical results on mass forgetting and component drift during continual post-training.",
+      "llm_tldr_cn": "对持续后训练过程中的质量遗忘和组件漂移现象提供了理论分析。",
+      "llm_tldr": "对持续后训练过程中的质量遗忘和组件漂移现象提供了理论分析。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Selective forgetting in neural networks",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2603.12237v1",
+      "title": "STAMP: Selective Task-Aware Mechanism for Text Privacy",
+      "abstract": "We present STAMP (Selective Task-Aware Mechanism for Text Privacy), a new framework for task-aware text privatization that achieves an improved privacy-utility trade-off. STAMP selectively allocates privacy budgets across tokens by jointly considering (i) each token's importance to the downstream task (as measured via a task- or query-specific representation), and (ii) its privacy sensitivity (e.g., names, dates, identifiers). This token-level partitioning enables fine-grained, group-wise control over the level of noise applied to different parts of the input, balancing privacy protection with task relevance. To privatize individual token embeddings, we introduce the polar mechanism, which perturbs only the direction of embeddings on the unit sphere while preserving their magnitude. Decoding is performed via cosine nearest-neighbor search, aligning the perturbation geometry with the decoding geometry. Unlike isotropic noise mechanisms, the polar mechanism maintains semantic neighborhoods in the embedding space and better preserves downstream utility. Experimental evaluations on SQuAD, Yelp, and AG News datasets demonstrate that STAMP, when combined with the normalized polar mechanism, consistently achieves superior privacy-utility trade-offs across varying per-token privacy budgets.",
+      "authors": [
+        "Fengwei Tian",
+        "Payel Bhattacharjee",
+        "Heidi Hanson",
+        "Geoffrey D. Rubin",
+        "Joseph Y. Lo",
+        "Ravi Tandon"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.CR",
+        "cs.IT"
+      ],
+      "published": "2026-03-12T17:55:07+00:00",
+      "link": "https://arxiv.org/pdf/2603.12237v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Selective task-aware mechanism for text privacy",
+      "llm_evidence_cn": "针对文本隐私的选择性任务感知机制",
+      "llm_evidence": "针对文本隐私的选择性任务感知机制",
+      "canonical_evidence": "针对文本隐私的选择性任务感知机制",
+      "llm_tldr_en": "Develops a framework to selectively privatize sensitive tokens while preserving task utility.",
+      "llm_tldr_cn": "开发了一个在保留任务效用的同时，选择性地对敏感标记进行隐私化处理的框架。",
+      "llm_tldr": "开发了一个在保留任务效用的同时，选择性地对敏感标记进行隐私化处理的框架。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Algorithms for removing sensitive information from neural networks",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2603.12598v1",
+      "title": "Neural Gate: Mitigating Privacy Risks in LVLMs via Neuron-Level Gradient Gating",
+      "abstract": "Large Vision-Language Models (LVLMs) have shown remarkable potential across a wide array of vision-language tasks, leading to their adoption in critical domains such as finance and healthcare. However, their growing deployment also introduces significant security and privacy risks. Malicious actors could potentially exploit these models to extract sensitive information, highlighting a critical vulnerability. Recent studies show that LVLMs often fail to consistently refuse instructions designed to compromise user privacy. While existing work on privacy protection has made meaningful progress in preventing the leakage of sensitive data, they are constrained by limitations in both generalization and non-destructiveness. They often struggle to robustly handle unseen privacy-related queries and may inadvertently degrade a model's performance on standard tasks. To address these challenges, we introduce Neural Gate, a novel method for mitigating privacy risks through neuron-level model editing. Our method improves a model's privacy safeguards by increasing its rate of refusal for privacy-related questions, crucially extending this protective behavior to novel sensitive queries not encountered during the editing process. Neural Gate operates by learning a feature vector to identify neurons associated with privacy-related concepts within the model's representation of a subject. This localization then precisely guides the update of model parameters. Through comprehensive experiments on MiniGPT and LLaVA, we demonstrate that our method significantly boosts the model's privacy protection while preserving its original utility.",
+      "authors": [
+        "Xiangkui Cao",
+        "Jie Zhang",
+        "Meina Kan",
+        "Shiguang Shan",
+        "Xilin Chen"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-13T03:03:20+00:00",
+      "link": "https://arxiv.org/pdf/2603.12598v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Neuron-level gradient gating to mitigate privacy risks and prevent sensitive data leakage",
+      "llm_evidence_cn": "神经元级梯度门控以减轻隐私风险并防止敏感数据泄露",
+      "llm_evidence": "神经元级梯度门控以减轻隐私风险并防止敏感数据泄露",
+      "canonical_evidence": "神经元级梯度门控以减轻隐私风险并防止敏感数据泄露",
+      "llm_tldr_en": "Introduces Neural Gate to prevent sensitive information extraction from LVLMs via gradient gating.",
+      "llm_tldr_cn": "引入 Neural Gate，通过梯度门控防止从大型视觉语言模型中提取敏感信息。",
+      "llm_tldr": "引入 Neural Gate，通过梯度门控防止从大型视觉语言模型中提取敏感信息。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Algorithms for removing sensitive information from neural networks",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2603.15842v1",
+      "title": "Informationally Compressive Anonymization: Non-Degrading Sensitive Input Protection for Privacy-Preserving Supervised Machine Learning",
+      "abstract": "Modern machine learning systems increasingly rely on sensitive data, creating significant privacy, security, and regulatory risks that existing privacy-preserving machine learning (ppML) techniques, such as Differential Privacy (DP) and Homomorphic Encryption (HE), address only at the cost of degraded performance, increased complexity, or prohibitive computational overhead. This paper introduces Informationally Compressive Anonymization (ICA) and the VEIL architecture, a privacy-preserving ML framework that achieves strong privacy guarantees through architectural and mathematical design rather than noise injection or cryptography. ICA embeds a supervised, multi-objective encoder within a trusted Source Environment to transform raw inputs into low-dimensional, task-aligned latent representations, ensuring that only irreversibly anonymized vectors are exported to untrusted Training and Inference Environments. The paper rigorously proves that these encodings are structurally non-invertible using topological and information-theoretic arguments, showing that inversion is logically impossible, even under idealized attacker assumptions, and that, in realistic deployments, the attackers conditional entropy over the original data diverges, driving reconstruction probability to zero. Unlike prior autoencoder-based ppML approaches, ICA preserves predictive utility by aligning representation learning with downstream supervised objectives, enabling low-latency, high-performance ML without gradient clipping, noise budgets, or encryption at inference time. The VEIL architecture enforces strict trust boundaries, supports scalable multi-region deployment, and naturally aligns with privacy-by-design regulatory frameworks, establishing a new foundation for enterprise ML that is secure, performant, and safe by construction, even in the face of post-quantum threats.",
+      "authors": [
+        "Jeremy J Samuelson"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI",
+        "cs.IT"
+      ],
+      "published": "2026-03-16T19:17:51+00:00",
+      "link": "https://arxiv.org/pdf/2603.15842v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Privacy-preserving ML framework for sensitive input protection",
+      "llm_evidence_cn": "用于敏感输入保护的隐私保护机器学习框架",
+      "llm_evidence": "用于敏感输入保护的隐私保护机器学习框架",
+      "canonical_evidence": "用于敏感输入保护的隐私保护机器学习框架",
+      "llm_tldr_en": "Introduces Informationally Compressive Anonymization for privacy-preserving supervised machine learning.",
+      "llm_tldr_cn": "引入信息压缩匿名化技术，用于隐私保护的有监督机器学习。",
+      "llm_tldr": "引入信息压缩匿名化技术，用于隐私保护的有监督机器学习。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Privacy-preserving machine learning and the right to be forgotten",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2603.13570v1",
+      "title": "Privacy-Preserving Machine Learning for IoT: A Cross-Paradigm Survey and Future Roadmap",
+      "abstract": "The rapid proliferation of the Internet of Things has intensified demand for robust privacy-preserving machine learning mechanisms to safeguard sensitive data generated by large-scale, heterogeneous, and resource-constrained devices. Unlike centralized environments, IoT ecosystems are inherently decentralized, bandwidth-limited, and latency-sensitive, exposing privacy risks across sensing, communication, and distributed training pipelines. These characteristics render conventional anonymization and centralized protection strategies insufficient for practical deployments. This survey presents a comprehensive IoT-centric, cross-paradigm analysis of privacy-preserving machine learning. We introduce a structured taxonomy spanning perturbation-based mechanisms such as differential privacy, distributed paradigms such as federated learning, cryptographic approaches including homomorphic encryption and secure multiparty computation, and generative synthesis techniques based on generative adversarial networks. For each paradigm, we examine formal privacy guarantees, computational and communication complexity, scalability under heterogeneous device participation, and resilience against threats including membership inference, model inversion, gradient leakage, and adversarial manipulation. We further analyze deployment constraints in wireless IoT environments, highlighting trade-offs between privacy, communication overhead, model convergence, and system efficiency within next-generation mobile architectures. We also consolidate evaluation methodologies, summarize representative datasets and open-source frameworks, and identify open challenges including hybrid privacy integration, energy-aware learning, privacy-preserving large language models, and quantum-resilient machine learning.",
+      "authors": [
+        "Zakia Zaman",
+        "Praveen Gauravaram",
+        "Mahbub Hassan",
+        "Sanjay Jha",
+        "Wen Hu"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.CR"
+      ],
+      "published": "2026-03-13T20:19:18+00:00",
+      "link": "https://arxiv.org/pdf/2603.13570v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "survey of privacy-preserving machine learning and data protection",
+      "llm_evidence_cn": "隐私保护机器学习与数据保护综述",
+      "llm_evidence": "隐私保护机器学习与数据保护综述",
+      "canonical_evidence": "隐私保护机器学习与数据保护综述",
+      "llm_tldr_en": "Provides a comprehensive survey of privacy-preserving ML techniques relevant to data protection and privacy.",
+      "llm_tldr_cn": "全面综述了与数据保护和隐私相关的隐私保护机器学习技术。",
+      "llm_tldr": "全面综述了与数据保护和隐私相关的隐私保护机器学习技术。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Privacy-preserving machine learning and the right to be forgotten",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}
