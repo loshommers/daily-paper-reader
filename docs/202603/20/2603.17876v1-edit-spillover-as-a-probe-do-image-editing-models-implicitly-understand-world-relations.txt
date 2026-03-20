@@ -1,0 +1,460 @@
+Title: Edit Spillover as a Probe: Do Image Editing Models Implicitly Understand World Relations?
+
+URL Source: https://arxiv.org/pdf/2603.17876v1
+
+Published Time: Thu, 19 Mar 2026 01:30:00 GMT
+
+Number of Pages: 10
+
+Markdown Content:
+# Edit Spillover as a Probe: Do Image Editing Models Implicitly Understand World Relations? 
+
+Guandong Li iFLYTEK leeguandon@gmail.com Zhaobin Chu iFLYTEK 
+
+Abstract 
+
+Instruction-following image editing models are expected to modify only the specified region while keeping the rest of the image unchanged. However, in practice, we observe a pervasive phenomenon— edit spillover : models alter se-mantically related but unspecified content outside the edit region. This raises a fundamental question—does spillover reflect genuine implicit world understanding, or is it merely attention leakage? We propose EditSpilloverProbe , a systematic frame-work that repurposes edit spillover as a natural probe for world knowledge in image editing models. We introduce a spillover taxonomy (spatial, semantic, mixed, random), an automated detection-and-classification pipeline, and a benchmark dataset constructed from real-world Chinese text editing tasks, EditSpilloverBench. Systematic evaluation of 5 representative editing mod-els reveals three core findings: (1) spillover rates vary dramatically across architectures, from 3.49% to 11.46%, with a 3.3× ratio; (2) absolute semantic spillover quan-tity reveals models’ world understanding capability— nano banana produces the most semantic spillover (27.8 per image), while qwen 2511 has the most precise edit-ing control but lower semantic spillover (16.3 per image), revealing a trade-off between editing control and world understanding; (3) spatial decay analysis shows spillover area density decays exponentially with distance, but the proportion of semantically relevant spillover remains con-stant (40%–58%), providing direct evidence that semantic spillover reflects genuine world understanding rather than spatial diffusion. 
+
+1. Introduction 
+
+In recent years, instruction-following image editing based on diffusion models has made significant progress [3, 11, 18]. Models such as InstructPix2Pix [3] and Mag-icBrush [18] can modify images according to natural lan-guage instructions, faithfully executing editing operations while preserving irrelevant content. A core expectation is that models should only modify the specified content while keeping the rest of the image completely unchanged [7]. However, during a large-scale quality audit of the production-level text editing model Nano Banana Pro (200 images across 5 categories), we observed a systematic anomaly pattern: when instructing the model to replace text within a marked region, the model frequently modi-fied other text elements in the image that were semanti-cally related to the edit target but never mentioned in the instruction. For example, when modifying the shop name “Old Wang Noodle House” to “Xinhua Bookstore” on a signboard, the model not only completed the specified edit but also spontaneously changed “Old Wang Special Noo-dles” on a distant menu to “Xinhua Special Noodles”—even though the menu area was completely outside the edit box and not mentioned in the instruction. This phenomenon is not isolated. Across 200 test im-ages, nano banana’s average spillover rate reached 11.46%, meaning over one-tenth of pixels in non-edit regions were modified. More importantly, this spillover is not random noise—it exhibits clear semantic selectivity. This raises a fundamental question: does spillover reflect genuine implicit world understanding, or is it merely attention leakage? 
+
+To address this question, we revisit the nature of edit spillover in generative models. We argue that spillover should not be uniformly treated as an error to be eliminated, but rather as a diagnostic signal that can reveal what world knowledge the model has learned. Based on this insight, we propose EditSpilloverProbe , a systematic framework that repurposes edit spillover as a natural probe for world knowledge in image editing models. The core innovation of EditSpilloverProbe lies in decom-posing spillover into four types based on spatial distance and semantic relevance: spatial spillover (near + unre-lated, reflecting attention leakage), semantic spillover (far 1
+
+> arXiv:2603.17876v1 [cs.CV] 18 Mar 2026
+
++ related, reflecting world understanding), mixed spillover 
+
+(near + related, ambiguous), and random spillover (far + unrelated, noise). In text editing scenarios, seman-tic spillover captures three types of world knowledge: (1) brand consistency (co-occurrence of the same shop name on signboards and menus), (2) spatial co-occurrence patterns (distribution patterns of related text elements in scenes), (3) functional associations (associations within semantic fields such as price, date, and product name). To quantify world understanding, we introduce two complementary metrics: the World Understanding Score (WUS) , which measures the ratio of semantic to spatial spillover, and Semantic Spillover Density , which measures the absolute quantity of semantic spillover per image. Cru-cially, we find that absolute quantity better reflects models’ world knowledge activation capability than ratio-based met-rics, as the latter can be inflated for low-spillover models. In summary, the main contributions of this paper are: 1. Phenomenon Identification : Identify and formalize edit spillover, propose a 2 × 2 taxonomy (spatial dis-tance × semantic relevance) as a natural probe for world knowledge. 2. Automated Pipeline : Propose a detection-classification pipeline combining pixel-level difference detection, con-nected component analysis, and CLIP semantic similar-ity. 3. Benchmark Dataset : Construct EditSpilloverBench with 200 images across 5 categories for systematic spillover evaluation. 4. Empirical Findings : Reveal the inverse relationship be-tween spillover rate and WUS, exponential spatial decay, and distance-invariance of semantic spillover. 
+
+2. Related Work 
+
+2.1. World Models and Visual Reasoning 
+
+Whether generative models implicitly encode world knowledge has been a hot topic in recent years. MiniVeo3-Reasoner [16] demonstrates that video generation models can solve visual reasoning tasks (such as maze naviga-tion) through frame-by-frame generation, suggesting im-plicit world modeling capabilities. RISE-Video [6] system-atically evaluates video generators from the perspective of cognitive reasoning rather than visual fidelity, finding that some models can infer implicit physical rules. Our work extends this research direction from video gen-eration to image editing models, and adopts a fundamen-tally different probing strategy: we do not design explicit reasoning tasks, but rather use the spillover behavior spon-taneously produced by models during routine editing as a passive probe. The advantage of this approach is that it does not require special test case design—spillover is an inherent behavior of models during natural use. This passive probing paradigm is more suitable for evaluating black-box produc-tion models where internal states are inaccessible. 
+
+2.2. Image Editing Evaluation 
+
+Existing image editing evaluation mainly focuses on two dimensions: editing quality (whether instructions are faith-fully executed) and content preservation (whether irrelevant regions remain unchanged) [7]. PIE-Bench [7] provides a systematic evaluation framework for 10 types of editing tasks, covering object addition, removal, replacement, and attribute modification. EditWorld [17] trains editing mod-els to simulate world dynamics, focusing on making models 
+
+better at world-consistent editing by incorporating physical simulation. UniReason [14] aligns generation with world knowledge through multi-modal reasoning. Our perspective complements the above work: we do not evaluate what models “did right,” but rather analyze what models “did wrong”—unintended spillover. This “failure analysis” methodology has a long tradition in engineering (such as failure mode and effect analysis [12]), but this is the first systematic application in generative model evaluation. By reframing spillover from a bug to a diagnostic signal, we can extract insights about models’ implicit capabilities without requiring ground-truth annotations or task-specific benchmarks. 
+
+2.3. Neural Network Probing 
+
+Probing methodology has matured in NLP [2, 5, 13]. Be-linkov et al.’s survey [2] systematically summarizes meth-ods for extracting syntactic and semantic knowledge from pretrained language models using linear probes. The typ-ical approach is to freeze model parameters and train lightweight classifiers on intermediate representations to detect the presence of specific knowledge [1]. We adapt the probing paradigm to generative models, but use a different signal source: instead of analyzing the model’s internal representations, we analyze the model’s 
+
+external behavior (spillover patterns). The advantage of this behavior-level probing is that it does not require access to model internal states, making it suitable for black-box model evaluation [10]. Furthermore, behavior-level probing can reveal emergent capabilities that may not be explicitly encoded in any single layer’s representation, but rather arise from the interaction of multiple components during genera-tion. 
+
+3. Method 
+
+EditSpilloverProbe aims to systematically detect, clas-sify, and quantify edit spillover to probe models’ im-plicit world understanding. This section first provides an overview of the framework, then details the three core com-2ponents: spillover detection, spillover classification, and world understanding metrics. 
+
+3.1. Overview 
+
+Given an original image Iorig , an editing instruction, and an edit box B marking the target region, an editing model 
+
+M generates Igen . Our goal is to analyze changes outside 
+
+B to distinguish between architectural artifacts (attention leakage) and genuine world understanding (semantic asso-ciations). The EditSpilloverProbe framework consists of three stages: 1. Detection : Identify all spillover regions outside the edit box through pixel-level difference analysis and con-nected component extraction. 2. Classification : Classify each spillover region into one of four types (spatial, semantic, mixed, random) based on spatial distance and semantic similarity. 3. Quantification : Compute world understanding metrics (WUS and Semantic Density) to quantify the model’s implicit knowledge activation. The entire pipeline is fully automated and model-agnostic, requiring only the original image, generated im-age, and edit box as input. 
+
+3.2. Problem Formalization 
+
+Given an original image Iorig ∈ RH×W ×3, an image 
+
+Igen = M(Iorig , instruction ) generated by editing model 
+
+M, and an edit box B = ( xmin , y min , x max , y max ), we de-fine: • Edit Region ΩB : the set of pixels inside the edit box • Non-Edit Region Ω ¯B = Ω \ ΩB : all pixels outside the edit box • Spillover Map S(p) = ⊮[|Iorig (p) − Igen (p)| > τ ], p ∈
+
+Ω ¯B
+
+where τ is the pixel difference threshold. The spillover rate is defined as: SpillRate = |{ p ∈ Ω ¯B : S(p) = 1 }| |Ω ¯B | (1) 
+
+3.3. Spillover Detection Pipeline 
+
+The detection pipeline transforms the difference be-tween original and generated images into a structured set of spillover regions, consisting of the following steps: 
+
+Step 1: Pixel-level Difference Computation. Convert both images to grayscale and compute pixel-wise absolute differences. To suppress JPEG compression noise, apply Gaussian blur ( σ = 2 .0) to both images first. 
+
+Step 2: Binarization and Mask Exclusion. Apply threshold τ = 15 (on 0-255 scale) to the difference map to obtain a binary spillover map. Then exclude pixels inside edit box B, retaining only changes in the non-edit region. 
+
+Step 3: Connected Component Extraction. Perform connected component labeling (8-connectivity) on the bi-nary map to extract all connected regions. Filter out regions with area smaller than Amin = 100 pixels to exclude noise. 
+
+Step 4: Region Feature Computation. For each con-nected component Ri, compute: • Bounding box bbox i = ( xi
+
+> min
+
+, y i
+
+> min
+
+, x i
+
+> max
+
+, y i
+
+> max
+
+)
+
+• Centroid centroid i = (¯ xi, ¯yi)
+
+• Area area i (number of pixels) • Euclidean distance to edit box center di = ∥centroid i −
+
+center (B)∥2
+
+Step 5: Global Metrics. Compute SSIM (Structural Similarity) [15] for the non-edit region as a complementary measure of spillover severity. Optionally compute region-level LPIPS (perceptual distance) [19], but this is disabled by default due to high computational cost. 
+
+3.4. Spillover Classification 
+
+The detection pipeline outputs “where changes oc-curred,” while the classification stage answers “what these changes mean.” We classify each spillover region based on two orthogonal dimensions: 
+
+Dimension 1: Spatial Distance (Normalized). Normal-ize the distance from region centroid to edit box center by the edit box diagonal: 
+
+dnorm  
+
+> i
+
+= ∥centroid i − center (B)∥2
+
+diag (B) (2) where diag (B) = p(xmax − xmin )2 + ( ymax − ymin )2.Normalization makes edit boxes of different sizes compa-rable. 
+
+Dimension 2: Semantic Similarity. Use CLIP (ViT-L/14) [9] to compute cosine similarity between the edit re-gion crop and spillover region crop: 
+
+si = CLIP (crop (Igen , B )) · CLIP (crop (Igen , bbox i)) 
+
+∥CLIP (crop (Igen , B )) ∥ · ∥ CLIP (crop (Igen , bbox i)) ∥
+
+(3) When cropping, add 10-pixel padding to include context information. For efficiency, all region crops from the same image are batch-processed through CLIP inference at once, and the edit region feature is computed only once. 3Classification Rules. Given distance threshold α and semantic threshold β:class (Ri) = 
+
+
+
+spatial if dnorm  
+
+> i
+
+< α and si ≤ β
+
+semantic if dnorm  
+
+> i
+
+≥ α and si > β 
+
+mixed if dnorm  
+
+> i
+
+< α and si > β 
+
+random if dnorm  
+
+> i
+
+≥ α and si ≤ β
+
+(4) We set α = 1 .5 (i.e., 1.5 times the edit box diagonal as the near/far boundary) and β = 0 .80 .
+
+On the Choice of β = 0 .80 . This threshold is signifi-cantly higher than commonly used CLIP similarity thresh-olds (typically 0.2-0.3). The reason lies in the specificity of text editing scenarios: cropped text regions visually share strong features (font rendering, text layout, background tex-ture), resulting in a CLIP cosine similarity baseline of ap-proximately 0.78 between any two text region crops (sta-tistical mean from 5 models, 100K+ region pairs). If we used β = 0 .3, 100% of spillover regions would be judged as “semantically related,” completely losing discriminative power. β = 0.80 roughly corresponds to the median (P50) of the similarity distribution, effectively distinguish-ing “genuine semantic associations above baseline” from “baseline-level visual similarity.” We validate the robust-ness of this choice through ablation experiments in Sec. 6. 
+
+3.5. World Understanding Metrics 
+
+We define two complementary metrics to quantify a model’s implicit world knowledge: 
+
+World Understanding Score (WUS) : The ratio of se-mantic spillover to spatial spillover, measuring the “quality” of spillover: WUS = |{ Ri : class (Ri) = semantic }| |{ Ri : class (Ri) = spatial }| + ϵ (5) where ϵ = 0 .01 prevents division by zero. The intuitive meaning of WUS is: among the spillover produced by the model, how much is “meaningful” (semantically driven) vs. “meaningless” (attention leakage). 
+
+Design Considerations for WUS :• The numerator uses semantic rather than semantic + mixed, because the mixed type (close distance + semanti-cally related) cannot exclude the contribution of attention leakage • The denominator uses spatial rather than total regions, to directly measure the ratio of “understanding vs. leakage” rather than being diluted by random types • When total spillover regions < 5, WUS is unstable and should be marked as N/A                
+
+> Category Count Description
+> App Screenshots 54 Mobile app interfaces with struc-tured layout Normal Docs 23 Documents, posters with mixed text/images Others 13 Diverse scenarios Real Scenes 57 Photos with signboards, road signs Receipts 53 Invoices with high-density text Table 1. EditSpilloverBench dataset composition (200 images)
+
+Limitations of WUS : As a ratio metric, WUS can be in-flated for low-spillover models. For example, an extremely conservative model might produce only 10 spillover regions (8 semantic, 2 spatial), yielding WUS = 4.0, but this does not mean it “understands more” than a model producing 100 spillover regions (60 semantic, 40 spatial, WUS = 1.5)—the latter activates more semantic associations. 
+
+Semantic Spillover Density : Average number of se-mantic spillover regions per image, measuring the “quan-tity” of spillover: SemanticDensity = |{ Ri : class (Ri) = semantic }| 
+
+Nimages 
+
+(6) This metric directly reflects the model’s absolute abil-ity to activate semantic associations, unaffected by total spillover rate. High semantic density means the model fre-quently identifies and modifies semantically related content, demonstrating stronger world knowledge activation. 
+
+4. EditSpilloverBench 
+
+4.1. Data Source 
+
+We construct the benchmark from a production-level Chinese text editing quality audit dataset. The original data contains real-world scene images, each with bounding box annotations (marking text regions to be edited) and target replacement text. 
+
+4.2. Dataset Composition 
+
+EditSpilloverBench contains 200 images covering 5 cat-egories: 
+
+4.3. Controlled Test Groups 
+
+To systematically evaluate spillover behavior, we design three controlled test groups corresponding to three quad-rants of the 2 ×2 classification matrix: • Group A (Near + Unrelated) : Text semantically unre-lated to the edit target exists near the edit box. Expected to produce spatial spillover (attention leakage), should not produce semantic spillover. 4Model Architecture Rationale 
+
+Nano Banana Production text editor Spillover discovery source Qwen-2511 Dual-stream DiT High quality repre-sentative FireRed Qwen-based Architecture compari-son SeedReam 4.5 Large pretrained High spillover case WanX 2.6 Tongyi series Medium spillover case Table 2. Evaluated models 
+
+• Group B (Far + Related) : Text highly semantically re-lated to the edit target exists far from the image (e.g., the same shop name appearing in different locations). If the model has world understanding, expected to produce se-mantic spillover. • Group C (Far + Unrelated) : Baseline control group, only unrelated content exists in the distance. Expected to produce no spillover or only a small amount of random spillover. This design allows us to distinguish between attention leakage and world understanding mechanisms by compar-ing spillover patterns across Groups A/B/C. 
+
+5. Experiments 
+
+5.1. Experimental Setup 
+
+Evaluated Models. We select 5 representative image editing models covering different architectures and capabil-ity levels: 
+
+Evaluation Metrics. We report the following metrics: • Spill% (spillover rate): proportion of modified pixels in non-edit region, lower is better • SSIM (structural similarity): degree of structure preser-vation in non-edit region, higher is better • Spatial / Semantic / Mixed / Random : proportion of region counts for the four spillover types • WUS (World Understanding Score): ratio of seman-tic spillover to spatial spillover, higher indicates more “meaningful” spillover 
+
+Implementation Details. Detection parameters: Gaus-sian blur σ = 2 .0, pixel threshold τ = 15 , minimum region area Amin = 100 . Classification parameters: α = 1 .5,
+
+β = 0 .80 , CLIP model ViT-L/14. Concurrency configu-ration: 8 threads, 8 GPUs (A100 80GB), batch CLIP in-ference (batch size=64). Full evaluation (5 models × 200 images) takes approximately 24 minutes. Spillover Rate  
+
+> Spatial Ratio
+> Semantic Ratio
+> Mixed Ratio
+> Intensity
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> Spillover Profile Comparison nano_banana
+> seedream45
+> firered
+> wanx26
+> qwen_2511
+> spillover
+
+Figure 1. Cross-model comparison radar chart. Models exhibit different trade-offs between spillover control (SSIM, low Spill%) and world understanding (WUS, Semantic Density). 
+
+5.2. Main Results 
+
+Table 3 shows the complete spillover analysis results for 5 models ( β = 0 .80 , α = 1 .5). From Tab. 3 and Fig. 1, we extract the following key observations: 
+
+Observation 1: Spillover rates vary significantly across models. Spillover rates range from 3.49% (qwen 2511) to 11.46% (nano banana), with a 3.3 × ratio between highest and lowest. This difference far exceeds random fluctuation, reflecting fundamental differences in edit region constraint capabilities across model architec-tures. Notably, while seedream45’s spillover rate (11.12%) is close to nano banana’s, its average number of spillover regions is 2.7 times higher (240.8 vs. 89.0), and total spillover area is 3.8 times higher (438,224 vs. 116,197 pix-els), indicating that seedream45’s spillover is more diffuse and fragmented, while nano banana’s spillover is more con-centrated. 
+
+Observation 2: Semantic spillover density reveals dif-ferences in world understanding capability. This is one of the most important findings of this paper. Sorted by semantic spillover density: seedream45 (64.3) > wanx26 (36.2) > firered (29.0) > nano banana (27.8) > qwen 2511 (16.3). However, considering that seedream45’s spillover is extremely fragmented (240.8 regions/image) and has the highest proportion of random spillover (45.1%), its high density mainly stems from noise rather than genuine seman-tic understanding. Excluding seedream45, nano banana demonstrates the strongest world understanding activation capability :• Semantic spillover density 27.8, highest among non-fragmented models 5Model Imgs Spill% ↓ SSIM ↑ Regions Spat. Sem. Mix. Rand. WUS Sem.Cnt Sem.Den. ↑
+
+nano banana 200 11.46 0.869 89.0 17.5 31.2 12.9 38.3 1.69 5561 27.8 
+
+seedream45 198 11.12 0.864 240.8 21.1 26.7 7.0 45.1 1.21 12730 64.3 
+
+firered 200 7.55 0.901 79.6 12.9 36.4 15.0 35.7 2.62 5796 29.0 
+
+wanx26 192 6.92 0.894 104.5 15.8 34.6 14.6 34.9 2.06 6950 36.2 
+
+qwen 2511 198 3.49 0.942 40.2 9.4 40.5 11.2 38.9 3.87 3222 16.3 Table 3. Spillover analysis results. Spill%: spillover rate (%), Spat./Sem./Mix./Rand.: spillover type proportions (%), Sem.Cnt: total semantic regions, Sem.Den.: semantic density (regions/image). 
+
+• Semantic spillover proportion 31.2%, absolute count 5561 • More concentrated spillover (89.0 regions/image vs. see-dream45’s 240.8), indicating targeted semantic activation In contrast, while qwen 2511 has the highest WUS (3.87), this is mainly because its total spillover is min-imal (3.49%), causing the ratio to be inflated. Its se-mantic spillover density is only 16.3, less than 60% of nano banana’s, indicating it is most precise in editing con-trol but activates fewer semantic associations. 
+
+Observation 3: Trade-off between editing control and world understanding activation. qwen 2511 has the highest SSIM (0.942) and lowest spillover rate (3.49%), making it the most precise editing control model. But its semantic spillover density is lowest (16.3), indicating it tends toward a conservative strategy—strictly limiting the edit region and reducing semantic association activa-tion. nano banana exhibits opposite characteristics: higher spillover rate (11.46%) accompanied by strongest seman-tic activation (27.8 density), indicating it more actively identifies and modifies semantically related content. This trade-off reflects differences in model training objectives: qwen 2511 optimizes content preservation, nano banana optimizes semantic consistency. 
+
+5.3. Spatial Decay Analysis 
+
+To distinguish between attention leakage and world understanding spillover mechanisms, we analyze how spillover intensity decays with distance from the edit box. 
+
+Method. Divide normalized distance dnorm into 7 bins: [0, 0.5), [0.5, 1.0), [1.0, 1.5), [1.5, 2.0), [2.0, 3.0), [3.0, 5.0), [5.0, 10.0). For each bin, compute spillover area density : total area of all spillover regions in that bin di-vided by the annular area corresponding to that distance bin ( π(r2 
+
+> outer
+
+− r2
+
+> inner
+
+)), to eliminate bias from larger areas at greater distances. 
+
+Finding 1: Most models exhibit approximately expo-nential decay. nano banana’s decay is the steepest: from near distance to 2-3 × distance it drops to 5.8%, and at 5-10 × distance only 0.5% remains, a decay of approxi-mately 200 × (see Fig. 2). This exponential decay pattern 0 1 2 3 4 5 6 7       
+
+> Normalized Distance from Edit Box
+> 10 3
+> Mean Spillover Area (pixels)
+> Spillover Intensity vs. Distance
+> firered_output
+> nano_banana
+> qwen_2511
+> seedream45
+> wanx26
+> 01234567
+> Normalized Distance from Edit Box
+> 0
+> 2000
+> 4000
+> 6000
+> 8000
+> Number of Spillover Regions
+> Spillover Region Count vs. Distance
+> firered_output
+> nano_banana
+> qwen_2511
+> seedream45
+> wanx26
+
+Figure 2. Spillover area density decay with distance. All models exhibit exponential decay, with nano banana showing the steepest decline (200 × from near to far distance). 
+
+is consistent with the spatial locality of attention mecha-nisms—attention weights decrease rapidly with distance, causing spatial diffusion of the edit signal to decay expo-nentially. 
+
+Finding 2: Decay rates vary by model. nano banana decays fastest, seedream45 and firered are intermediate, wanx26 is slower, and qwen 2511 is slowest. Notably, qwen 2511’s density at 0.5-1.0 × distance is actually higher 
+
+than at near distance (216.7%). This anomaly may be because qwen 2511’s near-distance spillover is effectively suppressed (total spillover rate only 3.49%), making the small amount of mid-distance spillover appear relatively prominent after normalization. 
+
+Finding 3: Semantic spillover proportion is distance-invariant (key evidence). We further analyze the propor-tion of semantically relevant spillover ( si > β ) within each distance bin (Tab. 5 and Fig. 3): nano banana’s semantic proportion fluctuates between 39%–53%, qwen 2511 between 49%–58%, both without clear distance-dependent trends. The implication of this re-sult is profound: • Attention leakage (spatial spillover) decays exponen-tially with distance—this is a physical property of the ar-chitecture • The proportion of semantic spillover remains constant across distance bins—this means semantic spillover is not driven by spatial proximity The decoupling of these two provides direct evidence: semantic spillover reflects internal semantic association ac-6Distance nano banana seedream45 firered wanx26 qwen 2511 
+
+0–0.5 × 100 100 100 100 100 0.5–1.0 × 38.4 65.4 70.9 94.8 216.7 1.0–1.5 × 19.5 41.3 45.6 62.4 102.8 1.5–2.0 × 12.8 21.8 24.5 38.4 64.3 2.0–3.0 × 5.8 15.0 16.7 21.6 50.5 3.0–5.0 × 2.1 5.7 4.8 6.6 21.3 5.0–10.0 × 0.5 1.8 1.5 1.6 5.7 Table 4. Spillover area density decay with distance (normalized to near distance = 100%). Distance is measured in multiples of edit box diagonal. 0.0 0.2 0.4 0.6 0.8 1.0                
+
+> CLIP Semantic Similarity
+> 0
+> 2
+> 4
+> 6
+> 8
+> 10
+> Density
+> Spatial (Attention Leakage)
+> firered_output (n=2054)
+> nano_banana (n=3117)
+> qwen_2511 (n=752)
+> seedream45 (n=10075)
+> wanx26 (n=3172)
+> 0.0 0.2 0.4 0.6 0.8 1.0
+> CLIP Semantic Similarity
+> 0
+> 2
+> 4
+> 6
+> 8
+> 10
+> 12
+> 14
+> Density
+> Semantic (World Understanding)
+> firered_output (n=5796)
+> nano_banana (n=5561)
+> qwen_2511 (n=3222)
+> seedream45 (n=12730)
+> wanx26 (n=6950)
+> 0.0 0.2 0.4 0.6 0.8 1.0
+> CLIP Semantic Similarity
+> 0
+> 2
+> 4
+> 6
+> 8
+> 10
+> 12
+> 14
+> Density
+> Mixed
+> firered_output (n=2381)
+> nano_banana (n=2302)
+> qwen_2511 (n=890)
+> seedream45 (n=3360)
+> wanx26 (n=2935)
+> 0.0 0.2 0.4 0.6 0.8 1.0
+> CLIP Semantic Similarity
+> 0
+> 2
+> 4
+> 6
+> 8
+> 10
+> 12
+> Density
+> Random (Noise)
+> firered_output (n=5686)
+> nano_banana (n=6824)
+> qwen_2511 (n=3095)
+> seedream45 (n=21511)
+> wanx26 (n=7015)
+
+Figure 3. Semantic spillover proportion remains constant across distances (39%–58%), providing direct evidence that semantic spillover is not driven by spatial proximity. 
+
+Distance nano banana qwen 2511 
+
+0–0.5 × 53.2 58.5 0.5–1.0 × 42.4 56.4 1.0–1.5 × 39.0 51.1 1.5–2.0 × 38.7 50.9 2.0–3.0 × 46.5 52.5 3.0–5.0 × 41.7 48.6 5.0–10.0 × 48.6 49.3 Table 5. Semantic spillover proportion (%) by distance 
+
+tivation in the model, not spatial diffusion of attention. When a model modifies semantically related content in the distance, it is not because “attention leaked there,” but be-cause it “understood the relationship between that content and the edit target.” 
+
+5.4. Quality-Spillover Trade-off 
+
+Table 3 reveals a counterintuitive pattern: spillover rate and WUS exhibit an inverse relationship. We conduct a deeper analysis of this. 
+
+Spillover “quality” matters more than “quantity.” 
+
+qwen 2511 has the lowest spillover rate (3.49%), but when it does produce spillover, 40.5% is semantic (far distance + semantically related), and only 9.4% is spatial (near dis-tance + semantically unrelated). In contrast, seedream45 has the highest spillover rate (11.12%), but 21.1% of its spillover is spatial, 26.7% is semantic, and 45.1% is ran-dom—much of the spillover is “meaningless.” 
+
+Mechanistic explanation of this trade-off. We hy-pothesize that models with stronger editing control (such as qwen 2511) learned more precise edit region constraints during training, effectively suppressing spatial leakage of attention. But semantic associations are deeper fea-tures—they are encoded in the model’s semantic represen-tations and are not easily eliminated by simple spatial con-straints. Therefore, models with better control “filter out” spatial leakage but “preserve” semantic associations, result-ing in higher WUS. 
+
+Practical implications. This finding has direct guidance for model development: if the goal is to reduce spillover, fo-cus should be on suppressing spatial leakage (e.g., improv-ing spatial locality of attention), rather than indiscriminately suppressing all changes in non-edit regions—the latter may simultaneously suppress valuable semantic consistency. 
+
+6. Ablation Study 
+
+Our classification framework relies on two key hyper-parameters: semantic threshold β (CLIP cosine similarity threshold) and distance threshold factor α (spatial distance threshold = α× edit box diagonal). This section validates the robustness of our core conclusions to these two param-eters. 
+
+6.1. Impact of Semantic Threshold β
+
+We test across β ∈ { 0.70 , 0.75 , 0.80 , 0.85 , 0.90 } with fixed α = 1 .5.7β nano seed fire wanx qwen                                                                              
+
+> 0.70 8.38 9.13 17.09 15.72 25.67 0.75 3.81 3.35 7.16 5.71 10.79 0.80 1.69 1.21 2.62 2.06 3.87 0.85 0.66 0.44 0.88 0.71 1.49 0.90 0.21 0.13 0.37 0.25 0.66 Table 6. WUS values under different β(α= 1 .5)
+> Model Spat. Sem. Mix. Rand.
+> nano banana 17.5 31.2 12.9 38.3 seedream45 21.1 26.7 7.0 45.1 firered 12.9 36.4 15.0 35.7 wanx26 15.8 34.6 14.6 34.9 qwen 2511 9.4 40.5 11.2 38.9 Table 7. Classification distribution (%) at β= 0 .80
+> αnano seed fire wanx qwen
+> 1.0 3.42 2.45 5.36 4.36 8.03 1.5 1.69 1.21 2.62 2.06 3.87 2.0 1.05 0.78 1.60 1.33 2.35 Table 8. WUS values under different α(β= 0 .80 )
+
+WUS ranking is completely consistent across all β
+
+values : qwen 2511 > firered > wanx26 > nano banana 
+
+> seedream45. This stability indicates that our core find-ing—the inverse relationship between spillover rate and WUS—does not depend on specific threshold choices. 
+
+Rationale for β selection. We choose β = 0 .80 as the default value for the following reasons: (1) In text editing scenarios, CLIP’s baseline similarity for text crops is high (mean 0.78–0.81); too low a threshold (e.g., 0.30) would classify almost all regions as “semantically related,” losing discriminative power; (2) β = 0 .80 is approximately at the median (P50) of the CLIP similarity distribution, effectively distinguishing high-similarity from low-similarity regions; (3) At this threshold, the distribution of the four spillover types is relatively balanced, avoiding extreme skew. 
+
+6.2. Impact of Distance Threshold Factor α
+
+We test across α ∈ { 1.0, 1.5, 2.0} with fixed β = 0 .80 .WUS ranking is also completely consistent across all α
+
+values. Changes in α mainly affect the absolute value of WUS (smaller α means narrower “near distance” range, more regions classified as “far distance,” overall WUS in-creases), but do not change the relative ordering between models. 
+
+6.3. Summary 
+
+Ablation experiments show that our core find-ings—qwen 2511 has the highest WUS, seedream45 the lowest, and spillover rate and WUS exhibit an in-verse relationship—remain stable across a wide range of β ∈ [0 .70 , 0.90] and α ∈ [1 .0, 2.0] . This robustness strengthens our confidence in the conclusions: differences in world understanding capabilities between models are real, not artifacts of threshold selection. 
+
+7. Discussion 
+
+7.1. Limitations 
+
+Scenario Coverage. The current EditSpilloverBench only covers Chinese text editing scenarios (5 categories: app screenshots, normal scenes, receipts, real photos, oth-ers). The spillover taxonomy we proposed in Sec. 4 en-compasses dimensions such as physical consistency (light-ing/shadows), causal understanding (seasonal/temporal changes), and cultural common sense (brand/regional styles), but these dimensions have not yet been validated in experiments. Extending the framework to these scenar-ios requires constructing corresponding test datasets, which is important future work. 
+
+Proxy Indicator for Semantic Relevance. We use CLIP cosine similarity as a measure of “semantic rele-vance.” While CLIP excels at vision-language alignment, it captures visual appearance-level similarity and may not fully reflect deep semantic relationships (such as causal or functional relationships). For example, the similarity be-tween “signboard” and “menu” in CLIP space may be lower than between “signboard” and “another signboard,” even though the former semantic association is more meaningful. Future work could explore using multimodal large language models (such as GPT-4V) for more fine-grained semantic relationship judgments. 
+
+Limitations of Pixel-level Detection. Our detection pipeline is based on pixel-level differences and is sensi-tive to JPEG compression artifacts. Although we perform denoising through Gaussian blur ( σ = 2 .0) and minimum area filtering (100 pixels), false positives may still occur on highly compressed images. Additionally, pixel-level differ-ences cannot capture semantic-level changes (such as text replacements where color remains unchanged but mean-ing changes), which require higher-level detection methods such as OCR. 
+
+Model Coverage. We evaluated 5 representative mod-els covering different architectures and training strategies. However, image editing models are developing rapidly, and new models (such as DiT architecture-based editing mod-els) may exhibit different spillover patterns. Our framework is designed to be model-agnostic and can be directly applied to evaluation of new models. 87.2. Mechanistic Explanation of Semantic Spillover 
+
+The semantic spillover phenomenon we ob-serve—models modifying semantically related but unspecified content in the distance—may originate from the interaction between cross-attention and self-attention in diffusion models. In U-Net or DiT-based diffusion models, text conditions are injected into image features through cross-attention [4, 8]. When an editing instruction involves a specific semantic concept (such as “shop name”), cross-attention may acti-vate all regions in the image related to that concept—not only the target region inside the edit box, but also semanti-cally related regions in the distance (such as related text on a menu). Subsequently, self-attention propagates information between these activated regions, causing distant regions to also be modified. This mechanistic explanation accounts for why semantic spillover is distance-invariant: cross-attention activation is based on semantic matching rather than spatial proximity, so semantically related regions may be activated regardless of distance. In contrast, spatial spillover is primarily driven by the spatial locality of self-attention, and therefore decays exponentially with distance. 
+
+7.3. Implications for Model Development 
+
+Our findings have the following implications for the de-velopment and evaluation of image editing models: 
+
+Spillover should not be indiscriminately suppressed. 
+
+Traditional evaluation treats all changes in non-edit re-gions as “errors.” Our analysis shows that some spillover (semantic type) actually reflects the model’s understand-ing of world relationships and is a valuable capability sig-nal. Future evaluation frameworks should distinguish be-tween “harmful spillover” (spatial leakage) and “beneficial spillover” (semantic consistency). 
+
+Editing control and world understanding can coexist. 
+
+The case of qwen 2511 shows that low spillover rate and high WUS can be achieved simultaneously. This suggests an ideal state of “precise editing” exists: the model strictly controls the edit region but can make semantically consis-tent global adjustments when necessary. 
+
+WUS can serve as a complementary metric for model selection. Among models with similar editing quality, WUS provides an additional evaluation dimension: higher WUS means the model has stronger implicit world under-standing capabilities and may perform better on editing tasks requiring global consistency. 
+
+8. Conclusion 
+
+We propose EditSpilloverProbe, a systematic framework that repurposes the “edit spillover” phenomenon in image editing models as a probe for world knowledge. By intro-ducing a 2 ×2 spillover taxonomy (spatial distance × se-mantic relevance) and two complementary metrics (WUS and semantic spillover density), we transform spillover from a “bug” that needs to be eliminated into a diagnostic signal that can be quantitatively analyzed. Systematic evaluation of 5 representative editing models yields three core findings: 1. Spillover rates vary significantly across models 
+
+(3.49%–11.46%, 3.3 × difference), and are closely re-lated to model architecture and training strategies. 2. Trade-off between editing control and world un-derstanding activation —qwen 2511 demonstrates the strongest editing control (spillover rate 3.49%, SSIM 0.942) but lowest semantic spillover density (16.3/im-age); nano banana, as a production-grade model, demonstrates the strongest world understanding activa-tion capability (semantic spillover density 27.8/image, absolute count 5561), but with higher total spillover rate (11.46%). This trade-off reveals the opposition between two optimization objectives: content preservation vs. semantic consistency. Our analysis shows that abso-lute semantic spillover quantity better reflects mod-els’ world knowledge activation capability than WUS ratio .3. Semantic spillover proportion is distance-invariant —although total spillover area decays exponentially with distance (consistent with atten-tion leakage), the proportion of semantically relevant spillover remains constant across distance bins (40%– 58%), providing direct evidence that semantic spillover reflects genuine world understanding rather than spatial diffusion. Our methodology—using models’ unintended behavior as a passive probe—provides a new paradigm for capability evaluation of generative models. Unlike traditional task-design-based evaluation, behavior-level probing does not require special test cases, is applicable to black-box mod-els, and can reveal implicit capabilities of models during natural use. In the future, we plan to extend this framework to broader world knowledge dimensions such as physical consistency and causal understanding, and explore its appli-cations in domains such as video editing and 3D generation. 
+
+References 
+
+[1] Guillaume Alain and Yoshua Bengio. Understand-ing intermediate layers using linear classifier probes. 
+
+arXiv preprint arXiv:1610.01644 , 2016. [2] Yonatan Belinkov. Probing classifiers: Promises, shortcomings, and advances. Computational Linguis-tics , 48(1):207–219, 2022. 9[3] Tim Brooks, Aleksander Holynski, and Alexei A Efros. Instructpix2pix: Learning to follow image edit-ing instructions. In Proceedings of the IEEE/CVF con-ference on computer vision and pattern recognition ,pages 18392–18402, 2023. [4] Amir Hertz, Ron Mokady, Jay Tenenbaum, Kfir Aber-man, Yael Pritch, and Daniel Cohen-Or. Prompt-to-prompt image editing with cross attention control. 
+
+arXiv preprint arXiv:2208.01626 , 2022. [5] John Hewitt and Christopher D Manning. A struc-tural probe for finding syntax in word representations. In Proceedings of the 2019 Conference of the North American Chapter of the Association for Computa-tional Linguistics: Human Language Technologies, Volume 1 (Long and Short Papers) , pages 4129–4138, 2019. [6] Mingxin Liu, Shuran Ma, Shibei Meng, Xiangyu Zhao, Zicheng Zhang, Shaofeng Zhang, Zhihang Zhong, Peixian Chen, Haoyu Cao, Xing Sun, et al. Rise-video: Can video generators decode implicit world rules? arXiv preprint arXiv:2602.05986 , 2026. [7] Yiwei Ma, Jiayi Ji, Ke Ye, Weihuang Lin, Zhibin Wang, Yonghan Zheng, Qiang Zhou, Xiaoshuai Sun, and Rongrong Ji. I2ebench: A comprehensive bench-mark for instruction-based image editing. Advances in Neural Information Processing Systems , 37:41494– 41516, 2024. [8] Ron Mokady, Amir Hertz, Kfir Aberman, Yael Pritch, and Daniel Cohen-Or. Null-text inversion for editing real images using guided diffusion models. In Pro-ceedings of the IEEE/CVF conference on computer vi-sion and pattern recognition , pages 6038–6047, 2023. [9] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sas-try, Amanda Askell, Pamela Mishkin, Jack Clark, et al. Learning transferable visual models from natural language supervision. In International conference on machine learning , pages 8748–8763. PmLR, 2021. [10] Marco Tulio Ribeiro, Tongshuang Wu, Carlos Guestrin, and Sameer Singh. Beyond accuracy: Be-havioral testing of nlp models with checklist. In Pro-ceedings of the 58th annual meeting of the associa-tion for computational linguistics , pages 4902–4912, 2020. [11] Robin Rombach, Andreas Blattmann, Dominik Lorenz, Patrick Esser, and Bj¨ orn Ommer. High-resolution image synthesis with latent diffusion mod-els. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 10684–10695, 2022. [12] Helmut Schneider. Failure mode and effect analysis: Fmea from theory to execution, 1996. [13] Ian Tenney, Dipanjan Das, and Ellie Pavlick. Bert re-discovers the classical nlp pipeline. In Proceedings of the 57th annual meeting of the association for compu-tational linguistics , pages 4593–4601, 2019. [14] Dianyi Wang, Chaofan Ma, Feng Han, Size Wu, Wei Song, Yibin Wang, Zhixiong Zhang, Tianhang Wang, Siyuan Wang, Zhongyu Wei, et al. Unireason 1.0: A unified reasoning framework for world knowledge aligned image generation and editing. arXiv preprint arXiv:2602.02437 , 2026. [15] Zhou Wang, Alan C Bovik, Hamid R Sheikh, and Eero P Simoncelli. Image quality assessment: from error visibility to structural similarity. IEEE transac-tions on image processing , 13(4):600–612, 2004. [16] Jialong Wu, Tianhao Huang, Changjing He, and Mingsheng Long. Miniveo3-reasoner: Thinking with videos from open-source priors. https:// github . com / thuml / MiniVeo3 - Reasoner ,2025. [17] Bohan Zeng, Ling Yang, Jiaming Liu, Minghao Xu, Yuanxing Zhang, Pengfei Wan, Wentao Zhang, and Shuicheng Yan. Editworld: Simulating world dynam-ics for instruction-following image editing. In Pro-ceedings of the 33rd ACM International Conference on Multimedia , pages 12674–12681, 2025. [18] Kai Zhang, Lingbo Mo, Wenhu Chen, Huan Sun, and Yu Su. Magicbrush: A manually annotated dataset for instruction-guided image editing. Advances in Neu-ral Information Processing Systems , 36:31428–31449, 2023. [19] Richard Zhang, Phillip Isola, Alexei A Efros, Eli Shechtman, and Oliver Wang. The unreasonable ef-fectiveness of deep features as a perceptual metric. In 
+
+Proceedings of the IEEE conference on computer vi-sion and pattern recognition , pages 586–595, 2018. 10

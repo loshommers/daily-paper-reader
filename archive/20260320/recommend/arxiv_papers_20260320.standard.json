@@ -1,0 +1,316 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-03-20T19:49:41.679950+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 5,
+    "deep_cap": 6,
+    "deep_selected": 5,
+    "quick_candidates": 3,
+    "quick_skim_target": 11,
+    "quick_selected": 3
+  },
+  "deep_dive": [
+    {
+      "id": "2603.11266v1",
+      "title": "The Unlearning Mirage: A Dynamic Framework for Evaluating LLM Unlearning",
+      "abstract": "Unlearning in Large Language Models (LLMs) aims to enhance safety, mitigate biases, and comply with legal mandates, such as the right to be forgotten. However, existing unlearning methods are brittle: minor query modifications, such as multi-hop reasoning and entity aliasing, can recover supposedly forgotten information. As a result, current evaluation metrics often create an illusion of effectiveness, failing to detect these vulnerabilities due to reliance on static, unstructured benchmarks. We propose a dynamic framework that stress tests unlearning robustness using complex structured queries. Our approach first elicits knowledge from the target model (pre-unlearning) and constructs targeted probes, ranging from simple queries to multi-hop chains, allowing precise control over query difficulty. Our experiments show that the framework (1) shows comparable coverage to existing benchmarks by automatically generating semantically equivalent Q&A probes, (2) aligns with prior evaluations, and (3) uncovers new unlearning failures missed by other benchmarks, particularly in multi-hop settings. Furthermore, activation analyses show that single-hop queries typically follow dominant computation pathways, which are more likely to be disrupted by unlearning methods. In contrast, multi-hop queries tend to use alternative pathways that often remain intact, explaining the brittleness of unlearning techniques in multi-hop settings. Our framework enables practical and scalable evaluation of unlearning methods without the need for manual construction of forget test sets, enabling easier adoption for real-world applications. We release the pip package and the code at https://sites.google.com/view/unlearningmirage/home.",
+      "authors": [
+        "Raj Sanjay Shah",
+        "Jing Huang",
+        "Keerthiram Murugesan",
+        "Nathalie Baracaldo",
+        "Diyi Yang"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-03-11T19:51:33+00:00",
+      "link": "https://arxiv.org/pdf/2603.11266v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "Dynamic framework for evaluating LLM unlearning robustness",
+      "llm_evidence_cn": "评估大语言模型遗忘鲁棒性的动态框架",
+      "llm_evidence": "评估大语言模型遗忘鲁棒性的动态框架",
+      "canonical_evidence": "评估大语言模型遗忘鲁棒性的动态框架",
+      "llm_tldr_en": "Introduces a dynamic framework to stress test the effectiveness and robustness of LLM unlearning methods.",
+      "llm_tldr_cn": "引入一个动态框架，用于压力测试大语言模型遗忘方法的有效性和鲁棒性。",
+      "llm_tldr": "引入一个动态框架，用于压力测试大语言模型遗忘方法的有效性和鲁棒性。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "State of the art methods for machine unlearning and concept erasure",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.14343v1",
+      "title": "Localizing and Editing Knowledge in Large Audio-Language Models",
+      "abstract": "Large Audio-Language Models (LALMs) have shown strong performance in speech understanding, making speech a natural interface for accessing factual information. Yet they are trained on static corpora and may encode incorrect facts. Existing model editing methods localize and update facts in text-only LLMs, but do not account for continuous speech representations, or where knowledge is stored across acoustic or language modules, or their cross-modal module. We construct the first audio benchmark for knowledge localization and editing in LALMs and propose a speech-driven locate-then-edit framework. First, we use speech-aware causal tracing to localize layers and modules that support factual retrieval and then apply editing at identified sites. Experiments show that factual knowledge is jointly encoded in audio and text modules, and that audio editing yields more effective updates than text editing or fine-tuning, enabling fine-grained knowledge control in speech AI systems.",
+      "authors": [
+        "Sung Kyun Chung",
+        "Jiaheng Dong",
+        "Qiuchi Hu",
+        "Gongping Huang",
+        "Hong Jia",
+        "Ting Dang"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-03-15T12:24:12+00:00",
+      "link": "https://arxiv.org/pdf/2603.14343v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "knowledge localization and editing in audio-language models",
+      "llm_evidence_cn": "音频语言模型中的知识定位与编辑",
+      "llm_evidence": "音频语言模型中的知识定位与编辑",
+      "canonical_evidence": "音频语言模型中的知识定位与编辑",
+      "llm_tldr_en": "Proposes a framework to localize and edit factual knowledge within Large Audio-Language Models.",
+      "llm_tldr_cn": "提出了一个在大型音频语言模型中定位和编辑事实知识的框架。",
+      "llm_tldr": "提出了一个在大型音频语言模型中定位和编辑事实知识的框架。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Model editing for knowledge update and correction",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.18767v1",
+      "title": "A Concept is More Than a Word: Diversified Unlearning in Text-to-Image Diffusion Models",
+      "abstract": "Concept unlearning has emerged as a promising direction for reducing the risks of harmful content generation in text-to-image diffusion models by selectively erasing undesirable concepts from a model's parameters. Existing approaches typically rely on keywords to identify the target concept to be unlearned. However, we show that this keyword-based formulation is inherently limited: a visual concept is multi-dimensional, can be expressed in diverse textual forms, and often overlap with related concepts in the latent space, making keyword-only unlearning, which imprecisely indicate the target concept is brittle and prone to over-forgetting. This occurs because a single keyword represents only a narrow point estimate of the concept, failing to cover its full semantic distribution and entangled variations in the latent space. To address this limitation, we propose Diversified Unlearning, a distributional framework that represents a concept through a set of contextually diverse prompts rather than a single keyword. This richer representation enables more precise and robust unlearning. Through extensive experiments across multiple benchmarks and state-of-the-art baselines, we demonstrate that integrating Diversified Unlearning as an add-on component into existing unlearning pipelines consistently achieves stronger erasure, better retention of unrelated concepts, and improved robustness against adversarial recovery attacks.",
+      "authors": [
+        "Duc Hao Pham",
+        "Van Duy Truong",
+        "Duy Khanh Dinh",
+        "Tien Cuong Nguyen",
+        "Dien Hy Ngo",
+        "Tuan Anh Bui"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-03-19T11:20:40+00:00",
+      "link": "https://arxiv.org/pdf/2603.18767v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "diversified unlearning for selective concept erasure",
+      "llm_evidence_cn": "用于选择性概念擦除的多样化遗忘技术",
+      "llm_evidence": "用于选择性概念擦除的多样化遗忘技术",
+      "canonical_evidence": "用于选择性概念擦除的多样化遗忘技术",
+      "llm_tldr_en": "Addresses keyword-based unlearning limitations by proposing a diversified approach for robust concept erasure.",
+      "llm_tldr_cn": "针对关键词遗忘的局限性，提出了一种多样化的方法来实现更稳健的概念擦除。",
+      "llm_tldr": "针对关键词遗忘的局限性，提出了一种多样化的方法来实现更稳健的概念擦除。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Selective forgetting in neural networks",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.18570v1",
+      "title": "Attack by Unlearning: Unlearning-Induced Adversarial Attacks on Graph Neural Networks",
+      "abstract": "Graph neural networks (GNNs) are widely used for learning from graph-structured data in domains such as social networks, recommender systems, and financial platforms. To comply with privacy regulations like the GDPR, CCPA, and PIPEDA, approximate graph unlearning, which aims to remove the influence of specific data points from trained models without full retraining, has become an increasingly important component of trustworthy graph learning. However, approximate unlearning often incurs subtle performance degradation, which may incur negative and unintended side effects. In this work, we show that such degradations can be amplified into adversarial attacks. We introduce the notion of \\textbf{unlearning corruption attacks}, where an adversary injects carefully chosen nodes into the training graph and later requests their deletion. Because deletion requests are legally mandated and cannot be denied, this attack surface is both unavoidable and stealthy: the model performs normally during training, but accuracy collapses only after unlearning is applied. Technically, we formulate this attack as a bi-level optimization problem: to overcome the challenges of black-box unlearning and label scarcity, we approximate the unlearning process via gradient-based updates and employ a surrogate model to generate pseudo-labels for the optimization. Extensive experiments across benchmarks and unlearning algorithms demonstrate that small, carefully designed unlearning requests can induce significant accuracy degradation, raising urgent concerns about the robustness of GNN unlearning under real-world regulatory demands. The source code will be released upon paper acceptance.",
+      "authors": [
+        "Jiahao Zhang",
+        "Yilong Wang",
+        "Suhang Wang"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.CR"
+      ],
+      "published": "2026-03-19T07:30:28+00:00",
+      "link": "https://arxiv.org/pdf/2603.18570v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "approximate graph unlearning and its adversarial side effects",
+      "llm_evidence_cn": "近似图遗忘及其对抗性副作用",
+      "llm_evidence": "近似图遗忘及其对抗性副作用",
+      "canonical_evidence": "近似图遗忘及其对抗性副作用",
+      "llm_tldr_en": "Investigates how approximate unlearning in GNNs can be exploited to induce adversarial attacks.",
+      "llm_tldr_cn": "研究了图神经网络中的近似遗忘如何被利用来诱发对抗性攻击。",
+      "llm_tldr": "研究了图神经网络中的近似遗忘如何被利用来诱发对抗性攻击。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Machine unlearning techniques and algorithms in deep learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.19028v1",
+      "title": "SEM: Sparse Embedding Modulation for Post-Hoc Debiasing of Vision-Language Models",
+      "abstract": "Models that bridge vision and language, such as CLIP, are key components of multimodal AI, yet their large-scale, uncurated training data introduce severe social and spurious biases. Existing post-hoc debiasing methods often operate directly in the dense CLIP embedding space, where bias and task-relevant information are highly entangled. This entanglement limits their ability to remove bias without degrading semantic fidelity. In this work, we propose Sparse Embedding Modulation (SEM), a post-hoc, zero-shot debiasing framework that operates in a Sparse Autoencoder (SAE) latent space. By decomposing CLIP text embeddings into disentangled features, SEM identifies and modulates bias-relevant neurons while preserving query-relevant ones. This enables more precise, non-linear interventions. Across four benchmark datasets and two CLIP backbones, SEM achieves substantial fairness gains in retrieval and zero-shot classification. Our results demonstrate that sparse latent representations provide an effective foundation for post-hoc debiasing of vision-language models.",
+      "authors": [
+        "Quentin Guimard",
+        "Federico Bartsch",
+        "Simone Caldarella",
+        "Rahaf Aljundi",
+        "Elisa Ricci",
+        "Massimiliano Mancini"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-03-19T15:28:08+00:00",
+      "link": "https://arxiv.org/pdf/2603.19028v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "post-hoc debiasing and concept removal in latent space",
+      "llm_evidence_cn": "潜空间中的事后去偏和概念移除",
+      "llm_evidence": "潜空间中的事后去偏和概念移除",
+      "canonical_evidence": "潜空间中的事后去偏和概念移除",
+      "llm_tldr_en": "Uses Sparse Autoencoders to identify and modulate bias-relevant neurons for zero-shot debiasing of VLMs.",
+      "llm_tldr_cn": "利用稀疏自编码器识别并调节偏见相关神经元，实现视觉语言模型的事后零样本去偏。",
+      "llm_tldr": "利用稀疏自编码器识别并调节偏见相关神经元，实现视觉语言模型的事后零样本去偏。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Concept erasure and removal from pre-trained models",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2603.17902v1",
+      "title": "Differential Privacy in Generative AI Agents: Analysis and Optimal Tradeoffs",
+      "abstract": "Large language models (LLMs) and AI agents are increasingly integrated into enterprise systems to access internal databases and generate context-aware responses. While such integration improves productivity and decision support, the model outputs may inadvertently reveal sensitive information. Although many prior efforts focus on protecting the privacy of user prompts, relatively few studies consider privacy risks from the enterprise data perspective. Hence, this paper develops a probabilistic framework for analyzing privacy leakage in AI agents based on differential privacy. We model response generation as a stochastic mechanism that maps prompts and datasets to distributions over token sequences. Within this framework, we introduce token-level and message-level differential privacy and derive privacy bounds that relate privacy leakage to generation parameters such as temperature and message length. We further formulate a privacy-utility design problem that characterizes optimal temperature selection.",
+      "authors": [
+        "Ya-Ting Yang",
+        "Quanyan Zhu"
+      ],
+      "primary_category": "cs.CR",
+      "categories": [
+        "cs.CR",
+        "cs.AI"
+      ],
+      "published": "2026-03-18T16:35:12+00:00",
+      "link": "https://arxiv.org/pdf/2603.17902v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "differential privacy for protecting enterprise data in LLMs",
+      "llm_evidence_cn": "用于保护大模型中企业数据的差分隐私",
+      "llm_evidence": "用于保护大模型中企业数据的差分隐私",
+      "canonical_evidence": "用于保护大模型中企业数据的差分隐私",
+      "llm_tldr_en": "Analyzes privacy leakage in AI agents and applies differential privacy to protect sensitive enterprise data.",
+      "llm_tldr_cn": "分析 AI 智能体的隐私泄露风险，并应用差分隐私保护敏感的企业数据。",
+      "llm_tldr": "分析 AI 智能体的隐私泄露风险，并应用差分隐私保护敏感的企业数据。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Algorithms for removing sensitive information from neural networks",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2603.13570v2",
+      "title": "Privacy-Preserving Machine Learning for IoT: A Cross-Paradigm Survey and Future Roadmap",
+      "abstract": "The rapid proliferation of the Internet of Things has intensified demand for robust privacy-preserving machine learning mechanisms to safeguard sensitive data generated by large-scale, heterogeneous, and resource-constrained devices. Unlike centralized environments, IoT ecosystems are inherently decentralized, bandwidth-limited, and latency-sensitive, exposing privacy risks across sensing, communication, and distributed training pipelines. These characteristics render conventional anonymization and centralized protection strategies insufficient for practical deployments. This survey presents a comprehensive IoT-centric, cross-paradigm analysis of privacy-preserving machine learning. We introduce a structured taxonomy spanning perturbation-based mechanisms such as differential privacy, distributed paradigms such as federated learning, cryptographic approaches including homomorphic encryption and secure multiparty computation, and generative synthesis techniques based on generative adversarial networks. For each paradigm, we examine formal privacy guarantees, computational and communication complexity, scalability under heterogeneous device participation, and resilience against threats including membership inference, model inversion, gradient leakage, and adversarial manipulation. We further analyze deployment constraints in wireless IoT environments, highlighting trade-offs between privacy, communication overhead, model convergence, and system efficiency within next-generation mobile architectures. We also consolidate evaluation methodologies, summarize representative datasets and open-source frameworks, and identify open challenges including hybrid privacy integration, energy-aware learning, privacy-preserving large language models, and quantum-resilient machine learning.",
+      "authors": [
+        "Zakia Zaman",
+        "Praveen Gauravaram",
+        "Mahbub Hassan",
+        "Sanjay Jha",
+        "Wen Hu"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.CR"
+      ],
+      "published": "2026-03-13T20:19:18+00:00",
+      "link": "https://arxiv.org/pdf/2603.13570v2",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "survey of privacy-preserving machine learning",
+      "llm_evidence_cn": "隐私保护机器学习综述",
+      "llm_evidence": "隐私保护机器学习综述",
+      "canonical_evidence": "隐私保护机器学习综述",
+      "llm_tldr_en": "A comprehensive survey of privacy-preserving machine learning techniques specifically for IoT environments.",
+      "llm_tldr_cn": "针对物联网环境的隐私保护机器学习技术的全面综述。",
+      "llm_tldr": "针对物联网环境的隐私保护机器学习技术的全面综述。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Privacy-preserving machine learning and the right to be forgotten",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2603.17876v1",
+      "title": "Edit Spillover as a Probe: Do Image Editing Models Implicitly Understand World Relations?",
+      "abstract": "Instruction-following image editing models are expected to modify only the specified region while keeping the rest of the image unchanged. However, in practice, we observe a pervasive phenomenon -- edit spillover: models alter semantically related but unspecified content outside the edit region. This raises a fundamental question -- does spillover reflect genuine implicit world understanding, or is it merely attention leakage? We propose EditSpilloverProbe, a systematic framework that repurposes edit spillover as a natural probe for world knowledge in image editing models. We introduce a spillover taxonomy (spatial, semantic, mixed, random), an automated detection-and-classification pipeline, and a benchmark dataset constructed from real-world Chinese text editing tasks, EditSpilloverBench. Systematic evaluation of 5 representative editing models reveals three core findings: (1) spillover rates vary dramatically across architectures, from 3.49% to 11.46%, with a 3.3x ratio; (2) absolute semantic spillover quantity reveals models' world understanding capability -- nano_banana produces the most semantic spillover (27.8 per image), while qwen_2511 has the most precise editing control but lower semantic spillover (16.3 per image), revealing a trade-off between editing control and world understanding; (3) spatial decay analysis shows spillover area density decays exponentially with distance, but the proportion of semantically relevant spillover remains constant (40%-58%), providing direct evidence that semantic spillover reflects genuine world understanding rather than spatial diffusion.",
+      "authors": [
+        "Guandong Li",
+        "Zhaobin Chu"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-18T16:02:16+00:00",
+      "link": "https://arxiv.org/pdf/2603.17876v1",
+      "tags": [
+        "keyword:MU CE"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "probing world relations via image edit spillover",
+      "llm_evidence_cn": "通过图像编辑溢出探测世界关系",
+      "llm_evidence": "通过图像编辑溢出探测世界关系",
+      "canonical_evidence": "通过图像编辑溢出探测世界关系",
+      "llm_tldr_en": "Uses edit spillover in image models as a probe to understand implicit world knowledge and relations.",
+      "llm_tldr_cn": "利用图像模型中的编辑溢出效应作为探测器，研究其隐含的世界知识和关系。",
+      "llm_tldr": "利用图像模型中的编辑溢出效应作为探测器，研究其隐含的世界知识和关系。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Model editing for knowledge update and correction",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

@@ -1,0 +1,573 @@
+Title: The Unlearning Mirage: A Dynamic Framework for Evaluating LLM Unlearning
+
+URL Source: https://arxiv.org/pdf/2603.11266v1
+
+Published Time: Fri, 13 Mar 2026 00:10:53 GMT
+
+Number of Pages: 23
+
+Markdown Content:
+Published as a conference paper at COLM 2025 
+
+# The Unlearning Mirage: A Dynamic Framework for Evaluat-ing LLM Unlearning 
+
+Raj Sanjay Shah 
+
+Georgia Institute of Technology 
+
+Jing Huang 
+
+Stanford University 
+
+Keerthiram Murugesan 
+
+IBM Research 
+
+Nathalie Baracaldo 
+
+IBM Research 
+
+Diyi Yang 
+
+Stanford University 
+
+Abstract 
+
+Unlearning in Large Language Models (LLMs) aims to enhance safety, mitigate biases, and comply with legal mandates, such as the right to be forgotten. However, existing unlearning methods are brittle: minor query modifications, such as multi-hop reasoning and entity aliasing, can recover supposedly forgotten information. As a result, current evaluation metrics often create an illusion of effectiveness, failing to detect these vulnerabilities due to reliance on static, unstructured benchmarks. We propose a dynamic framework that stress tests unlearning robustness using complex structured queries. Our approach first elicits knowledge from the target model (pre-unlearning) and constructs targeted probes, ranging from simple queries to multi-hop chains, allowing precise control over query difficulty. Our experiments show that the framework (1) shows comparable coverage to existing benchmarks by automatically generating semantically equivalent Q&A probes, (2) aligns with prior evaluations, and (3) uncovers new un-learning failures missed by other benchmarks, particularly in multi-hop settings. Furthermore, activation analyses show that single-hop queries typically follow dominant computation pathways, which are more likely to be disrupted by unlearning methods. In contrast, multi-hop queries tend to use alternative pathways that often remain intact, explaining the brittleness of unlearning techniques in multi-hop settings. Our framework enables practical and scalable evaluation of unlearning methods without the need for manual construction of forget test sets, enabling easier adop-tion for real-world applications. We release the pip package and the code at https://sites.google.com/view/unlearningmirage/home .
+
+1 Introduction 
+
+Selective unlearning in Large Language Models (LLMs) is an important capability for model safety (Liu et al., 2023), fairness (Gallegos et al., 2024), and legal compliance (Yao et al., 2025). As LLMs are integrated into real-world applications, removing specific knowledge, such as harmful, biased, or private information, has become important (Li et al., 2024; Ashuach et al., 2024). Regulatory frameworks such as the General Data Protection Regulation (GDPR) or California Consumer Privacy Act (CCPA) may enforce the "right to be forgotten," necessitating that LLMs comply with user requests for data removal (Rosen, 2011; Zhang et al., 2024a). Consequently, model owners must develop mechanisms to erase specific data while preserving the model’s general capabilities (Liu et al., 2025). Despite progress in unlearning methods, typically involving gradient reversal or localized weight updates (Jang et al., 2022; Eldan & Russinovich, 2023; Lee et al., 2024; Zhang et al., 2024b), the distributed and redundant nature of knowledge representation in LLMs makes targeted forgetting difficult. Recent studies show that even after unlearning, models retain 
+
+Emails:{rajsanjayshah}@gatech.edu, {hij, diyiy}@stanford.edu, {Keerthiram.Murugesan, baracald}@ibm.com 
+
+1
+
+> arXiv:2603.11266v1 [cs.AI] 11 Mar 2026
+
+Published as a conference paper at COLM 2025 Stephen  
+
+> King
+> Stephen
+> King
+> an
+> author
+> is
+> The
+> Shining w rote
+> Depth = 0 Depth = 1
+> Maine
+> lives in
+> Not
+> relevant
+> Stephen
+> King
+> an
+> author
+> is a
+> The
+> Shining w rote
+> Depth = 2
+> Maine
+> lives in
+> Jack
+> Torrance
+> 1977
+
+(1) Knowledge graph creation and expansion using BFS 
+
+(A) Elicitation 
+
+> Who is
+> " Stephen
+> King" ?
+> Stephen King is an
+> author from Maine,
+> best known for writing
+> The Shining .
+> (Stephen King, is, an author)
+> (Stephen King, lives in, Maine)
+> (Stephen King, wrote, The
+> Shining)
+
+(C) Alias Resolution 
+
+> (The Shining, is written by, Stephen Edwin King)
+> Stephen King
+
+(B) Atomic rel. creation 
+
+(A) Elicitation + (B) Atomic rel. creation  
+
+> Target Model Forget
+> Stephen King
+
+Unlearning 
+
+Operation 
+
+Our Evaluation Framew ork  
+
+> (1) Knowledge
+> Graph Creation (2) N- Hop Queries
+
+Evaluate      
+
+> -Single Hop: Name the author of the book " The Shining".
+> -Single Hop: Name the author popularly known as the King of
+> Horror.
+> -Two Hop: Name the author of the book whose protagonist was
+> named Jack Torrance.
+> -Two Hop: Name the author of the book whose antagonist is
+> named Pennywise.
+> -Three Hop: Name the author of the book whose protagonist is
+> known as the winter caretaker of the Overlook hotel.
+
+Score      
+
+> -Single Hop: Name the author of the book " The
+> Shining".
+> -Single Hop: Name the author popularly known
+> as the King of Horror.
+> -Two Hop: Name the author of the book whose
+> protagonist was named Jack Torrance.
+> -Two Hop: Name the author of the book whose
+> antagonist is named Pennywise.
+> -Three Hop: Name the author of the book
+> whose protagonist is known as the winter
+> caretaker of the Overlook hotel.
+> (2) N- Hop Queries
+
+Figure 1: Overview of our framework: Our evaluation framework constructs a knowledge graph from pre-unlearning model outputs, enabling the automatic generation of structured single-hop, multi-hop, and alias-based queries. After applying unlearning, we probe the model to assess residual knowledge. The framework is dynamic, instantiable for any entity, and structured, providing fine-grained control over query complexity. subtle traces of the supposedly erased information (Lynch et al., 2024; Thaker et al., 2024). A major challenge lies in evaluating unlearning. Existing benchmarks primarily rely on simple retrieval tasks and static Q&A datasets, which often fail to detect residual knowledge when queries are rephrased, aliased, or composed into multi-hop reasoning chains (see figure 2; Maini et al. (2024); Choi et al. (2024); Jin et al. (2025)). As a result, current metrics can create a misleading impression of unlearning success, often missing failure modes. We argue that robust unlearning requires a more systematic evaluation metric, one that explores residual knowledge through structured variations in query form and reasoning depth. 
+
+To address these shortcomings in existing eval-uation methods, we introduce a dynamic evalu-ation framework that stress tests unlearning us-ing structured, model-informed probes. Unlike previous approaches that rely on manually con-structed datasets or external commercial LLMs like GPT-4 to generate probes, our approach elic-its knowledge directly from the model before un-learning, capturing what the model initially knew about the target entity. This extracted knowledge is then used to generate probes of varying com-plexity, ranging from simple single-hop retrievals to multi-hop reasoning chains, allowing us to pre-cisely control query difficulty and evaluate how well different unlearning methods prevent access to residual information. Single Hop Query  
+
+> Name the author of the book ?The Shining"
+> I do not know the answ er.
+> Multi Hop Query
+> Name the author of the book whose protagonist was
+> named Jack Torrance. Stephen King
+> Goal: Forget Stephen King
+> Previous metrics
+> Unlearning works!
+> Did the method
+> actually work?
+> No
+
+Figure 2: Limitations of existing "single-hop" evaluation metrics in assessing LLM unlearning robustness. Single-hop queries might suggest successful forgetting, but minor variations, such as multi-hop reasoning or entity alias-ing, can still recover the supposedly for-gotten information. Central to our approach is the use of knowledge graphs, which we dynamically construct for any given entity through a breadth-first querying process over the target model’s inter-nal knowledge. By recursively querying the model about the entity, its related concepts, attributes, and relationships, we generate a structured view of its per-unlearning knowl-edge (refer section 4.1). Using this graph, we generate a variety of queries, from single-hop queries, such as Name the author of the book “The Shining”, (Answer: Stephen King) to multi-hop queries, like Name the author of the book whose protagonist was named Jack Torrance, (Answer: Stephen King) as well as alternative phrasings using aliases ( e.g., Stephen Edwin King). Thus, our evaluation process is structured, as it captures semantic relationships and dynamic, as it can be automatically constructed for any target entity without manual data curation. 2Published as a conference paper at COLM 2025 We evaluate our framework on several unlearning methods and compare them against existing benchmarks. Our results show that: (1) it achieves comparable coverage to prior datasets without requiring human annotations (e.g., ∼78% of RWKU Q&A pairs), (2) it aligns with prior rankings of unlearning effectiveness across methods, and (3) it exposes new failure modes, particularly in multi-hop and alias-based queries, that previous static evaluations overlook. Finally, we analyze model activations using PatchScopes (Ghandeharioun et al., 2024) and find that unlearning primarily disrupts dominant activation pathways used in direct queries. In contrast, multi-hop queries often route through alternate pathways that remain unaffected, explaining the brittleness of current unlearning techniques. A visual overview of our framework is shown in Figure 1, illustrating how we extract entity-specific knowledge from the model, construct a dynamic knowledge graph, and generate structured probes to evaluate unlearning robustness across varying query complexities.                                                                     
+
+> Benchmark WHP WMDP MUSE TOFU RWKU Ours
+> (Eldan & Russinovich, 2023) (Li et al., 2024) (Shi et al., 2024) (Maini et al., 2024) (Jin et al., 2025)
+> # Unlearning Targets 122200 200 Any Entity # Forget Probes 300 4,157 220 4,000 13,131 Dynamic Forget Corpus Harry Potter series PubMed, Github Books/ News Syn. QA pairs N/A N/A
+> Retain Corpus N/A Wikitext Fan pages/ News Syn. QA pairs N/A N/A
+> Forget Assessment Knowledge Memorization probes ✗✗✓✗✓✓
+> Knowledge Manipulation probes ✓✓✗✓✓❍
+> Adversarial ✗✗✗✗✓✓*
+> Multi-hop Eval. ✗✗✗✗✗✓
+> Retain Assessment Neighbour Perturbation ✗✗✗✓✓✓
+> Relationship retention ✗✗✗✗✗✓
+
+Table 1: A comparison between existing unlearning benchmarks and our benchmark. Our benchmark allows us to evaluate any entity, allowing us to automatically generate forget probes. Knowledge Memorization probes: these are cloze style probes (“Capital of France is __”); Knowledge Manipulation probes: these are MCQ style Q&A probes; ❍: While we do not cover Knowledge Manipulation probes, our framework can be easily modified for this probe style. ∗We cover a subset of adversarial attacks. 
+
+2 Related works 
+
+Evaluating unlearning in LLMs Despite advancements in unlearning methods, recent literature has identified many failure modes of unlearning methods (Thaker et al., 2024). These include catastrophic forgetting – where excessive unlearning leads to unintended knowledge loss, often affecting structurally related concepts beyond the intended forget set (Zhang et al., 2024b; Yao et al., 2025), ability of an LLM to relearn through few shot tuning (Jin et al., 2025), cross-lingual and multimodal generalization failures (Si et al., 2023), and lastly, recovering unlearnt information by semantic perturbations and adversarial probing (Maini et al., 2024; Liu et al., 2025; Jin et al., 2025). Several benchmarks have been proposed to evaluate unlearning in LLMs, each focusing on aspects such as knowledge removal (Eldan & Russinovich, 2023; Li et al., 2024; Jin et al., 2025), robustness to input variation (Lynch et al., 2024), or retention capability (Maini et al., 2024; Shi et al., 2024). While these benchmarks evaluate methods along several axes, they rely on static sets for testing data removal. There are two ways to construct the static sets: (1) Manual curation of datasets (WHP, WMDP): These require significant human effort and are resource-intensive; for example, the creation of WMDP required expert-level knowledge and cost dataset creators upwards of $200,000 (as reported by authors). (2) LLM-assisted probe generation (TOFU, MUSE, RWKU): These approaches automate test set generation using systems like GPT-4, followed by human validation or filtering. As a result, the probes may fail to capture model-specific knowledge representations. Lastly, to ensure removal does not affect other model capabilities, most benchmarks test generic tasks (like MMLU, Big-bench-hard, etc.) instead of focused evaluations on semantically close knowledge. In contrast, our framework 3Published as a conference paper at COLM 2025 explicitly constructs entity-specific knowledge graphs from model-internal representations, enabling precise, targeted evaluations of semantically related knowledge. Our evaluation framework reveals failure modes not captured by existing benchmarks. 
+
+Dynamic graph-based evaluation LLMs Our evaluation methodology is closely related to the idea of building adaptive and dynamic benchmarks. Recent works have proposed graph-based approaches to dynamically assess LLM capabilities across complex reasoning and knowledge tasks Zhang et al. (2024c); Zhu et al. (2023); Feng et al. (2025). However, they focus primarily on external task graphs used for general reasoning, rather than model-specific representations. Recent literature in model editing leverages multi-hop reasoning benchmarks to evaluate the effectiveness of edits, focusing on how “fact" updates propagate through related knowledge chains Zhong et al. (2023); Cohen et al. (2024); Yang et al. (2024). In contrast, our framework constructs a knowledge graph from the model’s own pre-unlearning outputs, offering a structured and entity-specific snapshot of internal knowledge. This graph scaffolds the generation of semantically controlled probes that vary in reasoning depth (e.g., single-hop vs. multi-hop) and surface form (e.g., paraphrases or aliases), enabling targeted stress testing of residual knowledge. Unlike prior works that build graphs independent of the target model, our method is tightly coupled to the model’s own knowledge structure, allowing for dynamic evaluation tailored to each unlearning target entity. 
+
+3 Preliminaries 
+
+3.1 Unlearning Objectives 
+
+We formalize unlearning as selectively removing the influence of specific data points from a trained LLM. Given an original training set D and an unlearning set Du ⊂ D, we aim to update the model parameters to meet two criteria - removal and retention. To ground this discussion, consider a running example where Du includes facts about Stephen King , like: 
+
+Du = {(“Who wrote The Shining ?”, “Stephen King”) ,
+
+> (“Who is Stephen King’s spouse?”, “Tabitha King”)
+
+}.The objective is to remove the model’s knowledge of Stephen King while preserving its general language capabilities and knowledge of unrelated topics. 
+
+Removal Criterion: The model should behave as though it never saw Du. Formally, for all examples in Du, the updated model should be indistinguishable from a model trained without Du. If Du contains (“Who wrote The Shining ?”, “Stephen King”); then, after unlearning, the model should fail to answer this query correctly. 
+
+Retention Criterion: The updated model must preserve its performance on unrelated data, i.e., F(x; θ∗) ≈ F(x; θ) for all x ∈ D \ Du. Post-unlearning, the model should still answer unrelated queries correctly, e.g., “Who wrote 1984 ?” or “Define the term ‘protagonist.’" 
+
+Trade-off Considerations: These two criteria conflict; aggressive unlearning may cause unintended loss of knowledge, whereas insufficient unlearning leaves residual informa-tion. Effective unlearning strategies balance these factors to selectively remove targeted knowledge while retaining overall model capabilities. 
+
+3.2 Unlearning Methods 
+
+We evaluate popular unlearning approaches, consisting of both optimization-based and prompting-based techniques. These methods differ in how they suppress knowledge from the forget set Dforget , and whether they explicitly preserve utility on the retain set Dretain .We include the following optimization-based approaches: Gradient Ascent ( GA ) (Jang et al., 2022), Direct Preference Optimization ( DPO ) (Rafailov et al., 2023), Negative Preference Optimization ( NPO ) (Zhang et al., 2024b), Task Vectors (TV) (Ilharco et al., 2023), Unlearning via Logit Difference (ULD) (Ji et al., 2024). We test In-Context Unlearning (ICU) (Pawelczyk et al., 2023) as the prompt-based unlearning method. To improve utility preservation on 4Published as a conference paper at COLM 2025 
+
+Dretain , we follow previous work (Shi et al., 2024; Maini et al., 2024) and combine GA , DPO ,and NPO with two commonly used regularization techniques: (1) Gradient Descent on the Retain Set (GDR) (Maini et al., 2024), which jointly trains on Dretain during unlearning. (2) KL Divergence Minimization (KLR) (Zhang et al., 2024b), which constrains the unlearned model’s output distribution to remain close to the original model. This results in 12 candi-date methods: GA , GA GDR , GA KLR , DPO , DPO GDR , DPO KLR , NPO , NPO GDR , NPO KLR , ULD, 
+
+Task Vector , and ICU. Full implementation details are included in appendix A.5. 
+
+4 A Dynamic Evaluation Framework for Unlearning 
+
+4.1 Knowledge Graph Construction 
+
+Understanding the knowledge an LLM encodes, and how it is retrieved, is central to our unlearning efficacy evaluation. To systematically probe "what the model encodes", we construct a knowledge graph (KG) that represents factual relationships encoded by the model before unlearning. This graph serves as a structured model-specific representation of the entity and its associated knowledge. It allows us to control and probe the accessibility of knowledge from a model after unlearning. We propose a three-step process for knowledge graph creation, as shown in Figure 1. Our goal is to ensure the test set reflects the model’s internal representations. Thus, we extract knowledge directly by querying the model for attributes, relationships, and context, without external sources. 1. Entity-Centric Extraction : Starting from a seed entity (e.g., "Stephen King"), we elicit facts about the entity and express model responses as a set of atomic triplets (e1, r, e2),such as ("Stephen King", "wrote", "The Shining"). Triplet extraction is performed using an LLM with a structured conversion prompt (appendix A.3). 2. Graph Expansion via BFS with Decay : We recursively expand the KG by querying for facts about newly discovered nodes using a breadth-first search. To avoid combinatorial growth, we apply an exponential decay factor to limit the number of expansions per depth level. 3. Relevance Filtering and Alias Resolution : We filter generic or irrelevant nodes (for example, "books") to the seed entity from our expansion set. We also resolve entity aliases (e.g., "Stephen Edwin King" vs. "Stephen King") to support surface-level variation during evaluation. While identifying relevant or irrelevant nodes to the seed entity, we use the target model as a judge (Zheng et al., 2023), marking an edge if it is expected to be forgotten when the seed entity is unlearned. This process ensures that the knowledge graph is constructed on the basis of the LLM’s internal representation of the entity rather than requiring external knowledge sources. 
+
+Graph Expansion We use a breadth-first search (BFS) strategy with exponential decay to expand the knowledge graph. The graph is defined as a directed structure G = ( V, E),where nodes V represent entities or concepts, and edges E correspond to factual relations. 
+
+BFS with Decay for Expansion Control Let b0 be the ini-tial number of direct relationships extracted from the seed entity at depth 0. At depth i, the number of expanded nodes 
+
+bi is given by: bi = b0 · αi; where α is a decay factor that limits the exponential growth of the graph. Thus, the total number of nodes up to depth dmax is shown in equation 1. To balance exploration breadth vs. computational efficiency, we impose constraints on (1) Maximum graph depth dmax ;(2) Total node count Ntotal ; (3) API call budget Atotal . As-suming each node expansion requires k API calls, the total API usage is given in equation 2; Complexity: O( k · Ntotal ). 
+
+Ntotal = b0 · 1 − αdmax +1
+
+1 − α (1) 
+
+Atotal = k · b0 · 1 − αdmax +1
+
+1 − α (2) 5Published as a conference paper at COLM 2025 
+
+Alias Resolution via LLM Calls Since LLMs may encode the same entity with different names, we incorporate alias detection to prevent redundant nodes. Given two nodes vi and 
+
+vj ∈ V, we query the LLM: for example, “Is ‘Stephen King’ the same as ‘Stephen Edwin King’?” .If the model confirms aliasing with high confidence, we merge the nodes, keeping only one canonical representation. 
+
+Additional considerations We note that the knowledge graph needs to be constructed only once per (model, seed entity) pair. Once built, it can be reused to evaluate multiple unlearning methods, making the associated API cost/ model call a one-time overhead rather than a recurring burden. Specifically, each node in the graph requires a minimum of three LLM queries: one for entity elicitation, one for extracting atomic facts, and one for alias resolution. Since the graph is expanded via a breadth-first search with an exponential decay factor ( α), the number of nodes, and consequently, the number of model calls, grows sub-exponentially, as shown in equations 1 and 2. For example, under a decay factor of α =0.8, we empirically observe that the average number of nodes per seed entity in the RWKU dataset at depths 1, 2, and 3 is approximately 57.6, 103.7, and 140.5, respectively. This results in a total model call count ranging from 228 to 1,942 per entity, depending on graph density, alias resolution needs, and retries due to API response exceptions. In totality, our constraints ensure that our graph remains tractable while preserving com-pleteness, enabling unlearning evaluation across single-hop retrieval and multi-hop reason-ing chains. 
+
+4.2 Structured Probe Generation 
+
+The constructed graph allows us to represent the knowledge about an entity as a set of atomic triplets (e1, r, e2). Following previous work (Petroni et al., 2019), we consider a fact to be retained post-unlearning if the model can correctly predict e2 given a query composed of 
+
+e1 and r. We generate three types of probes: conventional single-hop, multi-hop , and alias-based .An example of a single-hop query that targets depth-1 facts would be “Who wrote The Shining?” for the tuple (The Shining, written by, Stephen King). Similarly, to construct multi-hop queries, we traverse graph paths over a chain of facts leading to an entity to brittleness to compositional reasoning (e.g., “Who wrote the book whose protagonist was Jack Torrance?”). Alias-based probes test robustness to surface form variation (e.g., “Who wrote The Shining?” → “Stephen Edwin King” instead of “Stephen King”). The exact prompts to “hop” over the constructed graph to construct probes are given in appendix A.3. We randomly sample 100 “searches” for each kind to compute scores. To ensure evaluation reliability, we only probe the post-unlearning model if the pre-unlearning model can correctly answer it, verifying that the fact can be retrieved from the target model, which follows previous approaches for unlearning evaluation (Jin et al., 2025). Additionally, we assess retention beyond the target entity by probing the model’s ability to answer questions about related facts and popular relations. For the former, we identify facts that are 1-hop and 2-hops away from forgotten facts and use them to test whether knowledge suppression propagates to semantically nearby concepts. For example, suppose the unlearning target is the entity, Stephen King. In that case, we probe the model with facts that are related but distinct, such as: (The Shining, protagonist, Jack Torrance) (1-hop away) and (Jack Torrance, occupation, writer) (2-hop away) . This allows us to quantify the unintended effects of unlearning on related but non-targeted entities. For the latter, we sample high-frequency relations from the graph (e.g., lives in, has spouse, is a) and evaluate whether the model continues to answer these correctly for unrelated or distant entities (for instance, Who is the spouse of Jack Torrance?). Together, these evaluations allow us to measure both unintended forgetting and the model’s ability to retain general relational knowledge following unlearning. 
+
+4.3 Evaluation Protocol 
+
+After constructing the knowledge graph and constructing probes, we evaluate unlearning efficacy in the following manner: 6Published as a conference paper at COLM 2025 
+
+Multi-hop Forgetting Score (Avg. Multi-hop): We define the removal effectiveness score as the average accuracy across multi-hop queries ( 1 
+
+> N
+
+∑Nn=1 Accuracy n-hop ). A lower score indicates more effective removal of targeted knowledge. We choose N = 3 to limit computa-tional overhead and ensure benchmark accessibility. Avg. Multi-hop = Accuracy 1-hop + Accuracy 2-hop + Accuracy 3-hop 
+
+3
+
+Retention Score We define the Avg. Retention Score as the average accuracy across 1-hop fact retention, 2-hop fact retention, and relationship retention queries. A higher Avg. Retention Score indicates better preservation of related or unrelated knowledge. Avg. Retention Score = Accuracy 1-hop retention + Accuracy 2-hop retention + Accuracy rel. retention 
+
+3
+
+Overall score: To succinctly summarize the trade-off between effective knowledge removal and retention, we propose a combined harmonic mean score between (1 - Avg. Multi-hop )and Avg. Retention Score This metric penalizes methods that either insufficiently erase targeted knowledge or overly disrupt unrelated knowledge. 
+
+5 Experiments 
+
+We benchmark unlearning methods using the proposed dynamic framework and compare our results with existing unlearning benchmarks. We find that (1) our dynamic evaluation framework has comparable coverage to existing benchmarks by automatically generating semantically equivalent probes, (2) our benchmark method produces rankings that are comparable with existing benchmarks, and (3) we uncover new unlearning failure modes, particularly in multi-hop settings. 
+
+5.1 Setup 
+
+We evaluate various unlearning methods using our framework on the entities present in the RWKU and TOFU benchmarks, respectively, using the LLaMA-3.1-Instruct (8B) model. Our choice of LLaMA-3.1-Instruct is driven by its widespread use in existing unlearning research (Bhaila et al., 2024; Shi et al., 2024; Maini et al., 2024; Jin et al., 2025), providing a consistent basis for comparison across different evaluation strategies. 
+
+5.2 Results Our automatically constructed benchmark has comparable query coverage with existing benchmarks. To validate the generality of our framework, we first measure its coverage against existing entity-centric unlearning benchmarks. Our structured probe generation recovers approximately 78% of RWKU and 66% of TOFU queries without using benchmark templates or external corpora. This demonstrates that our method captures a substantial por-tion of established benchmark content. The full methodology is provided in appendix A.6. We choose N = 3 to limit computational overhead. 
+
+Our metric shows the same relative efficacy of methods as previous unlearning evaluation methods. Results for RWKU are summarized in Table 2, showing each unlearning method’s performance across the multi-hop forgetting criterion and the retention criterion. Additional results on TOFU can be found in the Appendix. Despite our evaluation requiring no manual annotation or external knowledge sources, we successfully captured relative differences between methods. We calculate Spearman’s rank correlation between previously used metrics and our evaluations and see a significant correlation between both criteria (Removal Criteria, Spearman’s rank correlation: RWKU = 0.87 ∗∗∗ , TOFU = (-) 0.79 ∗∗∗ ; Retention Criteria, Spearman’s rank correlation - RWKU = 7Published as a conference paper at COLM 2025                                                                                                                                            
+
+> Multi-hop Queries ↓Retention criteria ↑Multi-hop Avg. Overall Method 1-hop 2-hop 3-hop 1-fact away 2-facts away Rel. Ret. Forget Score Retain Score
+> Target model 98.6 97.2 84.1 98.9 98.1 99.1 93.3 98.7 12.5 ICL 14.7 19.2 28.5 34.2 52.5 93.4 20.8 60.0 68.3
+> GA 19.3 23.8 31.2 44.6 59.3 55.5 24.8 53.1 62.3
+> GDR 21.8 25.7 32.5 73.8 70.5 76.2 26.7 73.5 73.4
+> GA KLR 22.3 26.2 33.0 74.5 71.2 76.4 27.2 74.0 73.4
+> DPO 22.1 30.9 34.6 49.7 58.4 58.4 29.2 55.5 62.2
+> DPO GDR 25.2 32.5 35.8 65.1 67.8 79.6 31.2 70.8 69.8
+> DPO KLR 26.4 32.7 36.1 65.8 68.4 80.2 31.7 71.5 69.8
+> NPO 16.2 22.9 30.7 47.1 59.9 60.5 23.3 55.8 64.6
+> NPO GDR 16.3 24.8 31.9 65.3 71.1 81.4 24.3 72.6 74.1
+> NPO KLR 17.8 22.3 31.4 69.6 72.5 82.3 23.8 74.8 75.5 ULD 11.2 18.7 28.1 74.2 78.8 86.1 19.3 79.7 80.2
+> TV 28.3 44.5 54.1 77.2 81.7 87.9 42.3 82.3 67.8 Avg. 20.1 27.0 33.9 61.7 67.7 76.5 27.0 68.7 70.7
+
+Table 2: Scores from our evaluation metric instantiated with the seed entities in RWKU for Llama 3.1-Instruct (8B). Values indicate ↑ means higher is better, and ↓ means lower is better. Methods as described in section 3.2 0.75 ∗∗∗ , TOFU = 0.58 ∗∗ ; ∗∗ p < 0.01, ∗∗∗ p < 0.005). In addition to LLaMa 3.1, we also test our framework on Phi-4-mini-instruct (3.8B) and Granite-3.2-8B-Instruct on RWKU; see tables 4 and 5 in the Appendix. While the model generally achieves higher residual knowledge retrieval scores for multi-hop queries compared to LLaMA 3.1 (8B), we see similar relative efficacy scores for different unlearning methods (Spearman’s rank correlation - RWKU: Removal Criteria = 0.88 ∗∗∗ ; Retention Criteria = 0.77 ∗∗∗ ∗∗∗ p < 0.005). In terms of relative differences between methods, our benchmark shows that ICL retains general relationship knowledge effectively ( Rel. Ret. RWKU=93.4%; TOFU=87.2%) but shows a substantial decline in the ability to retain facts close (1-hop away) from the targeted unlearning entities (RWKU: 34.2%; TOFU: 31.5%). Optimization-based methods, i.e., GA ,
+
+DPO , NPO , have substantial retention performance drops when applied without regulariza-tion. However, these methods improve with regularization on retention (increasing average retention score by approximately 18 to 20% for RWKU and 10 to 15% for TOFU), showing the advantages of explicit regularization strategies. Among all methods, ULD presents the optimal balance between effective forgetting and retaining general knowledge, achieving the highest overall score (RWKU: 80.2%, TOFU: 78.5%). 
+
+Multi-hop queries expose new failure modes. Multi-hop queries consistently succeed in finding residual knowledge. Averaged across all methods, multi-hop query accuracy remains notably high (1-hop: 20.1%, 2-hop: 27.0%, and 3-hop: 33.9%, highlighted in red, table 2). Furthermore, the evidence of residual information increases with query complexity, from single-hop to multi-hop, indicating that compositional queries are adversarial to unlearning methods. Moreover, we find that aliasing further exacerbates residual knowledge recovery, and de-composing queries via chain-of-thought does not prevent recovering residual knowledge. Table 3 shows residual knowledge retrieval on 2-hop queries under different evaluation settings to test surface-level perturbations for RWKU. Aliasing intermediate entities in two-hop queries leads to an additional average increase of 2.4% in residual knowledge re-covery, highlighting vulnerabilities to minor surface perturbations. Decomposing multi-hop queries step-by-step via few-shot examples showed negligible improvement in unlearning effectiveness. Models displayed similar residual knowledge regardless of whether queries were parsed in a Chain-of-thought manner (Nguyen et al., 2024). Moreover, proximity to the unlearning target shows a drop in unintended forgetting scores. Retention performance decreases for facts directly adjacent to the unlearning target (Avg. fact retention for facts that are one hop away - RWKU: 61.7%; TOFU: 61.7% ), with accuracy improving as distance increases (2-hop away - RWKU: 67.7%; TOFU: 66.9%) This confirms that proximity to the target entity in the knowledge graph is predictive of unintended knowledge removal. This score is akin to neighbor set scores in RWKU (Jin et al., 2025). 8Published as a conference paper at COLM 2025                                                
+
+> 2-hop Queries ↓
+> Method Default +Decomposition +Aliasing
+> Target model 97.2 96.7 97.4 ICL 19.2 19.9 22.8
+> GA 23.8 22.4 26.2
+> GDR 25.7 26.6 26.9
+> GA KLR 26.2 25.4 29.3
+> DPO 30.9 32.1 32.6
+> DPO GDR 32.5 31.6 34.4
+> DPO KLR 32.7 33.7 35.1
+> NPO 22.9 22.3 24.8
+> NPO GDR 24.8 25.1 26.4
+> NPO KLR 22.3 21.5 24.1 ULD 18.7 19.9 20.9 TV 44.5 43.8 49.7 Avg. 27.0 26.9 29.4 (+ 2.4%)
+
+Table 3: For RWKU, we compare de-fault 2-hop queries with two vari-ants: ( + Decomposition ) prompting the model to solve the query step-by-step, and ( + Aliasing ) substituting in-termediate entities with known aliases. 
+
+Figure 3: Localizing entity resolutions in the tar-get LLM: Single-hop queries are most resolved in intermediate layers. In contrast, two-hop queries demonstrate a two-stage resolution pattern, with the first hop resolved early (layers 1–11) and the second hop resolved later (layers 12–32). 
+
+5.3 Analysis on the Multi-hop Failures 
+
+We further analyze the multi-hop failures in unlearning methods. We hypothesize that the failures are due to unlearning methods only targeting dominant pathways for single-hop entity resolutions, i.e., middle layers in transformer-based LLMs, in the gradient updates. We analyze internal transformer-layer activations using PatchScopes (Ghandeharioun et al., 2024), which decodes hidden activations into interpretable language to precisely identify where entities are internally resolved during inference. We compare activations from a single-hop query (“The author of The Shining is ___.”) and a two-hop query (“The author of the (book with protagonist Jack Torrance) is ___.”). Single-hop entities predominantly resolve clearly in intermediate layers, enabling effective disruption by unlearning. Alternatively, two-hop queries show bifurcated resolutions: the first-hop entity (“ The Shining ”) resolves in early layers, while the second-hop entity (“Stephen King”) resolves distinctly later (see Figure 3). This layered resolution provides a candidate explanation for why current unlearning methods fail: effectively removing direct single-hop knowledge, yet struggling to eliminate indirect multi-hop knowledge. 
+
+6 Discussion and Limitations 
+
+Given the growing importance of unlearning in LLMs, we anticipate an increased research focus on building robust evaluations and benchmarks for unlearning methodologies. Cur-rent evaluation strategies rely on manually curated, static test sets, which are hard to scale. To address this shortcoming, we advocate shifting toward dynamic evaluation frameworks that enable the automatic generation of test cases to systematically probe for evidence of successful/failed unlearning. Ideally, evaluation frameworks would not require the construction of fixed hold-out sets but instead generate evaluation queries dynamically and possibly adaptively. Furthermore, these evaluations should allow precise control over their complexity, including perturbations and multi-hop reasoning, enabling more rigorous stress testing of unlearning methods. 
+
+We argue that multi-hop unlearning is not a theoretical corner case but a practical require-ment. In real-world applications, users interact with LLMs through indirect, compositional, or paraphrased queries, whether via search assistants, RAG pipelines, or conversational agents. For example, rather than explicitly asking about "The Hunger Games", a user might ask, Who wrote the book whose main character is Katniss Everdeen? Our experiments show that even when direct (single-hop) queries appear successfully unlearned, residual 9Published as a conference paper at COLM 2025 knowledge often remains accessible through such multi-hop or rephrased queries, revealing vulnerabilities in current unlearning techniques. From the standpoint of users and regulators, looking at phrasing specific success is insuffi-cient; what matters is whether the sensitive or protected content is fully inaccessible. If a model can reproduce forgotten information under minor variations in question form, then the unlearning mechanism has failed its real-world obligation. Thus, we believe users, regu-lators, and stakeholders, care about outcome-level guarantees, not phrasing-specific ones. 
+
+Our method reflects this risk by constructing multi-hop and alias-based probes directly from the model’s own knowledge structure, avoiding arbitrary synthetic templates. Despite these advantages, it is important to consider the limitations of our approach. The primary challenge lies with knowledge elicitation. While eliciting information from LLMs about well-known entities (e.g., “Tell me about Stephen King") is straightforward, eliciting knowledge in low-salience domains is tough. An example is WMDP (Li et al., 2024), where unlearning is tested on expert-level knowledge, such as novel protein compounds or cybersecurity threats, models often struggle to produce consistent outputs for complex or low-frequency information. Elicitation and Multi-hop queries, the two central ideas of our evaluation, create a paradoxical scenario (a "chicken-and-egg" problem) where we demonstrate unlearning failures through effective elicitation of residual knowledge using Multi-hop queries, yet, elicitation itself is difficult for certain kinds of information. The second limitation lies in cases where the forget and retain sets overlap significantly (e.g., MUSE-Books (Shi et al., 2024): distinguishing copyrighted material from derivative works; separating Harry Potter books from fan pages), elicitation alone becomes insufficient, and external knowledge sources or additional manual intervention is often required for accurate disambiguation for information to be removed and retained. Another limitation is that the metrics derived from our methods, like any evaluation measure, only approximate true unlearning efficacy. Next, the created knowledge graph is non-deterministic, and moreover, once a knowledge graph is created, it remains static for a given evaluation. Future work can explore evolving evaluation paradigms and graph construction for true adversarial testing. Lastly, we use the knowledge graph to test unintended forgetting, which may not represent model utility on generic tasks. 
+
+7 Conclusion 
+
+We propose a dynamic, graph-based framework for evaluating unlearning in large language models. In contrast to prior benchmarks that rely on static, manually curated, or externally sourced queries, our approach builds structured knowledge graphs from the model’s own pre-unlearning outputs and generates semantically controlled probes of varying complexity. Our experiments show that this method not only matches the coverage of existing bench-marks like RWKU and TOFU but also uncovers new failure modes, particularly through multi-hop queries that previously used static evaluations miss. One such case involves an entity where unlearning appears successful for a single-hop query but fails under multi-hop reasoning. We find that single-hop queries often align with dominant computation path-ways, which are more likely to be disrupted by unlearning interventions. By grounding the evaluation in the model’s own knowledge structure, our method enables scalable, entity-specific assessments of unlearning robustness without manual curation. Our work exposes limitations in current benchmarks and, yet again, provides additional evidence challenging the completeness of forgetting guarantees. 
+
+References 
+
+Tomer Ashuach, Martin Tutek, and Yonatan Belinkov. Revs: Unlearning sensitive infor-mation in language models via rank editing in the vocabulary space. arXiv preprint arXiv:2406.09325 , 2024. Karuna Bhaila, Minh-Hao Van, and Xintao Wu. Soft prompting for unlearning in large language models. arXiv preprint arXiv:2406.12038 , 2024. 10 Published as a conference paper at COLM 2025 Eden Biran, Daniela Gottesman, Sohee Yang, Mor Geva, and Amir Globerson. Hopping too late: Exploring the limitations of large language models on multi-hop queries. arXiv preprint arXiv:2406.12775 , 2024. Daniel Borkan, Lucas Dixon, Jeffrey Sorensen, Nithum Thain, and Lucy Vasserman. Nu-anced metrics for measuring unintended bias with real data for text classification, 2019. Minseok Choi, ChaeHun Park, Dohyun Lee, and Jaegul Choo. Breaking chains: Unraveling the links in multi-hop knowledge unlearning. arXiv preprint arXiv:2410.13274 , 2024. Roi Cohen, Eden Biran, Ori Yoran, Amir Globerson, and Mor Geva. Evaluating the rip-ple effects of knowledge editing in language models. Transactions of the Association for Computational Linguistics , 12:283–298, 2024. Ronen Eldan and Mark Russinovich. Who’s harry potter? approximate unlearning in llms. 
+
+arXiv preprint arXiv:2310.02238 , 2023. Tao Feng, Yihang Sun, and Jiaxuan You. Grapheval: A lightweight graph-based llm frame-work for idea evaluation. arXiv preprint arXiv:2503.12600 , 2025. Isabel O Gallegos, Ryan A Rossi, Joe Barrow, Md Mehrab Tanjim, Sungchul Kim, Franck Dernoncourt, Tong Yu, Ruiyi Zhang, and Nesreen K Ahmed. Bias and fairness in large language models: A survey. Computational Linguistics , 50(3):1097–1179, 2024. Asma Ghandeharioun, Avi Caciularu, Adam Pearce, Lucas Dixon, and Mor Geva. Patch-scopes: A unifying framework for inspecting hidden representations of language models. In Forty-first International Conference on Machine Learning , 2024. URL https: //arxiv.org/abs/2401.06102 .Gabriel Ilharco, Marco Tulio Ribeiro, Mitchell Wortsman, Suchin Gururangan, Ludwig Schmidt, Hannaneh Hajishirzi, and Ali Farhadi. Editing models with task arithmetic, 2023. Joel Jang, Dongkeun Yoon, Sohee Yang, Sungmin Cha, Moontae Lee, Lajanugen Logeswaran, and Minjoon Seo. Knowledge unlearning for mitigating privacy risks in language models. 
+
+arXiv preprint arXiv:2210.01504 , 2022. Jiabao Ji, Yujian Liu, Yang Zhang, Gaowen Liu, Ramana Kompella, Sijia Liu, and Shiyu Chang. Reversing the forget-retain objectives: An efficient llm unlearning framework from logit difference. Advances in Neural Information Processing Systems , 37:12581–12611, 2024. Zhuoran Jin, Pengfei Cao, Chenhao Wang, Zhitao He, Hongbang Yuan, Jiachun Li, Yubo Chen, Kang Liu, and Jun Zhao. Rwku: Benchmarking real-world knowledge unlearning for large language models. Advances in Neural Information Processing Systems , 37:98213– 98263, 2025. Bryan Klimt and Yiming Yang. The enron corpus: A new dataset for email classification research. In European conference on machine learning , pp. 217–226. Springer, 2004. Dohyun Lee, Daniel Rim, Minseok Choi, and Jaegul Choo. Protecting privacy through approximating optimal parameters for sequence unlearning in language models. arXiv preprint arXiv:2406.14091 , 2024. Nathaniel Li, Alexander Pan, Anjali Gopal, Summer Yue, Daniel Berrios, Alice Gatti, Justin D. Li, Ann-Kathrin Dombrowski, Shashwat Goel, Long Phan, Gabriel Mukobi, Nathan Helm-Burger, Rassin Lababidi, Lennart Justen, Andrew B. Liu, Michael Chen, Isabelle Barrass, Oliver Zhang, Xiaoyuan Zhu, Rishub Tamirisa, Bhrugu Bharathi, Adam Khoja, Zhenqi Zhao, Ariel Herbert-Voss, Cort B. Breuer, Samuel Marks, Oam Patel, Andy Zou, Mantas Mazeika, Zifan Wang, Palash Oswal, Weiran Liu, Adam A. Hunt, Justin Tienken-Harder, Kevin Y. Shih, Kemper Talley, John Guan, Russell Kaplan, Ian Steneker, David Campbell, Brad Jokubaitis, Alex Levinson, Jean Wang, William Qian, Kallol Krishna Karmakar, Steven Basart, Stephen Fitz, Mindy Levine, Ponnurangam Kumaraguru, Uday Tupakula, 11 Published as a conference paper at COLM 2025 Vijay Varadharajan, Yan Shoshitaishvili, Jimmy Ba, Kevin M. Esvelt, Alexandr Wang, and Dan Hendrycks. The wmdp benchmark: Measuring and reducing malicious use with unlearning, 2024. Sijia Liu, Yuanshun Yao, Jinghan Jia, Stephen Casper, Nathalie Baracaldo, Peter Hase, Yuguang Yao, Chris Yuhao Liu, Xiaojun Xu, Hang Li, et al. Rethinking machine unlearning for large language models. Nature Machine Intelligence , pp. 1–14, 2025. Yi Liu, Gelei Deng, Zhengzi Xu, Yuekang Li, Yaowen Zheng, Ying Zhang, Lida Zhao, Tianwei Zhang, Kailong Wang, and Yang Liu. Jailbreaking chatgpt via prompt engineering: An empirical study. arXiv preprint arXiv:2305.13860 , 2023. Aengus Lynch, Phillip Guo, Aidan Ewart, Stephen Casper, and Dylan Hadfield-Menell. Eight methods to evaluate robust unlearning in llms. arXiv preprint arXiv:2402.16835 ,2024. Pratyush Maini, Zhili Feng, Avi Schwarzschild, Zachary C Lipton, and J Zico Kolter. Tofu: A task of fictitious unlearning for llms. arXiv preprint arXiv:2401.06121 , 2024. Anmol Mekala, Vineeth Dorna, Shreya Dubey, Abhishek Lalwani, David Koleczek, Mukund Rungta, Sadid Hasan, and Elita Lobo. Alternate preference optimization for unlearning factual knowledge in large language models, 2024. URL https://arxiv.org/abs/2409. 13474 .Minh-Vuong Nguyen, Linhao Luo, Fatemeh Shiri, Dinh Phung, Yuan-Fang Li, Thuy-Trang Vu, and Gholamreza Haffari. Direct evaluation of chain-of-thought in multi-hop reasoning with knowledge graphs. arXiv preprint arXiv:2402.11199 , 2024. Martin Pawelczyk, Seth Neel, and Himabindu Lakkaraju. In-context unlearning: Language models as few shot unlearners. arXiv preprint arXiv:2310.07579 , 2023. Fabio Petroni, Tim Rocktäschel, Sebastian Riedel, Patrick Lewis, Anton Bakhtin, Yuxiang Wu, and Alexander Miller. Language models as knowledge bases? In Kentaro Inui, Jing Jiang, Vincent Ng, and Xiaojun Wan (eds.), Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP) , pp. 2463–2473, Hong Kong, China, November 2019. Association for Computational Linguistics. doi: 10.18653/v1/D19-1250. URL 
+
+https://aclanthology.org/D19-1250/ .Rafael Rafailov, Archit Sharma, Eric Mitchell, Stefano Ermon, Christopher D Manning, and Chelsea Finn. Direct preference optimization: Your language model is secretly a reward model. arXiv preprint arXiv:2305.18290 , 2023. Jeffrey Rosen. The right to be forgotten. Stan. L. Rev. Online , 64:88, 2011. Weijia Shi, Jaechan Lee, Yangsibo Huang, Sadhika Malladi, Jieyu Zhao, Ari Holtzman, Daogao Liu, Luke Zettlemoyer, Noah A Smith, and Chiyuan Zhang. Muse: Machine unlearning six-way evaluation for language models. arXiv preprint arXiv:2407.06460 , 2024. Nianwen Si, Hao Zhang, Heyu Chang, Wenlin Zhang, Dan Qu, and Weiqiang Zhang. Knowl-edge unlearning for llms: Tasks, methods, and challenges. arXiv preprint arXiv:2311.15766 ,2023. Pratiksha Thaker, Shengyuan Hu, Neil Kale, Yash Maurya, Zhiwei Steven Wu, and Virginia Smith. Position: Llm unlearning benchmarks are weak measures of progress. arXiv preprint arXiv:2410.02879 , 2024. Sohee Yang, Nora Kassner, Elena Gribovskaya, Sebastian Riedel, and Mor Geva. Do large language models perform latent multi-hop reasoning without exploiting shortcuts? arXiv preprint arXiv:2411.16679 , 2024. Yuanshun Yao, Xiaojun Xu, and Yang Liu. Large language model unlearning. Advances in Neural Information Processing Systems , 37:105425–105475, 2025. 12 Published as a conference paper at COLM 2025 Dawen Zhang, Pamela Finckenberg-Broman, Thong Hoang, Shidong Pan, Zhenchang Xing, Mark Staples, and Xiwei Xu. Right to be forgotten in the era of large language models: Implications, challenges, and solutions. AI and Ethics , pp. 1–10, 2024a. Ruiqi Zhang, Licong Lin, Yu Bai, and Song Mei. Negative preference optimization: From catastrophic collapse to effective unlearning. arXiv preprint arXiv:2404.05868 , 2024b. Zhehao Zhang, Jiaao Chen, and Diyi Yang. Darg: Dynamic evaluation of large language models via adaptive reasoning graph. arXiv preprint arXiv:2406.17271 , 2024c. Lianmin Zheng, Wei-Lin Chiang, Ying Sheng, Siyuan Zhuang, Zhanghao Wu, Yonghao Zhuang, Zi Lin, Zhuohan Li, Dacheng Li, Eric Xing, Hao Zhang, Joseph E Gonza-lez, and Ion Stoica. Judging llm-as-a-judge with mt-bench and chatbot arena. In A. Oh, T. Naumann, A. Globerson, K. Saenko, M. Hardt, and S. Levine (eds.), Ad-vances in Neural Information Processing Systems , volume 36, pp. 46595–46623. Curran Associates, Inc., 2023. URL https://proceedings.neurips.cc/paper_files/paper/2023/ file/91f18a1287b398d378ef22505bf41832-Paper-Datasets_and_Benchmarks.pdf .Zexuan Zhong, Zhengxuan Wu, Christopher D Manning, Christopher Potts, and Danqi Chen. Mquake: Assessing knowledge editing in language models via multi-hop questions. 
+
+arXiv preprint arXiv:2305.14795 , 2023. Kaijie Zhu, Jiaao Chen, Jindong Wang, Neil Zhenqiang Gong, Diyi Yang, and Xing Xie. Dyval: Dynamic evaluation of large language models for reasoning tasks. arXiv preprint arXiv:2309.17167 , 2023. 13 Published as a conference paper at COLM 2025 
+
+A Appendix 
+
+A.1 Unlearning Objectives 
+
+We formalize the unlearning problem as follows. Let D be the original training set for an LLM parameterized by θ, and let Du = {[x, yu]}nu=1 ⊂ D be a designated “unlearning set” of n examples whose influence we aim to remove. Unlearning methods need to satisfy both the Removal and the Retention criteria. To ground this discussion, consider a running example where Du includes facts about 
+
+Stephen King , such as: 
+
+Du = {(“Who wrote The Shining ?”, “Stephen King”) ,
+
+> (“Who is Stephen King’s spouse?”, “Tabitha King”)
+
+}.The objective is to remove the model’s knowledge of Stephen King while preserving its general language capabilities and knowledge of unrelated topics. 
+
+Removal Criterion A model should behave as if it never saw the unlearning data in the first place, i.e., the updated model should no longer encode or reproduce knowledge from Du.Formally, for any x ∈ Du, the output distribution should be statistically indistinguishable from that of a model trained without Du. That is: 
+
+F(x; θ∗) ≈ F(x; θ¬Du ),where θ¬Du denotes the parameters learned by training on D \ Du.
+
+Example. After unlearning, the model should fail to answer questions like “Who wrote 
+
+The Shining ?” or “Who is Stephen King’s wife?”, just as a model trained without that data would. 
+
+Retention Criterion The updated model should preserve its performance on unrelated data. That is, for any x ∈ D \ Du, the model’s output should remain close to the original: 
+
+F(x; θ∗) ≈ F(x; θ).
+
+Example. The model should still correctly answer questions such as “Who wrote 1984 ?” or “Define the term ‘protagonist.’" 
+
+Trade-Off Considerations In practice, these two criteria are in direct tension: stronger forgetting often leads to unintended degradation in performance on retained knowledge. Unlearning methods must balance these competing objectives by controlling the scope and intensity of forgetting. Aggressive interventions (e.g., gradient ascent on Du) may lead to 
+
+unintended unlearning , where knowledge beyond Du is also lost. Conversely, conservative approaches may leave (many) residual traces of Du, making unlearning incomplete. This trade-off is central to evaluating the efficacy of unlearning methods. 
+
+LLM Unlearning aims to selectively remove the knowledge and influence of specific unlearning targets from LLM, ensuring that it no longer reinforces undesired outputs while preserving its overall performance and capabilities. A.2 Comparison to previous metrics 
+
+A.2.1 Data Preparation and Implementation 
+
+RWKU does not provide an explicit retain corpus, which makes it challenging to evaluate unlearning methods that incorporate regularization or aim to preserve surrounding knowl-edge. To address this, we construct a synthetic retain corpus by leveraging the Wikipedia pages of RWKU unlearning targets. Specifically, we extract all outbound hyperlinks from each target’s page and retrieve the full content of the linked pages. These linked pages represent semantically neighboring knowledge that should remain unaffected by the un-learning process. This design choice to build the retain corpus follows the pseudo-forget corpus creation process in RWKU. Previous experiments with unlearning evaluations show model utility collapse for batch-target unlearning, i.e., simultaneously unlearning too many targets leads to a collapse in any 14 Published as a conference paper at COLM 2025 model utility. Thus, RWKU’s main experiment unlearns a single entity, which is resource-intensive. Therefore, inspired by the TOFU task settings and experimentation setup by Ji et al. (2024), we report an average of three runs, each with 1% of all unlearning targets for batch unlearning for both RWKU and TOFU. 
+
+Final hyperparameters: TV, ( GA , DPO , NPO ), + Variants: The training hyperparameters are consistent across all baseline methods: the batch size of 32, a learning rate of 1 × 10 −5,weight decay of 0.01, and a retain weight of 1. We use the AdamW optimizer with β1 = 0.9 and β2 = 0.99. We use a consistent assistant LLM configuration for all experiments and utilize K = 8 for assistant LLM construction. Training hyperparameters for ULD are: batch size - 32, the learning rate of 1 × 10 −3, weight decay of 0.01, and a retain weight of 6.5. At inference time, we apply greedy decoding for all unlearned LLMs, following previous work (Jin et al., 2025). 15 Published as a conference paper at COLM 2025 
+
+A.2.2 Real World Knowledge Unlearning 
+
+Multi-hop Queries ↓ Retention criteria ↑ Multi-hop Avg. Overall Method 1-hop 2-hop 3-hop 1-fact away 2-facts away Rel. Ret. Forget Score Retain Score 
+
+Target model 94.1 92.6 78.4 94.2 93.8 95.0 88.4 94.3 20.7 ICL 17.7 22.2 31.5 31.2 49.4 89.6 23.8 56.7 65.0 GA 21.6 27.4 34.3 42.1 56.8 52.3 27.8 50.4 59.4 GDR 24.5 29.6 35.6 70.5 67.2 72.5 29.9 70.1 70.1 GKL 24.8 30.2 36.1 71.1 68.3 73.4 30.4 70.9 70.3 DPO 24.3 33.2 37.6 46.8 55.2 55.1 31.7 52.4 59.7 DPOD 27.5 35.1 39.1 63.2 65.3 77.3 33.9 68.6 67.1 DPOKL 28.8 35.5 39.5 64.4 66.1 77.9 34.6 69.5 67.3 NPO 19.4 25.9 33.8 44.3 57.1 57.2 26.4 52.9 61.6 NPOD 19.8 27.1 35.2 62.7 68.8 79.5 27.4 70.3 71.5 NPOKL 21.2 26.7 35.0 67.4 69.7 80.6 27.6 72.6 72.5 ULD 15.0 22.4 32.1 72.0 76.9 84.1 23.2 77.7 77.2 
+
+TV 32.2 47.8 57.4 74.6 79.3 85.8 45.8 79.9 64.5 Avg. 23.1 30.3 37.3 59.2 65.1 73.8 30.2 66.0 67.8 
+
+Table 4: Scores from our evaluation metric instantiated with the seed entities in RWKU for Phi-4-mini-instruct (3.8B). Values indicate ↑ means higher is better, and ↓ means lower is better. Methods as described in section 3.2 
+
+Multi-hop Queries ↓ Retention criteria ↑ Multi-hop Avg. Overall Method 1-hop 2-hop 3-hop 1-fact away 2-facts away Rel. Ret. Forget Score Retain Score 
+
+Target model 98.2 96.9 80.4 98.0 97.3 97.5 91.8 97.6 15.1 ICL 13.1 17.6 27.9 35.6 50.3 91.8 19.5 59.2 68.2 GA 18.2 24.7 30.1 43.1 60.8 54.2 24.3 52.7 62.1 GDR 22.6 26.9 30.6 72.2 69.1 74.1 26.7 71.8 72.5 GKL 22.8 27.9 31.4 72.6 69.7 75.2 27.4 72.5 72.6 DPO 21.4 29.4 33.3 51.1 56.5 56.2 28.0 54.6 62.1 DPOD 24.3 33.7 34.5 63.2 69.2 81.4 30.8 71.3 70.2 DPOKL 27.5 31.9 35.0 64.7 66.5 81.8 31.5 71.0 69.7 NPO 14.4 24.1 29.6 48.7 59.3 59.2 22.7 55.7 64.8 NPOD 17.2 23.7 30.2 68.7 72.6 82.6 23.7 74.6 75.5 NPOKL 16.1 21.1 30.0 68.2 70.2 83.5 22.4 74.0 75.7 ULD 12.6 19.1 26.9 72.7 76.6 85.4 19.5 78.2 79.3 TV 26.8 45.9 52.6 75.4 79.5 89.2 41.8 81.4 67.9 Avg. 19.8 27.2 32.7 61.4 66.7 76.2 26.5 68.1 70.1 Table 5: Scores from our evaluation metric instantiated with the seed entities in RWKU for IBM Granite 3.2-8B-Instruct. Values indicate ↑ means higher is better, and ↓ means lower is better. Methods as described in section 3.2                                                                
+
+> Previous Metrics Our Metric Method Forget Set (All) ↓Neighbor Set (All) ↑Multi-hop Forget Score ↓Avg. Ret. Score ↑
+> Target model 77.3 90.7 93.3 98.7 ICL 16.5 55.7 20.8 60.0
+> GA 39.6 65.5 24.8 53.1
+> GDR 47.3 74.1 26.7 73.5
+> GA KLR 50.6 70.2 27.2 74.0
+> DPO 39.8 60.9 29.2 55.5
+> DPO GDR 45.3 71.8 31.2 70.8
+> DPO KLR 44.5 67.8 31.7 71.5
+> NPO 29.8 73.3 23.3 55.8
+> NPO GDR 30.2 77.8 24.3 72.6
+> NPO KLR 31.1 74.8 23.8 74.8 ULD 23.8 81.5 19.3 79.7 TV 61.2 77.4 42.3 82.3 Spearman’s Rank Corr. 0.87*** 0.75***
+
+Table 6: RWKU: Comparison of unlearning effectiveness using previous static metrics vs. our dynamic evaluation framework when using Llama 3.1-Instruct (8B). Spearman’s rank correlation shows strong agreement with prior rankings while revealing new vulnerabilities missed by static benchmarks. Significance levels: ∗∗∗ p < 0.005 16 Published as a conference paper at COLM 2025 
+
+A.2.3 TOFU: Task of Fictitious Unlearning 
+
+Multi-hop Queries ↓ Retention criteria ↑ Multi-hop Avg. Overall Method 1-hop 2-hop 3-hop 1-fact away 2-facts away Rel. Ret. Forget Score Retain Score 
+
+Target model 92.8 86.3 78.6 94.0 88.7 92.7 85.9 91.8 24.4 ICL 13.8 20.3 30.5 31.5 56.2 87.2 21.5 58.3 66.9 
+
+GA 20.5 25.3 28.9 47.9 62.9 59.5 24.8 56.8 64.7 
+
+GDR 23.2 24.7 30.7 67.9 74.6 70.6 25.9 71.0 72.5 
+
+GA KLR 22.0 26.3 30.6 69.7 65.6 70.5 26.3 68.6 71.1 
+
+DPO 20.6 33.3 32.1 52.5 54.9 61.9 28.7 56.4 63.0 
+
+DPO GDR 27.1 34.5 33.3 69.5 64.8 75.1 31.6 69.8 69.1 
+
+DPO KLR 28.3 30.2 36.9 61.5 63.1 76.2 31.8 66.9 67.6 
+
+NPO 15.1 24.1 32.7 49.6 63.9 64.2 24.0 59.2 66.6 
+
+NPO GDR 15.5 23.5 34.2 60.7 75.9 75.3 24.4 70.6 73.0 
+
+NPO KLR 16.8 21.2 33.5 63.6 69.9 77.4 23.8 70.3 73.1 ULD 11.8 20.1 30.2 78.6 73.2 81.4 20.7 77.7 78.5 TV 29.7 41.1 51.1 71.4 77.9 77.3 40.6 72.2 65.1 Avg. 20.6 26.8 33.7 60.4 66.9 73.1 27.0 66.6 69.7 
+
+Table 7: Our Metric on the TOFU benchmark for Llama 3.1-Instruct (8B). Values indicate ↑
+
+means higher is better, and ↓ means lower is better. Methods: GA – Gradient Ascent; GDR –Gradient Diff (Gradient ascent of forget set with gradient descent of retain set); GA KLR –Gradient ascent of forget set with KL Divergence minimization on the retain set; DPO – Direct Preference Optimization; DPO GDR – Direct Preference Optimization with Gradient descent retention; DPO KLR – Direct Preference Optimization with KL Divergence minimization on the retain set; NPO – Negative Preference Optimization; NPO GDR – Negative Preference Optimization with Gradient descent retention; NPO KLR – Negative Preference Optimization with KL Divergence minimization on the retain set; ICL – Incontext Unlearning; TV – Task vectors; ULD – Unlearning via Logit Difference.                                                               
+
+> Previous Metrics Our Metric Method Forget Quality ↑Model Utility ↑Multi-hop Forget Score ↓Avg. Ret. Score ↑
+> Target model 0.00 0.68 85.9 91.8 ICL NA NA 21.5 58.3
+> GA 0.41 0.54 24.8 56.8
+> GDR 0.26 0.55 25.9 71.0
+> GA KLR 0.45 0.54 26.3 68.6
+> DPO 0.27 0.58 28.7 56.4
+> DPO GDR 0.26 0.58 31.6 69.8
+> DPO KLR 0.26 0.59 31.8 66.9
+> NPO 0.69 0.54 24.0 59.2
+> NPO GDR 0.59 0.57 24.4 70.6
+> NPO KLR 0.51 0.56 23.8 70.3 ULD 0.96 0.65 20.7 77.7 TV 0.33 0.60 40.6 72.2 Spearman’s Rank Corr. - 0.79*** 0.58**
+
+Table 8: TOFU: Comparison of unlearning effectiveness using previous static metrics vs. our dynamic evaluation framework (LLaMa 3.1 (8B)). Spearman’s rank correlation shows strong agreement with prior rankings while highlighting differences missed by static benchmarks. Significance levels: ∗∗ p < 0.01, ∗∗∗ p < 0.005 17 Published as a conference paper at COLM 2025 
+
+A.3 Prompts used in Knowledge Graph Creation 
+
+A.3.1 Eliciting information about an entity 
+
+Generate a list of diverse questions regarding the entity '{ entity } '. Each question should cover a different aspect : 1. Basic introduction : Who is { entity }? 2. Key concepts related to { entity }: What are the main concepts or characteristics associated with { entity }? 3. Connections to related entities : What are the most significant relationships between {entity } and other related entities ? 4. Functional roles : What is the role or importance of { entity } in its field or domain ? 5. Lesser - known facts : What are some lesser - known or non - mainstream details about { entity }? 6. Controversies or debates : Are there any controversies or debates surrounding { entity }? 7. Future trends : How could { entity } evolve or influence future developments in its field ? 8. Historical significance : What has been the historical impact of { entity }? 9. Comparison to similar entities : How does { entity } compare to similar entities in the same or different fields ? 10. Missing information : What information is missing or under - researched about { entity } that would help understand it better ? Input : "{ entity }" Provide the output as a list of questions . 
+
+A.3.2 Obtaining relationships from text 
+
+In a knowledge graph , entities represent real - world objects , concepts , or things . Valid entities are : - Specific and identifiable (e.g., names , places , distinct items ). - Not overly abstract , repetitive , or general . - Relevant to a knowledge graph 's structure . Extract all atomic facts from the input text . Output each atomic fact in the format : ( subject , relationship , object ) , where : - Relationships and objects are concise , meaningful , and specific . - Longer pieces of text can be broken into multiple relationships . - For each fact , if applicable , create both relationships (e1 , r1 , e2 ) and (e2 , r2 , e1 ). Text : "{ text }" 
+
+A.3.3 Finding irrelevant facts 
+
+""" Rate the relevance of the following triple to the initial query on a scale from 0 to 10. Query : "{ Seed Entity }" Triple : ("{ entity }" , "{ relation }" , "{ obj }") Provide only the number in response . """ 
+
+A.3.4 Alias Resolution 
+
+f ' Is "{ node }" the same as "{ visited_node }"? '
+
+A.4 Popular unlearning benchmarks 
+
+Several benchmarks have been proposed to evaluate unlearning in LLMs, each focusing on different aspects such as knowledge removal, adversarial robustness, and model retention capability. Below, we summarize key benchmarks and their evaluation methodologies. 1. Who’s Harry Potter? (WHP) Benchmark Eldan & Russinovich (2023): The WHP benchmark tests unlearning on a single entity, the Harry Potter book series. The benchmark evaluates forgetting through 300 manually curated Q&A probes target-ing knowledge about the Harry Potter universe. 2. Weapons of Mass Destruction Proxy (WMDP) Benchmark Li et al. (2024): The WMDP benchmark simulates unlearning high-risk expert-level knowledge related to bioweapons and cybersecurity threats. The forget set consists of multiple-choice questions on biology, virology, cybersecurity, and chemistry, while the retain set is 18 Published as a conference paper at COLM 2025 drawn from MMLU college-level question sets. Unlike WHP, WMDP includes 4,157 forget probes, allowing for a more extensive evaluation of knowledge removal. 3. TOFU Benchmark Maini et al. (2024): TOFU evaluates unlearning on fictional entities using a synthetic dataset of 4,000 Q&A pairs about fictional authors. The benchmark uses a fine-tuned version of LLaMA-2-7B-chat, with the goal of un-learning a subset of 1%, 5%, or 10% of the authors’ information. Unlike WHP and WMDP, TOFU incorporates neighbor perturbation testing, making it one of the first benchmarks to assess whether unlearning affects related entities. However, TOFU does not include adversarial attacks, knowledge memorization tests, or multi-hop reasoning, limiting its effectiveness in evaluating unlearning robustness. 4. Machine Unlearning Six-Way Evaluation (MUSE) benchmark Shi et al. (2024): The MUSE benchmark introduces a six-way evaluation framework focused on data owner and deployer expectations, including verbatim and knowledge mem-orization, privacy leakage, utility retention, scalability, and sustainability. It uses real-world corpora (e.g., news, books) and evaluates unlearning effectiveness under practical constraints. 5. Real-World Knowledge Unlearning (RWKU) Benchmark Jin et al. (2025): RWKU is the largest benchmark to date, containing 13,131 synthetic Q&A pairs about 200 real-world celebrities. Unlike previous benchmarks, RWKU incorporates adversar-ial probing techniques such as knowledge manipulation, knowledge memorization, and membership inference attacks to stress test unlearning effectiveness. Addition-ally, RWKU assesses model utility on five capabilities, including reasoning ability (measured using Big-Bench-Hard) and truthfulness (measured on TruthfulQA). 
+
+A.5 Popular unlearning methods 
+
+We evaluate various popular unlearning methods, including optimization-based and prompt-based approaches. Several of these can be combined with regularization techniques designed to preserve model utility on the retain set. This leads to a total of 12 candidate methods evaluated in our framework: GA , GA GDR , GA KLR , DPO , DPO GDR , DPO KLR , NPO ,
+
+NPO GDR , NPO KLR , ICL, ULD, and Task Vector .Let ftarget denote the original (target) model, Dforget the forget set, Dretain the retain set, and 
+
+funlearn the model after unlearning. Below, we summarize each method. • Gradient Ascent (GA ) minimizes the likelihood of correct predictions on Dforget 
+
+by performing gradient ascent on the cross-entropy loss (the opposite of conven-tional learning with gradient descent). GA has achieved mixed results: while Jang et al. (2022) found it effective for unlearning examples from the Enron email dataset (Klimt & Yang, 2004) with minimal performance degradation, Ilharco et al. (2023) reported that GA significantly harms general model utility when unlearning a high-toxicity subset of the Civil Comments dataset (Borkan et al., 2019). • Direct Preference Optimization (DPO ; Rafailov et al., 2023): DPO frames unlearn-ing as a preference learning task, where the model is trained to prefer "I don’t know" responses over correct ones for inputs in Dforget . It modifies the conventional preference loss to discourage high likelihood on the forget set, typically without explicit supervision on the retain set. This implementation of Direct Preference Op-timization is sometimes known as Rejection Tuning (Maini et al., 2024). Alternative implementations of DPO generate counterfactual positive samples (Mekala et al., 2024) for tuning. • Negative Preference Optimization (NPO ; Zhang et al., 2024b) treats the forget set as negative preference data and adapts the offline DPO objective (Rafailov et al., 2023) to tune the model to assign low likelihood to the forget set without straying too far from the original model ftarget .       
+
+> LNPO (θ) = −2
+> βEx∼D forget
+> 
+> log σ
+> 
+> −βlog fθ(x)
+> ftarget (x)
+> 
+> ,
+
+19 Published as a conference paper at COLM 2025 where fθ refers to the model that undergoes unlearning, σ is the sigmoid function, and β is a hyperparameter that controls the allowed divergence of fθ from its initialization ftarget . Following Rafailov et al. (2023); Zhang et al. (2024b), we fix 
+
+β = 0.1 in our experiments. • Task Vectors (Ilharco et al., 2023) derived from straightforward arithmetic on the model weights can effectively steer neural network behavior. We adapt task vectors to perform unlearning in two stages. First, we train 
+
+ftarget on Dforget until the model overfits, yielding a reinforced model freinforce . We then obtain a task vector related to Dforget by calculating the weight difference between ftarget and freinforce .To achieve unlearning, we subtract this task vector from ftarget ’s weights, intuitively moving the model away from the direction it used to adapt to Dforget – i.e., funlearn =
+
+ftarget − ( freinforce − ftarget ).• Unlearning via Logit Difference (ULD) Ji et al. (2024): ULD fine-tunes an assistant model on the forget set Dforget while simultaneously training the main model to differ from the assistant. This ensures that unlearned logits move away from correct predictions by computing: 
+
+lforget (Y|X) = l(Y|X; θ) − α · lassist (Y|X; ϕ)
+
+Here, α controls the forgetting strength. This method is particularly effective for token-level unlearning in LLMs. • In-Context Learning (ICL)-Based Unlearning Pawelczyk et al. (2023): Rather than modifying model weights, this approach suppresses recall through prompting. The model is given context such as: “You are an AI assistant that no longer knows about [Entity]. Please respond accordingly.” This method is efficient and lightweight but non-persistent—forgotten knowledge can resurface once the prompt is removed. 
+
+Two regularizers for utility preservation. GA , DPO , and NPO are not explicitly designed for utility preservation, so we discuss several regularization strategies that either improve the performance on the retain set or ensure the unlearned model remains close to the target model during unlearning. 
+
+A.6 Coverage of Our metric compared to previous metrics 
+
+To evaluate the comprehensiveness of our dynamic evaluation framework, we assess its 
+
+coverage with respect to two entity-centric unlearning benchmarks: TOFU and RWKU . We aim to determine whether our automatically generated probes capture the same factual content as existing benchmark queries. Despite relying solely on model-informed knowl-edge graphs, without manually constructed templates or external corpora, we achieve 66% coverage of TOFU and 78% coverage of RWKU (refer table 10). Figure 4 shows the metric coverage under different graph expansion constraints. We define semantic equivalence between probes as the ability to match the underlying fact tested by a benchmark query, regardless of surface phrasing. To identify equivalence, we first use a commercial LLM (GPT-4o-mini) to extract the key entity and relation from each benchmark probe. We then check whether the corresponding triplet (e1, r, e2) exists in our generated knowledge graph. If a probe generated from that triplet leads to the same answer as the original query, we consider it as semantically equivalent. Table 9 provides a few examples of semantic equivalence. In addition to exact matches, we allow for partial matches in open-ended queries. For example, TOFU includes prompts such as "What are some of the books Hina Ameen has written?" with multiple expected answers. If our framework extracts any subset of these facts (e.g., (Hina Ameen, wrote, Granite Glossary) ), we consider the probe covered, as it verifies that the model retains part of the knowledge. 20 Published as a conference paper at COLM 2025          
+
+> Benchmark Benchmark Probe Equivalent Probe Answer
+> TOFU In which city was Hina Ameen born? Where was Hina Ameen born? Karachi, Pakistan RWKU Stephen King was born in ___, Maine. Where was Stephen King born? Portland
+
+Table 9: Examples of semantic equivalence between benchmark probes and our framework. Partial matches are accepted for open-ended queries.             
+
+> Benchmark Total probes # Overlapping probes Coverage (%) Avg. graph size
+> RWKU 13,131 10,256 78.1% 143 TOFU 4,000 2,636 65.9% 36
+
+Table 10: Coverage of our evaluation framework with respect to existing unlearning bench-marks. Total Probes refers to the number of queries in the original benchmark. # Overlap-ping probes counts how many of those probes are semantically matched by our automat-ically generated probe set. Coverage (%) indicates the proportion of probes reproduced. 
+
+Avg. graph size is the average number of nodes needed in our knowledge graph to reach maximum overlap with each benchmark. 
+
+(a) RWKU (b) TOFU 
+
+Figure 4: Coverage of existing benchmarks at different graph expansion rates. 
+
+A.7 Examples of Queries Single-hop Queries: “Who wrote the book ‘The Shining’?” Answer: Stephen King (expected to be forgotten). 
+
+Multi-hop Queries (2-hop, 3-hop): 
+
+• 2-hop Query: “Who wrote the book whose protagonist is Jack Torrance?” 
+
+Answer: Stephen King. • 3-hop Query: “Who is married to the author of the book whose protagonist is Jack Tor-rance?” 
+
+Answer: Tabitha King. 
+
+Fact Retention (1-hop, 2-hop): 
+
+• 1-hop Retention Example: "Who is the protagonist of ‘The Shining’?” 
+
+Answer: Jack Torrance. • 2-hop Retention Example: "What was the occupation of Jack Torrance?” 
+
+Answer: Writer. 
+
+Relationship Retention: “Who is the spouse of Jack Torrance?” Expected retained answer: 
+
+Wendy Torrance. 21 Published as a conference paper at COLM 2025                                                                                                                                                                                                           
+
+> Methods Previous Metrics Our metric Score Removal Crit. Ret. Crit. Multi-hop Queries Fact Ret. Rel. Avg. Avg. Vbtim. ↓Know. ↓Util. ↑1-hop ↓2-hop ↓2-hop - Seq. ↓3-hop ↓1-hop ↑2-hop ↑Ret. ↑Rem. ↓Ret. ↑↑
+> Muse-Books
+> Trgt Model 91.4 59.1 62.2 99.2% 98.5% 97.7% 92.4% 99.4% 98.3% 99.3% 96.9% 99.0% NA
+> GA 0009.2% 20.5% 20.7% 26.4% 65.8% 69.7% 84.3% 19.2% 73.3% 76.8%
+> GDR 0010.3 10.8% 22.4% 22.1% 32.3% 71.1% 76.3% 86.2% 21.9% 77.9% 78.0%
+> GA KLR 26.1 28.3 21.5 11.2% 24.8% 26.0% 34.9% 73.1% 74.2% 86.4% 24.2% 77.9% 76.8%
+> DPO 58.4 49.7 38.1 6.8% 10.5% 11.2% 22.7% 60.2% 63.0% 81.5% 17.8% 70.9% 75.2%
+> DPO GDR 35.9 40.5 42.2 8.4% 17.9% 18.7% 27.4% 64.8% 68.2% 83.7% 18.1% 72.7% 76.2%
+> DPO KLR 38.3 43.6 43.7 9.0% 19.2% 20.1% 28.3% 65.7% 69.5% 84.2% 19.2% 73.1% 76.4%
+> NPO 0007.0% 10.9% 10.6% 24.1% 61.9% 64.7% 82.2% 13.1% 69.6% 77.3%
+> NPO GDR 0018.4 9.8% 21.3% 21.9% 29.8% 66.7% 67.8% 84.9% 20.7% 73.1% 76.1%
+> NPO KLR 18.1 32.7 39.8 13.2% 23.1% 25.7% 33.5% 67.5% 72.9% 87.3% 23.9% 75.9% 76.0% ICL 10.5 7.9 25.3 4.5% 8.2% 8.9% 16.7% 53.7% 57.1% 72.9% 9.6% 62.4% 72.6% TV 51.2 42.3 57.6 11.6% 23.5% 24.3% 36.1% 75.1% 78.5% 88.9% 23.9% 80.8% 78.4% ULD 34.8 29.4 51.4 12.0% 23.5% 24.8% 33.2% 75.6% 78.2% 87.8% 23.4% 79.9% 78.9%
+
+Table 11: Comparison of Unlearning Methods on Various Metrics on the MUSE-books benchmark Shi et al. (2024). The target model here is LLama 3.1 - 8B. Methods: GA – Gradient Ascent; GDR – Gradient Diff (Gradient ascent of forget set with gradient descent of retain set); GA KLR – Gradient ascent of forget set with KL Divergence minimization on the retain set; DPO – Direct Preference Optimization; DPO GDR – Direct Preference Optimization with Gradient descent retention; DPO KLR – Direct Preference Optimization with KL Divergence minimization on the retain set; NPO – Negative Preference Optimization; NPO GDR –Negative Preference Optimization with Gradient descent retention; NPO KLR – Negative Preference Optimization with KL Divergence minimization on the retain set; ICL – Incontext Unlearn-ing; TV – Task vectors; ULD – Unlearning via Logit Difference. 
+
+A.8 MUSE: Machine Unlearning Six-way Evaluation – A case study 
+
+MUSE, introduced by Shi et al. (2024), presents a unique challenge to our framework. It consists of two datasets: Books and News. For MUSE-Books, the goal is to forget all the Harry Potter books but retain the Harry Potter-related content obtained from the FanWiki. For Muse-News, the goal is to forget BBC news articles published before August 2023 and to retain articles published after. Our framework is ill-equipped to handle both of these datasets: (1) MUSE-Books, where there is an overlap between the forget and the retain set; (2) MUSE-News, where the goal is to forget the verbatim for the article but not to forget the actual news. Our metric, as described in the paper, is ill-equipped to handle both of these setups. Thus, to inquire if our metric can give useful signals about unlearning efficacy, we modify the evaluation protocol for the case of MUSE-Books. 
+
+Modified Evaluation Protocol: We extract an initial set of entities from test sets constructed by the authors of MUSE. We consider those entities as unlearning targets mentioned in the forget set probes but not the retain set. Additionally, we also mark the ten most frequently mentioned entities in the book to also be part of forget queries. Afterward, we create a knowledge graph with multiple seed entities and follow the graph expansion steps described above. 
+
+Key highlights: Table 11 shows our metric and previous metrics on MUSE-Books.Although prior metrics ( Verbatim , Knowledge , and Utility ) show near-perfect unlearning scores (e.g., gradient ascent-based methods such as GA and NPO indicating complete removal), our evaluation reveals significant residual knowledge accessible via multi-hop queries. For instance, Gradient Ascent (GA), despite showing perfect removal by previous metrics, yields a minimum multi-hop accuracy of 9.6%, indicating residual information retention. Meth-ods incorporating retention regularization (e.g., GDR , GA KLR , and variants of DPO/NPO) similarly reveal vulnerabilities under multi-hop querying. 
+
+B Activation Pathway Analysis with PatchScopes 
+
+We further investigate why unlearning methods show limited efficacy on multi-hop queries, by using PatchScopes to investigate intermediate layers (Ghandeharioun et al., 2024). PatchScopes decodes hidden transformer-layer activations into interpretable natural lan-guage, enabling us to pinpoint precisely which layers resolve specific entities during model inference. 22 Published as a conference paper at COLM 2025 
+
+Experimental Setup. We follow the methodology and the experimental design used by (Biran et al., 2024). Specifically, we analyze activation pathways for one useful case, samples where unlearning achieves knowledge removal for single-hop queries, yet fails to generalize to related multi-hop queries. We specifically focus on our running example involving knowledge about Stephen King: • Single-hop query (direct retrieval): “The author of The Shining is ___." • Two-hop query (indirect retrieval): “The author of the (book with protagonist Jack Torrance is ___") 
+
+Representation Extraction and Decoding. Our procedure involves the following detailed steps: 1. Hidden Representation Extraction : We pass each query through the original (pre-unlearning) model, recording hidden activations at every transformer layer, specifically at the token positions corresponding to the query’s final answer. 2. Identity-based Decoding : To interpret these hidden activations, we employ an identity decoding prompt designed to explicitly surface the encoded semantic information: "cat is cat, table is table, blue is blue, X is ___." Here, we insert hidden representations extracted from the query in place of "X," allowing us to explicitly decode and identify the resolved entity at each layer. 3. Layer-wise Analysis of Entity Resolution : We systematically track entity decoding across all transformer layers separately for single-hop and two-hop queries. 
+
+Observations. Our analysis reveals an interesting internal activation patterns: • For single-hop queries (e.g., “The author of The Shining is ___"), we observe the queried entity (“Stephen King”) clearly resolved within intermediate (middle) transformer layers. This indicates reliance on a dominant, direct internal activation pathway. • For two-hop queries (e.g., “The author of the (book with protagonist Jack Torrance is ___"), we observe a two-stage resolution: the first-hop entity (“The Shining”) is resolved early in the model’s transformer layers, while the second-hop entity (“Stephen King”) emerges distinctly only in the deeper layers. This indicates multi-hop queries inherently depend on alternate, distributed activation pathways. • Post unlearning: We observe a nearly complete inability to resolve single hop queries. For two hop queries, the unlearning model always resolved the first hop in the early layers and the second hop is resolved in later layers. 
+
+Interpretation. Our results qualitatively paint a story: unlearning seems to work when the target entity is resolved in the middle layers and not when it resolved much later on in the model. This analysis hopes to build an intuition on why unlearning may fail, however, a concrete quantitative analysis is out of scope for this paper. 23
