@@ -1,0 +1,79 @@
+{
+  "label": "2026-03-21",
+  "date": "2026-03-21",
+  "generated_at": "2026-03-21T19:59:37",
+  "count": 5,
+  "papers": [
+    {
+      "paper_id": "202603/21/2603.14259v1-bringing-model-editing-to-generative-recommendation-in-cold-start-scenarios",
+      "section": "deep",
+      "title_en": "Bringing Model Editing to Generative Recommendation in Cold-Start Scenarios",
+      "authors": "Chenglei Shen, Teng Shi, Weijie Yu, Xiao Zhang, Jun Xu",
+      "date": "2026-03-15",
+      "pdf": "https://arxiv.org/pdf/2603.14259v1",
+      "score": "9.0",
+      "evidence": "用于知识注入的模型编辑",
+      "tldr": "针对生成式推荐系统在冷启动场景下性能骤降的问题，本文提出 GenRecEdit 框架，首次将模型编辑技术引入推荐领域。该方法通过显式建模序列上下文与生成标记的关系，并采用迭代式标记级编辑和一对一触发机制，实现了在不重新训练的情况下高效注入新项目知识。实验证明，该方法在显著提升冷启动推荐准确率的同时，大幅降低了更新成本，仅需重训练时间的 9.5% 即可完成高效更新。",
+      "tags": "query:mu-ce",
+      "abstract_en": "Generative recommendation (GR) has shown strong potential for sequential recommendation in an end-to-end generation paradigm. However, existing GR models suffer from severe cold-start collapse: their recommendation accuracy on cold-start items can drop to near zero. Current solutions typically rely on retraining with cold-start interactions, which is hindered by sparse feedback, high computational cost, and delayed updates, limiting practical utility in rapidly evolving recommendation catalogs. Inspired by model editing in NLP, which enables training-free knowledge injection into large language models, we explore how to bring this paradigm to generative recommendation. This, however, faces two key challenges: GR lacks the explicit subject-object binding common in natural language, making targeted edits difficult; and GR does not exhibit stable token co-occurrence patterns, making the injection of multi-token item representations unreliable. To address these challenges, we propose GenRecEdit, a model editing framework tailored for generative recommendation. GenRecEdit explicitly models the relationship between the full sequence context and next-token generation, adopts iterative token-level editing to inject multi-token item representations, and introduces a one-to-one trigger mechanism to reduce interference among multiple edits during inference. Extensive experiments on multiple datasets show that GenRecEdit substantially improves recommendation performance on cold-start items while preserving the model's original recommendation quality. Moreover, it achieves these gains using only about 9.5% of the training time required for retraining, enabling more efficient and frequent model updates.",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202603/21/2603.15117v1-mmku-bench-a-multimodal-update-benchmark-for-diverse-visual-knowledge",
+      "section": "deep",
+      "title_en": "MMKU-Bench: A Multimodal Update Benchmark for Diverse Visual Knowledge",
+      "authors": "Baochen Fu, Yuntao Du, Cheng Chang, Baihao Jin, Wenzhi Deng, Muhao Xu, Hongmei Yan, Weiye Song, Yi Wan",
+      "date": "2026-03-16",
+      "pdf": "https://arxiv.org/pdf/2603.15117v1",
+      "score": "9.0",
+      "evidence": "多模态知识更新与修正的基准测试",
+      "tldr": "针对多模态模型参数知识随时间失效的问题，本文提出了MMKU-Bench，这是一个包含2.5万个知识实例和4.9万张图像的综合评估基准。该基准涵盖了“更新知识”和“未知知识”两种场景，旨在系统分析模型在跨模态一致性及持续更新方面的表现。通过评估SFT、RLHF和知识编辑（KE）等方法，揭示了现有技术在灾难性遗忘和持续更新能力上的局限性，为多模态知识更新研究提供了重要参考。",
+      "tags": "query:mu-ce",
+      "abstract_en": "As real-world knowledge continues to evolve, the parametric knowledge acquired by multimodal models during pretraining becomes increasingly difficult to remain consistent with real-world knowledge. Existing research on multimodal knowledge updating focuses only on learning previously unknown knowledge, while overlooking the need to update knowledge that the model has already mastered but that later changes; moreover, evaluation is limited to the same modality, lacking a systematic analysis of cross-modal consistency. To address these issues, this paper proposes MMKU-Bench, a comprehensive evaluation benchmark for multimodal knowledge updating, which contains over 25k knowledge instances and more than 49k images, covering two scenarios, updated knowledge and unknown knowledge, thereby enabling comparative analysis of learning across different knowledge types. On this benchmark, we evaluate a variety of representative approaches, including supervised fine-tuning (SFT), reinforcement learning from human feedback (RLHF), and knowledge editing (KE). Experimental results show that SFT and RLHF are prone to catastrophic forgetting, while KE better preserve general capabilities but exhibit clear limitations in continual updating. Overall, MMKU-Bench provides a reliable and comprehensive evaluation benchmark for multimodal knowledge updating, advancing progress in this field.",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202603/21/2603.15518v1-beyond-the-covariance-trap-unlocking-generalization-in-same-subject-knowledge-editing-for-large-language-models",
+      "section": "deep",
+      "title_en": "Beyond the Covariance Trap: Unlocking Generalization in Same-Subject Knowledge Editing for Large Language Models",
+      "authors": "Xiyu Liu, Qingyi Si, Zhengxiao Liu, Chenxu Yang, Naibin Gu, Zheng Lin",
+      "date": "2026-03-16",
+      "pdf": "https://arxiv.org/pdf/2603.15518v1",
+      "score": "9.0",
+      "evidence": "用于更新大语言模型知识的知识编辑",
+      "tldr": "针对大语言模型在同主体知识编辑中存在的指令遵循泛化失效问题，本文揭示了其几何根源在于激活偏移超出了模型的几何容差。研究指出传统协方差约束会导致扰动放大（协方差陷阱）。为此，提出了RoSE方法，通过各向同性几何对齐和分层知识集成来优化表示并平滑优化景观。实验证明RoSE显著提升了模型在交互式参数记忆中的鲁棒性和指令遵循能力。",
+      "tags": "query:mu-ce",
+      "abstract_en": "While locate-then-edit knowledge editing efficiently updates knowledge encoded within Large Language Models (LLMs), a critical generalization failure mode emerges in the practical same-subject knowledge editing scenario: models fail to recall the updated knowledge when following user instructions, despite successfully recalling it in the original edited form. This paper identifies the geometric root of this generalization collapse as a fundamental conflict where the inner activation drifts induced by prompt variations exceed the model's geometric tolerance for generalization after editing. We attribute this instability to a dual pathology: (1) The joint optimization with orthogonal gradients collapses solutions into sharp minima with narrow stability, and (2) the standard covariance constraint paradoxically acts as a Covariance Trap that amplifies input perturbations. To resolve this, we introduce RoSE (Robust Same-subject Editing), which employs Isotropic Geometric Alignment to minimize representational deviation and Hierarchical Knowledge Integration to smooth the optimization landscape. Extensive experiments demonstrate that RoSE significantly improves instruction-following capabilities, laying the foundation for robust interactive parametric memory of LLM agents.",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202603/21/2603.14222v1-membership-inference-for-contrastive-pre-training-models-with-text-only-pii-queries",
+      "section": "quick",
+      "title_en": "Membership Inference for Contrastive Pre-training Models with Text-only PII Queries",
+      "authors": "Ruoxi Cheng, Yizhong Ding, Hongyi Zhang, Yiyan Huang",
+      "date": "2026-03-15",
+      "pdf": "https://arxiv.org/pdf/2603.14222v1",
+      "score": "7.0",
+      "evidence": "通过成员推理审计模型中记忆的个人身份信息",
+      "tldr": "针对对比预训练模型（如CLIP、CLAP）在处理大规模网页数据时可能泄露个人隐私的问题，本文提出了一种名为UMID的纯文本成员推理检测框架。UMID通过文本引导的跨模态潜空间反演，提取相似度和变异性信号，并利用无监督异常检测器进行判定。该方法无需昂贵的影子模型或敏感的生物特征配对输入，在保证隐私合规的同时，实现了亚秒级的快速高效审计。",
+      "tags": "query:mu-ce",
+      "abstract_en": "Contrastive pretraining models such as CLIP and CLAP underpin many vision-language and audio-language systems, yet their reliance on web-scale data raises growing concerns about memorizing Personally Identifiable Information (PII). Auditing such models via membership inference is challenging in practice: shadow-model MIAs are computationally prohibitive for large multimodal backbones, and existing multimodal attacks typically require querying the target with paired biometric inputs, thereby directly exposing sensitive biometric information to the target model. We propose Unimodal Membership Inference Detector (UMID), a text-only auditing framework that performs text-guided cross-modal latent inversion and extracts two complementary signals, similarity (alignment to the queried text) and variability (consistency across randomized inversions). UMID compares these statistics to a lightweight non-member reference constructed from synthetic gibberish and makes decisions via an ensemble of unsupervised anomaly detectors. Comprehensive experiments across diverse CLIP and CLAP architectures demonstrate that UMID significantly improves the effectiveness and efficiency over prior MIAs, delivering strong detection performance with sub-second auditing cost while complying with realistic privacy constraints.",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202603/21/2603.17217v1-anonymous-by-construction-an-llm-driven-framework-for-privacy-preserving-text",
+      "section": "quick",
+      "title_en": "Anonymous-by-Construction: An LLM-Driven Framework for Privacy-Preserving Text",
+      "authors": "Federico Albanese, Pablo Ronco, Nicolás D'Ippolito",
+      "date": "2026-03-17",
+      "pdf": "https://arxiv.org/pdf/2603.17217v1",
+      "score": "6.0",
+      "evidence": "大模型驱动的文本个人隐私信息匿名化框架",
+      "tldr": "针对大模型时代敏感信息保护与数据可用性之间的矛盾，本文提出了一种基于本地大模型的匿名化框架。该框架通过将文本中的个人身份信息（PII）替换为类型一致的虚拟替代物，在确保数据不出域的前提下，保留了文本的流畅性与语义。实验证明，该方法在隐私保护、语义效用和下游任务训练能力方面均优于现有工业标准和前沿技术，为负责任的AI应用提供了有效方案。",
+      "tags": "query:mu-ce",
+      "abstract_en": "Responsible use of AI demands that we protect sensitive information without undermining the usefulness of data, an imperative that has become acute in the age of large language models. We address this challenge with an on-premise, LLM-driven substitution pipeline that anonymizes text by replacing personally identifiable information (PII) with realistic, type-consistent surrogates. Executed entirely within organizational boundaries using local LLMs, the approach prevents data egress while preserving fluency and task-relevant semantics.   We conduct a systematic, multi-metric, cross-technique evaluation on the Action-Based Conversation Dataset, benchmarking against industry standards (Microsoft Presidio and Google DLP) and a state-of-the-art approach (ZSTS, in redaction-only and redaction-plus-substitution variants). Our protocol jointly measures privacy, semantic utility, and trainability under privacy via a lifecycle-ready criterion obtained by fine-tuning a compact encoder (BERT+LoRA) on sanitized text. In addition, we assess agentic Q&A performance by inserting an on-premise anonymization layer before the answering LLM and evaluating the quality of its responses. This intermediate, type-preserving substitution stage ensures that no sensitive content is exposed to third-party APIs, enabling responsible deployment of Q\\&A agents without compromising confidentiality.   Our method attains state-of-the-art privacy, minimal topical drift, strong factual utility, and low trainability loss, outperforming rule-based approaches and named-entity recognition (NER) baselines and ZSTS variants on the combined privacy--utility--trainability frontier. These results show that local LLM substitution yields anonymized corpora that are both responsible to use and operationally valuable: safe for agentic pipelines and suitable for downstream fine-tuning with limited degradation.",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,830 @@
+Title: Membership Inference for Contrastive Pre-training Models with Text-only PII Queries
+
+URL Source: https://arxiv.org/pdf/2603.14222v1
+
+Published Time: Tue, 17 Mar 2026 02:44:59 GMT
+
+Number of Pages: 31
+
+Markdown Content:
+# Membership Inference for Contrastive Pre-training Models with Text-only PII Queries 
+
+Ruoxi Cheng ∗a,b , Yizhong Ding ∗a, Hongyi Zhang c, Yiyan Huang †d
+
+> aBeijing Electronic Science and Technology Institute, Beijing, 100070, China
+> bAlibaba Group, Beijing, 100027, China
+> cNanyang Technological University, Singapore, 637371, Singapore
+> dSchool of Computing and Information Technology, Great Bay University, Dongguan, Guangdong, 523000, China
+
+Abstract 
+
+Contrastive pretraining models such as CLIP and CLAP underpin many vision-language and audio-language systems, yet their reliance on web-scale data raises grow-ing concerns about memorizing Personally Identifiable Information (PII). Auditing such models via membership inference is challenging in practice: shadow-model MIAs are computationally prohibitive for large multimodal backbones, and existing multi-modal attacks typically require querying the target with paired biometric inputs, thereby directly exposing sensitive biometric information to the target model. We propose 
+
+Unimodal Membership Inference Detector (UMID), a text-only auditing framework that performs text-guided cross-modal latent inversion and extracts two complementary signals, similarity (alignment to the queried text) and variability (consistency across randomized inversions). UMID compares these statistics to a lightweight non-member reference constructed from synthetic gibberish and makes decisions via an ensemble of unsupervised anomaly detectors. Comprehensive experiments across diverse CLIP and CLAP architectures demonstrate that UMID significantly improves the effectiveness and efficiency over prior MIAs, delivering strong detection performance with sub-second auditing cost while complying with realistic privacy constraints. 
+
+Keywords: Membership Inference, Contrastive Pre-training, Privacy Leakage, Anomaly Detection  
+
+> ∗Co-first authors. †Corresponding author. E-mail: huangyiyan@gbu.edu.cn
+> arXiv:2603.14222v1 [cs.CR] 15 Mar 2026
+
+1. Introduction 
+
+Contrastive pretraining models [ 1], exemplified by Contrastive Language–Image Pretraining (CLIP) [ 2 ] and Contrastive Language–Audio Pretraining (CLAP) [ 3], have become foundational backbones for modern vision–language and audio–language sys-tems. Their strong performance, however, is largely enabled by web-scale training data that can contain Personally Identifiable Information (PII) [ 4, 5], raising increasing con-cerns about PII leakage and downstream misuse [ 6, 7]. Recent studies further suggest that multimodal models may inadvertently memorize membership signals or identity attributes, exposing individuals to privacy risks when sensitive biometric data (e.g., faces or voices) appear in the training set [ 8]. Consequently, auditing these multimodal models for membership leakage has become a critical imperative, not only to meet regulatory requirements, but also to provide an accessible safeguard that enables the public to assess potential data exposure in widely deployed foundation models without technical barriers [9]. Current auditing protocols primarily rely on Membership Inference Attacks (MIAs) [ 10 ], which aim to determine whether a specific data sample was used for model training. However, when applied to contrastive pretraining models, existing MIAs face two critical challenges. (1) Computationally prohibitive costs: standard MIAs require training multiple shadow models to approximate the target model’s behavior, which is often computationally infeasible for large-scale multimodal architectures [ 11 ]. Even heuristic alternatives, such as cosine similarity-based attacks [ 12 ] or self-influence functions [ 13 ], either reduce detection accuracy or still demand substantial computational resources [ 14 ]. (2) The “auditor’s dilemma”: existing multimodal MIAs typically assume access to explicitly paired inputs, such as a face image with a name or a speaker’s voice with textual metadata, to query the target model [ 12 ], creating a fundamental paradox because third-party auditors (e.g., regulators) usually do not possess, and should not handle, users’ sensitive biometric data. Even worse, submitting such sensitive inputs to an untrusted model can introduce new exposure risks, undermining the very purpose of the privacy audit [15]. These challenges underscore an urgent need for auditing methods that avoid querying 2Figure 1: Comparison of UMID and traditional MIA methods. Traditional approaches rely on shadow models or bimodal input, while UMID turns membership inference problem into anomaly detection using text-only queries.  
+
+> Figure 2: Visualization of geometric separation. The extracted similarity and variability features via latent inversion exhibit a clear distributional gap between samples within and outside the train-ing dataset of the target model.
+
+the target model with matched multimodal pairs, in line with the principle of multimodal data protection [ 16 ]. To this end, we study MIAs in a more realistic identity-level auditing setting. Specifically, we assume each training sample consists of a textual PII description ti (e.g., a name) and a corresponding non-textual modality mi (e.g., a face image for CLIP or a voice recording for CLAP). Given only a target text query t, the auditor seeks to determine whether there exists any training sample (ti, mi) such that 
+
+ti = t. Crucially, this must be done under a strict unimodal constraint : even if the auditor possesses real biometric samples, they are prohibited from submitting them to the target model. This restriction enables lightweight, text-only queries that mitigate privacy leakage risk and are practical for third-party deployment, as shown in Figure 1. In this paper, we propose Unimodal Membership Inference Detector (UMID), a text-only query framework that detects PII memorization in contrastive models without exposing sensitive biometric inputs or training costly shadow models. Given a target text description, UMID performs cross-modal latent inversion with multiple randomized initializations and extracts two key statistics: (1) similarity , quantified as the average cosine alignment between the optimized embedding and the queried text embedding; and (2) variability , measured by the mean squared dispersion of the optimized embeddings across runs. UMID then compares these statistics against a lightweight non-member baseline built from synthetic textual “gibberish” and makes a membership decision 3using a voting ensemble of anomaly detectors. The intuition behind this design is simple yet heuristic: texts that correspond to identities seen during training (members) tend to produce more accurate and more consistent modal reconstructions under inversion than unseen texts (non-members), creating a clear distributional separation that can be detected reliably, as illustrated in Figure 2. 
+
+Contributions. Our contributions are three-fold: • We introduce UMID, a membership inference detector for contrastive pretraining models that operates solely on textual PII queries. UMID eliminates costly shadow-model training and thus overcomes the computationally prohibitive costs faced by prior MIAs. Moreover, UMID avoids querying the target model with explicitly paired multimodal inputs, resolving the auditor’s dilemma and adhering to the principle of multimodal data protection. • We provide both theoretical and empirical evidence showing that member and non-member texts induce well-separated feature distributions under text-guided cross-modal inversion. This enables membership inference via unsupervised anomaly detection using randomly generated textual gibberish. • We conduct comprehensive experiments across diverse CLIP and CLAP architec-tures, demonstrating that UMID consistently outperforms existing MIA methods in both effectiveness and efficiency, even though it queries with text alone, rather than paired multimodal inputs. 
+
+2. Related Work 
+
+Contrastive pretraining models. Multimodal contrastive pretraining [ 2 ] has become a core framework for learning unified representations across heterogeneous modalities, including images, audio, and natural language [ 17 ]. Representative methods, such as CLIP [ 18 ] and CLAP [ 19 ], train dual encoders with contrastive objectives on web-scale paired data to construct a shared embedding space, where semantically matched pairs are pulled together while mismatched pairs are pushed apart. Such an alignment in a 4shared embedding space enables strong zero-shot transfer, cross-modal retrieval, and a broad range of downstream applications without fine-tuning via task-specific super-vision [ 20 ]. Recent work further improves contrastive pretraining by strengthening cross-modal alignment and scalability [ 21 , 22 ], introducing codebook-based represen-tations, and leveraging larger and more curated audio–text resources [ 23 ]. Despite these advances, the scale and opacity of the underlying training corpora raise growing concerns [ 15 ]: sensitive information present in the data may be implicitly retained in learned embeddings, leading to privacy risks [24]. 
+
+PII leakage in MLLMs. The unprecedented capabilities of Multimodal Large Language Models (MLLMs) stem from extensive pretraining on massive and weakly supervised datasets [ 25 ]. Such model training process, however, inevitably introduces privacy risks as these web-scale datasets frequently contain personally identifiable information (PII), including faces, names, and voiceprints [ 26 , 27 ]. A growing number of studies demonstrate that multimodal encoders and associated LLM components can memorize identity-linked features and sensitive attributes, rendering them susceptible to various privacy attacks such as model stealing, knowledge extraction, data reconstruction, and membership inference [ 12 ]. These risks are especially pronounced in contrastive frameworks such as CLIP, where strong cross-modal alignment allows adversaries to elicit sensitive identity associations through crafted queries [ 28 ]. Consequently, developing rigorous auditing protocols to detect such representation-level PII leakage remains a critical open problem [29]. 
+
+Membership inference attacks. Membership inference attacks (MIAs) serve as a fun-damental and widely-used instrument for quantifying privacy leakage by ascertaining whether a specific data sample was included in a model’s training set [ 10 ]. Conventional MIA pipelines typically rely on the training of shadow models to approximate the target model’s decision boundaries [ 10 ] or the exploitation of loss-based confidence signals [ 30 ]. However, as architectures of modern large models usually scale to billions of parameters, these strategies have become computationally prohibitive and often im-practical [ 31 ]. Recent efforts have adapted MIAs to contrastive models such as CLIP by leveraging cross-modal alignment behavior, including identity detection inference 5attacks (IDIA) [ 32 ], cosine similarity attacks (CSA) [ 12 ], and weak supervision attacks (WSA) [ 33 ]. While these approaches successfully reduce or eliminate the need for shadow training, they paradoxically necessitate querying the target model with biometric inputs (e.g., facial images or voice recordings) during inference [ 34 ]. This highlights an urgent need for novel membership detectors that can operate effectively without involving sensitive bimodal PII. 
+
+3. Method 
+
+3.1. Problem Formulation Auditing scenario. Consider a multimodal contrastive pretraining model M (e.g., CLIP [ 18 ] or CLAP [ 19 ]) pre-trained on a dataset Dtrain . Each training sample si = (ti, mi)
+
+represents a paired identity (i.e., PII) of an individual, where ti denotes a textual descrip-tion (e.g., a person name) and mi denotes a corresponding non-textual modality (e.g., a face image for CLIP or a voice recording for CLAP). The objective of the detector is to perform identity-level membership inference : given a target identity t, the detector aims to determine whether the PII sample (t, m) was present in Dtrain . Notably, this is conducted under a unimodal privacy constraint : the auditor queries the model M using only textual descriptions. Even if the auditor possesses real biometric samples of the target, they are prohibited from submitting them to M to prevent secondary privacy leakage, which we term as the auditor’s dilemma in Section 1. 
+
+Detector’s capability. We operate under a gray-box model auditing setting, where the detector is assumed to have query and gradient access to the frozen encoders, ϕtext and 
+
+ϕmod to perform the latent inversion described in Section 3.2. Crucially, this assumption does not require access to the original training pipeline: the auditor remains completely oblivious to the private training dataset Dtrain , the specific training hyperparameters, or the optimizer states. This setting aligns with standard safety auditing protocols for open-weight foundation models, where model parameters are accessible but training data remains proprietary. 6Figure 3: Pipeline of UMID. We employ an optimizer guided by target model to align non-text embeddings with PII text embeddings, maximizing their cosine similarity. By analyzing similarity and variability features of these optimized samples relative to the synthetic gibberish baseline, an anomaly detection system identifies abnormal patterns to infer the membership of the input text. 
+
+3.2. UMID: Unimodal Membership Inference Detector 
+
+We propose UMID, a framework that reformulates membership inference as an un-supervised anomaly detection task based on cross-modal latent inversion. As illustrated in Figure 3, UMID operates in three logical steps: (1) extracting membership signatures via randomized modality inversion; (2) grounding the separability of these signatures via geometric theory; and (3) performing membership inference via anomaly detection calibrated on a semantic-null baseline. 
+
+Feature Extraction via Latent Inversion 
+
+For a target textual identity t, UMID elicits its membership signature by optimizing a modality input x to align with the text embedding vt = ϕtext (t). Specifically, we perform n independent optimization runs. In each run i ∈ { 1, . . . , n}, we initialize 
+
+x(i)0 from random noise and iteratively update it via gradient ascent to maximize the cosine similarity S (x, t) = ϕmod (x)⊤vt  
+
+> ∥ϕmod (x)∥∥ vt∥
+
+. Let v(1) (t), . . . , v(n)(t) denote the final optimized embeddings. We extract two trajectory statistics as the feature representation f (t):1. Similarity ( S n): Measured by the average final similarity across n runs, reflecting the model’s ability to reconstruct a modality counterpart for t:
+
+S n(t) : = v⊤
+
+> t
+
+ 1
+
+n
+
+> n
+
+X
+
+> i=1
+
+v(i)(t)
+
+ . (1) 72. Variability ( D2
+
+> n
+
+): Measured by the mean squared dispersion of the optimized embeddings, capturing the consistency of the optimization landscape: 
+
+D2
+
+> n
+
+(t) : = 1
+
+n
+
+> n
+
+X
+
+> i=1
+
+∥v(i)(t) − ¯vn(t)∥22, where ¯vn(t) = 1
+
+n
+
+> n
+
+X
+
+> i=1
+
+v(i)(t). (2) Note that S n(t) and D2
+
+> n
+
+(t) serve as proxies for alignment and consistency, respectively. Specifically, a higher S n(t) indicates higher similarity, while a lower D2
+
+> n
+
+(t) signifies lower variability (higher stability). Intuitively, member identities tend to yield higher similarity and lower variability due to stronger training-induced alignment. We formalize this intuition in the following theoretical analysis. 
+
+Geometric Separation with Theoretical Justification 
+
+We provide a theoretical guarantee that the statistics (S n, D2
+
+> n
+
+) fundamentally separate members from non-members. We model the latent space using K unit-norm prototypes 
+
+{μk}Kk=1. The insights are motivated by distinct geometric behaviors: For a non-member 
+
+tout , its embedding is isotropic relative to the prototypes, implying that the optimization explores the prototype space uniformly ( pk(tout ) ≈ 1/K). In contrast, a member 
+
+tin aligns with a specific prototype μy⋆ with a margin γ. This alignment forces the optimization to concentrate exponentially on y⋆ (py⋆ (tin ) ≈ 1). These properties are well-grounded in contrastive learning mechanics: the training objective (e.g., InfoNCE) explicitly optimizes for high cosine similarity (margin) for members, whereas unseen non-members naturally exhibit high-dimensional isotropy. Based on these properties, we define the population-level statistics S ∞(t) and D2
+
+> ∞
+
+(t),which capture the ideal behavior as n → ∞ . Members exhibit high alignment ( S ∞ ≈ γ)and low dispersion ( D2 
+
+> ∞
+
+≈ 0), whereas non-members exhibit low alignment ( S ∞ ≈ 0)and high dispersion ( D2 
+
+> ∞
+
+≈ 1 − 1/K). The following theorem provides a finite-sample guarantee for this separation rule. 
+
+Theorem 3.1 (Finite-sample geometric separation) . Given a member text tin and a non-member text tout satisfying the geometric properties above. Let ∆S := S ∞(tin ) − S ∞(tout )
+
+and ∆D := D2
+
+> ∞
+
+(tout ) − D2
+
+> ∞
+
+(tin ) be the population gaps, and define Γ := min {∆S , ∆D} > 0.For sufficiently large embedding dimension d = Ω (log (K/δ )) and number of runs 
+
+8n = Ω (Γ−2 log (1 /δ )) , there exist thresholds sthr and d2thr such that with probability at least 1 − δ,
+
+S n(tin ) ≥ sthr , D2
+
+> n
+
+(tin ) ≤ d2thr , S n(tout ) ≤ sthr , D2
+
+> n
+
+(tout ) ≥ d2thr . (3) Theorem 3.1 formally validates that our randomized reverse-optimization opera-tionalizes the geometric distinction described above. It guarantees that the empirical statistics (S n, D2
+
+> n
+
+) inherit the population-level separation with high probability. Fur-thermore, it quantifies the sample complexity, highlighting that the computational cost scales inversely with the square of the separation margin Γ. Detailed proofs are deferred to Appendix B. 
+
+Membership Inference via Anomaly Detection 
+
+Translating the theoretical separation into a practical algorithm requires estimating the decision boundaries. As the theoretical thresholds are unknown, we reformulate the problem as unsupervised anomaly detection. 
+
+Semantic-null baseline. To approximate the non-member distribution, we generate a reference set of ℓ gibberish strings G = {g1, . . . , gℓ}. Since G contains no semantic information and did not appear in training, it satisfies the isotropy condition stated in Section 3.2 and serves as a typical proxy for the null hypothesis. 
+
+Inference procedure. We extract features FG from G to train an ensemble of kdet anomaly detectors (e.g., Isolation Forests). Each detector learns a boundary encompassing the non-member region. For a test identity t, UMID classifies it as a member if the majority of detectors flag its features f (t) as an anomaly, indicating a significant shift toward the high-similarity and low-variability characteristic of members. 
+
+Algorithm of UMID. The complete algorithm, including feature extraction, geometric separation, and membership inference, is stated in Algorithm 1. 
+
+Optional Enhancement with Local Modality Samples 
+
+In scenarios where the auditor possesses local real modality samples (which cannot 
+
+be submitted to M), UMID can include an auxiliary coherence feature. We use an 9Algorithm 1 The algorithm of UMID. 
+
+Input : Model M; Target text t; number of runs n; iterations per run m; learning rate η.
+
+Output : Membership decision (member/non-member).  
+
+> 1:
+
+Phase 1: Baseline construction (Offline)  
+
+> 2:
+
+Generate gibberish set G = {g1, . . . , gℓ} 
+
+> 3:
+
+for gk ∈ G do  
+
+> 4:
+
+S n(gk), D2
+
+> n
+
+(gk) ← LATENT INVERSION (M, gk, n, m, η ) 
+
+> 5:
+
+end for  
+
+> 6:
+
+Train ensemble detectors E = {D1, . . . , Dk} on features {(S n(gk), D2
+
+> n
+
+(gk)) } 
+
+> 7:
+
+Phase 2: Membership inference (Online)  
+
+> 8:
+
+S n(t), D2
+
+> n
+
+(t) ← LATENT INVERSION (M, t, n, m, η ) 
+
+> 9:
+
+Votes ← Pkj=1 I(D j(S n(t), D2
+
+> n
+
+(t)) = Anomaly ) 
+
+> 10:
+
+Return Member if Votes > N, else Non-member.  
+
+> 11:
+
+function LATENT INVERSION (M, t, n, m, η ) 
+
+> 12:
+
+vt ← ϕtext (t); V ← ∅ ▷ Set of optimized embeddings  
+
+> 13:
+
+for i = 1 to n do  
+
+> 14:
+
+x0 ∼ N (0 , I) ▷ Random initialization  
+
+> 15:
+
+for j = 0 to m − 1 do  
+
+> 16:
+
+g ← g j ← ∇ x j
+
+ v⊤    
+
+> tϕmod (xj)
+> ∥vt∥∥ ϕmod (xj)∥
+
+ 
+
+> 17:
+
+x j+1 ← x j + η · g 
+
+> 18:
+
+end for  
+
+> 19:
+
+V ← V ∪ { ϕmod (xm)} 
+
+> 20:
+
+end for  
+
+> 21:
+
+Compute S n, D2 
+
+> n
+
+via Eqn. (1) and Eqn. (2)  
+
+> 22:
+
+Return S n, D2 
+
+> n
+> 23:
+
+end function 
+
+external feature extractor F (e.g., DeepFace [ 35 ]) to compute R(t): the average pairwise 
+
+ℓ2 distance between the local samples and the optimized embeddings provided by UMID. Intuitively, members yield smaller R(t) as optimized samples converge to true identity features. We incorporate R(t) by performing K-means clustering ( K = 2) on the augmented feature set {(S n, D2
+
+> n
+
+, R)}, adding the cluster assignment as an additional vote to the ensemble. 
+
+4. Experiments 
+
+We present a comprehensive evaluation of UMID across two distinct multimodal contrastive frameworks: CLIP (vision-text) and CLAP (audio-text). The experiments 10 aim to validate UMID’s superiority in both detection effectiveness and computational efficiency compared to state-of-the-art baselines. 
+
+4.1. Experimental Setup Datasets Image-text (CLIP). We construct the CelebA dataset following previous work [ 32 ]. We integrate image-text pairs from FaceScrub [36 ] and LAION-5B [37 ] into the CC3M 
+
+[ 38 ] backbone to form the training set, ensuring a gender-balanced distribution across 200 selected identities. Specifically, we set a threshold to exclude individuals with excessively high frequencies in LAION-400M, maintaining 100 members and 100 non-members to ensure experimental reliability. The training set comprises 100 celebrities (members) and 100 hold-out identities (non-members). To simulate varying degrees of memorization, we curate two subsets: One-Shot (1 photo/person) and Many-Shot (75 photos/person). 
+
+Audio-text (CLAP). We utilize LibriSpeech [39 ] and construct a richer speaker recogni-tion dataset based on CommonVoice18.0 [40 ]. The latter involves 3,000 speakers (1,500 members/1,500 non-members) with detailed PII descriptions (ID, age, gender) aug-mented by GPT-4o to generate semantic background narratives. Similarly, we evaluate under One-Shot (1 audio/user) and Many-Shot (50 audios/user) settings. 
+
+Models and Baselines Models. For CLIP, we conduct membership inference on six target models spanning three visual backbones: ResNet-50, ResNet-50x4, and ViT-B/32. The ResNet-based models follow the standard ResNet architecture [ 41 , 42 ], while ViT-B/32 adopts the Vision Transformer design, covering both CNN- and Transformer-based encoders. For CLAP, we adopt a dual-encoder architecture in which the audio encoder is HTSAT [ 43 ], a transformer composed of four groups of Swin Transformer blocks [ 44 ], and the text encoder is RoBERTa [ 45 ]. The penultimate-layer outputs of both encoders (768 dimensions) are projected to a shared 512-dimensional embedding space via a two-layer MLP with ReLU activation. All target models are trained from scratch on their respective member datasets to establish unambiguous ground-truth membership labels. 11 When real facial images are available for optional enhancement, DeepFace [ 46 ] is used as an external feature extractor. 
+
+Baselines. We compare UMID against a spectrum of MIA methods: • Shadow-model-based: Standard MIA [ 10 ] is the base membership inference attack using shadow models; Audio Auditor [ 47 ] trains shadow models and extracts audio features for inference; and AuditMI [ 48 ] trains shadow model using input utterances and features from model outputs; SLMIA-SR [ 49 ] employs a shadow speaker recognition system to train attack model. These require training proxy models to mimic target behavior. • Metric-based: IDIA [ 32 ] detects training membership by verifying if a model correctly predicts a target’s identity from candidate prompts across multiple reference images; WSA [ 12 ] infers membership via image-text cosine similarity, enhanced by a weakly supervised MIA framework trained on post-release non-member data; C-WSA [ 33 ] treats low-variance samples as pseudo-members to train a robust image-feature classifier via confidence-based weak supervision. These rely on thresholding signals like loss or cosine similarity, often requiring real modality inputs (e.g., images/audio). 
+
+Implementation and Evaluation 
+
+All experiments are conducted on four NVIDIA GeForce RTX 3090 GPUs. Each setting is repeated five times, with the mean and standard deviation reported. UMID performs optimization in latent inversion for n = 100 epochs, each consisting of 
+
+m = 1000 gradient descent iterations with a learning rate of η = 3 × 10 −2. The anomaly detection ensemble includes LocalOutlierFactor [ 50 ], IsolationForest [ 51 ], OneClassSVM [ 52 , 53 ], and AutoEncoder [ 54 ]. These detectors are trained using ℓ =
+
+100 synthetic gibberish strings generated by prompting GPT-3.5-turbo (see Appendix A for examples), with a default voting threshold of N = 3. When real non-textual samples are available, a K-means model ( K = 2) is additionally incorporated, and the threshold is adjusted to N′ = 4.12 Table 1: Comparison of CLIP (image-text) methods. Best and second-best results are bolded .
+
+Setting Method Real data Effectiveness Efficiency Precision Recall Accuracy Time 
+
+ResNet-50 (one-shot) MIA [10] 1 img .7251 .6873 .7042 4.32h IDIA [32] 3 imgs .6922 .4031 .6836 0.845s WSA [12] 1 img .6653 .2925 .6675 2158.1s C-WSA [33] 1 img .7210 .4530 .7125 2141.4s 
+
+UMID (Ours) Null .8634 .9821 .9172 0.628s UMID (Ours) 1 img .9145 .9912 .9528 0.745s 
+
+ResNet-50 (many-shot) MIA [10] 1 img .7530 .7086 .7219 4.32h IDIA [32] 3 imgs .6901 .3998 .6907 0.851s WSA [12] 1 img .6625 .2867 .6710 2143.7s C-WSA [33] 1 img .7245 .4605 .7218 2149.5s 
+
+UMID (Ours) Null .8642 .9835 .9031 0.634s UMID (Ours) 1 img .9168 .9925 .9554 0.752s 
+
+ResNet-50x4 (one-shot) MIA [10] 1 img .7937 .6492 .7218 4.37h IDIA [32] 3 imgs .6625 .3980 .6957 0.851s WSA [12] 1 img .6712 .2912 .6808 2144.3s C-WSA [33] 1 img .7305 .4592 .7234 2148.6s 
+
+UMID (Ours) Null .8613 .9747 .9355 0.633s UMID (Ours) 1 img .9128 .9896 .9535 0.685s 
+
+ResNet-50x4 (many-shot) MIA [10] 1 img .7654 .6981 .7189 4.36h IDIA [32] 3 imgs .7085 .3904 .7167 0.844s WSA [12] 1 img .6724 .2935 .6685 2156.7s C-WSA [33] 1 img .7364 .4670 .7321 2150.3s 
+
+UMID (Ours) Null .8712 .9916 .9462 0.637s UMID (Ours) 1 img .9156 .9908 .9562 0.691s 
+
+ViT-B/32 (one-shot) MIA [10] 1 img .6923 .5987 .6694 4.35h IDIA [32] 3 imgs .6783 .3746 .6772 1.245s WSA [12] 1 img .6323 .2964 .6812 2143.1s C-WSA [33] 1 img .6945 .4230 .6912 2146.2s 
+
+UMID (Ours) Null .7091 .6385 .6837 0.667s UMID (Ours) 1 img .7462 .6815 .7145 0.701s 
+
+ViT-B/32 (many-shot) MIA [10] 1 img .6958 .6341 .6732 4.35h IDIA [32] 3 imgs .6890 .3811 .6927 1.251s WSA [12] 1 img .7045 .2806 .6895 2144.8s C-WSA [33] 1 img .7012 .4305 .7008 2147.9s 
+
+UMID (Ours) Null .7182 .6372 .6947 0.652s UMID (Ours) 1 img .7498 .6844 .7186 0.712s 
+
+Additionally, we evaluate effectiveness using Precision , Recall , and Accuracy .Efficiency is assessed via Time , measured as the wall-clock latency per query. 13 4.2. Comparison with State-of-the-Art Methods Performance on vision-language models. Table 1 provides a comprehensive comparison of UMID against prior membership inference baselines across CLIP backbones, data exposure regimes, and query modalities. On ResNet-based CLIP models (ResNet-50 and ResNet-50x4), UMID exhibits a clear and consistent advantage, achieving over 90% 
+
+accuracy using text-only (without real data) queries while driving recall to 97 –99% . This represents a substantial improvement over the strongest baseline C-WSA, with gains of up to +18 accuracy points and, more critically, over +50 recall point. This suggests that metric- and shadow-model-based attacks incur severe false negatives and fail to capture subtle memorization effects in contrastive models. Additionally, UMID still maintains a consistent superior effectiveness over all baselines, despite that Vision Transformers (ViT-B/32) exhibit weaker text-only signals due to stronger generalization. This indicates its ability to effectively probe the more resilient Transformer latent space. Importantly, the effectiveness gains across all settings come without increased computational cost: UMID completes inference in sub-second time ( ≈ 0.6–0.8s), delivering orders-of-magnitude speedups over shadow-model approaches while eliminating reliance on real biometric samples. 
+
+Performance on audio-language models. Table 2 compares CLAP membership auditing methods across two datasets, revealing three consistent findings: (i) Effectiveness and robustness: UMID forms the clear top tier in all settings, uniquely maintaining high precision and high recall simultaneously. On LibriSpeech, UMID already performs strongly without any real target audio (UMID-Null: 91 .27% /93 .07% accuracy in one-/many-shot), exceeding the strongest baseline AuditMI by a clear margin. Notably, with only one audio query, the gap further widens (up to +7.08 accuracy points) and recall approaches saturation. This advantage is amplified on the more challenging CommonVoice dataset, where all baselines degrade markedly (e.g., AuditMI ≈ 75% 
+
+accuracy) but UMID remains robust, widening both accuracy and recall gaps, indicating better generalization beyond clean speech. (ii) Exposure sensitivity. UMID’s one-shot performance is already close to many-shot (accuracy gaps ≤ 2.2 points), suggesting that membership leakage is detectable even under minimal exposure when cross-modal 14 Table 2: Comparison of CLAP (audio-text) methods. Best and second-best results are bolded .
+
+Setting Method Real data Effectiveness Efficiency Precision Recall Accuracy Time 
+
+LibriSpeech (one-shot) Audio Auditor [47] 1 audio .6338 .7324 .6519 1.273s SLMIA-SR [49] 1 audio .7521 .8864 .8342 1.528s AuditMI [48] 1 audio .8257 .9526 .8791 13.578s 
+
+UMID (Ours) Null .8649 .9649 .9127 0.603s UMID (Ours) 1 audio .8921 .9868 .9354 0.647s 
+
+LibriSpeech (many-shot) Audio Auditor [47] 1 audio .6559 .8013 .6659 1.245s SLMIA-SR [49] 1 audio .7619 .9007 .8433 1.547s AuditMI [48] 1 audio .8341 .9804 .8816 13.511s 
+
+UMID (Ours) Null .8812 .9876 .9307 0.612s UMID (Ours) 1 audio 91.63 99.57 95.24 0.659s 
+
+CommonVoice (one-shot) Audio Auditor [47] 1 audio .5485 .6822 .6052 1.347s SLMIA-SR [49] 1 audio .6539 .7691 .7048 1.597s AuditMI [48] 1 audio .7143 .8145 .7436 15.214s 
+
+UMID (Ours) Null .7496 .8601 .8179 0.721s UMID (Ours) 1 audio .7602 .8955 .8356 0.753s 
+
+CommonVoice (many-shot) Audio Auditor [47] 1 audio .5611 .7358 .6135 1.391s SLMIA-SR [49] 1 audio .6628 .7927 .7218 1.652s AuditMI [48] 1 audio .7352 .8481 .7564 15.931s 
+
+UMID (Ours) Null .7647 .8946 .8233 0.815s UMID (Ours) 1 audio .7934 .9113 .8569 0.776s 
+
+evidence is properly exploited. (iii) Efficiency and deployability. In addition to its strong effectiveness, UMID runs in sub-second time ( ≈ 0.6–0.8s), offering an order-of-magnitude speedup over other baselines. 
+
+4.3. Ablation Study 
+
+We conduct ablation studies in the following four perspectives to quantify how key design choices affect detection performance on both CLIP and CLAP (Figure 4 and Figure 5). 
+
+Number of gibberish texts. Figure 4(a) and Figure 5(a) show that accuracy improves as the number of randomly generated gibberish strings ( ℓ) increases, and stabilizes once 
+
+ℓ ≥ 50 for both modalities. With fewer than 20 strings, training becomes noisy and less reliable. Beyond 50 strings, the gain is marginal (typically < 0.5% in accuracy), so we use ℓ = 100 as a practical choice that balances performance and overhead. 
+
+Real sample enhancement. As shown in Figure 4(b) and Figure 5(b), adding even a single real sample consistently improves accuracy (by roughly 1.5 − 3.5% , depending 15 Figure 4: Detection accuracy for CLIP model (ResNet-50) under various parameters. 
+
+on the dataset and training set size). In contrast, using more than one real sample provides limited additional benefit (typically < 1% ), suggesting that real samples are sufficient but not necessary to capture the modality-specific structure needed by the clustering-based vote. 
+
+Detection threshold analysis. We study the sensitivity of the ensemble decision to the voting threshold. As shown in Figure 4(c) and Figure 5(c), text-only inputs achieve the best accuracy with a three-vote threshold, whereas incorporating real samples favors a four-vote threshold (Figure 4(d) and Figure 5(d)). A higher threshold tends to miss true anomalies (lower recall), while a lower threshold increases false positives. The selected thresholds provide a robust balance between precision and recall across both modalities. 
+
+Optimization parameters. We examine two hyperparameters used during feature extrac-tion: the number of epochs (Figure 4(e) and Figure 5(e) and the number of iterations per epoch (Figure 4(f) and Figure 5(f)). Overall, performance peaks at 100 epochs with 1000 iterations per epoch for CLIP, and 50 epochs with 1000 iterations per epoch for CLAP. Increasing iterations beyond 100 per epoch yields negligible gains (typically 
+
+< 0.3% in accuracy) while substantially increasing computation. Likewise, using more than 100 epochs leads to diminishing returns. 16 Figure 5: Detection accuracy for CLAP model (LibriSpeech) under various parameters. 
+
+5. Robustness against Potential Defenses 
+
+To comprehensively assess the practical effectiveness of our approach, we evaluate UMID’s robustness against potential defenses that model owners might deploy to mitigate membership inference attacks. 
+
+Gaussian noise. We apply differential privacy to embedding computations by adding calibrated Gaussian noise. Specifically, for each query, noise sampled from N(0 , σ 2 Id) is added to returned embeddings, where σ is calibrated to achieve (ϵ, δ )-differential privacy with ϵ = 1.0 and δ = 10 −5. Table 3 reports the robustness of UMID against a Differential Privacy (DP) defense in both the image and audio modalities. After injecting calibrated Gaussian noise ( ϵ = 1.0), UMID exhibits only a moderate degradation: accuracy drops by roughly 6% − 12% , depending on the dataset and the number of samples. Concretely, for CLIP (ResNet-50x4) on CelebA, UMID still achieves 87 .42% accuracy with 1 sample and 85 .95% with 75 samples under the defense. Likewise, for CLAP on LibriSpeech, performance remains high at 87 .88% and 83 .40% , and on CommonVoice it remains competitive at 75 .90% and 79 .15% . Importantly, runtime is essentially unchanged across all settings (averaging 0.7s), indicating that DP introduces negligible additional computational overhead for the attacker. Overall, these results suggest that 17 Table 3: UMID robustness evaluation under differential privacy defense ( ϵ = 1.0, δ = 10 −5).                                    
+
+> Dataset Training samples Defense Effectiveness Efficiency Accuracy Time CelebA (CLIP)
+> one-shot Without .9535 0.685s DP .8742 0.688s many-shot Without .9562 0.691s DP .8595 0.689s
+> LibriSpeech (CLAP)
+> one-shot Without .9354 0.647s DP .8788 0.651s many-shot Without .9524 0.659s DP .8340 0.663s
+> CommonVoice (CLAP)
+> one-shot Without .8356 0.753s DP .7590 0.749s many-shot Without .8569 0.776s DP .7915 0.772s
+
+while DP noise reduces the fidelity of embedding-based leakage, UMID’s reliance on geometric vulnerabilities remains effective under a moderate privacy budget; in practice, stronger privacy budgets ( ϵ < 1.0) and/or complementary defenses may be necessary to fully secure these models. 
+
+Covert gibberish generation. In practice, a target model may incorporate input filters that flag overtly anomalous queries (e.g., nonsensical gibberish) and return misleading outputs, causing UMID to misclassify the presence of PII. To obtain more covert queries, we generate gibberish-like strings that remain visually and phonotactically plausible by replacing a small subset of characters with syllables drawn from a different language. For example, the detector can synthesize query texts by mixing English-style names with syllables from Arabic medical terminology. Concretely, we first prompt an LLM (e.g., GPT-3.5-turbo) to produce lists of common English initial and final syllables, then post-process the lists to remove duplicates and encourage coverage. We randomly concatenate syllables to form pseudo-English names (e.g., Karinix”, Zylogene”, “Renotyl”), and explicitly verify their novelty against a name lexicon to avoid collisions with real entities. Finally, we prompt the LLM to instantiate these syllable templates into full strings, yielding covert gibberish that closely resembles 18 Table 4: UMID robustness evaluation under covert gibberish defense.                                    
+
+> Dataset Training samples Defense Effectiveness Efficiency Accuracy Time CelebA (CLIP)
+> one-shot Without .9535 0.685s CG .9412 0.689s many-shot Without .9562 0.691s CG .9385 0.687s
+> LibriSpeech (CLAP)
+> one-shot Without .9354 0.647s CG .9210 0.652s many-shot Without .9524 0.659s CG .9395 0.655s
+> CommonVoice (CLAP)
+> one-shot Without .8356 0.753s CG .8220 0.756s many-shot Without .8569 0.776s CG .8415 0.781s
+
+authentic names (see Table A.6). Table 4 summarizes UMID’s robustness to the Covert Gibberish (CG) defense for both CLIP and CLAP. UMID remains highly resilient: CG reduces accuracy by only 1.23% –1.54% across all datasets and training sample sizes. For example, on CelebA with 75 training samples, UMID still achieves 93 .85% accuracy under CG. Running time is also essentially unchanged (about 0.65 –0.78 s), suggesting that CG neither introduces meaningful computational overhead nor effectively disrupts the identification procedure. Overall, UMID preserves both effectiveness and efficiency under covert, text-like perturbations. 
+
+6. Conclusion 
+
+This work revisits membership inference for contrastive pretraining models through the lens of identity-level auditing under a unimodal privacy constraint, motivated by the practical limitations of existing MIAs: prohibitive shadow-model training and the need to query targets with paired biometric inputs. In this paper, we introduced UMID, a text-only auditing framework that avoids both requirements by leveraging text-guided cross-modal latent inversion. The key insight is that member identities induce reconstructions that are not only better aligned with the queried text but also 19 more consistent across randomized inversions. UMID operationalizes this intuition via two statistics (similarity and variability) and a lightweight non-member reference built from synthetic gibberish, enabling membership decisions through an ensemble of unsupervised anomaly detectors. Extensive experiments on CLIP and CLAP across architectures and exposure regimes validate that UMID consistently outperforms prior baselines while remaining highly efficient, making it suitable for third-party auditing where sensitive biometrics are unavailable or impermissible to submit. Overall, UMID provides a practical and privacy-compliant pathway to assess PII memorization in widely deployed multimodal foundation models. 
+
+References 
+
+[1] Xin Yuan, Zhe Lin, Jason Kuen, Jianming Zhang, Yilin Wang, Michael Maire, Ajinkya Kale, and Baldo Faieta. Multimodal contrastive training for visual rep-resentation learning. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 6995–7004, 2021. [2] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry, Amanda Askell, Pamela Mishkin, Jack Clark, et al. Learning transferable visual models from natural language supervision. In 
+
+International conference on machine learning , pages 8748–8763. PMLR, 2021. [3] Benjamin Elizalde, Soham Deshmukh, Mahmoud Al Ismail, and Huaming Wang. Clap learning audio concepts from natural language supervision. In ICASSP 2023-2023 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP) , pages 1–5. IEEE, 2023. [4] Paul M Schwartz and Daniel J Solove. The pii problem: Privacy and a new concept of personally identifiable information. NYUL rev. , 86:1814, 2011. [5] Ruining Sun, Hongsheng Hu, Wei Luo, Zhaoxi Zhang, Yanjun Zhang, Haizhuan Yuan, and Leo Yu Zhang. When better features mean greater risks: The performance-privacy trade-off in contrastive learning. In Proceedings of the 
+
+20 20th ACM Asia Conference on Computer and Communications Security , pages 488–500, 2025. [6] Zhaohan Xi, Tianyu Du, Changjiang Li, Ren Pang, Shouling Ji, Jinghui Chen, Fenglong Ma, and Ting Wang. Defending pre-trained language models as few-shot learners against backdoor attacks. Advances in Neural Information Processing Systems , 36, 2024. [7] Li Hu, Anli Yan, Hongyang Yan, Jin Li, Teng Huang, Yingying Zhang, Changyu Dong, and Chunsheng Yang. Defenses to membership inference attacks: A survey. 
+
+ACM Computing Surveys , 56(4):1–34, 2023. [8] Huan Zhao, Haijiao Chen, Yufeng Xiao, and Zixing Zhang. Privacy-enhanced federated learning against attribute inference attack for speech emotion recognition. In ICASSP 2023 - 2023 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP) , pages 1–5, 2023. [9] Songze Li, Ruoxi Cheng, and Xiaojun Jia. Tuni: A textual unimodal detector for identity inference in clip models. In Proceedings of the Sixth Workshop on Privacy in Natural Language Processing , pages 1–13, 2025. [10] Reza Shokri, Marco Stronati, Congzheng Song, and Vitaly Shmatikov. Member-ship inference attacks against machine learning models. In 2017 IEEE symposium on security and privacy (SP) , pages 3–18. IEEE, 2017. [11] Matthew Jagielski, Milad Nasr, Katherine Lee, Christopher A Choquette-Choo, Nicholas Carlini, and Florian Tramer. Students parrot their teachers: Membership inference on model distillation. Advances in Neural Information Processing Systems , 36, 2024. [12] Minseon Ko, Minseok Jin, Chen Wang, et al. Practical membership inference attacks against large-scale multi-modal models: A pilot study. In Proceedings of the IEEE/CVF International Conference on Computer Vision , pages 4871–4881, 2023. 21 [13] Gilad Cohen and Raja Giryes. Membership inference attack using self influence functions. In Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision , pages 4892–4901, 2024. [14] Myung Gyo Oh, Leo Hyun Park, Jaeuk Kim, Jaewoo Park, and Taekyoung Kwon. Membership inference attacks with token-level deduplication on korean language models. IEEE Access , 11:10207–10217, 2023. [15] Pingyi Hu, Zihan Wang, Ruoxi Sun, Hu Wang, and Minhui Xue. M 4i: Multi-modal models membership inference. Advances in Neural Information Processing Systems , 35:1867–1882, 2022. [16] Xinwei Liu, Xiaojun Jia, Yuan Xun, Siyuan Liang, and Xiaochun Cao. Multimodal unlearnable examples: Protecting data against multimodal contrastive learning. In Proceedings of the 32nd ACM International Conference on Multimedia , pages 8024–8033, 2024. [17] Yi Li, Hualiang Wang, Yiqun Duan, Jiheng Zhang, and Xiaomeng Li. A closer look at the explainability of contrastive language-image pre-training. Pattern Recognition , 162:111409, 2025. [18] Prannay Khosla, Piotr Teterwak, Chen Wang, Aaron Sarna, Yonglong Tian, Phillip Isola, Aaron Maschinot, Ce Liu, and Dilip Krishnan. Supervised contrastive learning. Advances in neural information processing systems , 33:18661–18673, 2020. [19] Junda Wu, Warren Li, Zachary Novack, Amit Namburi, Carol Chen, and Julian McAuley. Collap: Contrastive long-form language-audio pretraining with musical temporal structure augmentation. In ICASSP 2025-2025 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP) , pages 1–5. IEEE, 2025. [20] Wei-Lun Tsai, Phuong-Linh Le, Wang-Fat Ho, Nai-Wen Chi, Jacob J Lin, Shuai Tang, and Shang-Hsien Hsieh. Construction safety inspection with contrastive 22 language-image pre-training (clip) image captioning and attention. Automation in Construction , 169:105863, 2025. [21] Zhenjie Cao, Zhuo Deng, Zhicheng Yang, Jie Ma, and Lan Ma. Supervised contrastive pre-training models for mammography screening. Journal of Big Data ,12(1):24, 2025. [22] Bram Hunt, Eugene Kwan, Jake Bergquist, James Brundage, Benjamin Orkild, Jiawei Dong, Eric Paccione, Kyoichiro Yazaki, Rob S MacLeod, Derek J Dosdall, et al. Contrastive pretraining improves deep learning classification of endocardial electrograms in a preclinical model. Heart Rhythm O2 , 6(4):473–480, 2025. [23] Zeyu Xie, Xuenan Xu, Zhizheng Wu, and Mengyue Wu. Audiotime: A temporally-aligned audio-text benchmark dataset. In ICASSP 2025-2025 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP) , pages 1–5. IEEE, 2025. [24] Aditya Golatkar, Alessandro Achille, Yu-Xiang Wang, Aaron Roth, Michael Kearns, and Stefano Soatto. Mixed differential privacy in computer vision. In 
+
+Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recog-nition , pages 8376–8386, 2022. [25] Huthaifa I Ashqar, Ahmed Jaber, Taqwa I Alhadidi, and Mohammed Elhenawy. Advancing object detection in transportation with multimodal large language models (mllms): A comprehensive review and empirical testing. Computation ,13(6):133, 2025. [26] Zheyuan Liu, Guangyao Dou, Mengzhao Jia, Zhaoxuan Tan, Qingkai Zeng, Yongle Yuan, and Meng Jiang. Protecting privacy in multimodal large language models with mllmu-bench. In Proceedings of the 2025 Conference of the Nations of the Americas Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 1: Long Papers) , pages 4105–4135, 2025. [27] Linh Tran, Wei Sun, Stacy Patterson, and Ana Milanova. Privacy-preserving 23 personalized federated prompt learning for multimodal large language models. In 
+
+The Thirteenth International Conference on Learning Representations , 2025. [28] Seonghyeon Kim, Sooyeon Yun, Hwanil Lee, et al. Propile: Probing privacy leakage in large language models. In Advances in Neural Information Processing Systems , volume 36, 2024. [29] Tien-Huy Pham, Quoc-Huy Vo, Ha Dao, and Kensuke Fukuda. I never willingly consented to this! investigate pii leakage via sso logins. IEEE Transactions on Privacy , 2025. [30] Zhiqi Wang, Chengyu Zhang, Yuetian Chen, Nathalie Baracaldo, Swanand R Kadhe, and Lei Yu. Membership inference attacks as privacy tools: Reliability, disparity and ensemble. In Proceedings of the 2025 ACM SIGSAC Conference on Computer and Communications Security , pages 1724–1738, 2025. [31] Mingfu Xue, Chengxiang Yuan, Can He, Yinghao Wu, Zhiyu Wu, Yushu Zhang, Zhe Liu, and Weiqiang Liu. Use the spear as a shield: An adversarial example based privacy-preserving technique against membership inference attacks. IEEE Transactions on Emerging Topics in Computing , 11(1):153–169, 2023. [32] Dominik Hintersdorf, Lukas Struppek, Manuel Brack, Felix Friedrich, Patrick Schramowski, and Kristian Kersting. Does clip know my face? Journal of Artificial Intelligence Research , 80:1033–1062, 2024. [33] Daniel Samira, Edan Habler, Yuval Elovici, and Asaf Shabtai. Variance-based membership inference attacks against large-scale image captioning models. In 
+
+Proceedings of the Computer Vision and Pattern Recognition Conference , pages 9210–9219, 2025. [34] Jiashu Tao and Reza Shokri. Range membership inference attacks. In 2025 IEEE Conference on Secure and Trustworthy Machine Learning (SaTML) , pages 346–361. IEEE, 2025. [35] Yaniv Taigman, Ming Yang, Marc’Aurelio Ranzato, and Lior Wolf. Deepface: Closing the gap to human-level performance in face verification. In Proceedings 
+
+24 of the IEEE conference on computer vision and pattern recognition , pages 1701– 1708, 2014. [36] Ira Kemelmacher-Shlizerman, Steven M Seitz, Daniel Miller, and Evan Brossard. The megaface benchmark: 1 million faces for recognition at scale. In Proceedings of the IEEE conference on computer vision and pattern recognition , pages 4873– 4882, 2016. [37] Christoph Schuhmann, Romain Beaumont, Richard Vencu, Cade Gordon, Ross Wightman, Mehdi Cherti, Theo Coombes, Aarush Katta, Clayton Mullis, Mitchell Wortsman, et al. Laion-5b: An open large-scale dataset for training next generation image-text models. Advances in Neural Information Processing Systems , 35:25278– 25294, 2022. [38] Soravit Changpinyo, Piyush Sharma, Nan Ding, and Radu Soricut. Conceptual 12m: Pushing web-scale image-text pre-training to recognize long-tail visual concepts. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 3558–3568, 2021. [39] Vassil Panayotov, Guoguo Chen, Daniel Povey, and Sanjeev Khudanpur. Lib-rispeech: An asr corpus based on public domain audio books. In 2015 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP) ,pages 5206–5210, 2015. [40] Rosana Ardila, Megan Branson, Kelly Davis, Michael Henretty, Michael Kohler, Josh Meyer, Reuben Morais, Lindsay Saunders, Francis M. Tyers, and Gre-gor Weber. Common voice: A massively-multilingual speech corpus. CoRR ,abs/1912.06670, 2019. [41] Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun. Deep residual learning for image recognition. In Proceedings of the IEEE conference on computer vision and pattern recognition , pages 770–778, 2016. [42] Dhananjay Theckedath and RR Sedamkar. Detecting affect states using vgg16, resnet50 and se-resnet50 networks. SN Computer Science , 1(2):79, 2020. 25 [43] Ke Chen, Xingjian Du, Bilei Zhu, Zejun Ma, Taylor Berg-Kirkpatrick, and Shlomo Dubnov. Hts-at: A hierarchical token-semantic audio transformer for sound classification and detection. In ICASSP 2022-2022 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP) , pages 646–650. IEEE, 2022. [44] Ze Liu, Yutong Lin, Yue Cao, Han Hu, Yixuan Wei, Zheng Zhang, Stephen Lin, and Baining Guo. Swin transformer: Hierarchical vision transformer using shifted windows. In Proceedings of the IEEE/CVF international conference on computer vision , pages 10012–10022, 2021. [45] Y Liu, M Ott, N Goyal, J Du, M Joshi, D Chen, O Levy, M Lewis, L Zettlemoyer, and V Stoyanov. Roberta: a robustly optimized bert pretraining approach. corr 2019. arXiv preprint arXiv:1907.11692 , 1907. [46] Sefik Ilkin Serengil and Alper Ozpinar. Lightface: A hybrid deep face recog-nition framework. In 2020 Innovations in Intelligent Systems and Applications Conference (ASYU) , pages 23–27. IEEE, 2020. [47] Yuantian Miao, Minhui Xue, Chao Chen, Lei Pan, Jun Zhang, Benjamin Zi Hao Zhao, Dali Kaafar, and Yang Xiang. The audio auditor: User-level membership inference in internet of things voice services. Proceedings on Privacy Enhancing Technologies , 1:209–228, 2021. [48] Francisco Teixeira, Karla Pizzi, Raphaël Olivier, Alberto Abad, Bhiksha Raj, and Isabel Trancoso. Exploring features for membership inference in asr model auditing. Computer Speech & Language , page 101812, 2025. [49] Guangke Chen, Yedi Zhang, and Fu Song. Slmia-sr: Speaker-level membership inference attacks against speaker recognition systems. In Proceedings of the 31st Annual Network and Distributed System Security (NDSS) Symposium , 2024. [50] Zhangyu Cheng, Chengming Zou, and Jianwei Dong. Outlier detection using isolation forest and local outlier factor. In Proceedings of the conference on research in adaptive and convergent systems , pages 161–168, 2019. 26 [51] Fei Tony Liu, Kai Ming Ting, and Zhi-Hua Zhou. Isolation forest. In 2008 eighth ieee international conference on data mining , pages 413–422. IEEE, 2008. [52] Kun-Lun Li, Hou-Kuan Huang, Sheng-Feng Tian, and Wei Xu. Improving one-class svm for anomaly detection. In Proceedings of the 2003 international confer-ence on machine learning and cybernetics (IEEE Cat. No. 03EX693) , volume 5, pages 3077–3081. IEEE, 2003. [53] Shehroz S Khan and Michael G Madden. One-class classification: taxonomy of study and review of techniques. The Knowledge Engineering Review , 29(3):345– 374, 2014. [54] Zhaomin Chen, Chai Kiat Yeo, Bu Sung Lee, and Chiew Tong Lau. Autoencoder-based network anomaly detection. In 2018 Wireless telecommunications sympo-sium (WTS) , pages 1–5. IEEE, 2018. 27 Appendix A. Gibberish Samples                 
+
+> Table A.5: Samples of randomly generated textual gibberish generated by GPT-3.5-turbo. b+dh43u!f9de545w 53e(s3erg24=pnI<S fe3_5fg;@f34f.e2w/ d3|%542ferf34G_ 4teh<E{434fef234ter 5gt%b@5435-hgF #4c3rd4scd324g ’2_:g435thyngb Table A.6: Covert gibberish that seem to be real names generated by GPT-3.5-turbo. Karinix Zylogene Glycogenyx Zylotrax Vexilith Dynatrix Exodynix Novylith Glycosyne Xenolynx Rynexis Delphylith
+
+Appendix B. Theoretical Guarantees for Geometric Separation 
+
+In this appendix, we provide the detailed proofs for the theoretical claims made in Section 3.2. We establish that under mild geometric assumptions about the contrastive latent space, the proposed statistics S n and D2 
+
+> n
+
+fundamentally separate member identities from non-members with high probability. 
+
+Appendix B.1. Preliminaries and Assumptions 
+
+We fix a text t with embedding vt = ϕ(t) ∈ Rd. The randomized modality inversion produces n independent optimized embeddings v(1) , . . . , v(n). Recall the definitions of our statistics: 
+
+¯vn := 1
+
+n
+
+> n
+
+X
+
+> i=1
+
+v(i), S n := v⊤ 
+
+> t
+
+¯vn, D2 
+
+> n
+
+:= 1
+
+n
+
+> n
+
+X
+
+> i=1
+
+∥v(i) − ¯vn∥22. (B.1) We model the latent space geometry using M unit-norm prototypes {μk}Mk=1 ⊂ Sd−1.We restate the core assumptions formally for the proof: 
+
+Assumption Appendix B.1 (Prototype orthogonality) . The prototypes μ1, . . . , μ M are approximately orthogonal. Specifically, let ρd := max y,z |μ⊤ 
+
+> y
+
+μz|. For δ1 ∈ (0 , 1) , with probability at least 1 − δ1, ρd ≤
+
+q 4 log(2 M2/δ 1) 
+
+> d
+
+.28 Assumption Appendix B.2 (Text-prototype geometry) . Non-member: For a non-member tout , its embedding vout is isotropic relative to random directions. For any unit 
+
+u, P(|v⊤
+
+> out
+
+u| ≥ ϵ) ≤ 2 exp (−cd ϵ2). Member: For a member tin , there exists a prototype 
+
+y⋆ such that v⊤
+
+> in
+
+μy⋆ ≥ γin > 0.
+
+Assumption Appendix B.3 (Randomized Optimization) . Each run i selects a prototype index C(i) ∼ p(t) and lands near it: v(i) = μC(i) + ∆ (i), with ∥∆(i)∥2 ≤ εopt with high probability. For members , p(tin ) concentrates on y⋆: py⋆ ≥ 1 − δ⋆ (where δ⋆ is small). 
+
+For non-members , p(tout ) is nearly uniform: py ≈ 1/M.
+
+Appendix B.2. Population-Level Separation 
+
+We first analyze the population statistics defined as n → ∞ (assuming εopt → 0): 
+
+S ∞(t) : = v⊤ 
+
+> t
+
+m(t) and D2
+
+> ∞
+
+(t) : = 1 − ∥ m(t)∥22, where m(t) : = PMy=1 py(t)μy is the mean prototype vector. 
+
+Proposition Appendix B.4 (Population separation gaps) . Under the assumptions above, with high probability over prototypes: 
+
+1. Member: S ∞(tin ) ≥ γin − 2δ⋆ and D2
+
+> ∞
+
+(tin ) ≤ 2δ⋆ + 3ρdδ⋆ ≈ 0.
+
+2. Non-member: |S ∞(tout )| ≤ O(d−1/2) ≈ 0 and D2
+
+> ∞
+
+(tout ) ≥ 1 − 1 
+
+> M
+
+− ρd ≈ 1.Proof. For Member: S ∞ = P pyv⊤
+
+> in
+
+μy = py⋆ v⊤
+
+> in
+
+μy⋆ + Py,y⋆ pyv⊤
+
+> in
+
+μy. Using py⋆ ≥ 1 − δ⋆,
+
+v⊤
+
+> in
+
+μy⋆ ≥ γin , and trivial bounds |v⊤μ| ≤ 1, we get S ∞ ≥ (1 − δ⋆)γin − δ⋆ ≈ γin . For dispersion, D2 
+
+> ∞
+
+= 1 − ∥ py⋆ μy⋆ + Py,y⋆ pyμy∥22. The cross-terms are bounded by ρd.Dominant term is 1 − p2 
+
+> y⋆
+
+≈ 1 − (1 − δ⋆)2 ≈ 2δ⋆.
+
+For Non-member: S ∞ = v⊤
+
+> out
+
+m(tout ). Since vout is isotropic and independent of 
+
+m(tout ), S ∞ concentrates around 0 with rate d−1/2 (Assumption Appendix B.2). For dispersion, ∥m(tout )∥22 = ∥ P pyμy∥22 = P p2 
+
+> y
+
++ Py,z py pzμ⊤ 
+
+> y
+
+μz. With py ≈ 1/M, P p2 
+
+> y
+
+≈
+
+1/M. Cross terms are bounded by ρd(P py)2 = ρd. Thus D2 
+
+> ∞
+
+≥ 1 − (1 /M + ρd).
+
+Appendix B.3. Finite-Sample Concentration 
+
+We now show that empirical statistics (S n, D2
+
+> n
+
+) converge to population values as 
+
+O(1 / √n). Decompose the empirical mean ¯vn = ˜mn + ¯∆n, where ˜mn = 1
+
+> n
+
+P μC(i) is the average of selected prototypes and ¯∆n is the average optimization residual. 29 Lemma Appendix B.5 (Concentration Bounds) . Conditioned on small residuals 
+
+∥∆(i)∥ ≤ εopt , for any ϵ > 0:
+
+P(|S n − S ∞| ≥ ϵ + εopt ) ≤ 2 exp( −2nϵ2), (B.2) 
+
+P(|D2 
+
+> n
+
+− D2
+
+> ∞
+
+| ≥ 4ϵ + Cεopt ) ≤ 2 exp( −nϵ2). (B.3) 
+
+Proof. For S n: S n = v⊤ 
+
+> t
+
+˜mn + v⊤ 
+
+> t
+
+¯∆n. The term |v⊤ 
+
+> t
+
+¯∆n| ≤ εopt . The term v⊤ 
+
+> t
+
+˜mn = 1
+
+> n
+
+P Zi
+
+where Zi = v⊤ 
+
+> t
+
+μC(i) are i.i.d. variables bounded in [−1, 1] with mean S ∞. Hoeffding’s inequality gives the result. 
+
+For D2
+
+> n
+
+: Using the identity D2 
+
+> n
+
+= 1
+
+> n
+
+P ∥v(i)∥2 − ∥ ¯vn∥2, and decomposing v(i), we can bound |D2 
+
+> n
+
+− D2
+
+> ∞
+
+| ≤ 2∥ ˜mn − m(t)∥2 + O(εopt ). Since ˜mn is the average of bounded i.i.d. vectors with mean m(t), Hoeffding inequality yields the exponential tail bound. 
+
+Appendix B.4. Proof of Theorem 3.1 
+
+The goal is to show that with probability at least 1 − δ, the empirical statistics 
+
+(S n, D2
+
+> n
+
+) for members and non-members fall on opposite sides of the thresholds sthr 
+
+and d2thr . We structure the proof in three logical steps: (1) ensuring valid population geometry, (2) bounding the optimization and sampling errors, and (3) deriving the separation condition. We allocate the total failure probability δ into three components: prototype geometry failure ( δproto ), optimization localization failure ( δ′
+
+> opt
+
+), and sampling concentration failure (δsamp ), such that δtotal = δproto + δ′ 
+
+> opt
+
++ δsamp ≤ δ. We set each component to δ/ 4.
+
+(1) Existence of population gaps. By Proposition Appendix B.4 and the prototype orthogonality assumption (Assumption Appendix B.1), there exists an event Eproto 
+
+with P(Eproto ) ≥ 1 − δ/ 4 where the population gaps are strictly positive. We define the minimum margin Γ := min nS ∞(tin ) − S ∞(tout ), D2
+
+> ∞
+
+(tout ) − D2
+
+> ∞
+
+(tin )o > 0. The decision thresholds are defined as the midpoints: sthr = 12 (S ∞(tin ) + S ∞(tout )) and 
+
+d2thr = 12 (D2
+
+> ∞
+
+(tin ) + D2
+
+> ∞
+
+(tout )) .
+
+(2) Concentration of empirical statistics. We require the empirical statistics to concentrate around their population means within a radius smaller than Γ/2. First, consider the optimization localization . Let Eopt (t) be the event that all n runs satisfy 30 ∥∆(i)∥2 ≤ εopt . By the union bound over 2n runs (for both tin and tout ), we have P(Ec
+
+> opt
+
+) ≤
+
+2nδopt . We require 2nδopt ≤ δ/ 4.Next, consider the sampling noise . Conditioned on Eopt , Lemma Appendix B.5 guarantees concentration. We choose an error tolerance ϵ and residual εopt such that the total deviation is bounded by Γ/4. Specifically, let the target deviation bound be 
+
+∆dev := 4ϵ + C∆εopt . We require ∆dev ≤ Γ/2. By Lemma Appendix B.5, the probability that any of the four statistics ( S n, D2 
+
+> n
+
+for member/non-member) deviates by more than 
+
+∆dev is bounded by 8 exp (−nϵ2). Setting this to δ/ 4 yields the sample complexity requirement: 
+
+n ≥ 1
+
+ϵ2 log 32 
+
+δ
+
+!
+
+= Ω Γ−2 log(1 /δ ) .
+
+(3) Geometric separation condition. Let Egood be the intersection of valid geometry, optimization localization, and sampling concentration. On this event, for the similarity statistic S n(tin ):
+
+S n(tin ) − sthr = S n(tin ) − 12 (S ∞(tin ) + S ∞(tout )) 
+
+= 12 (S ∞(tin ) − S ∞(tout )) 
+
+| {z }
+
+> ≥Γ
+
+− | S n(tin ) − S ∞(tin )|
+
+| {z }
+
+> ≤∆dev
+
+≥ Γ
+
+2 − Γ
+
+2 = 0 =⇒ S n(tin ) ≥ sthr .
+
+Similarly, for the non-member, sthr − S n(tout ) ≥ Γ 
+
+> 2
+
+− ∆dev ≥ 0, implying S n(tout ) ≤ sthr .The exact same logic applies to the dispersion D2
+
+> n
+
+:
+
+d2thr − D2
+
+> n
+
+(tin ) ≥ Γ
+
+2 − ∆dev ≥ 0 =⇒ D2
+
+> n
+
+(tin ) ≤ d2thr .
+
+Thus, on Egood , the separation conditions hold simultaneously. Together, the probability of failure is bounded by the sum of failure probabilities for each step: P(Ec
+
+> good
+
+) ≤
+
+δproto + δ′ 
+
+> opt
+
++ δsamp ≤ δ. This completes the proof. 31
