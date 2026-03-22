@@ -1,0 +1,768 @@
+Title: Elastic Weight Consolidation Done Right for Continual Learning
+
+URL Source: https://arxiv.org/pdf/2603.18596v1
+
+Published Time: Fri, 20 Mar 2026 00:47:30 GMT
+
+Number of Pages: 13
+
+Markdown Content:
+# Elastic Weight Consolidation Done Right for Continual Learning 
+
+## Xuan Liu 1, Xiaobin Chang *1,2,3 1School of Artificial Intelligence, Sun Yat-sen University, China 
+
+> 2
+
+## Key Laboratory of Intelligent Assessment Technology for Sustainable Tourism, Ministry of Culture and Tourism, Sun Yat-sen University 
+
+> 3
+
+## Key Laboratory of Machine Intelligence and Advanced Computing, Ministry of Education, China 
+
+liux687@mail2.sysu.edu.cn, changxb3@mail.sysu.edu.cn 
+
+## Abstract 
+
+Weight regularization methods in continual learning (CL) alleviate catastrophic forgetting by assessing and penaliz-ing changes to important model weights. Elastic Weight Consolidation (EWC) is a foundational and widely used approach within this framework that estimates weight im-portance based on gradients. However, it has consistently shown suboptimal performance. In this paper, we conduct a systematic analysis of importance estimation in EWC from a gradient-based perspective. For the first time, we find that EWC’s reliance on the Fisher Information Matrix (FIM) re-sults in gradient vanishing and inaccurate importance es-timation in certain scenarios. Our analysis also reveals that Memory Aware Synapses (MAS), a variant of EWC, im-poses unnecessary constraints on parameters irrelevant to prior tasks, termed the redundant protection. Consequently, both EWC and its variants exhibit fundamental misalign-ments in estimating weight importance, leading to inferior performance. To tackle these issues, we propose the Logits Reversal (LR) operation, a simple yet effective modification that rectifies EWC’s importance estimation. Specifically, re-versing the logit values during the calculation of FIM can effectively prevent both gradient vanishing and redundant protection. Extensive experiments across various CL tasks and datasets show that the proposed method significantly outperforms existing EWC and its variants. Therefore, we refer to it as EWC Done Right (EWC-DR) 1.
+
+## 1. Introduction 
+
+Neural networks excel at computer vision tasks by train-ing on samples from all tasks simultaneously. However, in  
+
+> *indicates corresponding author.
+> 1Code is available at https://github.com/scarlet0703/ EWC-DR .Task t-1
+> Task t
+> Compute
+> Regularization
+> Training
+> gradient
+
+Figure 1. Overview of the EWC learning process. After training on task t−1, model weights θt−1 are obtained. The gradient of the cross-entropy loss LCE is computed using the dataset Dt−1 with the model f (·, θ t−1). These gradients estimate the weight impor-tance matrix Ωt−1, but they are not used to update the weights. When learning a new task t, a regularization term Lreg based on 
+
+Ωt−1 is added into the total loss to constrain changes and preserve important parameters in θt−1.
+
+continual learning (CL) [7, 45], tasks are learned sequen-tially, with the network accessing data from only one task at a time. This leads to the challenge of catastrophic for-getting [30], where the network often forgets previously learned tasks when adapting to new ones. One approach to handle this issue is to store a small subset of training data from earlier tasks to prevent forgetting during new task training [8, 16, 28, 41, 53]. However, these replay-based methods require storing and replaying past data, leading to issues like memory constraints, privacy concerns, and sam-pling bias [2, 6]. Alternatively, the network can be reg-
+
+> arXiv:2603.18596v1 [cs.LG] 19 Mar 2026
+
+ularized to retain important weights from previous tasks without exemplar storage [1, 21, 35], thereby eliminating memory overhead, avoiding privacy concerns, and enabling more scalable deployment in various CL scenarios. Elastic Weight Consolidation (EWC) [21] is a classic method that belongs to the second approach. EWC remains relevant as a fundamental and widely adopted CL method for various tasks, such as image classi-fication [11, 19, 29, 46], instruction tuning [9, 14, 17, 42], and object detection [4, 24, 44], due to its simplicity and rehearsal-free nature. As shown in Figure 1, EWC assesses the importance of network weights for previously learned tasks by analyzing gradients and recording these impor-tance scores. During training on new tasks, it regularizes the network to prevent significant changes in crucial weights, with the constraint strength determined by each weight’s importance. However, EWC consistently demonstrates sub-optimal performance [19, 26, 39]. To examine EWC and its variants, we propose a novel gradient-based analysis frame-work. Detailed analysis indicates that when the network achieves high confidence in accurate predictions, EWC pro-duces a low-magnitude Fisher Information Matrix (FIM) due to the vanishing gradients. Consequently, EWC strug-gles to retain crucial parameter information, resulting in poor CL performance and significant catastrophic forget-ting. Applying this analysis to Memory Aware Synapses (MAS) [1], a variant of EWC, reveals that MAS can miti-gate the gradient vanishing issue mentioned earlier, but in-troduces redundant protection by over-constraining param-eters not related to previous tasks. To resolve the weight im-portance misalignment, we introduce Logits Reversal (LR), an operation that simply reverses the logits during the com-putation of the gradient-based importance matrix. This ap-proach substantially improves the performance of vanilla EWC, which we refer to as EWC Done Right (EWC-DR). The main contributions are summarized as follows: • We analyze EWC and its variants from a gradient-based perspective, offering new insights for developing more re-liable and effective regularization-based CL algorithms. • The analysis shows that EWC and its variants exhibit weight importance misalignments: EWC suffers from gradient vanishing, while MAS experiences redundant protection, leading to inferior CL performance. • We propose EWC-DR, an enhancement to vanilla EWC by incorporating the operation of logits reversal (LR) to better estimate weight importance and improve CL re-sults. We demonstrate the improved effectiveness of the proposed EWC-DR across different continual learning tasks, includ-ing exemplar-free class-incremental learning and continual learning of multimodal instruction tuning. EWC-DR sig-nificantly outperforms vanilla EWC and its variants, such as online EWC, MAS, and Synaptic Intelligence (SI). 
+
+## 2. Related Work 
+
+2.1. Continual Learning Scenarios 
+
+2.1.1. Class Incremental Learning 
+
+In Class Incremental Learning (CIL), the model is trained on a sequence of non-overlapping T tasks {1, 2, . . . , T } ,where each new task introduces new classes to the output space. The number of available classes increases incremen-tally over time, making this setting more challenging and realistic. The data distribution of task t, denoted as Dt,is fixed but unknown in advance, while all tasks share the same output space Y. Specifically, Dt consists of N t la-beled examples {(xtn, ytn)}N t
+
+> n=1
+
+, where the new labels ytj
+
+belong to a task-specific subset Yt ⊂ Y , and no label over-lap exists between tasks, i.e., St−1 
+
+> j=1
+
+Yj ∩ Y t = ∅. At the end of task t, the total number of seen classes becomes Ptj=1 |Y j |. Depending on whether past samples (exem-plars) are stored and reused during training, CIL methods are generally categorized into exemplar-based (EBCIL) [5, 18, 34, 52, 53] and exemplar-free (EFCIL) [33, 49, 55– 57] approaches. In CIL literature, exemplar-based methods typically outperform exemplar-free ones. However, in con-strained scenarios involving privacy and limited resources, storing previous task data samples is prohibited, making EFCIL more challenging. Thus, direct comparisons be-tween these two settings can be misleading. 
+
+2.1.2. Multimodal Continual Instruction Tuning 
+
+In Multimodal Continual Instruction Tuning (MCIT), the goal is to continually adapt a multimodal model to new data while preserving previously acquired knowledge [3, 42]. Consider a sequence of datasets {D 1, . . . , DT }, where each 
+
+Dt = {(ximg  
+
+> n
+
+, xtext  
+
+> n
+
+, yn)}N t 
+
+> n=1
+
+contains N t triplets, consist-ing of an image, a text instruction, and the corresponding answer. This continual learning paradigm closely resembles how humans continuously learn from diverse modalities in real-world scenarios [32]. Recently, the weight regulariza-tion method EWC has been widely used as a baseline for comparison in MCIT to evaluate its effectiveness in miti-gating catastrophic forgetting [9, 14, 17, 25, 42]. 
+
+2.2. Weight Regularization-based Methods 
+
+Elastic Weight Consolidation (EWC) [21] is a classic weight regularization-based method for continual learning. It estimates the importance of each parameter after training on a task. An importance matrix Ω is maintained, where a larger Ωi indicates that parameter θi is more critical. To prevent forgetting of the previous task t − 1 during train-ing on a new task t, EWC penalizes changes to important parameters by adding a regularization loss 
+
+Lreg = λ
+
+2
+
+X
+
+> i
+
+Ωt−1
+
+> i
+
+ θt−1 
+
+> i
+
+− θti
+
+2 , (1) where θt−1 
+
+> i
+
+is the i-th parameter after training on the previ-ous task data Dt−1, and  θti − θt−1
+
+> i
+
+2 measures the devia-tion from the previously learned parameter. The importance Ω is calculated based on an approxi-mation of the Fisher Information Matrix (FIM), and many studies [19, 26, 39] have highlighted that such approxima-tions can be inaccurate in practice. To address this, Online EWC [39] proposes to accumulate the importance weights in an online manner across tasks, introducing a decay factor to gradually forget outdated information and reduce mem-ory overhead. Unlike EWC, which uses FIM to assess pa-rameter importance, Synaptic Intelligence (SI) [51] com-putes importance online by tracking each parameter’s con-tribution to loss reduction during training. Memory Aware Synapses (MAS) [1] measures importance based on the sen-sitivity of the learned output function to each parameter. Pa-rameters that cause larger changes in the output when per-turbed are assigned higher importance values. However, EWC and its variants lack theoretical analyses and do not identify the fundamental cause of their performance degra-dation. 
+
+## 3. Gradient-based Analysis of EWCs 
+
+In this section, motivated by the observation that weight im-portance in EWC-based methods is closely related to gradi-ent values, we propose a gradient-based analytical frame-work to theoretically and empirically examine existing ap-proaches to importance estimation. Specifically, our analy-sis focuses on the fully connected (FC) layer, as its param-eters are directly associated with classification outcomes, making them more interpretable. Furthermore, according to the chain rule, gradients from the FC layer are backprop-agated through the network, thereby affecting the updates to preceding parameters. Thus, we focus on the importance of FC layer weights in our analysis for simplicity and clar-ity. In continual learning for classification, the goal is to learn T tasks sequentially while retaining knowledge from earlier tasks. For task t − 1, let the training dataset be de-noted as Dt−1 = {(xt−1 
+
+> n
+
+, yt−1 
+
+> n
+
+)}N t−1 
+
+> n=1
+
+, where N t−1 is the number of samples and Ct−1 denotes the number of classes encountered up to task t − 1. After training on Dt−1, we obtain a model parameterized by θt−1 = {θt−1 
+
+> i
+
+}i. Weight regularization methods estimate the importance of each pa-rameter θt−1 
+
+> i
+
+by computing an importance weight Ωt−1 
+
+> i
+
+. A larger value of Ωt−1 
+
+> i
+
+indicates that parameter i is more im-portant for task t − 1. When learning a new task t, impor-tance values Ωt−1 = {Ωt−1 
+
+> i
+
+}i are used in a regularization loss (Equation (1)) to preserve important parameters in θt−1
+
+and mitigate catastrophic forgetting. Considering the FC layer of the classification head, where the input is ht−1 ∈ Rn, and the weight matrix is 
+
+wt−1 ∈ RC×n. The output logits are computed as zt−1 =
+
+wt−1ht−1 ∈ RC . The weights wt−1 = {wt−1 
+
+> k
+
+}k are a sub-set of the entire network parameter set, wt−1 ⊆ θt−1. The predicted probability for each class k ∈ { 1, . . . , C } is then obtained via the softmax function 
+
+pt−1 
+
+> k
+
+= Softmax( zt−1)k = exp( zt−1 
+
+> k
+
+)
+
+PCj=1 exp( zt−1 
+
+> j
+
+) . (2) The predicted class is given by the index with the largest probability, i.e., ˆyt−1 = arg max k pt−1 
+
+> k
+
+. In the following analysis, we focus on the calculation of the parameter im-portance Ωt−1 
+
+> w
+
+for task t − 1, with particular attention to the FC layer weights wt−1. Therefore, we will omit the super-script t − 1 from the notation for simplicity. 
+
+3.1. Gradient Vanishing in EWC 
+
+In Elastic Weight Consolidation (EWC), the importance 
+
+ΩEW C i of each model parameter is approximated via the diagonal FIM and defined as 
+
+ΩEW C i = Fi = E(x,y)∼p(x,y)
+
+" ∂ log p(y | x, θ )
+
+∂θ i
+
+2#
+
+,
+
+(3) where p(y | x, θ ) denotes the model’s predictive distribu-tion. Since the cross-entropy loss LCE is the negative log-likelihood, under the assumption that θ is close to a local optimum, the FIM can equivalently be approximated by the squared gradients of the cross-entropy loss evaluated on the training data 
+
+LCE (θ) = − log p(y | x, θ ) = − X
+
+> k
+
+yk log( pk), (4) 
+
+Fi = E(x,y)
+
+" ∂LCE (θ)
+
+∂θ i
+
+2#
+
+, (5) where yk is the k-th value in the one-hot encoded label y.Assuming the ground-truth class is c, we have 
+
+yk =
+
+(
+
+1, if k = c, 
+
+0, if k̸ = c.  (6) Consequently, parameters with larger gradient variations are considered more critical for retaining knowledge ac-quired from the current task. The gradient of LCE with respect to the k-th class of FC layer weight w is given by 
+
+∂LCE 
+
+∂w k
+
+= ∂LCE 
+
+∂z k
+
+· ∂z k
+
+∂w k
+
+. (7) Considering k = c, thus yc = 1 , the derivative of LCE with respect to zc is 
+
+∂LCE 
+
+∂z c
+
+= pc − 1 = pc − yc. (8) 0 1 2 3 4        
+
+> Class k
+> 0.0
+> 0.1
+> 0.2
+> 0.3
+> 0.4
+> 0.5
+> 0.6
+> 0.7
+> Probability  p(a) The predicted probability pkof
+> k-th class. Ground truth at 2. 01234
+> Weight Wk
+> 0
+> 10
+> 20
+> 30
+> 40
+> 50
+> Importance  W
+> EWC
+> Ours
+> (b) Importance of the FC layer weights, summed per class.
+
+Figure 2. A Case Study of Gradient Vanishing. 
+
+Otherwise ( k̸ = c), yk = 0 and ∂LCE  
+
+> ∂z k
+
+becomes 
+
+∂LCE 
+
+∂z k
+
+= pk = pk − yk. (9) Therefore, Equations (8) and (9) can be unified as 
+
+∂LCE 
+
+∂z k
+
+= pk − yk. (10) Accordingly, the gradient with respect to wk is 
+
+∂LCE 
+
+∂w k
+
+= ( pk − yk) · ∂z k
+
+∂w k
+
+. (11) The importance of the FC layer weight wk corresponding to the k-th class for EWC can be expressed as 
+
+ΩEWC  
+
+> wk
+
+= Fwk = E
+
+
+
+(pk − yk)2 · ( ∂z k
+
+∂w k
+
+)2
+
+
+
+. (12) However, when the model makes the correct prediction at a high confidence, i.e., the predicted probability of  pc
+
+approaches 1, making the difference  (pc − 1)  close to 0, which we refer to as gradient vanishing . Therefore, the FIM value  Fwc for the final FC layer weight wc, crucial to correct classification, is underestimated, failing to properly represent its significance. The FIM value  Fwk for weight 
+
+wk, k̸ = c, also experiences gradient vanishing due to the corresponding  pk approaches 0. This problem can be illus-trated with the case in Figure 2, the predicted probability 
+
+p2 of a sample is close to 1 (Figure 2(a)), but the impor-tance scores ΩEWC  
+
+> w2
+
+for the FC weight parameters across all classes are very small (red bars in Figure 2(b)). Since the FIM is computed from the trained model using the train-ing data at the end of each task, this issue frequently arises, ultimately affecting EWC’s ability to accurately retain im-portant knowledge. 
+
+3.2. Redundant Protection in MAS 
+
+Memory Aware Synapses (MAS) is a variant of EWC. In-stead of relying on the FIM, MAS quantifies parameter im-portance by measuring how the ℓ2 norm of the network out-put changes with small parameter changes. For a neural 0 1 2 3 4            
+
+> Class k
+> 0.10
+> 0.05
+> 0.00
+> 0.05
+> 0.10
+> Logit  z
+> (a) The logit zkof k-th class. Ground truth at 0. 01234
+> Weight Wk
+> 0
+> 10
+> 20
+> 30
+> 40
+> 50
+> 60
+> Importance  W
+> MAS
+> Ours
+> (b) Importance of the FC layer weights, summed per class.
+
+Figure 3. A Case Study of Redundant Protection. 
+
+network with parameters θ, and given input x, let the out-put be f (x; θ). The loss L2 and the importance ΩM AS i are defined as 
+
+L2(θ) = ∥f (x; θ)∥2, (13) 
+
+ΩM AS i = ∂L2
+
+∂θ i 1
+
+. (14) For the weight matrix w in an FC layer, the logits z are the output. The corresponding gradient of the ℓ2 norm loss with respect to the k-th class FC layer weight wk can be computed as 
+
+∂L2
+
+∂w k
+
+= ∂L2
+
+∂z k
+
+· ∂z k
+
+∂w k
+
+. (15) For each class k, the gradient with respect to the k-th logit 
+
+zk is  ∂L2
+
+∂z k
+
+= zk
+
+∥z∥2
+
+, (16) Thus, the gradient of the ℓ2 norm loss is simply the logits value itself. Therefore, the gradient with respect to wk is 
+
+∂L2
+
+∂w k
+
+= zk
+
+∥z∥2
+
+· ∂z k
+
+∂w k
+
+. (17) The importance of the FC layer weight wk corresponding to the k-th class for MAS can be expressed as 
+
+ΩMAS  
+
+> wk
+
+= ∂L2
+
+∂w k 1
+
+= |zk|∥z∥2
+
+· | ∂z k
+
+∂w k
+
+|. (18) However, since MAS computes weight importance us-ing the ℓ2 norm without a softmax operation, the logits re-main unbounded. Consequently, when a large negative logit 
+
+zk appear, MAS may assign disproportionately high impor-tance to parameters associated with these branches, result-ing in redundant protection . This issue is illustrated in Figure 3, where logit z2 is a large negative value (corre-sponding to a very small predicted probability p2), yet the importance score ΩMAS  
+
+> w2
+
+for the associated FC weight pa-rameters are very high, as the last yellow bar Figure 3(b) indicates. Since such extreme negative logits have little im-pact on the output probability, preserving these parameters is unnecessary and can even hinder the model’s plasticity in learning new tasks. 4. Logits Reversal 
+
+Based on the analysis provided, we propose a new method for effectively implementing EWC. This method introduces a logits reversal (LR) operation during the computation of the Fisher Information Matrix (FIM). By negating the log-its in the softmax output, we highlight key parameters that enhance the accuracy of class predictions. Specifically, during the computation of weight impor-tance, we negate each logit  zk to obtain ˜zk
+
+˜zk = −zk. (19) Under this transformation, the new softmax output becomes 
+
+˜pk = e˜zk
+
+P 
+
+> j
+
+e˜zj = e−zk
+
+P 
+
+> j
+
+e−zj . (20) The corresponding cross-entropy loss with the LR softmax output ˜pk is defined as 
+
+˜LCE = − X
+
+> k
+
+yk log(˜ pk). (21) For the correct class k = c, the derivative of ˜LCE with respect to k-th class of the FC layer weight w is 
+
+∂ ˜LCE 
+
+∂z c
+
+= 1 − ˜pc = yc − ˜pc. (22) whereas for incorrect classes ( k̸ = c), 
+
+∂ ˜LCE 
+
+∂z k
+
+= −˜pk = yk − ˜pk. (23) By unifying Equation (22) and Equation (23), the impor-tance of the FC layer weight w corresponding to the k-th class is given by 
+
+ΩLR wk = E
+
+
+
+(yk − ˜pk)2 · ( ∂ ˜zk
+
+∂w k) )2
+
+
+
+. (24) To understand the behavior of ˜pk under LR, we analyze how the output probability responds to changes in its asso-ciated logit 
+
+∂ ˜pk
+
+∂z k
+
+=
+
+e−zk
+
+
+
+e−zk − P 
+
+> j
+
+e−zj
+
+P 
+
+> j
+
+e−zj
+
+2 . (25) Given that e−zk > 0 and e−zk − P 
+
+> j
+
+e−zj < 0 (unless e−zk
+
+dominates the sum, which is rarely the case), it follows that 
+
+∂ ˜pk
+
+∂z k
+
+< 0. (26) Thus, after LR, increasing zk leads to a decrease in ˜pk,which is the opposite of the original softmax behavior. As 
+
+zc increases, ˜pc for the correct class decreases, making 
+
+1 − ˜pc larger and thus increasing ΩLR  
+
+> wc
+
+. At the same time, 
+
+˜pk for incorrect classes remains small, resulting in negli-gible gradient contributions from these classes. Therefore, when computing the importance ΩLR  
+
+> wk
+
+under LR, the dom-inant contribution to the parameter importance arises from the correct class. As shown in Figure 2, our approach (green bars) assigns the highest importance to the correct class (class 2), even when z2 is close to 1. In high-confidence cases, LR also maintains gradient magnitude, allowing the FIM scores to more accurately reflect the importance of each weight. Fig-ure 3 demonstrates that our approach (green bars) prioritizes the ground-truth class (class 0) while MAS unnecessarily protects class 2. LR can effectively avoid this redundancy by focusing on the parameters that truly impact accurate predictions. Therefore, computing ΩLR  
+
+> wk
+
+with LR offers a more discriminative estimation of weight importance across tasks. Statistics of the FC layer weight importance are pro-vided in the next section. 
+
+## 5. Experiments 
+
+In this section, we compare our method, EWC-DR, with EWC and its variants in standard exemplar-free class-incremental learning (EFCIL) settings, following the big-start and equally split protocols. We also evaluate its perfor-mance in multimodal continual instruction tuning (MCIT). 
+
+5.1. Exemplar-Free Class-Incremental Learning 
+
+5.1.1. EFCIL Datasets 
+
+We utilize three public datasets: (1) CIFAR-100 [22], 100 classes, 32 ×32 pixels images, each class contains 600 im-ages, with 500 allocated for training and 100 for testing; (2) ImageNet-Subset, 100 classes subset of ImageNet LSVRC dataset [37], 224 ×224 pixel images, each class consists of 1,300 training images and 50 validation images; (3) Tiny-ImageNet [23], a subset of ImageNet with 200 classes, 64 ×64 pixel images, each class has 500 training images and 50 test images. 
+
+5.1.2. Big-start Incremental Setting 
+
+We adopt the big-start incremental learning protocol follow-ing [11, 33, 55–57], where a substantial number of classes are allocated to the initial phase followed by evenly dis-tributed incremental phases. The specific configurations for each dataset are as follows: CIFAR-100 and ImageNet-Subset are tested with (1) 50 initial classes and 5 incremen-tal tasks of 10 classes, (2) 50 initial classes and 10 incre-mental tasks of 5 classes, (3) 40 initial classes and 20 incre-mental tasks of 3 classes. Tiny-ImageNet is tested with 100 initial classes and (1) 5 incremental tasks of 20 classes, (2) 10 incremental tasks of 10 classes, (3) 20 incremental tasks of 5 classes. Table 1. EFCIL performance on CIFAR-100. Reported results represent means across three independent trials. 
+
+method Big start Equally split T=5 T=10 T=20 T=5 T=10 T=20 
+
+Alast Aavg Alast Aavg Alast Aavg Alast Aavg Alast Aavg Alast Aavg 
+
+EWC 14.61 32.82 11.53 27.02 6.20 19.61 17.80 39.02 10.62 27.90 5.48 18.13 online EWC 29.70 45.65 26.36 40.36 17.63 31.71 26.13 43.97 17.45 33.04 11.52 25.49 SI 19.26 37.68 11.33 27.45 5.62 17.62 13.10 29.84 9.91 23.58 7.98 20.72 MAS 35.37 48.32 29.09 43.24 19.98 34.77 29.45 43.68 23.41 37.84 13.24 27.39 EWC-DR 50.23 63.75 44.88 60.94 35.86 53.45 46.89 61.47 29.41 46.01 18.00 33.52 
+
+Table 2. EFCIL performance on ImageNet-Subset. Reported results represent means across three independent trials. 
+
+method Big start Equally split T=5 T=10 T=20 T=5 T=10 T=20 
+
+Alast Aavg Alast Aavg Alast Aavg Alast Aavg Alast Aavg Alast Aavg 
+
+EWC 11.44 26.57 5.76 15.52 3.73 9.86 20.78 42.37 10.60 28.75 5.28 18.74 online EWC 23.56 46.68 16.12 39.71 13.00 32.74 26.64 46.58 12.78 29.72 6.34 18.91 SI 9.19 24.56 4.80 13.66 2.93 8.30 17.83 40.19 9.10 26.44 4.77 16.77 MAS 21.06 42.59 13.72 31.17 7.86 22.44 45.33 62.99 24.36 44.16 11.47 26.83 EWC-DR 66.18 76.00 58.94 70.99 43.43 59.59 54.80 68.46 35.02 54.55 17.17 34.68 12345    
+
+> 4.8333
+> SI 4.1667
+> EWC 2.5556
+> MAS
+> 2.4444 online EWC
+> 1.0000 EWC-DR
+> CD = 1.438
+
+Figure 4. CD diagram comparing the Aavg of different methods across all evaluated EFCIL settings. The CD is 1.438 with a sig-nificance level of 0.05. 
+
+5.1.3. Equally-split Incremental Setting 
+
+We also implement the equally split protocol described in [10, 12, 31, 36, 40], where the entire set of classes is divided uniformly into 5, 10, or 20 tasks, with each task containing an equal number of classes. Notably, we choose the equally split setting because it poses a greater challenge for mitigating forgetting compared to the big-start setting, thereby providing a more rigorous evaluation. 
+
+5.1.4. Implementation Details 
+
+For all experiments, we adopt the PyCIL [54] frame-work as our implementation basis. Consistent with prior work [11, 12, 31, 34, 48, 56], we employ a ResNet-18 [15] model using SGD with an initial learning rate of 0.1, mo-mentum of 0.9, batch size of 128, and weight decay of 0.0005. The model undergoes 200 training epochs with learning rate reductions by a factor of 10 at epochs 60, 120, and 160. For subsequent incremental tasks, we use a re-duced initial learning rate of 0.1 with step-wise decay by a factor of 70 at epochs 120 and 150, and train for 180 epochs with a weight decay of 0.0002. All implementations are initialized and trained from scratch. 
+
+5.1.5. Evaluation Metrics 
+
+Performance is evaluated using two metrics [5, 8]: the last task accuracy ( Alast = AT ), which measures model per-formance after completing the final task T , and the average incremental accuracy ( Aavg = 1
+
+> T
+
+PT 
+
+> t=1
+
+At), computed as the arithmetic mean of accuracies recorded after each task (including the initial task). Reported results are averaged across three independent runs. 
+
+5.1.6. EFCIL Results 
+
+As shown in Tabs. 1 to 3, our proposed EWC-DR consis-tently outperforms EWC and its variants across all evalu-ated settings. Specifically, EWC-DR achieves the best per-formance in both the big-start and equally split settings, achieving a maximum improvement of 53.18% over EWC in Alast and 55.47% in Aavg . Online EWC outperforms EWC by accumulating importance weights online with a decay factor. However, its performance remains limited in the equally-split setting. Among the variants, MAS achieves the second-best results, possibly because MAS does not suffer from the gradient vanishing problem seen in EWC, SI and Online EWC. However, MAS is affected by redundant protection, which limits its overall effectiveness. More comparisons between our EWC-DR and CL methods Table 3. EFCIL performance on Tiny-ImageNet. Reported results represent means across three independent trials. 
+
+method Big start Equally split T=5 T=10 T=20 T=5 T=10 T=20 
+
+Alast Aavg Alast Aavg Alast Aavg Alast Aavg Alast Aavg Alast Aavg 
+
+EWC 9.74 19.92 7.00 15.35 4.56 12.51 20.15 32.10 11.42 23.52 5.34 15.58 online EWC 27.02 39.63 20.03 31.76 18.52 31.96 24.01 35.41 16.77 27.63 10.95 19.44 SI 7.46 17.59 4.04 10.10 2.24 5.68 12.14 27.02 6.97 19.00 3.81 12.41 MAS 25.53 38.45 15.32 27.97 11.67 25.98 20.04 32.95 11.56 24.63 7.41 17.51 EWC-DR 38.24 47.00 31.43 42.88 23.64 37.56 28.67 39.52 21.46 32.79 12.09 22.62 0 1 2 3 4          
+
+> Output Classes
+> Input Features Dim
+> 0.05
+> 0.10
+> 0.15
+> 0.20
+> 0.25
+> 0.30
+> (a) EWC 01234
+> Output Classes
+> Input Features Dim
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2 (b) MAS 01234
+> Output Classes
+> Input Features Dim
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2 (c) EWC-DR
+
+Figure 5. Importance matrices of the FC layer weights (ground truth at class 2) for EWCs. 
+
+from other categories can be found in the supplementary. To assess the statistical significance of performance dif-ferences between methods across multiple datasets, we con-duct a critical difference (CD) analysis on the experimental results under the EFCIL setting, as depicted in Figure 4. The CD diagram demonstrates that EWC-DR achieves the lowest average rank, indicating superior performance com-pared to all other methods. Notably, the gaps between EWC-DR and other methods exceed the CD threshold 1.438, confirming that the improvement of EWC-DR is sta-tistically significant. 
+
+5.1.7. Statistics of FC Layer Weight Importance Matrices 
+
+To further support our main findings, we present the statis-tics on the importance of the fully connected (FC) layer weights. The weight importance is represented as a ma-trix calculated using all CIFAR-100 training samples la-beled as class 2 (GT) and averaged. Figure 5 visual-izes the weight importance matrices of EWC, MAS, and EWC-DR, where warmer colors indicate higher importance values. Our method emphasizes the ground truth class, yielding a prominent column for class 2. In contrast, the heatmap of EWC appears nearly blank, reflecting subtle importance values due to gradient vanishing. MAS high-lights the ground truth class but also assigns high impor-tance to class 0 and class 4, suggesting unnecessary protec-tion. Additionally, the importance value column of MAS at each activated class seems dense and evenly distributed, while that of EWC-DR appears more selective and concen-trated. Overall, our approach achieves a more selective and discriminative estimation of weight importance, mitigating both under-protection (as seen in EWC) and over-protection (as seen in MAS). 
+
+5.2. Multimodal Continual Instruction Tuning 
+
+5.2.1. MCIT Datasets 
+
+We follow CLiMB [42] benchmark and use four vision-and-language datasets: VQAv2 [13] is an image ques-tion answering dataset with short, open-ended answers. NLVR2 [43] is a language grounding dataset requiring rea-soning about statements and paired photographs. SNLI-VE [47] extends natural language inference to image-text pairs. VCR [50] requires visual commonsense reasoning Table 4. Results of MCIT. The accuracy at,j ↑ (%) with forgetting transfer Ft,j ↓ (%) in brackets are reported. 
+
+EWC Checkpoint VQA2 NLVR2 SNLI-VE VCR 
+
+Task 1: VQA2 67.89 – – –Task 2: NLVR2 39.94 [41.17] 72.85 – –Task 3: SNLI-VE 40.83 [39.86] 64.95 [34.59] 74.60 –Task 4: VCR 18.70 [72.46] 52.13 [ 90.66 ] 41.84 [79.39] 59.30 
+
+EWC-DR Checkpoint VQA2 NLVR2 SNLI-VE VCR 
+
+Task 1: VQA2 67.72 – – –Task 2: NLVR2 43.25 [36.15] 72.77 – –Task 3: SNLI-VE 54.25 [19.90] 70.65 [9.31] 74.58 –Task 4: VCR 33.61 [50.37] 66.51 [ 27.48 ] 50.86 [57.52] 59.38 VQAv2 NLVR2 SNLI-VE VCR 
+
+> Task
+> 45
+> 50
+> 55
+> 60
+> 65
+> 70
+> 75
+> Accuracy (%)
+> EWC ( At)
+> EWC ( Anew )
+> EWC-DR ( At)
+> EWC-DR ( Anew )
+
+Figure 6. The incremental accuracy ( At) and new task accuracy (Anew ) of EWC and EWC-DR across tasks in the MCIT scenario. Solid lines denote At, while dashed lines denote Anew .
+
+with multiple-choice questions. 
+
+5.2.2. Implementation Details 
+
+Following the implementation in [42], we employ a pre-trained Vision-Language Transformer (ViLT) [20] as the backbone encoder. The tasks are trained sequentially in the following order: VQAv2, NLVR2, SNLI-VE, and VCR. All training procedures and hyperparameters are kept consistent with those described in [42]. 
+
+5.2.3. Evaluation Metrics 
+
+at,j is defined as the accuracy on task j evaluated after fin-ishing training on task t. Anew = at,t is reported to quan-tify the model plasticity. The incremental accuracy At, eval-uated on all seen classes right after being trained on task t, is also reported. Following [42], we report forgetting transfer 
+
+Ft,j , defined as Ft,j = aj,j −at,j   
+
+> aj,j −aj−1,j
+
+, j < t , where aj−1,j 
+
+is the accuracy on task j before the learning task j.
+
+5.2.4. MCIT Results 
+
+Tab. 4 presents the evaluation scores for each task af-ter training on a subsequent task  t, along with the for-getting transfer values  F for all previously encountered tasks. While vanilla EWC experiences catastrophic forget-ting, e.g., a 90.66% forgetting rate on NLVR2 after the final task, our EWC-DR effectively mitigates this issue, substan-tially reducing the corresponding forgetting rate to 27.48%. More importantly, such improvements are achieved without compromising the model plasticity, as EWC-DR achieves almost the same diagonal accuracies as those of EWC. The comparisons between EWC and EWC-DR are illus-trated in Figure 6. Although both methods exhibit compara-ble new task learning ability (indicated by Anew ), EWC-DR demonstrates significantly stronger resistance to forgetting, leading to improved performance on At. For instance, after training on the final VCR task, EWC-DR increases At by nearly 10%, from 42.99% to 52.59%, compared to EWC. The analysis of Figure 6 supports the findings in Tab. 4. 
+
+## 6. Conclusion 
+
+In this work, we revisit Elastic Weight Consolidation (EWC) and its variants and diagnose their fundamen-tal limitations for continual learning. Through a novel gradient-based analysis framework, we find that EWC suf-fers from a vanishing gradient issue, leading to underesti-mated weight importance, while the EWC variant, Mem-ory Aware Synapses (MAS), overly restricts irrelevant pa-rameters, resulting in redundant protection. To address these issues, we propose a simple operation, Logits Rever-sal (LR), to facilitate more accurate weight importance esti-mation. Extensive experiments across multiple tasks and benchmarks demonstrate that EWC-DR consistently out-performs EWC and its variants. Therefore, we refer to this proposed method as EWC Done Right (EWC-DR). The pro-posed analysis and method offer new insights for building more reliable and effective regularization-based continual learning algorithms. Acknowledgment This work was supported by the grants from the National Natural Science Foundation of China (62576369). 
+
+## References 
+
+[1] Rahaf Aljundi, Francesca Babiloni, Mohamed Elhoseiny, Marcus Rohrbach, and Tinne Tuytelaars. Memory aware synapses: Learning what (not) to forget. In Proceedings of the European conference on computer vision (ECCV) , pages 139–154, 2018. 2, 3 [2] Sara Babakniya, Zalan Fabian, Chaoyang He, Mahdi Soltanolkotabi, and Salman Avestimehr. A data-free ap-proach to mitigate catastrophic forgetting in federated class incremental learning for vision tasks. Advances in Neural Information Processing Systems , 36:66408–66425, 2023. 1 [3] Tadas Baltruˇ saitis, Chaitanya Ahuja, and Louis-Philippe Morency. Multimodal machine learning: A survey and tax-onomy. IEEE transactions on pattern analysis and machine intelligence , 41(2):423–443, 2018. 2 [4] Fabio Cermelli, Antonino Geraci, Dario Fontanel, and Bar-bara Caputo. Modeling missing annotations for incremental learning in object detection. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition ,pages 3700–3710, 2022. 2 [5] Arslan Chaudhry, Puneet K Dokania, Thalaiyasingam Ajan-than, and Philip HS Torr. Riemannian walk for incremen-tal learning: Understanding forgetting and intransigence. In 
+
+Proceedings of the European conference on computer vision (ECCV) , pages 532–547, 2018. 2, 6 [6] Xiuwei Chen and Xiaobin Chang. Dynamic residual clas-sifier for class incremental learning. In Proceedings of the IEEE/CVF International Conference on Computer Vision ,pages 18743–18752, 2023. 1 [7] Zhiyuan Chen and Bing Liu. Lifelong machine learning .Morgan & Claypool Publishers, 2018. 1 [8] Arthur Douillard, Matthieu Cord, Charles Ollion, Thomas Robert, and Eduardo Valle. Podnet: Pooled outputs dis-tillation for small-tasks incremental learning. In Computer vision–ECCV 2020: 16th European conference, Glasgow, UK, August 23–28, 2020, proceedings, part XX 16 , pages 86–102. Springer, 2020. 1, 6 [9] Chen et al. Coin: A benchmark of continual instruction tun-ing for multimodel large language models. NeurIPS , 2024. 2[10] Qiankun Gao, Chen Zhao, Bernard Ghanem, and Jian Zhang. R-dfcil: Relation-guided representation learning for data-free class incremental learning. In European Conference on Computer Vision , pages 423–439. Springer, 2022. 6 [11] Dipam Goswami, Yuyang Liu, Bartłomiej Twardowski, and Joost Van De Weijer. Fecam: Exploiting the heterogeneity of class distributions in exemplar-free continual learning. Ad-vances in Neural Information Processing Systems , 36:6582– 6595, 2023. 2, 5, 6 [12] Dipam Goswami, Albin Soutif-Cormerais, Yuyang Liu, Sandesh Kamath, Bart Twardowski, Joost Van De Weijer, et al. Resurrecting old classes with new data for exemplar-free continual learning. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition ,pages 28525–28534, 2024. 6 [13] Yash Goyal, Tejas Khot, Douglas Summers-Stay, Dhruv Ba-tra, and Devi Parikh. Making the v in vqa matter: Elevating the role of image understanding in visual question answer-ing. In Proceedings of the IEEE conference on computer vision and pattern recognition , pages 6904–6913, 2017. 7 [14] Haiyang Guo, Fanhu Zeng, Ziwei Xiang, Fei Zhu, Da-Han Wang, Xu-Yao Zhang, and Cheng-Lin Liu. Hide-llava: Hierarchical decoupling for continual instruction tun-ing of multimodal large language model. arXiv preprint arXiv:2503.12941 , 2025. 2 [15] Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun. Deep residual learning for image recognition. In Proceed-ings of the IEEE conference on computer vision and pattern recognition , pages 770–778, 2016. 6 [16] Xinting Hu, Kaihua Tang, Chunyan Miao, Xian-Sheng Hua, and Hanwang Zhang. Distilling causal effect of data in class-incremental learning. In Proceedings of the IEEE/CVF con-ference on Computer Vision and Pattern Recognition , pages 3957–3966, 2021. 1 [17] Tianyu Huai, Jie Zhou, Xingjiao Wu, Qin Chen, Qingchun Bai, Ze Zhou, and Liang He. Cl-moe: Enhancing multi-modal large language model with dual momentum mixture-of-experts for continual visual question answering. In Pro-ceedings of the Computer Vision and Pattern Recognition Conference , pages 19608–19617, 2025. 2 [18] Ahmet Iscen, Jeffrey Zhang, Svetlana Lazebnik, and Cordelia Schmid. Memory-efficient incremental learning through feature adaptation. In Computer Vision–ECCV 2020: 16th European Conference, Glasgow, UK, August 23–28, 2020, Proceedings, Part XVI 16 , pages 699–715. Springer, 2020. 2 [19] Sanghwan Kim, Lorenzo Noci, Antonio Orvieto, and Thomas Hofmann. Achieving a better stability-plasticity trade-off via auxiliary networks in continual learning. In Pro-ceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 11930–11939, 2023. 2, 3 [20] Wonjae Kim, Bokyung Son, and Ildoo Kim. Vilt: Vision-and-language transformer without convolution or region su-pervision. In International conference on machine learning ,pages 5583–5594. PMLR, 2021. 8 [21] James Kirkpatrick, Razvan Pascanu, Neil Rabinowitz, Joel Veness, Guillaume Desjardins, Andrei A Rusu, Kieran Milan, John Quan, Tiago Ramalho, Agnieszka Grabska-Barwinska, et al. Overcoming catastrophic forgetting in neu-ral networks. Proceedings of the national academy of sci-ences , 114(13):3521–3526, 2017. 2 [22] Alex Krizhevsky, Geoffrey Hinton, et al. Learning multiple layers of features from tiny images. Toronto, ON, Canada ,2009. 5 [23] Yann Le and Xuan Yang. Tiny imagenet visual recognition challenge. CS 231N , 7(7):3, 2015. 5 [24] Liyang Liu, Zhanghui Kuang, Yimin Chen, Jing-Hao Xue, Wenming Yang, and Wayne Zhang. Incdet: In defense of elastic weight consolidation for incremental object detection. 
+
+IEEE transactions on neural networks and learning systems ,32(6):2306–2319, 2020. 2 [25] Wenzhuo Liu, Fei Zhu, and Qi Tian. C-clip: Multimodal continual learning for vision-language model. In The Thir-teenth International Conference on Learning Representa-tions , 2025. 2 [26] Xialei Liu, Marc Masana, Luis Herranz, Joost Van de Weijer, Antonio M Lopez, and Andrew D Bagdanov. Rotate your networks: Better weight consolidation and less catastrophic forgetting. In 2018 24th international conference on pattern recognition (ICPR) , pages 2262–2268. IEEE, 2018. 2, 3 [27] Yu Liu, Sarah Parisot, Gregory Slabaugh, Xu Jia, Ales Leonardis, and Tinne Tuytelaars. More classifiers, less for-getting: A generic multi-classifier paradigm for incremen-tal learning. In European Conference on Computer Vision ,pages 699–716. Springer, 2020. 1 [28] Yaoyao Liu, Bernt Schiele, and Qianru Sun. Adaptive aggre-gation networks for class-incremental learning. In Proceed-ings of the IEEE/CVF conference on Computer Vision and Pattern Recognition , pages 2544–2553, 2021. 1 [29] Marc Masana, Xialei Liu, Bartłomiej Twardowski, Mikel Menta, Andrew D Bagdanov, and Joost Van De Weijer. Class-incremental learning: survey and performance evalu-ation on image classification. IEEE Transactions on Pattern Analysis and Machine Intelligence , 45(5):5513–5533, 2022. 2[30] Michael McCloskey and Neal J Cohen. Catastrophic inter-ference in connectionist networks: The sequential learning problem. In Psychology of learning and motivation , pages 109–165. Elsevier, 1989. 1 [31] Zichong Meng, Jie Zhang, Changdi Yang, Zheng Zhan, Pu Zhao, and Yanzhi Wang. Diffclass: Diffusion-based class incremental learning. In European Conference on Computer Vision , pages 142–159. Springer, 2024. 6 [32] Aleksandra Mroczko-Wasowicz. Perception–cognition inter-face and cross-modal experiences: Insights into unified con-sciousness, 2016. 2 [33] Gr´ egoire Petit, Adrian Popescu, Hugo Schindler, David Pi-card, and Bertrand Delezoide. Fetril: Feature translation for exemplar-free class-incremental learning. In Proceed-ings of the IEEE/CVF winter conference on applications of computer vision , pages 3911–3920, 2023. 2, 5 [34] Sylvestre-Alvise Rebuffi, Alexander Kolesnikov, Georg Sperl, and Christoph H Lampert. icarl: Incremental classifier and representation learning. In Proceedings of the IEEE con-ference on Computer Vision and Pattern Recognition , pages 2001–2010, 2017. 2, 6, 1 [35] Subendhu Rongali, Abhyuday Jagannatha, Bhanu Pratap Singh Rawat, and Hong Yu. Continual domain-tuning for pretrained language models. arXiv preprint arXiv:2004.02288 , 2020. 2 [36] Soumya Roy, Vinay Verma, and Deepak Gupta. Efficient expansion and gradient based task inference for replay free incremental learning. In Proceedings of the IEEE/CVF Win-ter Conference on Applications of Computer Vision , pages 1165–1175, 2024. 6 [37] Olga Russakovsky, Jia Deng, Hao Su, Jonathan Krause, San-jeev Satheesh, Sean Ma, Zhiheng Huang, Andrej Karpathy, Aditya Khosla, Michael Bernstein, et al. Imagenet large scale visual recognition challenge. International journal of computer vision , 115:211–252, 2015. 5 [38] Gobinda Saha, Isha Garg, and Kaushik Roy. Gradient projection memory for continual learning. arXiv preprint arXiv:2103.09762 , 2021. 1 [39] Jonathan Schwarz, Wojciech Czarnecki, Jelena Luketina, Agnieszka Grabska-Barwinska, Yee Whye Teh, Razvan Pas-canu, and Raia Hadsell. Progress & compress: A scalable framework for continual learning. In International confer-ence on machine learning , pages 4528–4537. PMLR, 2018. 2, 3 [40] James Smith, Yen-Chang Hsu, Jonathan Balloch, Yilin Shen, Hongxia Jin, and Zsolt Kira. Always be dreaming: A new approach for data-free class-incremental learning. In Pro-ceedings of the IEEE/CVF international conference on com-puter vision , pages 9374–9384, 2021. 6 [41] James Seale Smith, Lazar Valkov, Shaunak Halbe, Vysh-navi Gutta, Rogerio Feris, Zsolt Kira, and Leonid Karlinsky. Adaptive memory replay for continual learning. In Proceed-ings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 3605–3615, 2024. 1 [42] Tejas Srinivasan, Ting-Yun Chang, Leticia Pinto Alva, Geor-gios Chochlakis, Mohammad Rostami, and Jesse Thoma-son. Climb: A continual learning benchmark for vision-and-language tasks. Advances in Neural Information Processing Systems , 35:29440–29453, 2022. 2, 7, 8 [43] Alane Suhr, Stephanie Zhou, Ally Zhang, Iris Zhang, Hua-jun Bai, and Yoav Artzi. A corpus for reasoning about natural language grounded in photographs. arXiv preprint arXiv:1811.00491 , 2018. 7 [44] Jianren Wang, Xin Wang, Yue Shang-Guan, and Abhinav Gupta. Wanderlust: Online continual object detection in the real world. In Proceedings of the IEEE/CVF international conference on computer vision , pages 10829–10838, 2021. 2[45] Liyuan Wang, Xingxing Zhang, Hang Su, and Jun Zhu. Acomprehensive survey of continual learning: Theory, method and application. IEEE transactions on pattern analysis and machine intelligence , 46(8):5362–5383, 2024. 1 [46] Shipeng Wang, Xiaorong Li, Jian Sun, and Zongben Xu. Training networks in null space of feature covariance for continual learning. In Proceedings of the IEEE/CVF con-ference on Computer Vision and Pattern Recognition , pages 184–193, 2021. 2, 1 [47] Ning Xie, Farley Lai, Derek Doran, and Asim Kadav. Visual entailment: A novel task for fine-grained image understand-ing. arXiv preprint arXiv:1901.06706 , 2019. 7 [48] Shipeng Yan, Jiangwei Xie, and Xuming He. Der: Dy-namically expandable representation for class incremental learning. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 3014–3023, 2021. 6 [49] Lu Yu, Bartlomiej Twardowski, Xialei Liu, Luis Herranz, Kai Wang, Yongmei Cheng, Shangling Jui, and Joost van de Weijer. Semantic drift compensation for class-incremental learning. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 6982–6991, 2020. 2 [50] Rowan Zellers, Yonatan Bisk, Ali Farhadi, and Yejin Choi. From recognition to cognition: Visual commonsense rea-soning. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 6720–6731, 2019. 7 [51] Friedemann Zenke, Ben Poole, and Surya Ganguli. Contin-ual learning through synaptic intelligence. In International conference on machine learning , pages 3987–3995. PMLR, 2017. 3 [52] Hanbin Zhao, Hui Wang, Yongjian Fu, Fei Wu, and Xi Li. Memory-efficient class-incremental learning for image classification. IEEE Transactions on Neural Networks and Learning Systems , 33(10):5966–5977, 2021. 2 [53] Da-Wei Zhou, Qi-Wei Wang, Han-Jia Ye, and De-Chuan Zhan. A model or 603 exemplars: Towards memory-efficient class-incremental learning. arXiv preprint arXiv:2205.13218 , 2022. 1, 2 [54] Da-Wei Zhou, Fu-Yun Wang, Han-Jia Ye, and De-Chuan Zhan. Pycil: a python toolbox for class-incremental learn-ing, 2023. 6 [55] Fei Zhu, Zhen Cheng, Xu-yao Zhang, and Cheng-lin Liu. Class-incremental learning via dual augmentation. Advances in neural information processing systems , 34:14306–14318, 2021. 2, 5 [56] Fei Zhu, Xu-Yao Zhang, Chuang Wang, Fei Yin, and Cheng-Lin Liu. Prototype augmentation and self-supervision for incremental learning. In Proceedings of the IEEE/CVF con-ference on computer vision and pattern recognition , pages 5871–5880, 2021. 6 [57] Kai Zhu, Wei Zhai, Yang Cao, Jiebo Luo, and Zheng-Jun Zha. Self-sustaining representation expansion for non-exemplar class-incremental learning. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 9296–9305, 2022. 2, 5 Elastic Weight Consolidation Done Right for Continual Learning 
+
+# Supplementary Material 
+
+## I. Pseudocode of Our Method 
+
+We present the pseudocode of our proposed method in a PyTorch-like style in Listing A to demonstrate its simplic-ity and effectiveness. After training the current network, we estimate the importance of each weight using Logits Rever-sal (LR) combined with cross-entropy loss. In contrast to EWC, which does not incorporate an LR step, our approach leverages this additional operation to achieve more accurate importance estimation. Listing A: Pseudocode of Logits Reversal in PyTorch-like style.                                        
+
+> 1"""
+> 2Input:
+> 3images: Tensor[bs, C, H, W]
+> 4targets: Tensor[bs,]
+> 56Output:
+> 7omega: dict{name: tensor, shape=param.shape}
+> 8"""
+> 9logits =network(images)["logits"]
+> 10 logits_r =-logits
+> 11 loss =torch.nn.functional.cross_entropy( logits_r, targets)
+> 12 optimizer.zero_grad()
+> 13 loss.backward()
+> 14 for name, param in network.named_parameters():
+> 15 if param.grad is not None:
+> 16 omega[n]+= param.grad. pow (2).clone()
+
+## II. Comparisons with Continual Learning Methods from Other Categories 
+
+Table A. EFCIL performance on CIFAR-100 compared against strong baselines. Reported results represent means across three independent trials. 
+
+method category T=5 T=10 T=20 iCaRL-CNN † Replay 51.07 48.66 44.43 iCaRL-NCM † Replay 58.56 54.19 50.51 LWF-MC Regularization 45.93 27.43 20.07 MUC Regularization 49.42 30.19 21.27 GPM Optimization 41.51 37.78 41.27 ADAM-NSCL Optimization 22.67 12.72 8.79 EWC Regularization 32.82 27.02 19.61 
+
+EWC-DR Regularization 63.75 60.94 53.45 
+
+> †Replay-based method which stores and reuses samples from previous tasks during training.
+
+In the CIFAR-100 big-start exemplar-free CIL setting, we report the average incremental accuracy ( Aavg ). Be-sides ours, a replay-based † method (iCaRL [34] stores 20 samples per old class), two regularization-based methods (LWF-MC [34], MUC [27]), and two optimization-based ones (GPM [38], ADAM-NSCL [46] reimplemented within our task-free framework) are included in Tab. A. The EFCIL setting is significantly more challenging than replay-based ones since no previous task data can be stored or accessed during incremental learning. 
+
+Table B. EFCIL results on CIFAR-100 comparing EWC-DR with modern methods. Average incremental accuracy ( Aavg ) is re-ported using seed 1993. 
+
+method Big start Equally split T=5 T=10 T=20 T=5 T=10 T=20 FeTrIL 66.3 65.2 61.5 60.4 52.1 43.2 PASS 63.5 61.8 58.1 63.4 52.2 41.8 SSRE 65.9 65.0 61.7 56.6 44.4 33.6 EWC 33.4 26.4 19.2 39.2 27.3 17.7 EWC-DR 63.9 62.1 53.5 61.5 49.6 35.3 Tab. B showcases the comparison of EWC-DR with other modern PyCIL methods on CIFAR-100 under seed 1993, our method substantially elevates the original EWC from a lower baseline to a level competitive with contempo-rary techniques. Notably, in the Equally-split setting, EWC-DR even surpasses the SSRE. Our proposed EWC-DR significantly improves upon EWC, making it a competitive baseline in continual learn-ing especially in exemplar-free setting, though it is not in-tended to be state-of-the-art. 
+
+## III. Sensitivity Analysis of λ
+
+As with all weight regularization methods, our EWC-DR introduces a hyperparameter λ, which penalizes changes to the model weights, as defined in Equation (1). We con-ducted a sensitivity analysis to assess the impact of λ on the average accuracy ( Aavg ). Specifically, for the CIFAR-100 10-task equally split EFCIL setting, λ was varied from 1,000 to 50,000. As depicted in Figure A, Aavg increases steadily as λ grows from 1,000 and reaches its peak around 
+
+λ = 10 ,000 –20 ,000 . Beyond this point, further increasing 
+
+λ leads to a gradual decline in accuracy. This trend suggests that an appropriate choice of λ is crucial for balancing the trade-off between learning new knowledge and mitigating 0
+
+> 10
+> 20
+> 30
+> 40
+> 50
+> (× 10 3)
+> 36
+> 38
+> 40
+> 42
+> 44
+> 46
+> 48
+> 50
+> Aavg
+
+Figure A. Sensitivity analysis of the average accuracy ( Aavg ) with respect to the regularization parameter λ on CIFAR-100 under the 10-task equally split EFCIL setting. 
+
+forgetting. However, the proposed method is not sensitive to λ, as shown in Figure A. 
+
+## IV. Statistics of FC Layer Weight Importance Matrices 
+
+We report statistics on the importance of the FC layer weights in tabular form, corresponding to the illustrations in Figure 5. Importance values per class are further summed for tabulation in Tab. C. EWC has low importance due to gradient vanishing. MAS has high importance and a rela-tively even distribution across classes. Our EWC-DR ob-tains high importance, with a notable peak in the GT class. 
+
+Table C. Statistics of the FC layer weight importance. 
+
+class 0 1 2 (GT) 3 4EWC 0.003 0.013 0.219 0.136 0.018 MAS 14.44 8.53 25.48 10.26 18.08 EWC-DR 5.30 6.55 41.38 2.51 11.12
