@@ -1,0 +1,23 @@
+{
+  "label": "2026-03-23",
+  "date": "2026-03-23",
+  "generated_at": "2026-03-23T19:29:43",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202603/23/2603.20036v1-continual-learning-as-shared-manifold-continuation-under-compatible-shift",
+      "section": "quick",
+      "title_en": "Continual Learning as Shared-Manifold Continuation Under Compatible Shift",
+      "authors": "Henry J. Kobs",
+      "date": "2026-03-20",
+      "pdf": "https://arxiv.org/pdf/2603.20036v1",
+      "score": "6.0",
+      "evidence": "持续学习中减少遗忘的策略",
+      "tldr": "本研究针对持续学习中潜在表示演化缺乏明确指导的问题，提出将持续学习视为共享流形的延续。作者开发了支持保持流形同化（SPMA）框架及其几何保持变体 SPMA-OG，通过结合稀疏重放、输出蒸馏和关系几何保持等技术，在保持新任务性能的同时，强化了对旧任务潜在表示的保护。实验证明，在数据分布兼容的情况下，该方法能显著提升旧任务的保留率和表示稳定性。",
+      "tags": "query:mu-ce",
+      "abstract_en": "Continual learning methods usually preserve old behavior by regularizing parameters, matching old outputs, or replaying previous examples. These strategies can reduce forgetting, but they do not directly specify how the latent representation should evolve. We study a narrower geometric alternative for the regime where old and new data should remain on the same latent support: continual learning as continuation of a shared manifold. We instantiate this view within Support-Preserving Manifold Assimilation (SPMA) and evaluate a geometry-preserving variant, SPMA-OG, that combines sparse replay, output distillation, relational geometry preservation, local smoothing, and chart-assignment regularization on old anchors. On representative compatible-shift CIFAR10 and Tiny-ImageNet runs, SPMA-OG improves over sparse replay baselines in old-task retention and representation-preservation metrics while remaining competitive on new-task accuracy. On a controlled synthetic atlas-manifold benchmark, it achieves near-perfect anchor-geometry preservation while also improving new-task accuracy over replay. These results provide evidence that geometry-aware anchor regularization is a useful inductive bias when continual learning should preserve a shared latent support rather than create a new one.",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

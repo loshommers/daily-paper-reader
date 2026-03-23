@@ -6,29 +6,26 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-03-22
-- 运行时间：2026-03-22 19:26:13 UTC
+- 最新运行日期：2026-03-23
+- 运行时间：2026-03-23 19:29:34 UTC
 - 运行状态：成功
-- 本次总论文数：2
+- 本次总论文数：1
 - 精读区：0
-- 速读区：2
+- 速读区：1
 
 ### 今日简报（AI）
-今日聚焦隐私安全的 RAG 检索新范式与持续学习算法 EWC 的效能重塑。
-重点推荐 SEAL-Tag 框架，其利用概率电路在保护隐私信息的同时实现了高效的证据聚合。
-建议开发者关注如何在检索增强流程中，通过技术手段严守个人隐私红线并提升模型稳定性。
-- 详情：[/202603/22/README](/202603/22/README)
+今日聚焦持续学习新视角，探讨如何在兼容偏移下实现共享流形的平滑延续。
+研究提出通过维持数据流形结构的一致性，可有效缓解任务切换过程中的灾难性遗忘。
+建议关注机器学习几何理论的读者，深入了解流形对齐在模型长期演进中的稳定性作用。
+- 详情：[/202603/23/README](/202603/23/README)
 
 ### 精读区论文标签
 - 本次无精读推荐。
 
 ### 速读区论文标签
-1. [SEAL-Tag: Self-Tag Evidence Aggregation with Probabilistic Circuits for PII-Safe Retrieval-Augmented Generation](/202603/22/2603.17292v1-seal-tag-self-tag-evidence-aggregation-with-probabilistic-circuits-for-pii-safe-retrieval-augmented-generation)  
-   标签：评分：7.0/10、query:mu-ce
-   evidence：从RAG输出中移除敏感PII信息
-2. [Elastic Weight Consolidation Done Right for Continual Learning](/202603/22/2603.18596v1-elastic-weight-consolidation-done-right-for-continual-learning)  
+1. [Continual Learning as Shared-Manifold Continuation Under Compatible Shift](/202603/23/2603.20036v1-continual-learning-as-shared-manifold-continuation-under-compatible-shift)  
    标签：评分：6.0/10、query:mu-ce
-   evidence：通过权重正则化缓解持续学习中的灾难性遗忘
+   evidence：持续学习中减少遗忘的策略
 
 
 <div class="dpr-home-promo-card">

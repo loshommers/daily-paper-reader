@@ -1,6 +1,9 @@
 * <a class="dpr-sidebar-root-link" href="#/">首页</a>
 * <a class="dpr-sidebar-root-link dpr-sidebar-noactive-link" href="javascript:void(0)" data-dpr-hash="#/tutorial/README">使用教程</a>
 * Daily Papers
+  * 2026-03-23 <!--dpr-date:20260323-->
+    * 速读区
+      * <a class="dpr-sidebar-item-link dpr-sidebar-item-structured" href="#/202603/23/2603.20036v1-continual-learning-as-shared-manifold-continuation-under-compatible-shift" data-sidebar-item="{&quot;title&quot;: &quot;Continual Learning as Shared-Manifold Continuation Under Compatible Shift&quot;, &quot;link&quot;: &quot;https://arxiv.org/abs/2603.20036v1-continual-learning-as-shared-manifold-continuation-under-compatible-shift&quot;, &quot;score&quot;: &quot;6.0&quot;, &quot;tags&quot;: [{&quot;kind&quot;: &quot;query&quot;, &quot;label&quot;: &quot;mu-ce&quot;}], &quot;evidence&quot;: &quot;持续学习中减少遗忘的策略&quot;}">Continual Learning as Shared-Manifold Continuation Under Compatible Shift</a>
   * 2026-03-22 <!--dpr-date:20260322-->
     * 速读区
       * <a class="dpr-sidebar-item-link dpr-sidebar-item-structured" href="#/202603/22/2603.17292v1-seal-tag-self-tag-evidence-aggregation-with-probabilistic-circuits-for-pii-safe-retrieval-augmented-generation" data-sidebar-item="{&quot;title&quot;: &quot;SEAL-Tag: Self-Tag Evidence Aggregation with Probabilistic Circuits for PII-Safe Retrieval-Augmented Generation&quot;, &quot;link&quot;: &quot;https://arxiv.org/abs/2603.17292v1-seal-tag-self-tag-evidence-aggregation-with-probabilistic-circuits-for-pii-safe-retrieval-augmented-generation&quot;, &quot;score&quot;: &quot;7.0&quot;, &quot;tags&quot;: [{&quot;kind&quot;: &quot;query&quot;, &quot;label&quot;: &quot;mu-ce&quot;}], &quot;evidence&quot;: &quot;从RAG输出中移除敏感PII信息&quot;}">SEAL-Tag: Self-Tag Evidence Aggregation with Probabilistic Circuits for PII-Safe Retrieval-Augmented Generation</a>
