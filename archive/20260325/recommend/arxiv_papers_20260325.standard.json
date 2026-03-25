@@ -1,0 +1,167 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-03-25T19:36:21.019684+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 1,
+    "deep_cap": 6,
+    "deep_selected": 1,
+    "quick_candidates": 3,
+    "quick_skim_target": 11,
+    "quick_selected": 3
+  },
+  "deep_dive": [
+    {
+      "id": "2603.22870v1",
+      "title": "Designing to Forget: Deep Semi-parametric Models for Unlearning",
+      "abstract": "Recent advances in machine unlearning have focused on developing algorithms to remove specific training samples from a trained model. In contrast, we observe that not all models are equally easy to unlearn. Hence, we introduce a family of deep semi-parametric models (SPMs) that exhibit non-parametric behavior during unlearning. SPMs use a fusion module that aggregates information from each training sample, enabling explicit test-time deletion of selected samples without altering model parameters. Empirically, we demonstrate that SPMs achieve competitive task performance to parametric models in image classification and generation, while being significantly more efficient for unlearning. Notably, on ImageNet classification, SPMs reduce the prediction gap relative to a retrained (oracle) baseline by $11\\%$ and achieve over $10\\times$ faster unlearning compared to existing approaches on parametric models. The code is available at https://github.com/amberyzheng/spm_unlearning.",
+      "authors": [
+        "Amber Yijia Zheng",
+        "Yu-Shan Tai",
+        "Raymond A. Yeh"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-24T07:13:45+00:00",
+      "link": "https://arxiv.org/pdf/2603.22870v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "deep semi-parametric models for efficient unlearning",
+      "llm_evidence_cn": "用于高效机器遗忘的深度半参数模型",
+      "llm_evidence": "用于高效机器遗忘的深度半参数模型",
+      "canonical_evidence": "用于高效机器遗忘的深度半参数模型",
+      "llm_tldr_en": "Introduces semi-parametric models that allow explicit sample deletion without altering parameters.",
+      "llm_tldr_cn": "引入半参数模型，允许在不改变参数的情况下显式删除特定样本。",
+      "llm_tldr": "引入半参数模型，允许在不改变参数的情况下显式删除特定样本。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Machine unlearning techniques and algorithms in deep learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2603.18657v1",
+      "title": "Enhancing Multi-Corpus Training in SSL-Based Anti-Spoofing Models: Domain-Invariant Feature Extraction",
+      "abstract": "The performance of speech spoofing detection often varies across different training and evaluation corpora. Leveraging multiple corpora typically enhances robustness and performance in fields like speaker recognition and speech recognition. However, our spoofing detection experiments show that multi-corpus training does not consistently improve performance and may even degrade it. We hypothesize that dataset-specific biases impair generalization, leading to performance instability. To address this, we propose an Invariant Domain Feature Extraction (IDFE) framework, employing multi-task learning and a gradient reversal layer to minimize corpus-specific information in learned embeddings. The IDFE framework reduces the average equal error rate by 20% compared to the baseline, assessed across four varied datasets.",
+      "authors": [
+        "Anh-Tuan Dao",
+        "Driss Matrouf",
+        "Mickael Rouvier",
+        "Nicholas Evans"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-03-19T09:22:48+00:00",
+      "link": "https://arxiv.org/pdf/2603.18657v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "minimize corpus-specific information in embeddings",
+      "llm_evidence_cn": "最小化嵌入中的特定语料库信息",
+      "llm_evidence": "最小化嵌入中的特定语料库信息",
+      "canonical_evidence": "最小化嵌入中的特定语料库信息",
+      "llm_tldr_en": "A framework to extract domain-invariant features by removing dataset-specific biases in anti-spoofing.",
+      "llm_tldr_cn": "一种通过消除防欺骗模型中特定数据集偏差来提取领域不变特征的框架。",
+      "llm_tldr": "一种通过消除防欺骗模型中特定数据集偏差来提取领域不变特征的框架。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Algorithms for removing sensitive information from neural networks",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2603.19902v1",
+      "title": "A Federated Many-to-One Hopfield model for associative Neural Networks",
+      "abstract": "Federated learning enables collaborative training without sharing raw data, but struggles under client heterogeneity and streaming distribution shifts, where drift and novel data can impair convergence and cause forgetting. We propose a federated associative-memory framework that learns shared archetypes in heterogeneous, continual settings, where client data are independent but not necessarily balanced. Each client encodes its experience as a low-rank Hebbian operator, sent to a central server for aggregation and factorization into global archetypes. This approach preserves privacy, avoids centralized replay buffers, and is robust to small, noisy, or evolving datasets. We cast aggregation as a low-rank-plus-noise spectral inference problem, deriving theoretical thresholds for detectability and retrieval robustness. An entropy-based controller balances stability and plasticity in streaming regimes. Experiments with heterogeneous clients, drift, and novelty show improved global archetype reconstruction and associative retrieval, supporting the spectral view of federated consolidation.",
+      "authors": [
+        "Andrea Alessandrelli",
+        "Fabrizio Durante",
+        "Andrea Ladiana",
+        "Andrea Lepre"
+      ],
+      "primary_category": "cond-mat.dis-nn",
+      "categories": [
+        "cond-mat.dis-nn",
+        "stat.ML"
+      ],
+      "published": "2026-03-20T12:37:43+00:00",
+      "link": "https://arxiv.org/pdf/2603.19902v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "federated associative-memory framework to address forgetting in continual settings",
+      "llm_evidence_cn": "解决持续学习设置中遗忘问题的联邦关联记忆框架",
+      "llm_evidence": "解决持续学习设置中遗忘问题的联邦关联记忆框架",
+      "canonical_evidence": "解决持续学习设置中遗忘问题的联邦关联记忆框架",
+      "llm_tldr_en": "Uses Hebbian operators in a federated setting to manage knowledge and mitigate catastrophic forgetting.",
+      "llm_tldr_cn": "在联邦设置中使用赫布算子来管理知识并减轻灾难性遗忘。",
+      "llm_tldr": "在联邦设置中使用赫布算子来管理知识并减轻灾难性遗忘。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Selective forgetting in neural networks",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2603.20673v1",
+      "title": "PAVE: Premise-Aware Validation and Editing for Retrieval-Augmented LLMs",
+      "abstract": "Retrieval-augmented language models can retrieve relevant evidence yet still commit to answers before explicitly checking whether the retrieved context supports the conclusion. We present PAVE (Premise-Grounded Answer Validation and Editing), an inference-time validation layer for evidence-grounded question answering. PAVE decomposes retrieved context into question-conditioned atomic facts, drafts an answer, scores how well that draft is supported by the extracted premises, and revises low-support outputs before finalization. The resulting trace makes answer commitment auditable at the level of explicit premises, support scores, and revision decisions. In controlled ablations with a fixed retriever and backbone, PAVE outperforms simpler post-retrieval baselines in two evidence-grounded QA settings, with the largest gain reaching 32.7 accuracy points on a span-grounded benchmark. We view these findings as proof-of-concept evidence that explicit premise extraction plus support-gated revision can strengthen evidence-grounded consistency in retrieval-augmented LLM systems.",
+      "authors": [
+        "Tianyi Huang",
+        "Caden Yang",
+        "Emily Yin",
+        "Eric Wang",
+        "Michael Zhang"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI"
+      ],
+      "published": "2026-03-21T06:23:21+00:00",
+      "link": "https://arxiv.org/pdf/2603.20673v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "inference-time validation and editing for RAG outputs",
+      "llm_evidence_cn": "RAG输出的推理阶段验证与编辑",
+      "llm_evidence": "RAG输出的推理阶段验证与编辑",
+      "canonical_evidence": "RAG输出的推理阶段验证与编辑",
+      "llm_tldr_en": "Proposes a layer to validate and edit LLM answers based on retrieved premises to correct knowledge outputs.",
+      "llm_tldr_cn": "提出一种基于检索前提验证和编辑LLM回答的图层，用于纠正知识输出。",
+      "llm_tldr": "提出一种基于检索前提验证和编辑LLM回答的图层，用于纠正知识输出。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Model editing for knowledge update and correction",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

@@ -6,46 +6,34 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-03-24
-- 运行时间：2026-03-24 20:05:35 UTC
+- 最新运行日期：2026-03-25
+- 运行时间：2026-03-25 19:37:14 UTC
 - 运行状态：成功
-- 本次总论文数：8
-- 精读区：4
-- 速读区：4
+- 本次总论文数：4
+- 精读区：1
+- 速读区：3
 
 ### 今日简报（AI）
-今日深度探索大模型知识编辑与持续遗忘机制，涵盖从激活引导到多模态概念解构的前沿突破。
-核心结论指出，通过机制引导的激活转向与概念分解，可显著提升模型知识修正的精准度并解决多模态遗忘难题。
-建议关注如何利用特征投影与梯度分解技术，在保障模型实用性的同时实现可追溯的训练数据治理。
-- 详情：[/202603/24/README](/202603/24/README)
+今日聚焦“机器卸载”前沿，深度解析如何通过半参数化模型让 AI 实现高效且彻底的隐私遗忘。
+重点推荐满分论文提出的数据擦除新范式，并同步关注 PAVE 框架在提升 RAG 系统逻辑一致性上的突破。
+建议开发者关注模型合规性与知识动态更新技术，这是构建
+- 详情：[/202603/25/README](/202603/25/README)
 
 ### 精读区论文标签
-1. [The Anatomy of an Edit: Mechanism-Guided Activation Steering for Knowledge Editing](/202603/24/2603.20795v1-the-anatomy-of-an-edit-mechanism-guided-activation-steering-for-knowledge-editing)  
+1. [Designing to Forget: Deep Semi-parametric Models for Unlearning](/202603/25/2603.22870v1-designing-to-forget-deep-semi-parametric-models-for-unlearning)  
    标签：评分：10.0/10、query:mu-ce
-   evidence：LLM 知识编辑的机械论视角以及对原始事实的抑制
-2. [Which Concepts to Forget and How to Refuse? Decomposing Concepts for Continual Unlearning in Large Vision-Language Models](/202603/24/2603.21484v1-which-concepts-to-forget-and-how-to-refuse-decomposing-concepts-for-continual-unlearning-in-large-vision-language-models)  
-   标签：评分：10.0/10、query:mu-ce
-   evidence：针对大型视觉语言模型的持续遗忘框架
-3. [PROBE: Diagnosing Residual Concept Capacity in Erased Text-to-Video Diffusion Models](/202603/24/2603.21547v1-probe-diagnosing-residual-concept-capacity-in-erased-text-to-video-diffusion-models)  
-   标签：评分：10.0/10、query:mu-ce
-   evidence：诊断已擦除扩散模型中的残留概念容量
-4. [Stream separation improves Bregman conditioning in transformers](/202603/24/2603.21317v1-stream-separation-improves-bregman-conditioning-in-transformers)  
-   标签：评分：8.0/10、query:mu-ce
-   evidence：分析了Transformer中概念擦除的几何特性
+   evidence：用于高效机器遗忘的深度半参数模型
 
 ### 速读区论文标签
-1. [Two Birds, One Projection: Harmonizing Safety and Utility in LVLMs via Inference-time Feature Projection](/202603/24/2603.14825v1-two-birds-one-projection-harmonizing-safety-and-utility-in-lvlms-via-inference-time-feature-projection)  
-   标签：评分：7.0/10、query:mu-ce
-   evidence：推理时特征投影以抑制模型中的有害偏差方向
-2. [DebugLM: Learning Traceable Training Data Provenance for LLMs](/202603/24/2603.17884v1-debuglm-learning-traceable-training-data-provenance-for-llms)  
-   标签：评分：7.0/10、query:mu-ce
-   evidence：识别导致特定行为的训练数据，从而实现精确的调试和数据移除
-3. [Gradient Atoms: Unsupervised Discovery, Attribution and Steering of Model Behaviors via Sparse Decomposition of Training Gradients](/202603/24/2603.14665v2-gradient-atoms-unsupervised-discovery-attribution-and-steering-of-model-behaviors-via-sparse-decomposition-of-training-gradients)  
+1. [Enhancing Multi-Corpus Training in SSL-Based Anti-Spoofing Models: Domain-Invariant Feature Extraction](/202603/25/2603.18657v1-enhancing-multi-corpus-training-in-ssl-based-anti-spoofing-models-domain-invariant-feature-extraction)  
    标签：评分：6.0/10、query:mu-ce
-   evidence：通过训练梯度进行模型行为的无监督发现与引导
-4. [MeMix: Writing Less, Remembering More for Streaming 3D Reconstruction](/202603/24/2603.15330v1-memix-writing-less-remembering-more-for-streaming-3d-reconstruction)  
+   evidence：最小化嵌入中的特定语料库信息
+2. [A Federated Many-to-One Hopfield model for associative Neural Networks](/202603/25/2603.19902v1-a-federated-many-to-one-hopfield-model-for-associative-neural-networks)  
    标签：评分：6.0/10、query:mu-ce
-   evidence：选择性更新减轻灾难性遗忘
+   evidence：解决持续学习设置中遗忘问题的联邦关联记忆框架
+3. [PAVE: Premise-Aware Validation and Editing for Retrieval-Augmented LLMs](/202603/25/2603.20673v1-pave-premise-aware-validation-and-editing-for-retrieval-augmented-llms)  
+   标签：评分：6.0/10、query:mu-ce
+   evidence：RAG输出的推理阶段验证与编辑
 
 
 <div class="dpr-home-promo-card">

@@ -1,0 +1,65 @@
+{
+  "label": "2026-03-25",
+  "date": "2026-03-25",
+  "generated_at": "2026-03-25T19:37:26",
+  "count": 4,
+  "papers": [
+    {
+      "paper_id": "202603/25/2603.22870v1-designing-to-forget-deep-semi-parametric-models-for-unlearning",
+      "section": "deep",
+      "title_en": "Designing to Forget: Deep Semi-parametric Models for Unlearning",
+      "authors": "Amber Yijia Zheng, Yu-Shan Tai, Raymond A. Yeh",
+      "date": "2026-03-24",
+      "pdf": "https://arxiv.org/pdf/2603.22870v1",
+      "score": "10.0",
+      "evidence": "用于高效机器遗忘的深度半参数模型",
+      "tldr": "本文针对机器卸载中模型更新成本高的问题，提出了一种深度半参数模型（SPM）。该模型通过融合模块聚合训练样本信息，使其在卸载时表现出非参数化特性，即在测试阶段直接删除特定样本而无需修改模型参数。实验证明，SPM在图像分类和生成任务中表现优异，卸载速度比现有方法快10倍以上，且能更有效地消除样本影响。",
+      "tags": "query:mu-ce",
+      "abstract_en": "Recent advances in machine unlearning have focused on developing algorithms to remove specific training samples from a trained model. In contrast, we observe that not all models are equally easy to unlearn. Hence, we introduce a family of deep semi-parametric models (SPMs) that exhibit non-parametric behavior during unlearning. SPMs use a fusion module that aggregates information from each training sample, enabling explicit test-time deletion of selected samples without altering model parameters. Empirically, we demonstrate that SPMs achieve competitive task performance to parametric models in image classification and generation, while being significantly more efficient for unlearning. Notably, on ImageNet classification, SPMs reduce the prediction gap relative to a retrained (oracle) baseline by $11\\%$ and achieve over $10\\times$ faster unlearning compared to existing approaches on parametric models. The code is available at https://github.com/amberyzheng/spm_unlearning.",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202603/25/2603.18657v1-enhancing-multi-corpus-training-in-ssl-based-anti-spoofing-models-domain-invariant-feature-extraction",
+      "section": "quick",
+      "title_en": "Enhancing Multi-Corpus Training in SSL-Based Anti-Spoofing Models: Domain-Invariant Feature Extraction",
+      "authors": "Anh-Tuan Dao, Driss Matrouf, Mickael Rouvier, Nicholas Evans",
+      "date": "2026-03-19",
+      "pdf": "https://arxiv.org/pdf/2603.18657v1",
+      "score": "6.0",
+      "evidence": "最小化嵌入中的特定语料库信息",
+      "tldr": "针对语音伪造检测在多语料库训练中因数据集偏差导致性能不稳定甚至下降的问题，本文提出了一种不变领域特征提取（IDFE）框架。该框架利用多任务学习和梯度反转层（GRL）来消除嵌入表示中的语料库特定信息。实验表明，IDFE在四个不同数据集上的平均等错误率（EER）比基准模型降低了20%，显著提升了模型的鲁棒性和泛化能力。",
+      "tags": "query:mu-ce",
+      "abstract_en": "The performance of speech spoofing detection often varies across different training and evaluation corpora. Leveraging multiple corpora typically enhances robustness and performance in fields like speaker recognition and speech recognition. However, our spoofing detection experiments show that multi-corpus training does not consistently improve performance and may even degrade it. We hypothesize that dataset-specific biases impair generalization, leading to performance instability. To address this, we propose an Invariant Domain Feature Extraction (IDFE) framework, employing multi-task learning and a gradient reversal layer to minimize corpus-specific information in learned embeddings. The IDFE framework reduces the average equal error rate by 20% compared to the baseline, assessed across four varied datasets.",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202603/25/2603.19902v1-a-federated-many-to-one-hopfield-model-for-associative-neural-networks",
+      "section": "quick",
+      "title_en": "A Federated Many-to-One Hopfield model for associative Neural Networks",
+      "authors": "Andrea Alessandrelli, Fabrizio Durante, Andrea Ladiana, Andrea Lepre",
+      "date": "2026-03-20",
+      "pdf": "https://arxiv.org/pdf/2603.19902v1",
+      "score": "6.0",
+      "evidence": "解决持续学习设置中遗忘问题的联邦关联记忆框架",
+      "tldr": "针对联邦学习在处理客户端异构性和流式分布偏移（如数据漂移和新颖性）时的遗忘与收敛难题，本文提出一种联邦关联记忆框架。该方法将客户端经验编码为低秩Hebbian算子，通过服务器聚合与分解提取全局原型。该框架无需重放缓冲区，能有效保护隐私并应对噪声或演化数据。通过引入基于熵的控制器平衡稳定性与塑性，在异构和持续学习场景下实现了更优的原型重构与关联检索性能。",
+      "tags": "query:mu-ce",
+      "abstract_en": "Federated learning enables collaborative training without sharing raw data, but struggles under client heterogeneity and streaming distribution shifts, where drift and novel data can impair convergence and cause forgetting. We propose a federated associative-memory framework that learns shared archetypes in heterogeneous, continual settings, where client data are independent but not necessarily balanced. Each client encodes its experience as a low-rank Hebbian operator, sent to a central server for aggregation and factorization into global archetypes. This approach preserves privacy, avoids centralized replay buffers, and is robust to small, noisy, or evolving datasets. We cast aggregation as a low-rank-plus-noise spectral inference problem, deriving theoretical thresholds for detectability and retrieval robustness. An entropy-based controller balances stability and plasticity in streaming regimes. Experiments with heterogeneous clients, drift, and novelty show improved global archetype reconstruction and associative retrieval, supporting the spectral view of federated consolidation.",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202603/25/2603.20673v1-pave-premise-aware-validation-and-editing-for-retrieval-augmented-llms",
+      "section": "quick",
+      "title_en": "PAVE: Premise-Aware Validation and Editing for Retrieval-Augmented LLMs",
+      "authors": "Tianyi Huang, Caden Yang, Emily Yin, Eric Wang, Michael Zhang",
+      "date": "2026-03-21",
+      "pdf": "https://arxiv.org/pdf/2603.20673v1",
+      "score": "6.0",
+      "evidence": "RAG输出的推理阶段验证与编辑",
+      "tldr": "针对检索增强语言模型（RAG）在生成答案前缺乏显式证据校验的问题，本文提出了 PAVE 框架。PAVE 是一种推理阶段的验证层，通过将检索内容分解为原子事实、评估草拟答案的证据支持度并对低支持度输出进行修正，显著提升了生成结果的一致性。该方法不仅提高了问答准确率，还增强了决策过程的可解释性。",
+      "tags": "query:mu-ce",
+      "abstract_en": "Retrieval-augmented language models can retrieve relevant evidence yet still commit to answers before explicitly checking whether the retrieved context supports the conclusion. We present PAVE (Premise-Grounded Answer Validation and Editing), an inference-time validation layer for evidence-grounded question answering. PAVE decomposes retrieved context into question-conditioned atomic facts, drafts an answer, scores how well that draft is supported by the extracted premises, and revises low-support outputs before finalization. The resulting trace makes answer commitment auditable at the level of explicit premises, support scores, and revision decisions. In controlled ablations with a fixed retriever and backbone, PAVE outperforms simpler post-retrieval baselines in two evidence-grounded QA settings, with the largest gain reaching 32.7 accuracy points on a span-grounded benchmark. We view these findings as proof-of-concept evidence that explicit premise extraction plus support-gated revision can strengthen evidence-grounded consistency in retrieval-augmented LLM systems.",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
