@@ -1,0 +1,328 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-03-26T20:13:33.590180+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 1,
+    "deep_cap": 6,
+    "deep_selected": 1,
+    "quick_candidates": 7,
+    "quick_skim_target": 11,
+    "quick_selected": 7
+  },
+  "deep_dive": [
+    {
+      "id": "2603.23780v1",
+      "title": "Lightweight Fairness for LLM-Based Recommendations via Kernelized Projection and Gated Adapters",
+      "abstract": "Large Language Models (LLMs) have introduced new capabilities to recommender systems, enabling dynamic, context-aware, and conversational recommendations. However, LLM-based recommender systems inherit and may amplify social biases embedded in their pre-training data, especially when demographic cues are present. Existing fairness solutions either require extra parameters fine-tuning, or suffer from optimization instability. We propose a lightweight and scalable bias mitigation method that combines a kernelized Iterative Null-space Projection (INLP) with a gated Mixture-of-Experts (MoE) adapter. Our approach estimates a closed-form projection that removes single or multiple sensitive attributes from LLM representations with no additional trainable parameters. To preserve task utility, we introduce a two-level MoE adapter that selectively restores useful signals without reintroducing bias. Experiments on two public datasets show that our method reduces attribute leakage across multiple protected variables while maintaining competitive recommendation accuracy.",
+      "authors": [
+        "Nan Cui",
+        "Wendy Hui Wang",
+        "Yue Ning"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-03-24T23:26:04+00:00",
+      "link": "https://arxiv.org/pdf/2603.23780v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "removes sensitive attributes from LLM representations",
+      "llm_evidence_cn": "从 LLM 表示中移除敏感属性",
+      "llm_evidence": "从 LLM 表示中移除敏感属性",
+      "canonical_evidence": "从 LLM 表示中移除敏感属性",
+      "llm_tldr_en": "Proposes a kernelized projection method to remove sensitive demographic attributes from LLM-based recommenders.",
+      "llm_tldr_cn": "提出一种核化投影方法，从基于 LLM 的推荐系统中移除敏感的人口统计属性以实现公平性。",
+      "llm_tldr": "提出一种核化投影方法，从基于 LLM 的推荐系统中移除敏感的人口统计属性以实现公平性。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Algorithms for removing sensitive information from neural networks",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2603.17198v1",
+      "title": "Abstraction as a Memory-Efficient Inductive Bias for Continual Learning",
+      "abstract": "The real world is non-stationary and infinitely complex, requiring intelligent agents to learn continually without the prohibitive cost of retraining from scratch. While online continual learning offers a framework for this setting, learning new information often interferes with previously acquired knowledge, causes forgetting and degraded generalization. To address this, we propose Abstraction-Augmented Training (AAT), a loss-level modification encouraging models to capture the latent relational structure shared across examples. By jointly optimizing over concrete instances and their abstract representations, AAT introduces a memory-efficient inductive bias that stabilizes learning in strictly online data streams, eliminating the need for a replay buffer. To capture the multi-faceted nature of abstraction, we introduce and evaluate AAT on two benchmarks: a controlled relational dataset where abstraction is realized through entity masking, and a narrative dataset where abstraction is expressed through shared proverbs. Our results show that AAT achieves performance comparable to or exceeding strong experience replay (ER) baselines, despite requiring zero additional memory and only minimal changes to the training objective. This work highlights structural abstraction as a powerful, memory-free alternative to ER.",
+      "authors": [
+        "Elnaz Rahmati",
+        "Nona Ghazizadeh",
+        "Zhivar Sourati",
+        "Nina Rouhani",
+        "Morteza Dehghani"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.CL"
+      ],
+      "published": "2026-03-17T22:59:13+00:00",
+      "link": "https://arxiv.org/pdf/2603.17198v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "addressing forgetting in online continual learning",
+      "llm_evidence_cn": "解决在线持续学习中的遗忘问题",
+      "llm_evidence": "解决在线持续学习中的遗忘问题",
+      "canonical_evidence": "解决在线持续学习中的遗忘问题",
+      "llm_tldr_en": "Introduces Abstraction-Augmented Training to reduce forgetting in non-stationary continual learning.",
+      "llm_tldr_cn": "引入抽象增强训练，以减少非平稳持续学习中的遗忘现象。",
+      "llm_tldr": "引入抽象增强训练，以减少非平稳持续学习中的遗忘现象。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Selective forgetting in neural networks",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2603.19040v1",
+      "title": "When Differential Privacy Meets Wireless Federated Learning: An Improved Analysis for Privacy and Convergence",
+      "abstract": "Differentially private wireless federated learning (DPWFL) is a promising framework for protecting sensitive user data. However, foundational questions on how to precisely characterize privacy loss remain open, and existing work is further limited by convergence analyses that rely on restrictive convexity assumptions or ignore the effect of gradient clipping. To overcome these issues, we present a comprehensive analysis of privacy and convergence for DPWFL with general smooth non-convex loss objectives. Our analysis explicitly incorporates both device selection and mini-batch sampling, and shows that the privacy loss can converge to a constant rather than diverge with the number of iterations. Moreover, we establish convergence guarantees with gradient clipping and derive an explicit privacy-utility trade-off. Numerical results validate our theoretical findings.",
+      "authors": [
+        "Chen Yaoling",
+        "Liang Hao",
+        "Tu Xiaotong"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-03-19T15:38:06+00:00",
+      "link": "https://arxiv.org/pdf/2603.19040v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "protecting sensitive user data with differential privacy",
+      "llm_evidence_cn": "利用差分隐私保护敏感用户数据",
+      "llm_evidence": "利用差分隐私保护敏感用户数据",
+      "canonical_evidence": "利用差分隐私保护敏感用户数据",
+      "llm_tldr_en": "Analyzes privacy and convergence in differentially private wireless federated learning.",
+      "llm_tldr_cn": "分析了差分隐私无线联邦学习中的隐私保护与收敛性。",
+      "llm_tldr": "分析了差分隐私无线联邦学习中的隐私保护与收敛性。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Privacy-preserving machine learning and the right to be forgotten",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2603.21573v1",
+      "title": "Rethinking Visual Privacy: A Compositional Privacy Risk Framework for Severity Assessment with VLMs",
+      "abstract": "Existing visual privacy benchmarks largely treat privacy as a binary property, labeling images as private or non-private based on visible sensitive content. We argue that privacy is fundamentally compositional. Attributes that are benign in isolation may combine to produce severe privacy violations. We introduce the Compositional Privacy Risk Taxonomy (CPRT), a regulation-aware framework that organizes visual attributes according to standalone identifiability and compositional harm potential. CPRT defines four graded severity levels and is paired with an interpretable scoring function that assigns continuous privacy severity scores. We further construct a taxonomy-aligned dataset of 6.7K images and derive ground-truth compositional risk scores. By evaluating frontier and open-weight VLMs we find that frontier models align well with compositional severity when provided structured guidance, but systematically underestimate composition-driven risks. Smaller models struggle to internalize graded privacy reasoning. To bridge this gap, we introduce a deployable 8B supervised fine-tuned (SFT) model that closely matches frontier-level performance on compositional privacy assessment.",
+      "authors": [
+        "Efthymios Tsaprazlis",
+        "Tiantian Feng",
+        "Anil Ramakrishna",
+        "Sai Praneeth Karimireddy",
+        "Rahul Gupta",
+        "Shrikanth Narayanan"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-23T04:48:42+00:00",
+      "link": "https://arxiv.org/pdf/2603.21573v1",
+      "tags": [
+        "keyword:MU CE"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Framework for assessing privacy risks and sensitive visual attributes",
+      "llm_evidence_cn": "评估隐私风险和敏感视觉属性的框架",
+      "llm_evidence": "评估隐私风险和敏感视觉属性的框架",
+      "canonical_evidence": "评估隐私风险和敏感视觉属性的框架",
+      "llm_tldr_en": "Proposes a compositional privacy risk framework to identify and score sensitive information in images.",
+      "llm_tldr_cn": "提出了一种组合隐私风险框架，用于识别和评估图像中的敏感信息。",
+      "llm_tldr": "提出了一种组合隐私风险框架，用于识别和评估图像中的敏感信息。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Algorithms for removing sensitive information from neural networks",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2603.21606v1",
+      "title": "mSFT: Addressing Dataset Mixtures Overfiting Heterogeneously in Multi-task SFT",
+      "abstract": "Current language model training commonly applies multi-task Supervised Fine-Tuning (SFT) using a homogeneous compute budget across all sub-datasets. This approach is fundamentally sub-optimal: heterogeneous learning dynamics cause faster-learning tasks to overfit early while slower ones remain under-fitted. To address this, we introduce mSFT, an iterative, overfitting-aware search algorithm for multi-task data mixtures. mSFT trains the model on an active mixture, identifies and excludes the earliest overfitting sub-dataset, and reverts to that specific optimal checkpoint before continuing. Extensive evaluations demonstrate that mSFT consistently outperforms 4 baselines across 10 benchmarks and 6 base models. Further analysis confirms mSFT maintains robust gains across diverse dataset sizes, task granularities, and is insensitive to its single new hyperparameter (compute budget). Notably, at low compute budget, mSFT can improve performance while lowering training FLOPs. Ultimately, mSFT establishes a practical overfitting-aware algorithm for multi-task SFT that maximizes the potential of models across diverse data mixtures.",
+      "authors": [
+        "Woosung Koh",
+        "Jeyoung Jeon",
+        "Youngjin Song",
+        "Yujin Cheon",
+        "Soowon Oh",
+        "Jaehyeong Choi",
+        "Se-Young Yun"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-03-23T06:01:51+00:00",
+      "link": "https://arxiv.org/pdf/2603.21606v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "identifying and excluding overfitting sub-datasets",
+      "llm_evidence_cn": "识别并排除过拟合的子数据集",
+      "llm_evidence": "识别并排除过拟合的子数据集",
+      "canonical_evidence": "识别并排除过拟合的子数据集",
+      "llm_tldr_en": "Introduces an algorithm to identify and remove overfitting data tasks during multi-task fine-tuning.",
+      "llm_tldr_cn": "引入一种算法，在多任务微调过程中识别并移除过拟合的数据任务。",
+      "llm_tldr": "引入一种算法，在多任务微调过程中识别并移除过拟合的数据任务。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Selective forgetting in neural networks",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2603.22987v1",
+      "title": "A Critical Review on the Effectiveness and Privacy Threats of Membership Inference Attacks",
+      "abstract": "Membership inference attacks (MIAs) aim to determine whether a data sample was included in a machine learning (ML) model's training set and have become the de facto standard for measuring privacy leakages in ML. We propose an evaluation framework that defines the conditions under which MIAs constitute a genuine privacy threat, and review representative MIAs against it. We find that, under the realistic conditions defined in our framework, MIAs represent weak privacy threats. Thus, relying on them as a privacy metric in ML can lead to an overestimation of risk and to unnecessary sacrifices in model utility as a consequence of employing too strong defenses.",
+      "authors": [
+        "Najeeb Jebreel",
+        "David Sánchez",
+        "Josep Domingo-Ferrer"
+      ],
+      "primary_category": "cs.CR",
+      "categories": [
+        "cs.CR",
+        "cs.LG"
+      ],
+      "published": "2026-03-24T09:23:57+00:00",
+      "link": "https://arxiv.org/pdf/2603.22987v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "membership inference attacks as a metric for privacy leakage",
+      "llm_evidence_cn": "成员推理攻击作为隐私泄露的衡量指标",
+      "llm_evidence": "成员推理攻击作为隐私泄露的衡量指标",
+      "canonical_evidence": "成员推理攻击作为隐私泄露的衡量指标",
+      "llm_tldr_en": "Critically reviews membership inference attacks as the standard for measuring privacy in machine learning.",
+      "llm_tldr_cn": "批判性地回顾了成员推理攻击作为衡量机器学习隐私的标准。",
+      "llm_tldr": "批判性地回顾了成员推理攻击作为衡量机器学习隐私的标准。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Privacy-preserving machine learning and the right to be forgotten",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2603.21606v3",
+      "title": "mSFT: Addressing Dataset Mixtures Overfitting Heterogeneously in Multi-task SFT",
+      "abstract": "Current language model training commonly applies multi-task Supervised Fine-Tuning (SFT) using a homogeneous compute budget across all sub-datasets. This approach is fundamentally sub-optimal: heterogeneous learning dynamics cause faster-learning tasks to overfit early while slower ones remain under-fitted. To address this, we introduce mSFT, an iterative, overfitting-aware search algorithm for multi-task data mixtures. mSFT trains the model on an active mixture, identifies and excludes the earliest overfitting sub-dataset, and reverts to that specific optimal checkpoint before continuing. Extensive evaluations demonstrate that mSFT consistently outperforms 4 baselines across 10 benchmarks and 6 base models. Further analysis confirms mSFT maintains robust gains across diverse dataset sizes, task granularities, and is insensitive to its single new hyperparameter (compute budget). Notably, at low compute budget, mSFT can improve performance while lowering training FLOPs. Ultimately, mSFT establishes a practical overfitting-aware algorithm for multi-task SFT that maximizes the potential of models across diverse data mixtures.",
+      "authors": [
+        "Woosung Koh",
+        "Jeyoung Jeon",
+        "Youngjin Song",
+        "Yujin Cheon",
+        "Soowon Oh",
+        "Jaehyeong Choi",
+        "Se-Young Yun"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-03-23T06:01:51+00:00",
+      "link": "https://arxiv.org/pdf/2603.21606v3",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "identifies and excludes overfitting sub-datasets",
+      "llm_evidence_cn": "识别并排除过拟合的子数据集",
+      "llm_evidence": "识别并排除过拟合的子数据集",
+      "canonical_evidence": "识别并排除过拟合的子数据集",
+      "llm_tldr_en": "An algorithm that identifies and removes overfitting data mixtures during multi-task supervised fine-tuning.",
+      "llm_tldr_cn": "一种在多任务微调过程中识别并移除过拟合数据混合的算法。",
+      "llm_tldr": "一种在多任务微调过程中识别并移除过拟合数据混合的算法。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Selective forgetting in neural networks",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2603.23822v1",
+      "title": "How Vulnerable Are Edge LLMs?",
+      "abstract": "Large language models (LLMs) are increasingly deployed on edge devices under strict computation and quantization constraints, yet their security implications remain unclear. We study query-based knowledge extraction from quantized edge-deployed LLMs under realistic query budgets and show that, although quantization introduces noise, it does not remove the underlying semantic knowledge, allowing substantial behavioral recovery through carefully designed queries. To systematically analyze this risk, we propose \\textbf{CLIQ} (\\textbf{Cl}ustered \\textbf{I}nstruction \\textbf{Q}uerying), a structured query construction framework that improves semantic coverage while reducing redundancy. Experiments on quantized Qwen models (INT8/INT4) demonstrate that CLIQ consistently outperforms original queries across BERTScore, BLEU, and ROUGE, enabling more efficient extraction under limited budgets. These results indicate that quantization alone does not provide effective protection against query-based extraction, highlighting a previously underexplored security risk in edge-deployed LLMs.",
+      "authors": [
+        "Ao Ding",
+        "Hongzong Li",
+        "Zi Liang",
+        "Zhanpeng Shi",
+        "Shuxin Zhuang",
+        "Shiqin Tang",
+        "Rong Feng",
+        "Ping Lu"
+      ],
+      "primary_category": "cs.CR",
+      "categories": [
+        "cs.CR",
+        "cs.CL",
+        "cs.LG"
+      ],
+      "published": "2026-03-25T01:10:38+00:00",
+      "link": "https://arxiv.org/pdf/2603.23822v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Studies knowledge extraction and semantic knowledge retention in quantized models",
+      "llm_evidence_cn": "研究量化模型中的知识提取和语义知识保留",
+      "llm_evidence": "研究量化模型中的知识提取和语义知识保留",
+      "canonical_evidence": "研究量化模型中的知识提取和语义知识保留",
+      "llm_tldr_en": "Investigates how quantized edge LLMs still retain sensitive semantic knowledge despite model compression.",
+      "llm_tldr_cn": "研究了量化边缘大模型在模型压缩后如何依然保留敏感的语义知识。",
+      "llm_tldr": "研究了量化边缘大模型在模型压缩后如何依然保留敏感的语义知识。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Algorithms for removing sensitive information from neural networks",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
