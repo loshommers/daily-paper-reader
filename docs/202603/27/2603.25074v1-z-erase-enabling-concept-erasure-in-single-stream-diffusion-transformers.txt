@@ -1,0 +1,1417 @@
+Title: Z-Erase: Enabling Concept Erasure in Single-Stream Diffusion Transformers
+
+URL Source: https://arxiv.org/pdf/2603.25074v1
+
+Published Time: Fri, 27 Mar 2026 00:35:25 GMT
+
+Number of Pages: 28
+
+Markdown Content:
+# Z-Erase: Enabling Concept Erasure in Single-Stream Diffusion Transformers 
+
+Nanxiang Jiang 1 Zhaoxin Fan 1 Baisen Wang 1 Daiheng Gao 2 Junhang Cheng 1 Jifeng Guo 1 Yalan Qin 3
+
+Yeying Jin 4 Hongwei Zheng 5 Faguo Wu 1 Wenjun Wu 1
+
+## Abstract 
+
+Concept erasure is a vital safety mechanism for removing unwanted concepts from text-to-image (T2I) models. While extensively studied in U-Net and dual-stream architectures ( e.g. , Flux), this task remains under-explored in the recent emerg-ing paradigm of single-stream diffusion transform-ers ( e.g. , Z-Image). In this new paradigm, text and image tokens are processed as a single unified sequence via shared parameters. Consequently, directly applying prior erasure methods typically leads to generation collapse. To bridge this gap, we introduce Z-Erase , the first concept erasure method tailored for single-stream T2I models. To guarantee stable image generation, Z-Erase first proposes a Stream Disentangled Concept Erasure Framework that decouples updates and enables existing methods on single-stream models. Sub-sequently, within this framework, we introduce 
+
+Lagrangian-Guided Adaptive Erasure Modula-tion , a constrained algorithm that further balances the sensitive erasure-preservation trade-off. More-over, we provide a rigorous convergence analysis proving that Z-Erase can converge to a Pareto stationary point. Experiments demonstrate that Z-Erase successfully overcomes the generation collapse issue, achieving state-of-the-art perfor-mance across a wide range of tasks. 
+
+## 1. Introduction 
+
+The landscape of text-to-image (T2I) generation has evolved at breakneck speed, rapidly transitioning from the founda-tional U-Net (Rombach et al., 2022) architectures to the scal-able era of Diffusion Transformers (Peebles & Xie, 2023). Recently, this evolution has reached a new pinnacle with the emergence of single-stream diffusion transformers, a unified framework exemplified by state-of-the-art models 
+
+> 1
+
+Beihang University 2USTC 3Shanghai University 
+
+> 4
+
+Tencent 5BAEC. Correspondence to: Nanxiang Jiang 
+
+<jiangnx@buaa.edu.cn >.
+
+Preprint. March 27, 2026. Wheatfield, with       
+
+> Cypresses by Van Gogh
+> Anaked girl with
+> beautiful short hair
+> A girl carrying LV bag
+> takes selfie in elevator
+> Z-Erase  Previous Erasure  AC EraseAnything UCE
+
+Figure 1. We introduce Z-Erase , a concept erasure method tailored for single-stream models. First row : Prior methods adapted via our 
+
+Stream Disentangled Concept Erasure Framework are tested with the “nudity” concept, showing under-erasure (AC, EraseAnything) or severe artifacts (UCE). Blue boxes reveal the generation collapse caused by naive fine-tuning without our adaptation. Second row : Z-Erase effectively removes target concepts while preserving quality. Original outputs are in yellow boxes. Sensitive content pixelated. 
+
+like Z-Image (Team, 2025) and HunyuanImage-3.0 (Cao et al., 2025). Unlike traditional dual-stream models ( e.g., 
+
+Flux (Labs et al., 2025)) that process text and pixels sepa-rately, this new paradigm fundamentally treats visual and textual data as a single, unified sequence handled by a mono-lithic transformer backbone (Team, 2025). The efficiency of this architectural grand unification is remarkable: Z-Image Turbo, for instance, generates stunningly photorealistic im-agery with only 6B parameters, signaling that the recently emerging pure single-stream framework is not merely an architectural variant, but the blueprint shaping the next gen-eration of foundational models. However, this generative prowess comes with significant risks. If the training data is not carefully filtered, founda-tional models can effortlessly absorb and reproduce copy-righted entities, Not-Safe-For-Work (NSFW) material, and biased imagery (Barez et al., 2025). As these models gain broader adoption, the societal risks of such unrestricted gen-eration become acute. In response, concept erasure has emerged as a vital safety alignment strategy (Kumari et al., 2023; Gandikota et al., 2023). Instead of re-training the entire model, concept erasure selectively removes undesired target concepts while maintaining the model’s utility and 1
+
+> arXiv:2603.25074v1 [cs.CV] 26 Mar 2026 Z-Erase: Enabling Concept Erasure in Single-Stream Diffusion Transformers
+
+performance on normal content. While concept erasure is well-established for Stable Dif-fusion (SD) (Rombach et al., 2022) and Flux (Labs et al., 2025) series, we find that directly transferring these methods to pure single-stream models leads to consistent generation collapse , as shown in Fig. 1 (blue boxes). Through careful analysis, we trace the failure to the unified single-stream ar-chitecture, as detailed in Section 3. Unlike previous models that isolate text-image interactions within separate modules, single-stream transformers fuse both modalities into a uni-fied self-attention mechanism with shared weights (Team, 2025). Consequently, optimizing shared parameters to sup-press text concepts will inevitably damage visual backbone’s synthesis capability, leading to catastrophic noise outputs. To tackle this issue, we introduce Z-Erase , a concept erasure method tailored for single-stream models. First, to enable existing erasure methods on single-stream models, we pro-pose Stream Disentangled Concept Erasure Framework ,a structural intervention that decouples parameter updates in single-stream models. By freezing the visual processing pathway while allowing low-rank adaptations (LoRAs) (Hu et al., 2021) only on textual hidden states, we create a safe optimization subspace that protects the image generation backbone. Within this subspace, prior erasure methods can operate on single-stream models. However, even with this structural fix, we find that the uni-fied attention space of single-stream models remains highly sensitive, making it difficult to balance erasure of target concept against preservation of unrelated content, as shown in Fig. 1 (first row). To address this, we further introduce a 
+
+Lagrangian-Guided Adaptive Erasure Modulation algo-rithm, which solves this trade-off as a constrained optimiza-tion problem by dynamically maximizing erasure only when the preservation loss remains within a strict tolerance. In addition to the algorithm design, we also provide a rigorous theoretical analysis proving that our algorithm can converge to a Pareto stationary point (Yu et al., 2020). Experiments demonstrate that Z-Erase successfully solves this optimiza-tion dilemma, ensuring robust ethical safety with minimal and controllable degradation in utility. To the best of our knowledge, Z-Erase is the first effective concept erasure method tailored for the emerging single-stream T2I paradigm. Our main contributions are: • Single-stream attention localization . We identify that generation collapse in single-stream models stems from shared projection weights. Beyond this, we further find that attention maps allow precise token-level localization, enabling selective erasure of targeted content. • Stream disentangled concept erasure framework . We propose a structural intervention for single-stream models. By injecting learnable adaptations exclusively into textual hidden states while freezing the visual backbone, we con-struct a safe optimization subspace that enables existing erasure methods to work on single-stream models. • Lagrangian-Guided Adaptive Erasure Modulation . To resolve the sensitive trade-off between erasure and preser-vation, we introduce a dynamic algorithm building upon this framework that maximizes erasure within a strict utility tolerance, and provide a rigorous convergence guar-antee to a Pareto stationary point. 
+
+## 2. Related Work 
+
+Generative diffusion and flow transformers. The evolu-tion of generative models has progressed rapidly, moving from the foundational U-Net (Ronneberger et al., 2015) ar-chitectures of DDPM (Ho et al., 2020) and DDIM (Song et al., 2020) to the scalable era of Diffusion Transform-ers (DiTs) (Peebles & Xie, 2023) and flow matching (Lip-man et al., 2022). Dominant T2I models ( e.g. , Flux (Labs et al., 2025), SD3 (Esser et al., 2024), LongCat (Team et al., 2025)) establish the standard by using dual-stream architec-tures, which process text and visual data separately before fusing them for image generation. Recently, however, Z-Image (Team, 2025) has broken this standard by introducing a pure single-stream paradigm. By concatenating text and image tokens at the sequence level to serve as a unified input stream, Z-Image achieves strong performance with remark-able efficiency: ranking among the top open-source models in recent ELO leaderboards with only 6B parameters. Rec-ognizing this shift, we conduct our main experiments on Z-Image to study concept erasure and safety in the next generation of foundational models. 
+
+Concept erasure. As generative models improve, safety concerns become increasingly important. Concept erasure offers a practical way to mitigate risks like NSFW content and copyright infringement, serving as a more efficient al-ternative to pre-training filtering (Rombach et al., 2022) or post-generation filtering (Rando et al., 2022). The field matures rapidly on noise-prediction U-Nets. For exam-ple, AC (Kumari et al., 2023) and ESD (Gandikota et al., 2023) fine-tune cross-attention modules by aligning pre-dicted noise via MSE. FMN (Zhang et al., 2023) minimizes attention activations associated with target concept text to-kens. UCE (Gandikota et al., 2024) solves a closed-form optimization of the text projection matrix. MACE (Lu et al., 2024) scales the capability to handle multiple concepts si-multaneously. Subsequent works (Bui et al., 2024; Zhou et al., 2025; Kim & Qi, 2025) leverage LoRA and adver-sarial training to improve erasure efficiency while balanc-ing irrelevant concept preservation. Recently works like EraseAnything (Gao et al., 2025a) and MCE (Zhang et al., 2025) successfully adapt concept erasure to Flux, tuning the separate prompt branches within its dual-stream structure. 2Z-Erase: Enabling Concept Erasure in Single-Stream Diffusion Transformers Output      
+
+> girl
+> hand
+> wristwatch
+> cherry
+> Image Keys Text Keys
+> Image Queries Text Queries
+> Image -to -Image
+> Attention
+> …….
+> .Concatenation
+> Text -to -Text
+> Attention
+> girl hand
+> girl hand
+> Text -to -Image
+> Attention
+> Image -to -Text
+> Attention
+> Global Conditioning
+> AdaLN Module
+> Text Prompt
+> Text Summary
+> Pooled Embedding
+> AdaLN /Modulation
+> Timestep σ
+> Modulates hidden
+> states before
+> attention and MLP
+> … ….
+
+Figure 2. Single-stream attention analysis. Given the prompt “A girl with a wristwatch on her hand amid cherry blossoms” , the attention maps reveal distinct localized responses for text tokens. 
+
+However, these methods cannot be directly applied to pure single-stream models like Z-Image, which differ fundamen-tally in architecture and generation dynamics. In this work, we identify the critical obstacles in adapting concept era-sure to this unified paradigm and propose the first effective erasure method designed for single-stream transformers. 
+
+## 3. Obstacles in Migrating Concept Erasure to Single-Stream Models 
+
+In this section, we analyze why concept erasure methods de-signed for SD and dual-stream models ( e.g. , Flux) fail when applied directly to single-stream architectures. Specifically, we highlight several fundamental obstacles, including the absence of explicit cross-attention mechanisms, the strong coupling between textual and visual representations induced by shared self-attention, and the limited robustness of naive localization-based strategies. 
+
+Absence of explicit cross-attention: The first key challenge is single-stream models like Z-Image lack explicit cross-attention layers (see Appendix A for detailed architecture). As a result, methods such as ESD, UCE, and MACE, which originally optimize cross-attention parameters should be redesigned to adapt the new architecture. This observation naturally raises a question: Although ex-plicit cross-attention does not exist, does single-stream transformers exhibit a similar pattern between text and im-age tokens? Motivated by this possibility, we conduct an in-depth examination of the neurons and features within the single-stream architecture. 
+
+Single-stream attention: We ultimately find that the similar pattern of text–image interactions is encoded through self-attention. Specifically, in modern single-stream models (like Z-Image), visual and textual information are not processed by separate encoders but are instead treated as a single unified sequence. Let H ∈ R(nI +nT )×d denote the input “A girl holding  matcha  cheesecake ”          
+
+> “A phone with Apple logo on a wooden desk”
+> Apple Apple e
+> “A detailed miniature Eiffel Tower model”
+> Eiffel Eiffle
+> Appl e
+> Eiffel
+> ESD EraseAnything
+
+Figure 3. Left: Attention erasure is brittle. Concept can be erased by zeroing its attention columns Aattn [: , :, idx ] = 0 once the tar-get token is localized from the prompt. However, this trick shows poor robustness to real-world prompt variations. Right: Naive fine-tuning collapses. Directly fine-tuning shared projections in single-stream models collapses generation with noisy outputs. 
+
+hidden states. The sequence concatenation is defined as: 
+
+H = concat (Himg , Htxt ) ∈ R(nI +nT )×d, (1) where Himg ∈ RnI ×d and Htxt ∈ RnT ×d. Unlike dual-stream architectures, which employ separate projection ma-trices for vision and language, single-stream models use shared weights WQ, WK , WV ∈ Rd×dk for both modali-ties. The query, key, and value matrices are computed as: 
+
+Q = HW Q =
+
+Himg WQ
+
+Htxt WQ
+
+
+
+=
+
+Qimg 
+
+Qtxt 
+
+
+
+,
+
+K = HW K =
+
+Himg WK
+
+Htxt WK
+
+
+
+=
+
+Kimg 
+
+Ktxt 
+
+
+
+,
+
+V = HW V =
+
+Himg WV
+
+Htxt WV
+
+
+
+=
+
+Vimg 
+
+Vtxt 
+
+
+
+.
+
+(2) The self-attention operation Aattn = Softmax ( QK ⊤
+
+> √dk
+
+) then yields a 2 × 2 block matrix representing intra- and inter-modality interactions: 
+
+Aattn = Softmax 
+
+
+
+1
+
+√dk
+
+
+
+Qimg K⊤
+
+> img
+
+| {z }
+
+> AI←I
+
+Qimg K⊤
+
+> txt
+
+| {z }
+
+> AI←T
+
+Qtxt K⊤
+
+> img
+
+| {z } 
+
+> AT←I
+
+Qtxt K⊤
+
+> txt
+
+| {z } 
+
+> AT←T
+
+ .
+
+(3) Here, the cross-terms AI←T and AT ←I are intrinsic to the self-attention mechanism, creating a tight coupling between image generation and text conditioning , as shown in Fig. 2. 
+
+Attention intervention is effective yet brittle: The above analysis suggests that the interaction between text and image is directly formed within Aattn : if we locate the target token in the prompt and zero out its attention column, the concept can be removed rather easily. However, this simple trick breaks once the prompt is even slightly altered—adding pre-fixes/suffixes ( Apple → Applee ) or intentional misspellings 3Z-Erase: Enabling Concept Erasure in Single-Stream Diffusion Transformers 
+
+(Eiffel → Eiffle ) is enough to bypass the erasure and still generate the concept, as shown in Fig. 3 (left). In other words, deleting a single attention column is brittle and not robust to real-world prompt variation , which motivates ap-proaches that modify the model itself through fine-tuning. 
+
+Naive fine-tuning fails: However, we find that directly applying the fine-tuning concept erasure methods such as ESD (for SD v1.5) or EraseAnything (for Flux) on single-stream models consistently causes generation collapse, as shown in Fig. 3 (right). The failure stems from the shared projection weights WQ, WK , WV , which jointly serve text conditioning and image synthesis. Therefore, suppressing a textual concept will inevitably perturb the image token pathway through shared self-attention, making controlled concept erasure infeasible. These observations indicate that single-stream models require a dedicated erasure framework that respects this architectural coupling. 
+
+## 4. Method 
+
+Overview. To solve the obstacles identified above, we present Z-Erase. First, we introduce the Stream Disentan-gled Concept Erasure Framework for single-stream models. This structural mechanism provides a safe subspace for our erasure and preservation losses, and enables previous era-sure methods to function effectively in the single-stream setting. Second, to handle the delicate trade-off between erasure and preservation, we propose a Lagrangian-Guided Adaptive Erasure Modulation algorithm based on this frame-work. Instead of using fixed weights, this novel algorithm dynamically adjusts erasure strength to strictly guarantee utility. Together, these two key parts make stable and ef-fective erasure possible on single-stream models. Next, we introduce each in detail. 
+
+4.1. Stream Disentangled Concept Erasure Framework 
+
+As analyzed in Section 3, the core challenge in single-stream models is the strict coupling of text and image processing: directly fine-tuning shared weights to erase a text concept will unavoidably distort the visual signal, causing genera-tion collapse. To resolve this architectural bottleneck, we propose the Stream Disentangled Concept Erasure Frame-work , which is designed to structurally isolate the parameter update trajectory. Specifically, we first control which modality receives up-dates. Let ST = diag (0nI , InT ) ∈ R(nI +nT )×(nI +nT ) be a token-wise selection operator that acts as a binary gate. This operator assigns zeros to image tokens and ones to text tokens, creating a physical barrier that restricts low-rank updates ∆W exclusively to textual hidden states while bypassing the visual stream. Formally, we apply this gating to the linear projection layers. For weights W ∈ { WQ, WK , WV }, the modified forward pass is defined as H′ = HW + ST H(∆ W). By factoring the hidden states H into visual and textual segments, this yields a clean separation in the adaptation dynamics: 
+
+H′
+
+> img
+
+H′
+
+> txt
+
+
+
+=
+
+Himg 
+
+Htxt 
+
+
+
+W|{z} 
+
+> Frozen
+
+OO W + ∆ W
+
+| {z }
+
+> Trainable, Concept Erasure
+
+ . (4) This design constructs a safe optimization subspace for concept erasure in single-stream models. The key idea is to restrict gradient updates to the textual hidden states 
+
+Htxt while keeping the pixel-generation backbone Himg 
+
+frozen. This isolation is critical, because the projection weights jointly govern both semantic understanding and image synthesis. Without such decoupling, erasure gradients inevitably perturb the shared attention pathways and cause the generation collapse observed in naive fine-tuning. With this subspace in place, previous erasure methods become operational again in the unified single-stream architecture. Within this safe subspace, we implement concept erasure as an adversarial fine-tuning process. Our goal is to suppress a target concept set Der , while anchoring the model on an unrelated concept set Dpr to ensure general utility remains unaffected. The two objects are defined as: 
+
+Erasure objective. Motivated by the negative guidance idea introduced by ESD (Gandikota et al., 2023), we start from direct trajectory intervention in flow matching. The first sub-loss in our Z-Erase aims to suppress the visual manifestation of the target concept during the denoising trajectory. Specifically, the erase loss is defined as: 
+
+Lerase = Ext,t,c er ∼D er vθ+∆ θ(xt, c er , t )−
+
+vθ (xt, ∅, t ) − η vθ (xt, c er , t ) − vθ (xt, ∅, t ) 22
+
+.
+
+(5) Here, η is the negative guidance factor and directly influ-ences how aggressively the concept is erased. θ denotes the pretrained model parameters and ∆θ is the learnable LoRA weights for erasure. xt denotes the latent at timestep t, start-ing from random noise xT where T is the total timesteps. 
+
+vθ (xt, ∅, t ) corresponds to the unconditional velocity pre-diction (with empty prompt), while cer ∈ D er identifies the concept to erase. In flow matching, v represents the velocity field guiding the trajectory between distributions, which makes it a natural site for concept-level intervention. Furthermore, building on the single-stream attention in-sights discussed in Section 3, we further reduce the influence of the erased concept by suppressing the attention assigned to its localized keywords: 
+
+Lattn =
+
+> end
+
+X
+
+> idx =start
+
+Aattn [: , :, idx ], (6) 4Z-Erase: Enabling Concept Erasure in Single-Stream Diffusion Transformers                 
+
+> Figure 4. Dynamic balancing of erasure and preservation gradi-ents. Left: When ∇L er does not conflict with ∇L pr , the erasure gradient itself is the update direction. Right: When the gradients conflict, the update direction d∗
+> tis obtained by steering ∇L er
+> toward ∇L pr until the preservation constraint εis satisfied.
+
+To avoid overfitting to fixed token positions, we also ran-domly shuffle the word order during training, keeping the index range dynamic while preserving the original meaning. Together, these two terms form the erasure objective: 
+
+Ler = Lerase + Lattn . (7) 
+
+Preservation objective. While the erasure objectives sup-press the target concept, it may unintentionally degrade unrelated concepts, reducing the model’s utility. For exam-ple, given the prompt “A nude girl” , our goal is to erase cer 
+
+“nude” while ensuring the model can still generate images of an unrelated concept cpr ∈ D pr normally, e.g., girl. To preserve usability, we constrain the shift in the generation process for concepts that should remain untouched: 
+
+Lpr = Ext,t vθ+∆ θ (xt, ∅, t ) − vθ (xt, ∅, t ) 22
+
++
+
+Ext,t, c pr ∼D pr vθ+∆ θ(xt, c pr , t ) − vθ (xt, c pr , t ) 22
+
+.
+
+(8) Finally, combining the erasure term, attention suppression, and preservation constraint completes the set of learning objectives for Z-Erase. 
+
+4.2. Lagrangian-Guided Adaptive Erasure Modulation 
+
+With our erasure and preservation objectives in place, the remaining challenge is how to optimize them together. Ex-isting methods typically adopt linear scalarization ( e.g. ,MACE) or multi-objective optimization ( e.g. , EraseAny-thing). However, simply combining erasure and preserva-tion objectives that have inherent conflict fails to find a balanced solution, as proved in multitask learning litera-ture (Hu et al., 2024). This failure is exacerbated in single-stream models like Z-Image, where the gradients for erasing a concept often clash violently with the gradients needed to preserve image quality. Consequently, static weighting often forces a binary outcome: either aggressive erasure that leads to image artifacts or conservative preservation that leaves the concept intact, as shown in Fig. 5. To resolve this dilemma, we further introduce a Lagrangian-Guided Adaptive Erasure Modulation algorithm. Unlike 
+
+Algorithm 1 Training Procedure of Z-Erase 
+
+Input: Pretrained model θ0, erasure concept set Der ,preservation concept set Dpr , total iteration steps M .
+
+Hyperparameters: Learning rates α (for model), β (for 
+
+λ), tolerance ε, initial λ0 = 0 .
+
+for iteration t = 1 to M do 
+
+❶ Calculate preservation loss change: 
+
+˜gt = 1 
+
+> α
+
+(Lpr (θt−1) − L pr (θt)) + ε.
+
+❷ Update constraint weight: λt+1 ← λt − β˜gt.
+
+❸ Sample batches cer ∼ D er and cpr ∼ D pr .
+
+❹ Compute losses Ler and Lpr with Eq. 5 to 8. 
+
+❺ Compute total balanced objective: 
+
+Ltotal = Ler + λt+1 Lpr 
+
+❻ Update LoRA weights: 
+
+∆θt+1 ← ∆θt − α∇∆θ Ltotal 
+
+end for Output: Final erased model θ′ = θ0 + ST (∆ θM )
+
+static weighting that struggles to find a stable balance, we treat erasure and preservation as a dynamic constrained opti-mization problem. The goal is to converge to a controllable point on the Pareto front (Yu et al., 2020), where erasure cannot be further improved without sacrificing preservation. Specifically, we increase erasure under a preservation tol-erance. At training step t with parameters θt, we solve for an update direction dt that maximizes the descent of the erasure objective Ler while constraining the increase of Lpr 
+
+to remain within a small tolerance ε:
+
+max 
+
+> dt
+
+∇L er (θt)·dt − 12 ∥dt∥2, s.t. ∇L pr (θt)·dt ≥ − ε, (9) where ∥dt∥2 is the regularization to avoid unbounded solu-tions. By introducing a Lagrange multiplier λt ≥ 0, we can rewrite this as a dual problem: 
+
+min  
+
+> λt≥0
+
+Lt(λt) = 12 ∇L er (θt) + λt∇L pr (θt) 2 + λtε. (10) This formulation shifts the optimization into finding a dy-namic dual weight λt that satisfies the constraint. By deter-mining the optimal λt and minimizing the Lagrangian w.r.t. 
+
+dt, we derive a closed-form solution d∗ 
+
+> t
+
+that naturally takes the form of gradient surgery :
+
+d∗ 
+
+> t
+
+=
+
+(
+
+∇L er (θt) + λ∗ 
+
+> t
+
+∇L pr (θt), if conflict exists (λ∗ 
+
+> t
+
+> 0) 
+
+∇L er (θt), otherwise (11) where 
+
+λ∗ 
+
+> t
+
+= −∇L er (θt) · ∇L pr (θt) − ε
+
+∥∇L pr (θt)∥2 . (12) Due to space limit, we provide full derivation from Eq. 9 to Eq. 12 in Appendix B.1 and B.2. Here, λ∗ 
+
+> t
+
+acts as a dynamic gatekeeper. If the erasure gradient attempts to 5Z-Erase: Enabling Concept Erasure in Single-Stream Diffusion Transformers Z-Image Turbo  UCE  EraseAnything  Ours 
+
+> Clownfish Origami Green  Van Gogh Leonardo
+
+Figure 5. Single-concept erasure. Our method removes both concrete and abstract concepts while preserving image quality with minimal collateral changes. In contrast, UCE severely distorts images and introduces strong artifacts, whereas EraseAnything may fail to erase or causes noticeable semantic shifts. 
+
+hurt preservation capability beyond ε, λ∗ 
+
+> t
+
+becomes positive, effectively projecting the update onto a safe subspace, as illustrated in Fig. 4. However, we find that explicitly computing λ∗ 
+
+> t
+
+requires two independent backward passes to obtain ∇L er and 
+
+∇L pr , doubling the training cost. To make this theoretically grounded approach computationally feasible, we employ an implicit approximation key to our adaptive modulation. Specifically, instead of directly solving for the exact λt at ev-ery step, we approximate the minimum of the dual problem Eq. 10 by iteratively updating λt via gradient descent: 
+
+λt+1 = λt − β∇λt Lt(λt), (13) where β controls the sensitivity of the weight adjust-ment. However, calculating ∇λt Lt still needs the gradient 
+
+∇L pr · dt, which brings us back to the original computa-tional bottleneck. To resolve this, we approximate this dot product ∇L pr · dt using the first-order Taylor expansion: 
+
+∇λt Lt(λt) = ∇L pr (θt) · (∇L er (θt) + λt∇L pr (θt)) + ε
+
+= ∇L pr (θt) · dt + ε
+
+≈ 1
+
+α (Lpr (θt) − L pr (θt+1 )) + ε. (14) Here, α is the learning rate of the model. This step is crucial: it translates the expensive geometric projection (dot product of gradients) into a cheap scalar observation (change in loss values). As a result, we obtain an approximate method for Prompt       
+
+> Adherence
+> Erasing
+> Cleanliness
+> Image
+> Quality
+> Irrelevant
+> Preservation
+> Output
+> Diversity
+> Ours EraseAnything DiT -Localization MACE UCE EAP AC ESD
+
+Figure 6. User study. An interface is built to compare generated images from various erasure methods on Z-Image Turbo (see Ap-pendix E for details). Using a 1–5 rating scale, Z-Erase achieves the best overall performance across five evaluated dimensions. 
+
+solving λt without extra backpropagation: 
+
+λt+1 = λt−β˜gt, where ˜gt = 1
+
+α (Lpr (θt−1) − L pr (θt))+ ε. 
+
+(15) This creates a self-regulating loop: if the model violates the preservation constraint ( i.e. , Lpr increases significantly such that ˜gt < 0), λ increases, forcing the model to prioritize preservation in the next unified backward pass; otherwise, 
+
+λ decays, allowing aggressive concept erasure. Notably, a major advantage of this algorithm is that it pro-vides a theoretical bound on how much the model’s original capabilities will shift. We can prove the degradation of the preservation capability is bounded by: 
+
+Lpr (θt) − L pr (θ0) ≲ O(t ε α ). (16) Detailed proofs are provided in Appendix B.3. Here, ε
+
+directly governs the trade-off : smaller values enforce tighter preservation, while larger ones allow controlled deviations to erase stubborn concepts. Despite using an efficient first-order approximation, we rigorously prove in Appendix C that this strategy guarantees asymptotic convergence to a Pareto stationary point, ensuring a principled balance. The full training procedure is summarized in Algorithm 1. 
+
+## 5. Experiments 
+
+5.1. Implementation Details 
+
+Currently, the only publicly available pure single-stream T2I diffusion models are Z-Image Turbo 1 and HunyuanImage-3.0 2. We report all main results on Z-Image Turbo, and provide additional experiments on HunyuanImage-3.0 in Appendix G. Our experiments adopt the flow-matching Eu-ler sampler with 9 steps and AdamW optimizer (Loshchilov et al., 2017) optimizer for 1,000 steps, with learning rate 
+
+α = 0 .001 , β = 0 .1, and erasing guidance η = 2 .
+
+> 1
+
+https://huggingface.co/Tongyi-MAI/Z-Image Turbo 
+
+> 2
+
+https://huggingface.co/tencent/HunyuanImage-3.0 
+
+6Z-Erase: Enabling Concept Erasure in Single-Stream Diffusion Transformers 
+
+Table 1. Evaluation on NSFW erasure. We evaluate nudity and violence erasure on 4,703 prompts from the I2P dataset, and report FID and CLIP scores on MS-COCO to assess utility preservation. Results of the original Z-Image Turbo are presented for reference. 
+
+DETECTED NUDITY MS-COCO 10K MS-COCO 10K METHOD Common Female Male Total ↓ FID ↓ CLIP ↑
+
+DETECTED 
+
+VIOLENCE ↓ FID ↓ CLIP ↑
+
+AC (Model-Based) (Kumari et al., 2023) 245 35 53 333 29.30 29.05 402 32.47 29.89 AC (Noise-Based) (Kumari et al., 2023) 270 38 55 363 30.07 28.16 496 33.12 28.73 ESD-x (Gandikota et al., 2023) 279 42 60 381 31.44 27.65 777 33.79 27.48 ESD-u (Gandikota et al., 2023) 260 41 61 362 31.96 27.13 668 34.22 26.80 EAP (Bui et al., 2024) 190 29 49 268 27.32 30.71 447 28.30 30.15 MACE (Lu et al., 2024) 136 35 28 199 28.75 30.48 382 29.63 29.86 UCE (Gandikota et al., 2024) 129 15 13 157 38.38 21.66 561 36.02 27.02 Meta-Unlearning (Gao et al., 2025b) 346 53 56 455 26.91 30.83 845 27.36 31.08 EraseAnything (Gao et al., 2025a) 206 43 45 294 26.63 31.10 - - -Minimalist CE (Zhang et al., 2025) 291 38 47 376 27.23 30.16 702 27.82 30.06 DiT Localization (Zarei et al., 2025) 264 40 52 356 32.65 27.12 649 32.65 27.12 Ours 109 29 23 161 26.46 31.25 324 27.62 31.17 
+
+Z-Image Turbo 486 100 63 649 26.33 31.47 1086 26.33 31.47 
+
+Table 2. Evaluation on celebrity erasure. CLIP-based classifica-tion accuracy are reported on the erased identities (A CC e, efficacy) and unaffected identities (A CC ir , specificity). The combined per-formance is summarized by H a = A CC ir − ACC e, where higher values indicate a better balance between erasure and preservation. FID and CLIP are results based on MS-COCO 10K dataset.                                                             
+
+> METHOD ACC e↓ACC ir ↑Ha↑FID ↓CLIP ↑
+> AC (Model-Based) 27.95 27.10 -0.85 31.85 28.22 AC (Noise-Based) 27.34 26.88 -0.46 32.46 27.93 ESD-x 27.66 27.20 -0.46 33.15 27.41 ESD-u 25.13 26.68 1.55 34.06 26.95 MACE 24.06 28.52 4.46 30.79 30.17
+> UCE 21.91 25.70 3.79 52.28 23.70 EraseAnything 23.25 27.36 3.71 27.86 29.65 DiT-Localization 24.43 23.41 -1.02 43.27 26.76 Ours 23.52 28.34 4.82 27.83 30.06 Z-Image Turbo 33.91 32.24 -26.33 31.47
+
+Notably, all fine-tuning baselines rely on our Stream Dis-entangled Concept Erasure Framework (Eq. 4) on single-stream models to function properly and prevent generation collapse. For more details, please refer to Appendix D. 
+
+5.2. Results NSFW Erasure. NSFW erasure is a well-established bench-mark for evaluating model safety. We assess our method on a comprehensive set of 4,703 prompts from the Inap-propriate Image Prompt (I2P) dataset (Schramowski et al., 2023), focusing on nudity and violence . For nudity detec-tion, we adopt NudeNet (Bedapudi, 2019) with a detection threshold of 0.6, and for violence, we employ the Q16-classifier (Schramowski et al., 2022). To further evaluate the specificity of our method on regular content, we randomly select 10,000 captions from MS-COCO dataset (Lin et al., 2014). Finally, we generate images from these captions and assess the results using both the FID and CLIP scores. 
+
+Table 3. Evaluation on erasing specific category : Entity (e.g., 
+
+church), Artistic Style (e.g., Claude Monet) and Abstraction (e.g., 
+
+color). We report erasure efficacy (A CC e) and balance score (H a)here due to space limit. The full metrics are in Appendix D.2.                                                                            
+
+> ENTITY ART STYLE ABSTRACTION
+> METHOD ACC e↓Ha↑ACC e↓Ha↑ACC e↓Ha↑
+> AC (Model-Based) 24.6 2.0 28.6 -4.2 26.9 -1.1 AC (Noise-Based) 25.5 0.9 29.3 -5.5 27.3 -1.1 ESD-x 23.3 5.3 28.5 -3.8 26.5 -0.8 ESD-u 21.8 6.0 27.8 -3.3 25.7 -0.4 MACE 23.2 4.3 26.6 -0.8 25.1 3.4 UCE 20.1 0.5 21.7 -1.8 19.7 0.6 EraseAnything 24.1 3.5 25.9 0.2 25.6 3.4 DiT-Localization 17.5 11.2 31.2 -7.9 28.6 -2.8 Ours 23.1 7.4 26.1 0.8 24.3 4.7
+> Z-Image Turbo 24.7 -33.6 -30.5 -
+
+Table 1 presents our results compared with the current state-of-the-art algorithms. Our method attains the second-lowest nudity detection, only outperformed by UCE. Yet, our method maintains strong FID and CLIP scores, indi-cating minimal degradation on regular content, while UCE shows a sharp decline in utility according to these metrics. Notably, our method ranks first on violence erasure, estab-lishing remarkable balance between NSFW removal and preservation of general image-generation capability. 
+
+Celebrity Erasure. Celebrity identity erasure is another socially crucial benchmark that reflects concerns over pri-vacy, likeness rights and model misuse. We select a subset from CelebA (Liu et al., 2018), removing identities that Z-Image Turbo fails to reproduce faithfully. This results in 100 identities, split into two groups: 50 for erasure and 50 for preservation. We adopt the evaluation metrics in Table 2. As shown, our method achieves the best overall bal-ance, attaining the highest H a score with competitive FID and CLIP. These results highlight the potential of our ap-7Z-Erase: Enabling Concept Erasure in Single-Stream Diffusion Transformers 
+
+Table 4. Evaluation against adversarial attacks. We attack nudity topic using the Ring-A-Bell dataset with 285 prompts, and report Attack Success Rate (%, lower is better). 
+
+UNLEARN DIFF ATK 
+
+METHOD W/O
+
+ATTACK R-A-B REFLUX Step = 0 Steps = 0,1,2 DiT-Localization 57.89 58.94 74.73 59.64 60.35 EraseAnything 14.38 26.67 43.85 23.50 25.61 
+
+Token-Zeroing 21.75 82.81 92.85 72.50 76.49 Ours 10.52 24.91 42.81 24.56 25.61 
+
+Z-Image Turbo 83.15 92.63 96.84 82.45 85.96 Hello    
+
+> A girl holding a cork
+> board with " Hello” in
+> front of the Tower Bridge.
+> Hello
+> Cork board
+> Hello
+> Cork board
+> Tower Bridge
+> Delicate Arch at
+> sunset with distant
+> snow mountains
+> Sunset Sunset
+> Snow
+> Sunse t
+> Snow
+> Delicate Arch
+
+Figure 7. Multi-concept erasure. Multiple concepts can be erased simultaneously via weighted LoRA averaging (see Appendix F). 
+
+proach to support privacy-aware content regulation without compromising generative utility. 
+
+Miscellaneousness Erasure. We evaluate our method on 3 broader categories: Entity , Artistic Style , and Abstrac-tion . Here, we choose 10 concept for each category (Please check Appendix D.2 for the full list of concepts) and adopt the metrics described in Table 3. The findings show that our approach remains consistently effective across diverse categories, with particularly stronger performance on ab-stract and global concepts. As shown in Fig. 5 and 7, our method reliably removes a wide range of concepts (includ-ing multiple concepts simultaneously) while introducing only minimal visual disturbance, whereas prior approaches often fail to erase or produce artifacts that undermine utility. 
+
+User Study. We further assess human perceptual erasure quality through a five-dimensional user study. The first two dimensions (Erasing Cleanliness and Irrelevant Preserva-tion) are evaluated using concepts from Entity, Artistic Style, and Abstraction, with images generated under same seeds for fair comparison. Our study involves 30 non-artist partici-pants, each providing an average of 50 responses. As shown in Fig. 6, our method demonstrates consistently strong per-formance across all dimensions, positioning Z-Erase as a well-rounded solution for perceptual concept erasure. Addi-tional study details are provided in Appendix E. 
+
+Robustness under Adversarial Prompt Attacks. To fur-ther evaluate robustness against adversarial attacks, we ap-ply Ring-A-Bell (Tsai et al., 2024), UnlearnDiffAtk (Zhang 
+
+Table 5. Ablation study on erasing nudity. We ablate three loss terms used in our method on 4,703 prompts from the I2P dataset. 
+
+CONFIG DETECTED NUDITY ↓ FID ↓ CLIP ↑Lerase 206 29.65 29.86 
+
+Lerase + Lattn 148 30.04 29.12 
+
+Lerase + Lpr 235 26.42 31.28 
+
+Lattn + Lpr 314 27.15 31.16 FULL 161 26.46 31.25 Z-Image Turbo 649 26.33 31.47 160           
+
+> 170
+> 180
+> 190
+> 200
+> 210
+> 0
+> εValue
+> 1e -41e -31e -21e -11
+> Detected Nudity  ( )
+> MS -COCO 10K CLIP (  )
+> 32
+> 31
+> 30
+> 29
+> 28
+> 27 0.01
+> 0.01
+> βValue
+> 0.05 0.10 0.50 1.00
+> Erase Loss (  )
+> Preserve Loss (  )
+> 3.5
+> 3.0
+> 2.5
+> 2.0
+> 1.5
+> 1.0
+> 0.02
+> 0.03
+> 0.04
+> 0.05
+> 0.06
+
+Figure 8. Ablation study on hyperparameters ε and β. With our Lagrangian-Guided Adaptive Erasure Modulation algorithm, erasure and preservation become monotonically controllable. 
+
+et al., 2024), and ReFlux (Jiang et al., 2025) to attack the nudity concept. As shown in Table 4, the token-zeroing trick discussed in Section 3 is highly vulnerable to prompt perturbation, whereas our approach remains substantially more robust across most attack settings. 
+
+5.3. Ablation Study Ablation on Stream Disentangled Concept Erasure Framework. We first validate the structural necessity of our framework. As visualized in Appendix Fig. 15, naive fine-tuning on single-stream models consistently causes gen-eration collapse regardless of layer selection, proving our framework is a prerequisite for stable erasure. Within this safe subspace, we further ablate our loss terms in Table 5. 
+
+Lerase effectively removes concepts but degrades quality, while Lattn enhances erasure precision. Crucially, Lpr 
+
+serves as a stabilizer for visual utility. Combining all three yields the optimal equilibrium between safety and quality. 
+
+Ablation on Lagrangian-Guided Adaptive Erasure Mod-ulation. We then examine the optimization dynamics by varying tolerance ε and learning rate β in Fig. 8. Consistent with Section 4.2, a smaller ε favors preservation at the cost of weaker erasure. We thus select ε = 0 .001 for balance. In contrast, our method shows strong robustness to β with neg-ligible performance fluctuations, verifying that convergence is stable to step size. We set β = 0 .1 as a practical choice. 
+
+## 6. Conclusion 
+
+In this work, we present Z-Erase , the first concept erasure method for single-stream models. To address the inherent 8Z-Erase: Enabling Concept Erasure in Single-Stream Diffusion Transformers 
+
+architectural entanglement, we present Stream Disentan-gled Concept Erasure Framework , which structurally decou-ples parameter updates to prevent collapse, and Lagrangian-Guided Adaptive Erasure Modulation algorithm, which rig-orously navigates the erasure-preservation trade-off within a highly sensitive latent. Experiments across diverse tasks demonstrate the effectiveness and versatility of our method. 
+
+## Impact Statement 
+
+This work aims to advance the safety and reliability of mod-ern text-to-image generative models by enabling effective concept erasure in emerging single-stream diffusion trans-formers. As these unified architectures are increasingly adopted due to their efficiency and performance, under-standing how to responsibly control and remove undesired concepts becomes an important technical challenge. Our method provides a principled framework for mitigating the generation of harmful, sensitive, or unwanted content while preserving the general utility of the model. We expect this work to have a positive societal impact by supporting safer deployment of generative models in real-world applications, such as content moderation, privacy pro-tection, and compliance with ethical and legal requirements. More broadly, it contributes technical insights toward build-ing controllable and responsible generative systems. 
+
+## References 
+
+Barez, F., Fu, T., Prabhu, A., Casper, S., Sanyal, A., Bibi, A., O’Gara, A., Kirk, R., Bucknall, B., Fist, T., Ong, L., Torr, P., Lam, K.-Y., Trager, R., Krueger, D., Mindermann, S., Hernandez-Orallo, J., Geva, M., and Gal, Y. Open problems in machine unlearning for ai safety, 2025. Bedapudi, P. Nudenet: Neural nets for nudity classification, detection and selective censoring, 2019. Bui, A., Vuong, L., Doan, K., Le, T., Montague, P., Abra-ham, T., and Phung, D. Erasing undesirable concepts in diffusion models with adversarial preservation. arXiv preprint arXiv:2410.15618 , 2024. Cao, S., Chen, H., Chen, P., Cheng, Y., Cui, Y., Deng, X., Dong, Y., Gong, K., Gu, T., Gu, X., et al. Hunyuanimage 3.0 technical report. arXiv preprint arXiv:2509.23951 ,2025. Esser, P., Kulal, S., Blattmann, A., Entezari, R., M ¨uller, J., Saini, H., Levi, Y., Lorenz, D., Sauer, A., Boesel, F., et al. Scaling rectified flow transformers for high-resolution image synthesis. In Forty-first International Conference on Machine Learning , 2024. Gandikota, R., Materzynska, J., Fiotto-Kaufman, J., and Bau, D. Erasing concepts from diffusion models. In 
+
+Proceedings of the IEEE/CVF International Conference on Computer Vision , pp. 2426–2436, 2023. Gandikota, R., Orgad, H., Belinkov, Y., Materzy ´nska, J., and Bau, D. Unified concept editing in diffusion models. In Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision , pp. 5111–5120, 2024. 9Z-Erase: Enabling Concept Erasure in Single-Stream Diffusion Transformers 
+
+Gao, D., Lu, S., Walters, S., Zhou, W., Chu, J., Zhang, J., Zhang, B., Jia, M., Zhao, J., Fan, Z., et al. Eraseany-thing: Enabling concept erasure in rectified flow trans-formers. Forty-second International Conference on Ma-chine Learning , 2025a. Gao, H., Pang, T., Du, C., Hu, T., Deng, Z., and Lin, M. Meta-unlearning on diffusion models: Preventing relearn-ing unlearned concepts, 2025b. Ho, J., Jain, A., and Abbeel, P. Denoising diffusion proba-bilistic models. Advances in neural information process-ing systems , 33:6840–6851, 2020. Hu, E. J., Shen, Y., Wallis, P., Allen-Zhu, Z., Li, Y., Wang, S., Wang, L., and Chen, W. Lora: Low-rank adaptation of large language models. arXiv preprint arXiv:2106.09685 ,2021. Hu, Y., Xian, R., Wu, Q., Fan, Q., Yin, L., and Zhao, H. Re-visiting scalarization in multi-task learning: A theoretical perspective. Advances in Neural Information Processing Systems , 36, 2024. Jadbabaie, A., Rakhlin, A., Shahrampour, S., and Sridha-ran, K. Online optimization : Competing with dynamic comparators, 2015. Jiang, N., Fan, Z., Kang, E., Gao, D., Zhou, Y., Chang, Y., Zhu, Z., Jin, Y., and Wu, W. Erased, but not forgotten: Erased rectified flow transformers still remain unsafe under concept attack, 2025. Kim, C. and Qi, Y. A comprehensive survey on concept erasure in text-to-image diffusion models, 2025. Kumari, N., Zhang, B., Wang, S.-Y., Shechtman, E., Zhang, R., and Zhu, J.-Y. Ablating concepts in text-to-image dif-fusion models. In Proceedings of the IEEE/CVF Interna-tional Conference on Computer Vision , pp. 22691–22702, 2023. Labs, B. F., Batifol, S., Blattmann, A., Boesel, F., Consul, S., Diagne, C., Dockhorn, T., English, J., English, Z., Esser, P., Kulal, S., Lacey, K., Levi, Y., Li, C., Lorenz, D., M ¨uller, J., Podell, D., Rombach, R., Saini, H., Sauer, A., and Smith, L. Flux.1 kontext: Flow matching for in-context image generation and editing in latent space, 2025. Lin, T.-Y., Maire, M., Belongie, S., Hays, J., Perona, P., Ra-manan, D., Doll ´ar, P., and Zitnick, C. L. Microsoft coco: Common objects in context. In Computer Vision–ECCV 2014: 13th European Conference, Zurich, Switzerland, September 6-12, 2014, Proceedings, Part V 13 , pp. 740– 755. Springer, 2014. Lipman, Y., Chen, R. T., Ben-Hamu, H., Nickel, M., and Le, M. Flow matching for generative modeling. arXiv preprint arXiv:2210.02747 , 2022. Liu, Z., Luo, P., Wang, X., and Tang, X. Large-scale celeb-faces attributes (celeba) dataset. Retrieved August , 15 (2018):11, 2018. Loshchilov, I., Hutter, F., et al. Fixing weight decay regu-larization in adam. arXiv preprint arXiv:1711.05101 , 5, 2017. Lu, S., Wang, Z., Li, L., Liu, Y., and Kong, A. W.-K. Mace: Mass concept erasure in diffusion models. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pp. 6430–6440, 2024. Peebles, W. and Xie, S. Scalable diffusion models with transformers. pp. 4172–4182, 10 2023. doi: 10.1109/ ICCV51070.2023.00387. Rando, J., Paleka, D., Lindner, D., Heim, L., and Tram `er, F. Red-teaming the stable diffusion safety filter. arXiv preprint arXiv:2210.04610 , 2022. Rombach, R., Blattmann, A., Lorenz, D., Esser, P., and Ommer, B. High-resolution image synthesis with latent diffusion models. In Proceedings of the IEEE/CVF con-ference on computer vision and pattern recognition , pp. 10684–10695, 2022. Ronneberger, O., Fischer, P., and Brox, T. U-net: Con-volutional networks for biomedical image segmenta-tion. In Medical image computing and computer-assisted intervention–MICCAI 2015: 18th international confer-ence, Munich, Germany, October 5-9, 2015, proceedings, part III 18 , pp. 234–241. Springer, 2015. Schramowski, P., Tauchmann, C., and Kersting, K. Can machines help us answering question 16 in datasheets, and in turn reflecting on inappropriate content?, 2022. Schramowski, P., Brack, M., Deiseroth, B., and Kersting, K. Safe latent diffusion: Mitigating inappropriate degenera-tion in diffusion models. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition ,pp. 22522–22531, 2023. Sener, O. and Koltun, V. Multi-task learning as multi-objective optimization, 2019. Song, J., Meng, C., and Ermon, S. Denoising diffusion implicit models. arXiv preprint arXiv:2010.02502 , 2020. Team, M. L., Ma, H., Tan, H., Huang, J., Wu, J., He, J.-Y., Gao, L., Xiao, S., Wei, X., Ma, X., Cai, X., Guan, Y., and Hu, J. Longcat-image technical report. arXiv preprint arXiv:2512.07584 , 2025. 10 Z-Erase: Enabling Concept Erasure in Single-Stream Diffusion Transformers 
+
+Team, Z.-I. Z-image: An efficient image generation foun-dation model with single-stream diffusion transformer. 
+
+arXiv preprint arXiv:2511.22699 , 2025. Tsai, Y.-L., Hsu, C.-Y., Xie, C., Lin, C.-H., Chen, J.-Y., Li, B., Chen, P.-Y., Yu, C.-M., and Huang, C.-Y. Ring-a-bell! how reliable are concept removal methods for diffusion models? ICLR , 2024. Yu, T., Kumar, S., Gupta, A., Levine, S., Hausman, K., and Finn, C. Gradient surgery for multi-task learning, 2020. Zarei, A., Basu, S., Rezaei, K., Lin, Z., Nag, S., and Feizi, S. Localizing knowledge in diffusion transformers, 2025. Zhang, E., Wang, K., Xu, X., Wang, Z., and Shi, H. Forget-me-not: Learning to forget in text-to-image diffusion models. arXiv preprint arXiv:2211.08332 , 2023. Zhang, Y., Jia, J., Chen, X., Chen, A., Zhang, Y., Liu, J., Ding, K., and Liu, S. To generate or not? safety-driven un-learned diffusion models are still easy to generate unsafe images... for now. In European Conference on Computer Vision , pp. 385–403. Springer, 2024. Zhang, Y., Jin, E., Dong, Y., Wu, Y., Torr, P., Khakzar, A., Stegmaier, J., and Kawaguchi, K. Minimalist concept era-sure in generative models. In Forty-second International Conference on Machine Learning , 2025. Zhou, S., Yu, T., Zhang, Z., Chang, H., Zhou, X., Wu, D., and Zhao, H. Efficient utility-preserving machine unlearning with implicit gradient surgery, 2025. Zinkevich, M. Online convex programming and general-ized infinitesimal gradient ascent. In Proceedings of the Twentieth International Conference on International Con-ference on Machine Learning , pp. 928–935, 2003. 11 Z-Erase: Enabling Concept Erasure in Single-Stream Diffusion Transformers 
+
+## A. Single-Stream Transformer Architecture 
+
+In our research, we adopt the emerging single-stream diffusion transformer as our foundational architecture. This paradigm, exemplified by recent state-of-the-art open-source models Z-Image Turbo (Team, 2025) and HunyuanImage-3.0 (Cao et al., 2025), represents a radical departure from the architectural conventions of both SD v1.x (Rombach et al., 2022) and the recent Flux series (Labs et al., 2025). As highlighted in Section 3, the evolution of T2I architectures has progressively moved towards higher modality fusion. SD v1.x models utilize a U-Net backbone where visual features are processed in a dedicated path, and textual information is injected via distinct cross-attention layers. This separation allows for easy localization of concept-specific parameters. Flux introduces a dual-stream backbone where text and image tokens are processed by separate weights ( Wtxt and Wimg )for the first half of the network before being concatenated. While more unified than SD v1.x, it still maintains explicit separation in the early stages. In contrast, the pure single-stream architecture (as shown in Fig. 9) abolishes these boundaries entirely. As depicted in the diagram, text embeddings (from large language models or vision language models) and image patches (from VAE latents) are mapped into a common embedding space via linear projections. Crucially, they are concatenated into a Unified Input Sequence before entering the transformer blocks. Within these blocks, the self-attention mechanism operates on this mixed sequence using shared projection weights ( WQ, WK , WV ) for both modalities. Prompt 
+
+Text Encoder 
+
+Linear 
+
+Noised Latent 
+
+Patching 
+
+Linear 
+
+Unified Input Sequence 
+
+Timestep 
+
+MLP 
+
+Single Stream Block 1 
+
+Single Stream Block N 
+
+... 
+
+Unpatching 
+
+Output 
+
+RoPE 
+
+Text  Image 
+
+t
+
+Single Stream  Block 
+
+Unified Input Sequence 
+
+LayerNorm 
+
+Mod 
+
+Self -Attention 
+
+To_q  To_k  To_v 
+
+t
+
+Q K V
+
+> Scale dot product attention
+
+Linear 
+
+Linear 
+
+LayerNorm 
+
+...        
+
+> Figure 9. Abstract illustration of the Single-Stream DiT architecture. The workflow begins with two parallel pathways: the prompt is processed by a text encoder, while the image latent is patched and projected similarly. These tokens are concatenated into a Unified Input Sequence , which serves as the input to a stack of NSingle Stream Blocks . Global conditioning information ( e.g. , Timestep) is injected into each block, influencing the layer normalization and attention scaling. Inside a Single Stream Block, the core Self-Attention
+> mechanism processes the sequence using shared Query ( Q), Key ( K), and Value ( V) projections for both text and image tokens.
+
+This “Grand Unification” means that differentiation between text and image processing is no longer structural but semantic, driven solely by the token embeddings themselves. While this design maximizes parameter efficiency and generative quality, it introduces the entanglement challenge we solve in Z-Erase: modifying weights to erase a text concept inherently risks corrupting the shared image generation mechanics. 
+
+## B. Derivation Details of Lagrangian-Guided Adaptive Erasure Modulation 
+
+In this section, we present the complete derivations and proofs that are omitted from the main text due to space limitations. 12 Z-Erase: Enabling Concept Erasure in Single-Stream Diffusion Transformers 
+
+B.1. Derivation of the dual problem 
+
+To begin with, recall that the primal update in Eq. 9 jointly optimizes a high-dimensional descent direction dt while enforcing a preservation constraint through an inner product term: 
+
+max 
+
+> dt
+
+∇L er (θt) · dt − 12 ∥dt∥2, s.t. ∇L pr (θt) · dt ≥ − ε, (17) Directly solving the primal form is undesirable for two reasons. First, the constraint only depends on the projection of dt
+
+onto ∇L pr , yet the optimization is carried out in the full parameter space, which obscures the proximal trade-off between erasure and preservation and offers no explicit control over the constraint ( e.g. , ε). Second, similar constrained gradient formulations in robust optimization and adversarial training (Sener & Koltun, 2019; Yu et al., 2020; Zhou et al., 2025) have shown that converting the primal into its dual leads to substantially more stable updates and interpretable balancing coefficients. Motivated by these observations, we follow the standard primal-dual approach and rewrite Eq. 9 into its dual form via a Lagrangian relaxation. This reparameterizes the update using a scalar dual variable λt ≥ 0 and naturally leads to the closed-form solution for dt once the dual objective is minimized. We provide the complete derivation below. 
+
+Proof. We start by constructing the Lagrangian function associated with the primal problem. The Lagrangian can be written as: 
+
+L(dt, λ t) = ∇L er (θt) · dt − 12 ∥dt∥2 + λt (ε + ∇L pr (θt) · dt) , (18) where λt ≥ 0 is the Lagrange multiplier corresponding to the constraint in the primal problem. To find the dual objective, we first need to minimize the Lagrangian w.r.t dt. Taking the gradient of L(dt, λ t) w.r.t dt and setting it to zero, we have: 
+
+∇dt L(dt, λ t) = ∇L er (θt) + λt∇L pr (θt) − dt = 0 . (19) Solving for dt, we obtain: 
+
+dt = ∇L er (θt) + λt∇L pr (θt). (20) Substituting this back into the Lagrangian, we then get the dual function: 
+
+Lt(λt) = L(dt, λ t) = ∇L er (θt) · (∇L er (θt) + λt∇L pr (θt)) − 12 ∥∇L er (θt) + λt∇L pr (θt)∥2 + λtε. (21) By expanding and simplifying, the dual objective finally becomes: 
+
+Lt(λt) = 12 ∇L er (θt) + λt∇L pr (θt) 2 + λtε, (22) which is the dual objective in Eq. 10. 
+
+B.2. Derivation of the closed-form solution for the optimal direction d∗
+
+> t
+
+Proof. To find the closed-form solution for the optimal direction d∗ 
+
+> t
+
+, we first minimize the dual objective Lt(λt) w.r.t λt.Taking the derivative of Lt(λt) w.r.t λt and setting it to zero, we then get: 
+
+∂Lt(λt)
+
+∂λ t
+
+= ∇L pr (θt) · (∇L er (θt) + λt∇L pr (θt)) + ε = 0 . (23) Solving for λt, we obtain: 
+
+λ∗ 
+
+> t
+
+= −∇L pr (θt) · ∇L er (θt) − ε
+
+∥∇L pr (θt)∥2 . (24) Substituting λ∗ 
+
+> t
+
+back into the expression for d∗ 
+
+> t
+
+, we find the optimal update direction d∗ 
+
+> t
+
+as: 
+
+d∗ 
+
+> t
+
+=
+
+(
+
+∇L er (θt) + λ∗ 
+
+> t
+
+∇L pr (θt), if λ∗ 
+
+> t
+
+> 0,
+
+∇L er (θt), if λ∗ 
+
+> t
+
+≤ 0. (25) This is the closed-form solution for d∗ 
+
+> t
+
+stated in Eq. 11. 13 Z-Erase: Enabling Concept Erasure in Single-Stream Diffusion Transformers 
+
+B.3. Derivation of upper bound on preservation degradation 
+
+Proof. We first assume that the preservation loss Lpr is G-smooth, meaning that its gradient is G-Lipschitz: 
+
+∥∇L pr (θ) − ∇L pr (θ′)∥ ≤ G∥θ − θ′∥, (26) for some constant G > 0. By the standard smoothness inequality, we obtain: 
+
+Lpr (θt+1 ) ≤ L pr (θt) + ∇L pr (θt)( θt+1 − θt) + G
+
+2 ∥θt+1 − θt∥2. (27) Substituting θt+1 = θt − αdt (where α is the learning rate of θ) gives: 
+
+Lpr (θt+1 ) − L pr (θt) ≤ − α∇L pr (θt)dt + Gα2
+
+2 ∥dt∥2. (28) Using the primal constraint ∇L pr (θt) · dt ≥ − ε, we obtain: 
+
+Lpr (θt+1 ) − L pr (θt) ≤ αε + Gα2
+
+2 ∥dt∥2 ≲ αε, (29) where the final approximation holds when α is sufficiently small such that the quadratic term becomes negligible. Summing over 0 to t, we get: 
+
+Lpr (θt) − L pr (θ0) ≲ O(t ε α ), (30) which is the upper bound in Eq. 16. 
+
+## C. Convergence Analysis of Lagrangian-Guided Adaptive Erasure Modulation 
+
+In this section, we provide a theoretical analysis of the convergence properties of the proposed Lagrangian-Guided Adaptive Erasure Modulation algorithm. Our primary goal is to demonstrate that Algorithm 1, despite employing a specific first-order Taylor approximation for computational efficiency (Eq. 14), successfully converges to a Pareto stationary point . This implies that the algorithm finds a solution where the erasure objective Ler cannot be further optimized without violating the preservation constraint defined by Lpr and tolerance ε.Formally, the optimization problem in Z-Erase can be modeled as a constrained optimization problem: min θ Ler (θ) s.t. the preservation degradation is bounded by ε. Our algorithm solves this via a dynamic Lagrangian method. The core challenge in the analysis lies in the coupled dynamics of the model parameters θt and the constraint weight λt, particularly given that 
+
+λt is updated via an implicit approximation (without calculating the full Hessian or second-order information). To rigorously prove the convergence, our analysis proceeds in three main steps: 1. Approximation Bound : We first establish that the implicitly estimated gradient for updating λt (derived from the loss difference in Eq. 14) serves as a valid proxy for the true gradient, with the error bounded by the learning rate α.2. Dynamic Regret Analysis : We treat the update of the dynamic weight λt as an online learning process. By leveraging results from Online Gradient Descent (OGD), we prove that the accumulation of errors (regret) due to the dynamic nature of λt and β is sub-linear and controllable. This answers why the dynamic variation of β (or λ) does not prevent the system from settling. 3. Convergence to Stationarity : Finally, combining the smoothness of the objective functions and the bounded regret, we prove that the gradient of the total objective tends to zero, ensuring the method converges to a valid stationary solution. 
+
+C.1. Approximation bound 
+
+Our analysis relies on the following standard assumptions regarding the erasure objective Ler and the preservation objective 
+
+Lpr .
+
+Assumption C.1 (Boundedness and Lipschitz Continuity) . For both objective functions f ∈ {L er , Lpr }, we assume they are bounded below and L-Lipschitz continuous. That is, for any parameters θ1, θ 2, there exists a constant L > 0 such that 
+
+∥∇ f (θ1)∥ ≤ L and |f (θ1) − f (θ2)| ≤ L∥θ1 − θ2∥.14 Z-Erase: Enabling Concept Erasure in Single-Stream Diffusion Transformers 
+
+Assumption C.2 (G-Smoothness) . The objective functions are differentiable and their gradients are G-Lipschitz continuous (G-Smooth). Specifically, there exists a constant G > 0 such that: 
+
+∥∇ f (θ1) − ∇ f (θ2)∥ ≤ G∥θ1 − θ2∥. (31) A key consequence of G-smoothness is the descent lemma (or quadratic upper bound): 
+
+|f (θ2) − f (θ1) − ∇ f (θ1)⊤(θ2 − θ1)| ≤ G
+
+2 ∥θ2 − θ1∥2. (32) Recall that the core of our Lagrangian-Guided Adaptive Erasure Modulation involves solving the dual problem (Eq. 10) with respect to λt. The update rule for λt depends on the gradient of the dual objective Lt(λt). From Eq. 23 (in the preceding derivation), the true gradient of the dual objective w.r.t λt is given by: 
+
+gt ≜ ∇λt Lt(λt) = ∇L pr (θt) · dt + ε, (33) where dt is the update direction for model parameters. However, computing ∇L pr (θt) · dt exactly requires two backward passes. To improve efficiency, Z-Erase utilizes an approximate gradient update (Eq. 14) using the loss difference from the first-order Taylor approximation: 
+
+˜gt ≜ 1
+
+α (Lpr (θt−1) − L pr (θt)) + ε, (34) where θt = θt−1 − αdt−1.The following lemma establishes that this implicit approximation is a theoretically valid proxy, as the approximation error is bounded by the model learning rate α.
+
+Lemma C.3 (Approximation Error Bound) . Under Assumptions C.1 and C.2, the difference between the true gradient gt
+
+and the approximate gradient ˜gt used in Algorithm 1 is bounded by the step size α:
+
+∥˜gt − gt∥ ≤ Gα
+
+2 ∥dt−1∥2 ≤ O (α). (35) 
+
+Proof. Substituting the parameter update rule θt = θt−1 − αdt−1 into the smoothness inequality (Assumption C.2) for the preservation loss Lpr , we have: 
+
+Lpr (θt) ≤ L pr (θt−1) + ∇L pr (θt−1)⊤(−αdt−1) + G
+
+2 ∥ − αdt−1∥2. (36) Rearranging the terms to isolate the dot product ∇L pr (θt−1)⊤dt−1:
+
+α∇L pr (θt−1)⊤dt−1 ≤ L pr (θt−1) − L pr (θt) + Gα2
+
+2 ∥dt−1∥2. (37) Similarly, using the lower bound property of smoothness, we can obtain: 
+
+Lpr (θt) ≥ L pr (θt−1) − α∇L pr (θt−1)⊤dt−1 − Gα2
+
+2 ∥dt−1∥2, (38) which implies: 
+
+α∇L pr (θt−1)⊤dt−1 ≥ L pr (θt−1) − L pr (θt) − Gα2
+
+2 ∥dt−1∥2. (39) Combining these two inequalities, the absolute difference satisfies: 
+
+(Lpr (θt−1) − L pr (θt)) − α∇L pr (θt−1)⊤dt−1 ≤ Gα2
+
+2 ∥dt−1∥2. (40) 15 Z-Erase: Enabling Concept Erasure in Single-Stream Diffusion Transformers 
+
+Now, we explicitly compare the gradients. The error is: 
+
+∥˜gt − gt∥ =
+
+ 1
+
+α (Lpr (θt−1) − L pr (θt)) + ε
+
+
+
+− (∇L pr (θt−1) · dt−1 + ε) (41) 
+
+= 1
+
+α |(Lpr (θt−1) − L pr (θt)) − α∇L pr (θt−1) · dt−1| (42) 
+
+≤ 1
+
+α · Gα2
+
+2 ∥dt−1∥2 (43) 
+
+= Gα
+
+2 ∥dt−1∥2. (44) Since Ler and Lpr are Lipschitz continuous (Assumption C.1), the gradient ∇L er and ∇L pr are bounded, which implies the update direction dt (a linear combination of gradients) is also bounded, i.e. , ∥dt−1∥2 ≤ C. Thus, strictly speaking, 
+
+∥˜gt − gt∥ ≤ O (α). This concludes the proof that the implicit gradient approximation is asymptotically accurate as 
+
+α → 0.
+
+C.2. Dynamic regret analysis 
+
+Since the model parameters θt are updated at each step, the dual objective function Lt(λ) is actually time-varying. Consequently, the update of the constraint weight λt via gradient ascent can be formulated as an Online Convex Optimization (OCO) problem. To prove convergence, we must bound the dynamic regret , which measures the accumulated loss difference between our algorithm’s choice of λt and the sequence of optimal comparators λ∗ 
+
+> t
+
+.We define the dual objective at step t following Eq. 10 as Lt(λt) = 12 ∥∇L er (θt) + λt∇L pr (θt)∥2 + λtε. Note that we aim to minimize this dual objective w.r.t λt. The dynamic regret is defined as: 
+
+RT ≜
+
+> T
+
+X
+
+> t=1
+
+(Lt(λt) − L t(λ∗ 
+
+> t
+
+)) , (45) where λ∗ 
+
+> t
+
+= arg min λt≥0 Lt(λt) is the optimal dual variable at step t (derived in Eq. 12). To bound this regret, we first establish a bound on the total functional variation of the dual objective , which quantifies how much the optimization landscape changes between steps. 
+
+Lemma C.4 (Total Functional Variation) . Under Assumptions C.1 and C.2, let D be the upper bound of the dual variable λ.The variation of the dual objective function between consecutive steps is bounded by the learning rate α: 
+
+> T−1
+
+X
+
+> t=0
+
+sup 
+
+> λ∈[0 ,D ]
+
+|L t+1 (λ) − L t(λ)| ≤ C1T α, (46) 
+
+where C1 is a constant depending on Lipschitz constant L, Smoothness constant G, and D.Proof. For any λ, the variation is: 
+
+|L t+1 (λ) − L t(λ)| = 12 ∥∇L er (θt+1 ) + λ∇L pr (θt+1 )∥2 − 12 ∥∇L er (θt) + λ∇L pr (θt)∥2 (47) 
+
+= 12 (vt+1 + vt)⊤ (vt+1 − vt) , (48) where we denote the composite gradient vector vt(λ) ≜ ∇L er (θt) + λ∇L pr (θt). By L-Lipschitz continuity, ∥vt∥ ≤ L(1 + λ). By G-smoothness, ∥vt+1 − vt∥ ≤ G(1 + λ)∥θt+1 − θt∥ = G(1 + λ)α∥dt∥. Substituting these bounds: 
+
+|L t+1 (λ) − L t(λ)| ≤ 12 · 2L(1 + λ) · G(1 + λ)α∥dt∥ (49) 
+
+≤ α · GL (1 + D)2∥dt∥. (50) Since ∥dt∥ is bounded (as gradients are bounded), let C1 = GL (1 + D)2 max ∥dt∥. Summing over t yields the lemma. 16 Z-Erase: Enabling Concept Erasure in Single-Stream Diffusion Transformers 
+
+With the variation bound established, we invoke the standard dynamic regret bound for Online Gradient Descent (OGD) (Zinkevich, 2003; Jadbabaie et al., 2015). 
+
+Theorem C.5 (Dynamic Regret Bound) . Suppose the updates for λt follow the gradient descent rule with a fixed step size β
+
+(as in Eq. 13), and model updates use a fixed learning rate α. Using the approximate gradient ˜gt where ∥˜gt − gt∥ ≤ O (α),the average dynamic regret is bounded by terms dependent on the step sizes and the horizon T :
+
+1
+
+T
+
+> T
+
+X
+
+> t=1
+
+(Lt(λt) − L t(λ∗ 
+
+> t
+
+)) ≤ O 
+
+ 1
+
+βT 
+
+
+
++ O(β) + O(α). (51) 
+
+As T → ∞ , the average regret converges to a neighborhood O(α + β) determined by the chosen hyperparameters. Proof. (Sketch) The regret in online learning with inexact gradients can be decomposed into two components: one arising from the non-stationarity of the environment (tracking error) and one from the gradient approximation error. Standard results in Online Convex Optimization (OCO) with constant step sizes indicate that the tracking error is upper-bounded by O(β) (representing the system’s reaction speed to dynamic changes) plus an initialization term decaying as O( 1 
+
+> βT
+
+).Additionally, Lemma C.3 ensures that the gradient approximation error is bounded by O(α) at each step. Averaging over 
+
+T steps, the total regret bound becomes O( 1 
+
+> βT
+
++ β + α). This result provides sufficient theoretical justification for our practical implementation: while exact convergence to zero requires diminishing steps, establishing small fixed α and β
+
+guarantees the system stabilizes within a tight, controlled neighborhood of the optimal Pareto front. 
+
+C.3. Convergence to Pareto stationarity 
+
+With the dynamic regret bound established, we now prove the convergence of the model parameters θ to a stationary point. We construct a total composite objective function at each step t defined by the dynamically tracked weight λt:
+
+Jt(θ) ≜ Ler (θ) + λtLpr (θ). (52) Our goal is to show that the gradient of this composite objective vanishes, implying that the algorithm reaches a consistent solution. 
+
+Theorem C.6 (Pareto Stationarity) . Under Assumptions C.1 and C.2, and given the diminishing step sizes α, β satisfying the conditions in Theorem C.5, the sequence of iterates generated by Algorithm 1 satisfies: 
+
+lim   
+
+> T→∞
+
+min  
+
+> t=1 ,...,T
+
+∥∇L er (θt) + λt∇L pr (θt)∥2 = 0 . (53) 
+
+Proof. Consider the update rule θt+1 = θt − αtdt. By the construction of our algorithm (Eq. 11), the update direction is the gradient of the Lagrangian: 
+
+dt = ∇L er (θt) + λt∇L pr (θt). (54) Applying the G-smoothness assumption to the composite function Jt(θ) (noting that Jt is smooth since it is a linear combination of smooth functions): 
+
+Jt(θt+1 ) ≤ J t(θt) + ∇J t(θt)⊤(θt+1 − θt) + G(1 + λt)2 ∥θt+1 − θt∥2 (55) 
+
+= Jt(θt) − α∥dt∥2 + G(1 + λt)α2
+
+> t
+
+2 ∥dt∥2 (56) 
+
+= Jt(θt) − α
+
+
+
+1 − αG(1 + λt)2
+
+
+
+∥dt∥2. (57) Since λt is bounded (let λt ≤ D) and we choose a sufficiently small step size α < 2 
+
+> G(1+ D)
+
+, the coefficient 
+
+
+
+1 − αG(1+ λt)2
+
+
+
+is positive. Let this coefficient be c > 0. Rearranging the terms, we get: 
+
+cα ∥dt∥2 ≤ J t(θt) − J t(θt+1 ). (58) 17 Z-Erase: Enabling Concept Erasure in Single-Stream Diffusion Transformers    
+
+> Table 6. Recommended εvalues used for different settings in our experiments
+
+EXPERIMENT / S ETTING RECOMMENDED ε RATIONALE 
+
+Nudity, Violence ε = 1 × 10 −3 Sensitive concepts, require tight preservation Artistic Style ε = 1 × 10 −3 Global style is easy to remove, require tight preservation Entity ε = 1 × 10 −2 Concrete objects harder to disentangle Abstract Concepts ε = 1 × 10 −2 Abstract priors harder to disentangle Celebrity Identity ε = 1 × 10 −2 Identity preservation more robust to slack Downstream editability / utility (post-erase LoRA use) ε = 5 × 10 −3 Maintain editability & style generalization However, unlike standard SGD, our objective Jt changes at each step because λt updates to λt+1 . We decompose the total variation: 
+
+Jt+1 (θt+1 ) − J t(θt) = Jt+1 (θt+1 ) − J t(θt+1 )
+
+| {z }  
+
+> due to λupdate
+
++ Jt(θt+1 ) − J t(θt)
+
+| {z }  
+
+> due to θupdate
+
+(59) 
+
+= ( λt+1 − λt)Lpr (θt+1 ) + ( Jt(θt+1 ) − J t(θt)) . (60) Summing from t = 1 to T :
+
+> T
+
+X
+
+> t=1
+
+cα ∥dt∥2 ≤ J 1(θ1) − J T +1 (θT +1 ) + 
+
+> T
+
+X
+
+> t=1
+
+(λt+1 − λt)Lpr (θt+1 ). (61) Standard telescope sum analysis combined with the bounded variation of λ (from Theorem C.5) ensures the right side is bounded by a constant C2. Therefore, PTt=1 αt∥dt∥2 ≤ C2 < ∞. Given that P α → ∞ (for standard decay rates), it implies that lim inf t→∞ ∥dt∥2 must be 0. Specifically, for standard choices of α, we have: 
+
+min  
+
+> t=1 ,...,T
+
+∥dt∥2 ≤ C2
+
+PTt=1 α 
+
+> T→∞
+
+−−−−→ 0. (62) This proves that the algorithm converges to a point where the update direction dt vanishes. Recall that dt is the gradient of the Lagrangian. dt = 0 implies the KKT condition for stationarity is satisfied for the constrained optimization problem. 
+
+Remark on Hyperparameters. The theoretical analysis above assumes diminishing step sizes α, β to guarantee asymptotic convergence. In our practical implementation (Section 5.1), we adopt fixed hyperparameters ( α = 0 .001 , β = 0 .1) for finite-step training. As indicated by Theorem C.5, the stationary error is bounded by terms related to the step sizes. A small, fixed step size effectively maintains the system within a small neighborhood of the optimal Pareto front, balancing convergence speed and stability in the non-convex landscape of diffusion models. 
+
+## D. Additional Implementation Details and Results 
+
+D.1. Hyperparameter settings for ε across experiments 
+
+The tolerance parameter ε controls how tightly the preservation constraint is enforced and directly determines the trade-off between erasing the target concept and maintaining the model’s overall utility. Small values of ε restrict the update direction and prioritize preservation, which is preferable for fragile concepts or datasets with high semantic entanglement. Larger values relax the constraint and enable more aggressive erasure at the cost of controlled performance drift. In all our experiments we find that ε is robust within a moderate range (typically 10 −3–10 −1), and does not require fine-grained tuning. We summarize the ε values used for different experimental settings in Table 6. 
+
+D.2. Complete list of Entity, Artistic Style, Abstraction 
+
+To test the generalization and effectiveness of our Z-Erase, we build a concept list at three levels: from the concrete objects to the global artistic style and abstract concepts. The full list used in our experiments is presented in Table 7. Due to space limits, we provide the main metrics in the main text. Here, we present the full results of miscellaneousness erasure in Table 8. 18 Z-Erase: Enabling Concept Erasure in Single-Stream Diffusion Transformers  
+
+> Table 7. Complete list of concepts of Entity, Artistic Style, and Abstraction used in our experiment.
+
+Category # Number Prompt template Concepts 
+
+ENTITY 10 ‘A photo of [ Entity ]’ ‘Church ’, ‘ Soccer ’, ‘ Car ’, ‘ Airplane ’, ‘Tower ’, ‘ Pencil ’, ‘ Pizza ’, ‘ Shoes ’, ‘Cat ’, ‘ Clownfish ’ARTISTIC STYLE 10 ‘An art in the style of [ Artistic Style ]’ ‘Pablo Picasso ’, ‘Salvador Dali ’, ‘Claude Monet ’, ‘ Vincent Van Gogh ’, ‘Rembrandt van Rijn ’, ‘ Frida Kahlo ’, ‘Edvard Munch ’, ‘ Leonardo da Vinci ’, ‘Nicholas Roerich ’, ‘ Gustave Dore ’ABSTRACTION 10 ‘A close scene of [ Abstraction ]’ ‘Shake Hand ’, ‘ Kiss ’, ‘ Hug ’, ‘ Time ’, ‘Explosion ’, ‘Green ’, ‘Origami ’, ‘Fried ’, ‘ Amidst ’, ‘ Sad ’             
+
+> Table 8. Evaluation on erasing the specific category :Entity (e.g., church), Artistic Style (e.g., Claude Monet) and Abstraction (e.g.,
+> color). CLIP classification accuracy are reported for each category on the erased category itself (A CC e, efficacy), and the remaining unaffected categories (A CC ir , specificity). The combined performance is summarized by H a= A CC ir −ACC e, where higher values indicate a better balance between erasure and preservation.
+
+ENTITY ARTISTIC STYLE ABSTRACTION 
+
+METHOD ACC e ↓ ACC ir ↑ Ha ↑ ACC e ↓ ACC ir ↑ Ha ↑ ACC e ↓ ACC ir ↑ Ha ↑
+
+AC (Model-Based) 24.6 26.6 2.0 28.6 24.4 -4.2 26.9 25.8 -1.1 AC (Noise-Based) 25.5 26.4 0.9 29.3 23.8 -5.5 27.3 26.2 -1.1 ESD-x 23.3 28.6 5.3 28.5 24.7 -3.8 26.5 25.7 -0.8 ESD-u 21.8 27.8 6.0 27.8 24.5 -3.3 25.7 25.3 -0.4 MACE 23.2 27.5 4.3 26.6 25.8 -0.8 25.1 28.5 3.4 UCE 20.1 20.6 0.5 21.7 19.9 -1.8 19.7 20.3 0.6 EraseAnything 24.1 27.6 3.5 25.9 26.1 0.2 25.6 29.0 3.4 DiT-Localization 17.5 28.7 11.2 31.2 23.3 -7.9 28.6 25.8 -2.8 Ours 23.1 28.9 7.4 26.1 26.9 0.8 24.3 29.0 4.7 
+
+Z-Image Turbo 24.7 32.1 - 33.6 27.6 - 30.5 29.2 -
+
+D.3. Complete list of Celebrities 
+
+The celebrities used in our experiments are illustrated in Table 9. It’s noteworthy that not arbitrary celebrities can be faithfully synthesized by Z-Image Turbo, after manually comparing the synthesized famous people with its prompt and add some comic characters, we keep 50 for each group. 
+
+## E. User Study 
+
+A common limitation in prior work on concept erasure and attack is the reliance on pretrained detectors or classifiers as the sole evaluation criterion. While such tools offer scalability, they are often unreliable: detectors may miss subtle instances of a concept (false negatives), mistakenly flag benign patterns (false positives), or fail to distinguish between high-quality erasure and degraded artifacts. This creates a gap between machine-detected presence of a concept and human-perceived restoration. To overcome these shortcomings, we conduct a user study, involving 30 non-artist participants, each providing an average of 50 responses. Adhering to Z-Image’s comprehensive evaluative criteria for T2I models, our user study incorporates three foundational metrics: Image Quality , Prompt Adherence , and Output Diversity . Together, these criteria form the evaluative baseline for benchmarking generative performance. In the specific context of concept erasure, where the objective is to suppress the target concept while allowing unrelated concepts to be faithfully rendered, this baseline is augmented with two task-oriented metrics: Erasing Cleanliness and Irrelevant Preservation .19 Z-Erase: Enabling Concept Erasure in Single-Stream Diffusion Transformers  
+
+> Table 9. Complete list of celebrities used in our experiment.
+
+Category # Number Mapping Concept Celebrities 
+
+Erasure Group 50 ‘A person ’‘Adele ’, ‘ Albert Camus ’, ‘ Angelina Jolie ’, ‘ Arnold Schwarzenegger ’, ‘ Au-drey Hepburn ’, ‘ Barack Obama ’, ‘ Beyonc ´e’, ‘ Brad Pitt ’, ‘ Bruce Lee ’, ‘Chris Evans ’, ‘ Christiano Ronaldo ’, ‘ David Beckham ’, ‘ Dr Dre ’, ‘ Drake ’, ‘Elizabeth Taylor ’, ‘ Eminem ’, ‘ Elon Musk ’, ‘ Emma Watson ’, ‘ Frida Kahlo ’, ‘ Hugh Jackman ’, ‘ Hillary Clinton ’, ‘ Isaac Newton ’, ‘ Jay-Z ’, ‘Justin Bieber ’, ‘ John Lennon ’, ‘ Keanu Reeves ’, ‘ Leonardo Dicaprio ’, ‘Mariah Carey ’, ‘ Madonna ’, ‘ Marlon Brando ’, ‘ Mahatma Gandhi ’, ‘ Mark Zuckerberg ’, ‘ Michael Jordan ’, ‘ Muhammad Ali ’, ‘ Nancy Pelosi ’,‘ Neil Armstrong ’, ‘ Nelson Mandela ’, ‘ Oprah Winfrey ’, ‘ Rihanna ’, ‘ Roger Fed-erer ’, ‘ Robert De Niro ’, ‘ Ryan Gosling ’, ‘ Scarlett Johansson ’, ‘ Stan Lee ’, ‘Tiger Woods ’, ‘ Timothee Chalamet ’, ‘ Taylor Swift ’, ‘ Tom Hardy ’, ‘ William Shakespeare ’, ‘ Zac Efron ’Retention Group 50 -‘Angela Merkel ’, ‘ Albert Einstein ’, ‘ Al Pacino ’, ‘ Batman ’, ‘ Babe Ruth Jr ’, ‘ Ben Affleck ’, ‘ Bette Midler ’, ‘ Benedict Cumberbatch ’, ‘ Bruce Willis ’, ‘Bruno Mars ’, ‘ Donald Trump ’, ‘ Doraemon ’, ‘ Denzel Washington ’, ‘ Ed Sheeran ’, ‘ Emmanuel Macron ’, ‘ Elvis Presley ’, ‘ Gal Gadot ’, ‘ George Clooney ’, ‘ Goku ’,‘ Jake Gyllenhaal ’, ‘ Johnny Depp ’, ‘ Karl Marx ’, ‘ Kanye West ’, ‘ Kim Jong Un ’, ‘ Kim Kardashian ’, ‘ Kung Fu Panda ’, ‘ Lionel Messi ’, ‘Lady Gaga ’, ‘ Martin Luther King Jr. ’, ‘ Matthew McConaughey ’, ‘ Morgan Freeman ’, ‘ Monkey D. Luffy ’, ‘ Michael Jackson ’, ‘ Michael Fassbender ’, ‘Marilyn Monroe ’, ‘ Naruto Uzumaki ’, ‘ Nicolas Cage ’, ‘ Nikola Tesla ’, ‘ Op-timus Prime ’, ‘ Robert Downey Jr. ’, ‘ Saitama ’, ‘ Serena Williams ’, ‘ Snow White ’, ‘ Superman ’, ‘ The Hulk ’, ‘ Tom Cruise ’, ‘ Vladimir Putin ’, ‘ Warren Buffett ’, ‘ Will Smith ’, ‘ Wonderwoman ’Erasing Cleanliness quantifies the effectiveness of the erasure mechanism, assessing whether the target concept is not only removed but eliminated without residual traces or indirect stylistic leakage. Irrelevant Preservation, in contrast, measures the system’s capability to retain semantic fidelity for concepts outside the erasure domain, ensuring that composition, contextual cues, and stylistic attributes remain coherent and unaffected, and the image is high-quality without artifacts. Fig. 10 and 11 illustrate the user study interface, which is deliberately designed to support smooth participant interaction and minimize cognitive overhead. During the evaluation, participants are shown image sets containing either 4 or 3 samples produced by multiple anonymized methods. They are asked to rate each method across the five aforementioned metrics using a consistent scoring protocol. The collected ratings are subsequently aggregated and visualized as a pentagonal performance profile (Fig. 6 in the main paper), providing an intuitive and comparative view of each method’s strengths and weaknesses. This representation offers both researchers and practitioners a structured and interpretable summary of model capabilities, enabling fine-grained insights into the trade-offs inherent in concept erasure and guiding future methodological refinements in T2I generation. 
+
+## F. Multi-Concept Erasure 
+
+In this section, we elaborate on the strategy employed for erasing multiple concepts simultaneously using Z-Erase. While the primary experiments in the main text focus on single-concept erasure to rigorously validate our Lagrangian-Guided Adaptive Erasure Modulation, practical safety alignment often requires removing multiple undesirable concepts at once. 
+
+Linear Synergy of Concept-Erased LoRAs. Our approach to multi-concept erasure leverages the modularity of Low-Rank Adaptations (LoRAs). Since Z-Erase confines the parameter updates to a specific subspace via Stream Disentangled Concept Erasure Framework, the optimization trajectories for different concepts remain relatively orthogonal in the parameter space. This structural decoupling allows us to merge independent erasure modules into a cohesive single entity without retraining from scratch. 20 Z-Erase: Enabling Concept Erasure in Single-Stream Diffusion Transformers This  study  evaluates  AI  generated  images  from  different  concept  erasure  methods,  each  time  showing  4 results  under  the  same  prompt  and 
+
+seed . You  need  to  judge  the  results  with  two  metrics : Erasing  Cleanliness  and  Irrelevant  Preservation .
+
+1 2 3 4 5
+
+1 2 3 4 5
+
+1 2 3 4 5
+
+1 2 3 4 5
+
+A
+
+B
+
+C
+
+D
+
+# User Study 
+
+Please  rate  the  images  from  1 to  5, where  1 indicates  the  lowest  quality  and  5 represents  the  highest  quality . The  column  in  RED  is  designated 
+
+for  evaluating  Erasing  Cleanliness  of  the  images,  which  refer  to  the  effectiveness  of  the  methods  to  erase  the  target  concept . The  adjacent 
+
+column  in  BLUE  is  for  Irrelevant  Preservation , which  measures  how  well  the  methods  can  generate  images  that  are  not  intended  for  erasure .
+
+1 2 3 4 5
+
+1 2 3 4 5
+
+1 2 3 4 5
+
+1 2 3 4 5
+
+A
+
+B
+
+C
+
+D
+
+Erasing Cleanliness 
+
+Method B 
+
+Method C 
+
+Method D 
+
+Irrelevant Preservation 
+
+[ Red  Hanfu  ] [ LV handbag ] 
+
+Method A 
+
+Figure 10. User study interface on Erasing Cleanliness and Irrelevant Preservation. This  study  evaluates  AI  generated  images  from  different  concept  erasure  methods,  each  time  showing  3 results  under  the  same  prompt  and 
+
+seed . You  need  to  judge  the  results  with  three  metrics : Image  Quality , Prompt  Adherence  and  Output  Diversity .
+
+1 2 3 4 5A
+
+# User Study 
+
+Please  rate  the  images  from  1 to  5, where  1 indicates  the  lowest  quality  and  5 represents  the  highest  quality . Prompts  are  all  sampled  from 
+
+PromptHero .
+
+Image Quality 
+
+Method B Method A 
+
+RAW photo of a mountain lake 
+
+landscape, clear water, highly 
+
+detailed, photorealistic, ultra -
+
+realistic, 8K UHD DSLR photo, 
+
+soft lighting, reflection, high 
+
+quality, film grain, Fujifilm XT3, 
+
+masterpiece, panoramic. 
+
+# Prompt 
+
+1 2 3 4 5B
+
+Method  C
+
+1 2 3 4 5C
+
+1 2 3 4 5APrompt Adherence  1 2 3 4 5B 1 2 3 4 5C
+
+1 2 3 4 5AOutput Diversity  1 2 3 4 5B 1 2 3 4 5C
+
+Figure 11. User study interface on Image Quality, Prompt Adherence and Output Diversity. 
+
+To unify multiple erasure objectives, we employ a linear interpolation strategy in the parameter space. Let 
+
+{∆θ1, ∆θ2, . . . , ∆θN } represent a set of N independently trained LoRA modules, each targeting a specific concept 
+
+ci ∈ { c1, . . . , c N }. The combined multi-concept LoRA, denoted as ∆θmul , is computed as a weighted average: 
+
+∆θmul =
+
+> N
+
+X
+
+> i=1
+
+wi∆θi, (63) 21 Z-Erase: Enabling Concept Erasure in Single-Stream Diffusion Transformers                                                                              
+
+> Table 10. Additional quantitative results on HunyuanImage-3.0 model.
+> NUDITY ENTITY ARTISTIC STYLE ABSTRACTION
+> METHOD Total ↓FID ↓CLIP ↑ACC e↓ACC ir ↑Ha↑ACC e↓ACC ir ↑Ha↑ACC e↓ACC ir ↑Ha↑
+> DiT-Localization (Zarei et al., 2025) 306 36.7 26.3 16.8 23.4 6.6 30.7 23.1 -7.6 27.9 26.4 -1.5 EraseAnything (Gao et al., 2025a) 231 24.0 29.9 24.6 27.5 2.9 25.6 26.4 0.8 25.3 28.9 3.6 Ours 145 23.6 30.8 24.3 27.9 3.6 26.2 27.0 0.8 24.9 28.8 3.9
+> HunyuanImage-3.0 628 23.1 31.2 28.6 31.5 -32.1 28.3 -29.6 29.8 -
+
+where wi represents the merging weight for the i-th concept. We adopt a normalized weight blending strategy where 
+
+wi = 1 
+
+> N
+
+. This normalization is crucial; it ensures that the magnitude of the combined perturbation remains within the safe optimization manifold established by our preservation constraints. Simply summing the weights (i.e., P wi > 1) often leads to concept “over-erasure” or catastrophic forgetting of general knowledge, as the aggregated parameter shift pushes the model too far from its pre-trained state. By averaging the weights, Z-Erase effectively constructs a superposition of distinct erasure directions. As demonstrated in Fig. 7, this simple yet effective strategy successfully removes multiple target concepts simultaneously. The generated images confirm that the model ceases to produce the target concepts while maintaining high fidelity for the remaining unrelated context, validating the linearity and composability of the LoRA modules learned by Z-Erase. 
+
+## G. Additional Results and Analysis 
+
+G.1. Evaluation on HunyuanImage-3.0 
+
+Due to space constraints in the main text, our primary evaluation focused on Z-Image Turbo. To further validate the versatility and robustness of Z-Erase across different single-stream architectures, we provide additional experimental results on HunyuanImage-3.0, another leading open-source model in this domain. We conduct tests using the I2P dataset (Schramowski et al., 2023) for nudity erasure and our curated Entity, Artistic Style, and Abstraction datasets (Table 7) for concept erasure, maintaining the exact same hyperparameter configurations as detailed in the main text. As shown in Table 10, Z-Erase demonstrates consistent superiority on the HunyuanImage-3.0 model. Our method achieves the lowest total nudity detection count while maintaining FID and CLIP scores highly comparable to the original model, significantly outperforming baselines like EraseAnything and DiT-Localization. In miscellaneousness concept erasure tasks (Entity, Style, Abstraction), Z-Erase consistently attains high balance scores (H a), indicating that we do not sacrifice image quality or irrelevant preservation for erasure success. Notably, our advantage becomes more pronounced when dealing with abstract and global concepts. Since these concepts are often entangled deeply within the high-level semantic layers of single-stream models, prior methods struggle to isolate them without damaging the model’s generation capability. In contrast, Z-Erase effectively navigates this complexity. Visual comparisons on HunyuanImage-3.0 are provided in Fig. 12 and Fig. 13, showing that Z-Erase cleanly removes target concepts without introducing the artifacts or semantic drifts. 
+
+G.2. Detailed Analysis of Baselines and Failure Modes 
+
+In this section, we provide a deeper analysis of why existing methods struggle in the single-stream paradigm, even after being stabilized by our proposed mechanism. It is important to note that all baselines evaluated in this work were adapted using our Stream Disentangled Concept Erasure Framework . Without this structural decoupling, naive fine-tuning will lead to immediate generation collapse (as shown in Fig. 1). However, even with this safe optimization subspace, prior methods frequently fall into one of two failure modes: under-erasure or over-erasure .1. Under-erasure : The target concept is not fully removed ( e.g. , subtle traces remain) or reappears under slight prompt perturbations or adversarial attacks. 2. Over-erasure : The model’s general utility is damaged, leading to severe visual artifacts, “fried” textures, or the inability to generate unrelated concepts. 22 Z-Erase: Enabling Concept Erasure in Single-Stream Diffusion Transformers Guernica  by 
+
+Pablo  Picasso 
+
+> HunyuanImage -3. 0Z-Erase
+
+The Weeping 
+
+Woman by 
+
+Pablo Picasso 
+
+Les Demoiselles 
+
+d'Avignon by 
+
+Pablo  Picasso 
+
+Seated Woman 
+
+with a Book by 
+
+Pablo Picasso 
+
+Three Musicians 
+
+by  Pablo Picasso 
+
+Figure 12. Visualizations on erasing the concept “Pablo Picasso” . With the retention prompt kept as “painting” in LoRA training, our method preserves the overall painting modality while effectively removing Picasso’s signature abstract-geometric style. The generated results remain high-quality and faithful, exhibiting minimal semantic or compositional shift. Bedroom in 
+
+Arles by  Vincent 
+
+van Gogh 
+
+> HunyuanImage -3.0 Z-Erase
+
+Café Terrace at 
+
+Night by  Vincent 
+
+van Gogh 
+
+Irises by  Vincent 
+
+van Gogh 
+
+Starry Night Over 
+
+the Rhone by 
+
+Vincent van Gogh 
+
+Olive Trees by 
+
+Vincent van Gogh 
+
+Figure 13. Visualizations on erasing the concept “Vincent van Gogh” . With the retention prompt kept as “realistic” in LoRA training, our method generates realistic scenarios while effectively removing van Gogh’s signature abstract style. The generated results remain high-quality and faithful, exhibiting minimal semantic or compositional shift. 
+
+This binary outcome is exacerbated by the highly entangled nature of single-stream transformers. Traditional optimization objectives lack the granularity to navigate this sensitive landscape. We analyze two recent representative strong baselines to illustrate this: 23 Z-Erase: Enabling Concept Erasure in Single-Stream Diffusion Transformers Z-Image Turbo  ε
+
+> Too Weak
+> Under -Erasure
+> Too Strong
+> Artifacts
+> Balanced
+> trade -off
+
+1e -4= ε 1e -3= ε 1e -2= ε 1e -1= ε 1=  
+
+> Taylor Swift  Leonardo DiCaprio
+> Figure 14. Visualizations of ablation study on ε.
+
+Analysis of EraseAnything (Gao et al., 2025a). EraseAnything employs a bi-level optimization strategy to find a balance between erasing and preserving. While theoretically sound for dual-stream models (like Flux), we find its granularity is too coarse for single-stream architectures. It struggles to find the optimal trade-off point on the Pareto front. In practice, it often settles for a conservative solution (leading to under-erasure) or pushes too hard to erase, causing semantic drift in the preservation set. It lacks a dynamic “brake” mechanism to stop erasure precisely when utility starts to degrade. 
+
+Analysis of DiT-Localization (Zarei et al., 2025). DiT-Localization operates by calculating attention scores for the target concept across layers and then replacing the text embedding with a null token in the Top-K most responsive layers. As seen in Table 10, this method is indeed powerful at erasure (low nudity count). However, it suffers significantly in utility preservation (high A CC ir , lower H a). In single-stream models, layers do not have discrete roles ( e.g. , “just style” or “just object”). An attention layer responsive to “nudity” might also be responsible for generating “skin texture” or “human anatomy” in general. By bluntly nulling out these layers, DiT-Localization acts like a sledgehammer: it removes the target but often breaks the generation of unrelated concepts that rely on those same shared layers. These observations underscore the necessity of our Lagrangian-Guided Adaptive Erasure Modulation . Instead of a static optimization target or a heuristic layer-pruning strategy, Z-Erase dynamically negotiates the trade-off at every step. This allows it to act as a scalpel, surgically removing the target concept deep within the entangled weights while strictly respecting the preservation boundary. 
+
+G.3. Additional ablation study results 
+
+In this section, we provide further insights into the core components of Z-Erase through visual ablations. These qualitative results serve to reinforce the quantitative findings discussed in the main text, offering a clearer window into how our method navigates the complex optimization landscape of single-stream models. 
+
+Visualization of the Preservation Constraint ε. While our main text quantifies the impact of ε on the I2P dataset, visualizing its effect on specific identity erasure offers a more intuitive understanding of the erasure-preservation trade-off. In Fig. 14, we focus on two distinct celebrity concepts: Leonardo DiCaprio and Taylor Swift . As we traverse the value of ε
+
+from 1e − 4 to 1, we observe a monotonic and controllable shift in the model’s behavior. At extremely tight constraints, the model prioritize preservation too heavily, resulting in under-erasure where the identities remain virtually unchanged. Conversely, loosening the constraint too much leads to aggressive erasure that introduces severe visual artifacts—distorting facial features and degrading overall image quality. The “sweet spot” (highlighted in red) represents a balanced state where the target identity is successfully removed while high-quality, photorealistic generation is maintained. This capability to monotonically tune the erasure intensity is a distinct advantage of Z-Erase, allowing users to define their own safety-utility boundaries. 
+
+Necessity of Stream Disentangled Concept Erasure Framework. Finding the correct parameters to tune in a single-stream 24 Z-Erase: Enabling Concept Erasure in Single-Stream Diffusion Transformers A naked girl with       
+
+> beautiful hair and
+> her breasts exposed
+> Q+K+V Q+K K+V FFN.w V+out
+> Full Layers Top  3 Layers Top  1 Layer Context
+> refiner
+> __
+> Stream Disentangled
+> Concept Erasure
+> Framework
+
+Figure 15. Visual ablation of different fine-tuning configurations. We compare various parameter update strategies to demonstrate the necessity of our method. “Top K” and “Top 1” layers are selected based on the highest attention scores for the target concept, following the logic of DiT-Localization (Zarei et al., 2025). The results reveal critical insights: fine-tuning the FFN weights has negligible impact on erasure; meanwhile, any standard LoRA fine-tuning on shared projections (even when restricted to a single layer) leads to immediate generation collapse and severe visual artifacts. Only our Stream Disentangled Concept Erasure Framework (bottom row) achieves high-quality erasure while preserving the structural integrity of the image. Therefore, our Stream Disentangled Concept Erasure Framework is a prerequisite for stable erasure in pure single-stream models. 
+
+architecture is not a straightforward process. The high entanglement between text and image processing means that naive intervention strategies almost invariably lead to generation collapse. To illustrate this difficulty and justify our comprehensive design, we demonstrate the failure modes of various alternative fine-tuning configurations in Fig. 15. We experimented with numerous combinations, including tuning different subsets of projection weights (Query, Key, Value) and restricting updates to specific layers (Top-1, Top-3, Full Layers) based on attention scores derived from DiT-Localization (Zarei et al., 2025). The results are stark: Directly fine-tuning shared projections (regardless of the combination (Q + K + V , Q + K, etc. ) or the number of layers, or context refiner) results in catastrophic noise. Even modifying a single layer (Top-1 Layer) is sufficient to destroy the image structure and lead to strong visual artifacts. Interestingly, we find that fine-tuning the Feed-Forward Network (FFN) had almost no impact on erasure, suggesting that semantic binding is primarily encoded in the attention mechanism. Ultimately, only our proposed Stream Disentangled Concept Erasure Framework , which structurally isolates the parameter updates to the textual pathway, enables effective concept erasure without compromising visual integrity. This confirms that our architectural intervention is not merely an option, but a prerequisite for stable erasure in single-stream diffusion transformers. 
+
+G.4. Additional Visualizations 
+
+Here, we provide more visualizations compared with state-of-the-art erasure methods adapted by our Stream Disentangled Concept Erasure Framework . As shown in Figure 16, our Z-Erase removes a wide range of concepts, from concrete to abstraction. Moreover, to assess the potential influence of integrating fine-tuned LoRAs into the original model, as 25 Z-Erase: Enabling Concept Erasure in Single-Stream Diffusion Transformers 
+
+depicted in Figure 17, it can be observed that incorporating fine-tuned LoRAs for diverse concepts, i.e. Celebrity : Batman, Spiderman, Cristiano Ronaldo, Hulk, Ironman . Entity : Tiger, Cat, Basketball, Statue of Liberty, The Great Wall 
+
+and Art : Van Gogh, Edvard Munch, Leonardo da Vinci, Johannes Vermeer, Rembrandt , does not adversely affect the original image synthesis capabilities. All above-mentioned concepts are depicted sequentially from left to right. 
+
+## H. Limitations 
+
+Compared to naive fine-tuning, our adaptive modulation introduces a slight computational cost. This is due to the calculation of the preservation loss gradient ( ∇L pr ) required for the constraint mechanism. Specifically, on a single H20 GPU, standard naive fine-tuning takes approximately 20 minutes per concept. In comparison, Z-Erase requires about 35 minutes to converge. We believe this extra time is a worthy trade-off for the significant stability and quality improvements achieved. 
+
+## I. Ethics Statement 
+
+The rapid evolution of generative AI has brought us to the era of Single-Stream Diffusion Transformers , a unified architecture that promises unprecedented generation quality and efficiency. However, this unification of text and image processing also introduces new risks. The deep entanglement of parameters makes these foundational models harder to control, posing new challenges for safe deployment. Z-Erase is developed in response to this emerging challenge. Our work is guided by the following ethical principles: 1. Proactive safety alignment : We believe safety should not be an afterthought. As architectures evolve from U-Net to Single-Stream Transformers, safety mechanisms must evolve with them. Z-Erase ensures that the capability to remove harmful content (NSFW, violence) remains effective in this new paradigm. 2. Copyright protection : Generative models often inadvertently memorize copyrighted materials. By enabling precise concept erasure, we provide model creators and community users with a tool to respect intellectual property and remove artistic styles or characters upon request. 3. Safety without compromise : A truly safe foundation model should not sacrifice its capabilities. Unlike blunt erasure methods that degrade image quality or irrelevant concepts, Z-Erase is designed to strictly preserve the model’s original powerful performance on unrelated tasks. We aim to build both secure and highly capable models, ensuring the next generation of T2I models serves society effectively. In summary, Z-Erase represents a step towards Responsible AI . We hope this work inspires further research into the interpretability and controllability of single-stream architectures, ensuring that the next generation of foundational models serves society safely and ethically. 26 Z-Erase: Enabling Concept Erasure in Single-Stream Diffusion Transformers Z-Image Turbo  ESD  AC [model]  EraseAnything  DiT -Localization  Ours 
+
+> Claude Monet Johnny Depp Sports Car Minecraft Hold Eiffel Tower Three
+
+Figure 16. Comparison with mainstream concept erasing methods. Here, ESD, AC and EraseAnything are adapted with our Stream Disentangled Concept Erasure Framework to prevent generation collapse. 
+
+27 Z-Erase: Enabling Concept Erasure in Single-Stream Diffusion Transformers School Bus  Z-Erase 
+
+> Paul Cézanne hug School Bus Paul Cézanne hug School Bus Paul Cézanne hug
+
+Figure 17. Visualization on LoRA Disentanglement. The left side of the blue dashed line delineates the original image (yellow box) and the erased image by our Z-Erase. The right side illustrates the result on unrelated concepts upon incorporating the LoRA associated with the erased concept. Top rows: Celebrity ; Mid rows: Entity ; Last rows: Art .
+
+28
