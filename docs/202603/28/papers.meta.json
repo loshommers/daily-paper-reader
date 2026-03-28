@@ -1,0 +1,23 @@
+{
+  "label": "2026-03-28",
+  "date": "2026-03-28",
+  "generated_at": "2026-03-28T19:46:55",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202603/28/2603.24695v1-amplified-patch-level-differential-privacy-for-free-via-random-cropping",
+      "section": "quick",
+      "title_en": "Amplified Patch-Level Differential Privacy for Free via Random Cropping",
+      "authors": "Kaan Durmaz, Jan Schuchardt, Sebastian Schmidt, Stephan Günnemann",
+      "date": "2026-03-25",
+      "pdf": "https://arxiv.org/pdf/2603.24695v1",
+      "score": "6.0",
+      "evidence": "在差分隐私训练中通过随机裁剪概率性地排除敏感内容",
+      "tldr": "本研究探讨了计算机视觉中常用的随机裁剪对差分隐私（DP）的放大作用。研究发现，当敏感信息在空间上局部化时，随机裁剪能以一定概率排除这些内容，从而在梯度噪声和随机采样之外提供第三种随机性来源。作者提出了“补丁级”邻近关系，并为结合随机裁剪的 DP-SGD 推导了紧致的隐私界限。该方法无需修改模型架构或训练流程，即可在图像分割等任务中实现更优的隐私与效用权衡，证明了利用现有数据增强手段提升隐私保护的潜力。",
+      "tags": "query:mu-ce",
+      "abstract_en": "Random cropping is one of the most common data augmentation techniques in computer vision, yet the role of its inherent randomness in training differentially private machine learning models has thus far gone unexplored. We observe that when sensitive content in an image is spatially localized, such as a face or license plate, random cropping can probabilistically exclude that content from the model's input. This introduces a third source of stochasticity in differentially private training with stochastic gradient descent, in addition to gradient noise and minibatch sampling. This additional randomness amplifies differential privacy without requiring changes to model architecture or training procedure. We formalize this effect by introducing a patch-level neighboring relation for vision data and deriving tight privacy bounds for differentially private stochastic gradient descent (DP-SGD) when combined with random cropping. Our analysis quantifies the patch inclusion probability and shows how it composes with minibatch sampling to yield a lower effective sampling rate. Empirically, we validate that patch-level amplification improves the privacy-utility trade-off across multiple segmentation architectures and datasets. Our results demonstrate that aligning privacy accounting with domain structure and additional existing sources of randomness can yield stronger guarantees at no additional cost.",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

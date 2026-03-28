@@ -1,6 +1,9 @@
 * <a class="dpr-sidebar-root-link" href="#/">首页</a>
 * <a class="dpr-sidebar-root-link dpr-sidebar-noactive-link" href="javascript:void(0)" data-dpr-hash="#/tutorial/README">使用教程</a>
 * Daily Papers
+  * 2026-03-28 <!--dpr-date:20260328-->
+    * 速读区
+      * <a class="dpr-sidebar-item-link dpr-sidebar-item-structured" href="#/202603/28/2603.24695v1-amplified-patch-level-differential-privacy-for-free-via-random-cropping" data-sidebar-item="{&quot;title&quot;: &quot;Amplified Patch-Level Differential Privacy for Free via Random Cropping&quot;, &quot;link&quot;: &quot;https://arxiv.org/abs/2603.24695v1-amplified-patch-level-differential-privacy-for-free-via-random-cropping&quot;, &quot;score&quot;: &quot;6.0&quot;, &quot;tags&quot;: [{&quot;kind&quot;: &quot;query&quot;, &quot;label&quot;: &quot;mu-ce&quot;}], &quot;evidence&quot;: &quot;在差分隐私训练中通过随机裁剪概率性地排除敏感内容&quot;}">Amplified Patch-Level Differential Privacy for Free via Random Cropping</a>
   * 2026-03-27 <!--dpr-date:20260327-->
     * 精读区
       * <a class="dpr-sidebar-item-link dpr-sidebar-item-structured" href="#/202603/27/2603.25074v1-z-erase-enabling-concept-erasure-in-single-stream-diffusion-transformers" data-sidebar-item="{&quot;title&quot;: &quot;Z-Erase: Enabling Concept Erasure in Single-Stream Diffusion Transformers&quot;, &quot;link&quot;: &quot;https://arxiv.org/abs/2603.25074v1-z-erase-enabling-concept-erasure-in-single-stream-diffusion-transformers&quot;, &quot;score&quot;: &quot;10.0&quot;, &quot;tags&quot;: [{&quot;kind&quot;: &quot;query&quot;, &quot;label&quot;: &quot;mu-ce&quot;}], &quot;evidence&quot;: &quot;单流扩散Transformer中的概念擦除&quot;}">Z-Erase: Enabling Concept Erasure in Single-Stream Diffusion Transformers</a>

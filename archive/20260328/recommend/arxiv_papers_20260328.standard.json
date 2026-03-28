@@ -1,0 +1,56 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-03-28T19:46:15.757139+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 0,
+    "deep_cap": 6,
+    "deep_selected": 0,
+    "quick_candidates": 1,
+    "quick_skim_target": 11,
+    "quick_selected": 1
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2603.24695v1",
+      "title": "Amplified Patch-Level Differential Privacy for Free via Random Cropping",
+      "abstract": "Random cropping is one of the most common data augmentation techniques in computer vision, yet the role of its inherent randomness in training differentially private machine learning models has thus far gone unexplored. We observe that when sensitive content in an image is spatially localized, such as a face or license plate, random cropping can probabilistically exclude that content from the model's input. This introduces a third source of stochasticity in differentially private training with stochastic gradient descent, in addition to gradient noise and minibatch sampling. This additional randomness amplifies differential privacy without requiring changes to model architecture or training procedure. We formalize this effect by introducing a patch-level neighboring relation for vision data and deriving tight privacy bounds for differentially private stochastic gradient descent (DP-SGD) when combined with random cropping. Our analysis quantifies the patch inclusion probability and shows how it composes with minibatch sampling to yield a lower effective sampling rate. Empirically, we validate that patch-level amplification improves the privacy-utility trade-off across multiple segmentation architectures and datasets. Our results demonstrate that aligning privacy accounting with domain structure and additional existing sources of randomness can yield stronger guarantees at no additional cost.",
+      "authors": [
+        "Kaan Durmaz",
+        "Jan Schuchardt",
+        "Sebastian Schmidt",
+        "Stephan Günnemann"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.CR",
+        "cs.CV"
+      ],
+      "published": "2026-03-25T18:15:06+00:00",
+      "link": "https://arxiv.org/pdf/2603.24695v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "probabilistically excluding sensitive content via random cropping in DP training",
+      "llm_evidence_cn": "在差分隐私训练中通过随机裁剪概率性地排除敏感内容",
+      "llm_evidence": "在差分隐私训练中通过随机裁剪概率性地排除敏感内容",
+      "canonical_evidence": "在差分隐私训练中通过随机裁剪概率性地排除敏感内容",
+      "llm_tldr_en": "Uses random cropping to amplify differential privacy by excluding spatially localized sensitive information.",
+      "llm_tldr_cn": "利用随机裁剪通过排除空间局部的敏感信息来增强差分隐私效果。",
+      "llm_tldr": "利用随机裁剪通过排除空间局部的敏感信息来增强差分隐私效果。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Algorithms for removing sensitive information from neural networks",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
