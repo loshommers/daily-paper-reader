@@ -1,0 +1,37 @@
+{
+  "label": "2026-03-29",
+  "date": "2026-03-29",
+  "generated_at": "2026-03-29T20:00:46",
+  "count": 2,
+  "papers": [
+    {
+      "paper_id": "202603/29/2603.21387v1-knowledge-priors-for-identity-disentangled-open-set-privacy-preserving-video-fer",
+      "section": "quick",
+      "title_en": "Knowledge Priors for Identity-Disentangled Open-Set Privacy-Preserving Video FER",
+      "authors": "Feng Xu, Xun Li, Lars Petersson, Yulei Sui, David Ahmedt Aristizabal, Dadong Wang",
+      "date": "2026-03-22",
+      "pdf": "https://arxiv.org/pdf/2603.21387v1",
+      "score": "7.0",
+      "evidence": "身份抑制网络使身份匿名化",
+      "tldr": "针对视频面部表情识别中的身份隐私泄露问题，本文提出一种无需身份标签的开放集隐私保护框架。通过利用视频内外的知识先验构建身份抑制网络，在匿名化身份的同时保留表情特征，并结合去噪模块恢复识别性能。该方法在三个数据集上证明了其在保护隐私的同时，能保持与有监督方法相当的表情识别精度，为开放场景下的隐私保护提供了新思路。",
+      "tags": "query:mu-ce",
+      "abstract_en": "Facial expression recognition relies on facial data that inherently expose identity and thus raise significant privacy concerns. Current privacy-preserving methods typically fail in realistic open-set video settings where identities are unknown, and identity labels are unavailable. We propose a two-stage framework for video-based privacy-preserving FER in challenging open-set settings that requires no identity labels at any stage. To decouple privacy and utility, we first train an identity-suppression network using intra- and inter-video knowledge priors derived from real-world videos without identity labels. This network anonymizes identity while preserving expressive cues. A subsequent denoising module restores expression-related information and helps recover FER performance. Furthermore, we introduce a falsification-based validation method that uses recognition priors to rigorously evaluate privacy robustness without requiring annotated identity labels. Experiments on three video datasets demonstrate that our method effectively protects privacy while maintaining FER accuracy comparable to identity-supervised baselines.",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202603/29/2603.21615v1-adaedit-adaptive-temporal-and-channel-modulation-for-flow-based-image-editing",
+      "section": "quick",
+      "title_en": "AdaEdit: Adaptive Temporal and Channel Modulation for Flow-Based Image Editing",
+      "authors": "Guandong Li, Zhaobin Chu",
+      "date": "2026-03-23",
+      "pdf": "https://arxiv.org/pdf/2603.21615v1",
+      "score": "6.0",
+      "evidence": "图像编辑与内容操作",
+      "tldr": "本研究针对流匹配模型在图像编辑中的“注入困境”，即背景保持与内容生成之间的冲突，提出了AdaEdit框架。该框架无需训练，通过渐进式注入调度替代传统的硬切断策略，实现了特征的平滑过渡；同时引入通道选择性潜变量扰动，根据通道重要性差异化调整强度。实验表明，AdaEdit在PIE-Bench上显著提升了图像重建质量和编辑效果，且具有良好的兼容性。",
+      "tags": "query:mu-ce",
+      "abstract_en": "Inversion-based image editing in flow matching models has emerged as a powerful paradigm for training-free, text-guided image manipulation. A central challenge in this paradigm is the injection dilemma: injecting source features during denoising preserves the background of the original image but simultaneously suppresses the model's ability to synthesize edited content. Existing methods address this with fixed injection strategies -- binary on/off temporal schedules, uniform spatial mixing ratios, and channel-agnostic latent perturbation -- that ignore the inherently heterogeneous nature of injection demand across both the temporal and channel dimensions. In this paper, we present AdaEdit, a training-free adaptive editing framework that resolves this dilemma through two complementary innovations. First, we propose a Progressive Injection Schedule that replaces hard binary cutoffs with continuous decay functions (sigmoid, cosine, or linear), enabling a smooth transition from source-feature preservation to target-feature generation and eliminating feature discontinuity artifacts. Second, we introduce Channel-Selective Latent Perturbation, which estimates per-channel importance based on the distributional gap between the inverted and random latents and applies differentiated perturbation strengths accordingly -- strongly perturbing edit-relevant channels while preserving structure-encoding channels. Extensive experiments on the PIE-Bench benchmark (700 images, 10 editing types) demonstrate that AdaEdit achieves an 8.7% reduction in LPIPS, a 2.6% improvement in SSIM, and a 2.3% improvement in PSNR over strong baselines, while maintaining competitive CLIP similarity. AdaEdit is fully plug-and-play and compatible with multiple ODE solvers including Euler, RF-Solver, and FireFlow. Code is available at https://github.com/leeguandong/AdaEdit",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
