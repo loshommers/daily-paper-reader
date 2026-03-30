@@ -1,0 +1,161 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-03-30T20:02:35.845612+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 4,
+    "deep_cap": 6,
+    "deep_selected": 4,
+    "quick_candidates": 0,
+    "quick_skim_target": 11,
+    "quick_selected": 0
+  },
+  "deep_dive": [
+    {
+      "id": "2603.25994v1",
+      "title": "Neighbor-Aware Localized Concept Erasure in Text-to-Image Diffusion Models",
+      "abstract": "Concept erasure in text-to-image diffusion models seeks to remove undesired concepts while preserving overall generative capability. Localized erasure methods aim to restrict edits to the spatial region occupied by the target concept. However, we observe that suppressing a concept can unintentionally weaken semantically related neighbor concepts, reducing fidelity in fine-grained domains. We propose Neighbor-Aware Localized Concept Erasure (NLCE), a training-free framework designed to better preserve neighboring concepts while removing target concepts. It operates in three stages: (1) a spectrally-weighted embedding modulation that attenuates target concept directions while stabilizing neighbor concept representations, (2) an attention-guided spatial gate that identifies regions exhibiting residual concept activation, and (3) a spatially-gated hard erasure that eliminates remaining traces only where necessary. This neighbor-aware pipeline enables localized concept removal while maintaining the surrounding concept neighborhood structure. Experiments on fine-grained datasets (Oxford Flowers, Stanford Dogs) show that our method effectively removes target concepts while better preserving closely related categories. Additional results on celebrity identity, explicit content and artistic style demonstrate robustness and generalization to broader erasure scenarios.",
+      "authors": [
+        "Zhuan Shi",
+        "Alireza Dehghanpour Farashah",
+        "Rik de Vries",
+        "Golnoosh Farnadi"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.CR"
+      ],
+      "published": "2026-03-27T00:58:11+00:00",
+      "link": "https://arxiv.org/pdf/2603.25994v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "localized concept erasure in diffusion models",
+      "llm_evidence_cn": "扩散模型中的局部概念擦除",
+      "llm_evidence": "扩散模型中的局部概念擦除",
+      "canonical_evidence": "扩散模型中的局部概念擦除",
+      "llm_tldr_en": "Proposes a training-free framework for removing specific concepts from diffusion models while preserving neighbors.",
+      "llm_tldr_cn": "提出了一种无需训练的框架，用于从扩散模型中移除特定概念并保留相关邻近概念。",
+      "llm_tldr": "提出了一种无需训练的框架，用于从扩散模型中移除特定概念并保留相关邻近概念。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Concept erasure and removal from pre-trained models",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.26316v1",
+      "title": "SALMUBench: A Benchmark for Sensitive Association-Level Multimodal Unlearning",
+      "abstract": "As multimodal models like CLIP become integral to downstream systems, the need to remove sensitive information is critical. However, machine unlearning for contrastively-trained encoders remains underexplored, and existing evaluations fail to diagnose fine-grained, association-level forgetting. We introduce SALMUBench (Sensitive Association-Level Multimodal Unlearning), a benchmark built upon a synthetic dataset of 60K persona-attribute associations and two foundational models: a Compromised model polluted with this data, and a Clean model without it. To isolate unlearning effects, both are trained from scratch on the same 400M-pair retain base, with the Compromised model additionally trained on the sensitive set. We propose a novel evaluation protocol with structured holdout sets (holdout identity, holdout association) to precisely measure unlearning efficacy and collateral damage. Our benchmark reveals that while utility-efficient deletion is feasible, current methods exhibit distinct failure modes: they either fail to forget effectively or over-generalize by erasing more than intended. SALMUBench sets a new standard for comprehensive unlearning evaluation, and we publicly release our dataset, models, evaluation scripts, and leaderboards to foster future research.",
+      "authors": [
+        "Cai Selvas-Sala",
+        "Lei Kang",
+        "Lluis Gomez"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.LG"
+      ],
+      "published": "2026-03-27T11:33:59+00:00",
+      "link": "https://arxiv.org/pdf/2603.26316v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "benchmark for sensitive association-level multimodal unlearning",
+      "llm_evidence_cn": "敏感关联级多模态遗忘的基准",
+      "llm_evidence": "敏感关联级多模态遗忘的基准",
+      "canonical_evidence": "敏感关联级多模态遗忘的基准",
+      "llm_tldr_en": "Introduces a benchmark for diagnosing fine-grained, association-level forgetting in multimodal models.",
+      "llm_tldr_cn": "引入了一个用于诊断多模态模型中细粒度关联级遗忘的基准。",
+      "llm_tldr": "引入了一个用于诊断多模态模型中细粒度关联级遗忘的基准。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "State of the art methods for machine unlearning and concept erasure",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.26569v1",
+      "title": "Machine Unlearning under Retain-Forget Entanglement",
+      "abstract": "Forgetting a subset in machine unlearning is rarely an isolated task. Often, retained samples that are closely related to the forget set can be unintentionally affected, particularly when they share correlated features from pretraining or exhibit strong semantic similarities. To address this challenge, we propose a novel two-phase optimization framework specifically designed to handle such retai-forget entanglements. In the first phase, an augmented Lagrangian method increases the loss on the forget set while preserving accuracy on less-related retained samples. The second phase applies a gradient projection step, regularized by the Wasserstein-2 distance, to mitigate performance degradation on semantically related retained samples without compromising the unlearning objective. We validate our approach through comprehensive experiments on multiple unlearning tasks, standard benchmark datasets, and diverse neural architectures, demonstrating that it achieves effective and reliable unlearning while outperforming existing baselines in both accuracy retention and removal fidelity.",
+      "authors": [
+        "Jingpu Cheng",
+        "Ping Liu",
+        "Qianxiao Li",
+        "Chi Zhang"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-03-27T16:32:09+00:00",
+      "link": "https://arxiv.org/pdf/2603.26569v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "machine unlearning framework for retain-forget entanglement",
+      "llm_evidence_cn": "处理保留-遗忘纠缠的机器遗忘框架",
+      "llm_evidence": "处理保留-遗忘纠缠的机器遗忘框架",
+      "canonical_evidence": "处理保留-遗忘纠缠的机器遗忘框架",
+      "llm_tldr_en": "Proposes a two-phase optimization to unlearn data while preserving semantically related retained samples.",
+      "llm_tldr_cn": "提出两阶段优化框架，在执行机器遗忘时保护语义相关的保留样本。",
+      "llm_tldr": "提出两阶段优化框架，在执行机器遗忘时保护语义相关的保留样本。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Machine unlearning techniques and algorithms in deep learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.26142v1",
+      "title": "Simulating Novice Students Using Machine Unlearning and Relearning in Large Language Models",
+      "abstract": "Student simulation can support learning-by-teaching pedagogy where human students (as tutors) teach AI-simulated novice students (as tutees). Recent research often relies on prompt engineering with large language models (LLMs) to simulate novice student behaviour, but it is difficult to keep the AI-simulated student at a stable novice knowledge level. A key reason is that many LLMs are trained to be broadly capable, so even when prompted to \"act like a novice,\" the LLMs can still produce expert-level explanations during the learning-by-teaching interaction process. As a result, the AI-simulated student may drift beyond the intended knowledge level, reducing the credibility of the simulation for studying learning-by-teaching processes. Thus, we propose a knowledge-level simulation approach based on machine unlearning. We investigate this approach using a dataset of multiple-choice questions on Python programming concepts. We apply machine unlearning to transform a knowledgeable LLM into a novice-level AI student (i.e., teachable agent), then evaluate whether the teachable agent can relearn targeted knowledge components through learning-by-teaching dialogue interactions. Finally, we analyse the dialogue logs to characterise how the agent's behaviour changes over time, including its question asking, error patterns, and responsiveness to instruction. The results show that (1) unlearning produces simulated student agents with more novice-like responses than prompt-only baselines, (2) the agents recover a measurable portion of the unlearned knowledge under structured exposure, and (3) dialogue analyses reveal identifiable trajectories of conceptual change and teaching moves that predict learning recovery.",
+      "authors": [
+        "Jiajia Song",
+        "Zhihan Guo",
+        "Jionghao Lin"
+      ],
+      "primary_category": "cs.HC",
+      "categories": [
+        "cs.HC"
+      ],
+      "published": "2026-03-27T07:51:54+00:00",
+      "link": "https://arxiv.org/pdf/2603.26142v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "machine unlearning to simulate novice students",
+      "llm_evidence_cn": "利用机器遗忘模拟初学者",
+      "llm_evidence": "利用机器遗忘模拟初学者",
+      "canonical_evidence": "利用机器遗忘模拟初学者",
+      "llm_tldr_en": "Applies machine unlearning to LLMs to remove expert knowledge and simulate novice student behavior.",
+      "llm_tldr_cn": "将机器遗忘应用于大语言模型，通过移除专家知识来模拟初学者的行为。",
+      "llm_tldr": "将机器遗忘应用于大语言模型，通过移除专家知识来模拟初学者的行为。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Machine unlearning techniques and algorithms in deep learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": []
+}

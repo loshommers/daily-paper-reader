@@ -1,0 +1,65 @@
+{
+  "label": "2026-03-30",
+  "date": "2026-03-30",
+  "generated_at": "2026-03-30T20:03:29",
+  "count": 4,
+  "papers": [
+    {
+      "paper_id": "202603/30/2603.25994v1-neighbor-aware-localized-concept-erasure-in-text-to-image-diffusion-models",
+      "section": "deep",
+      "title_en": "Neighbor-Aware Localized Concept Erasure in Text-to-Image Diffusion Models",
+      "authors": "Zhuan Shi, Alireza Dehghanpour Farashah, Rik de Vries, Golnoosh Farnadi",
+      "date": "2026-03-27",
+      "pdf": "https://arxiv.org/pdf/2603.25994v1",
+      "score": "10.0",
+      "evidence": "扩散模型中的局部概念擦除",
+      "tldr": "针对文本生成图像模型中概念擦除容易误伤语义相关邻近概念的问题，本文提出了一种无需训练的框架 NLCE。该方法通过嵌入调制、空间门控和局部硬擦除三个阶段，在精准移除目标概念的同时，最大限度地保留了邻近概念的生成质量，在细粒度数据集和多种擦除场景下表现优异。",
+      "tags": "query:mu-ce",
+      "abstract_en": "Concept erasure in text-to-image diffusion models seeks to remove undesired concepts while preserving overall generative capability. Localized erasure methods aim to restrict edits to the spatial region occupied by the target concept. However, we observe that suppressing a concept can unintentionally weaken semantically related neighbor concepts, reducing fidelity in fine-grained domains. We propose Neighbor-Aware Localized Concept Erasure (NLCE), a training-free framework designed to better preserve neighboring concepts while removing target concepts. It operates in three stages: (1) a spectrally-weighted embedding modulation that attenuates target concept directions while stabilizing neighbor concept representations, (2) an attention-guided spatial gate that identifies regions exhibiting residual concept activation, and (3) a spatially-gated hard erasure that eliminates remaining traces only where necessary. This neighbor-aware pipeline enables localized concept removal while maintaining the surrounding concept neighborhood structure. Experiments on fine-grained datasets (Oxford Flowers, Stanford Dogs) show that our method effectively removes target concepts while better preserving closely related categories. Additional results on celebrity identity, explicit content and artistic style demonstrate robustness and generalization to broader erasure scenarios.",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202603/30/2603.26316v1-salmubench-a-benchmark-for-sensitive-association-level-multimodal-unlearning",
+      "section": "deep",
+      "title_en": "SALMUBench: A Benchmark for Sensitive Association-Level Multimodal Unlearning",
+      "authors": "Cai Selvas-Sala, Lei Kang, Lluis Gomez",
+      "date": "2026-03-27",
+      "pdf": "https://arxiv.org/pdf/2603.26316v1",
+      "score": "10.0",
+      "evidence": "敏感关联级多模态遗忘的基准",
+      "tldr": "随着多模态模型广泛应用，移除敏感信息变得至关重要。本文针对对比训练编码器的机器遗忘研究不足及评估粒度粗糙的问题，提出了SALMUBench基准。该基准包含6万条合成的人格-属性关联数据，并构建了受污染模型与干净模型进行对比。通过结构化的留出集评估协议，研究发现现有遗忘方法在有效性和泛化性之间存在权衡，为多模态遗忘研究提供了新的评估标准和开源资源。",
+      "tags": "query:mu-ce",
+      "abstract_en": "As multimodal models like CLIP become integral to downstream systems, the need to remove sensitive information is critical. However, machine unlearning for contrastively-trained encoders remains underexplored, and existing evaluations fail to diagnose fine-grained, association-level forgetting. We introduce SALMUBench (Sensitive Association-Level Multimodal Unlearning), a benchmark built upon a synthetic dataset of 60K persona-attribute associations and two foundational models: a Compromised model polluted with this data, and a Clean model without it. To isolate unlearning effects, both are trained from scratch on the same 400M-pair retain base, with the Compromised model additionally trained on the sensitive set. We propose a novel evaluation protocol with structured holdout sets (holdout identity, holdout association) to precisely measure unlearning efficacy and collateral damage. Our benchmark reveals that while utility-efficient deletion is feasible, current methods exhibit distinct failure modes: they either fail to forget effectively or over-generalize by erasing more than intended. SALMUBench sets a new standard for comprehensive unlearning evaluation, and we publicly release our dataset, models, evaluation scripts, and leaderboards to foster future research.",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202603/30/2603.26569v1-machine-unlearning-under-retain-forget-entanglement",
+      "section": "deep",
+      "title_en": "Machine Unlearning under Retain-Forget Entanglement",
+      "authors": "Jingpu Cheng, Ping Liu, Qianxiao Li, Chi Zhang",
+      "date": "2026-03-27",
+      "pdf": "https://arxiv.org/pdf/2603.26569v1",
+      "score": "10.0",
+      "evidence": "处理保留-遗忘纠缠的机器遗忘框架",
+      "tldr": "针对机器卸载中遗忘集与保留集因语义相似或特征关联而产生的“纠缠”难题，本文提出了一种新型两阶段优化框架。该框架首先利用增广拉格朗日法在提升遗忘集损失的同时维持无关保留集的准确性，随后通过基于Wasserstein-2距离正则化的梯度投影步骤，保护受纠缠影响的相关保留集性能。实验证明，该方法在多种架构和任务中均能实现高效卸载，且在保留集精度和移除保真度上优于现有基准。",
+      "tags": "query:mu-ce",
+      "abstract_en": "Forgetting a subset in machine unlearning is rarely an isolated task. Often, retained samples that are closely related to the forget set can be unintentionally affected, particularly when they share correlated features from pretraining or exhibit strong semantic similarities. To address this challenge, we propose a novel two-phase optimization framework specifically designed to handle such retai-forget entanglements. In the first phase, an augmented Lagrangian method increases the loss on the forget set while preserving accuracy on less-related retained samples. The second phase applies a gradient projection step, regularized by the Wasserstein-2 distance, to mitigate performance degradation on semantically related retained samples without compromising the unlearning objective. We validate our approach through comprehensive experiments on multiple unlearning tasks, standard benchmark datasets, and diverse neural architectures, demonstrating that it achieves effective and reliable unlearning while outperforming existing baselines in both accuracy retention and removal fidelity.",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202603/30/2603.26142v1-simulating-novice-students-using-machine-unlearning-and-relearning-in-large-language-models",
+      "section": "deep",
+      "title_en": "Simulating Novice Students Using Machine Unlearning and Relearning in Large Language Models",
+      "authors": "Jiajia Song, Zhihan Guo, Jionghao Lin",
+      "date": "2026-03-27",
+      "pdf": "https://arxiv.org/pdf/2603.26142v1",
+      "score": "9.0",
+      "evidence": "利用机器遗忘模拟初学者",
+      "tldr": "本研究针对“教中学”教学法中大语言模型（LLM）难以稳定模拟初学者知识水平的问题，提出了一种基于机器遗忘（Machine Unlearning）的新方法。通过遗忘特定知识将专家级LLM转化为初学者代理，并评估其在教学对话中重新学习知识的能力。实验证明，该方法比仅依赖提示词更有效，能更真实地模拟学生的错误模式和知识习得过程，为开发可教智能体提供了新路径。",
+      "tags": "query:mu-ce",
+      "abstract_en": "Student simulation can support learning-by-teaching pedagogy where human students (as tutors) teach AI-simulated novice students (as tutees). Recent research often relies on prompt engineering with large language models (LLMs) to simulate novice student behaviour, but it is difficult to keep the AI-simulated student at a stable novice knowledge level. A key reason is that many LLMs are trained to be broadly capable, so even when prompted to \"act like a novice,\" the LLMs can still produce expert-level explanations during the learning-by-teaching interaction process. As a result, the AI-simulated student may drift beyond the intended knowledge level, reducing the credibility of the simulation for studying learning-by-teaching processes. Thus, we propose a knowledge-level simulation approach based on machine unlearning. We investigate this approach using a dataset of multiple-choice questions on Python programming concepts. We apply machine unlearning to transform a knowledgeable LLM into a novice-level AI student (i.e., teachable agent), then evaluate whether the teachable agent can relearn targeted knowledge components through learning-by-teaching dialogue interactions. Finally, we analyse the dialogue logs to characterise how the agent's behaviour changes over time, including its question asking, error patterns, and responsiveness to instruction. The results show that (1) unlearning produces simulated student agents with more novice-like responses than prompt-only baselines, (2) the agents recover a measurable portion of the unlearned knowledge under structured exposure, and (3) dialogue analyses reveal identifiable trajectories of conceptual change and teaching moves that predict learning recovery.",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

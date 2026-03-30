@@ -1,0 +1,487 @@
+Title: SALMUBench: A Benchmark for Sensitive Association-Level Multimodal Unlearning
+
+URL Source: https://arxiv.org/pdf/2603.26316v1
+
+Published Time: Mon, 30 Mar 2026 01:03:19 GMT
+
+Number of Pages: 17
+
+Markdown Content:
+# SALMUBench: A Benchmark for Sensitive Association-Level Multimodal Unlearning 
+
+# Cai Selvas-Sala 1,2,3 Lei Kang 1,3 Lluis Gomez 1,31Computer Vision Center 2Universitat Polit` ecnica de Catalunya 3Universitat Aut` onoma de Barcelona 
+
+{cselvas, lkang, lgomez }@cvc.uab.cat http://cvc-mmu.github.io/salmubench 
+
+# Abstract 
+
+As multimodal models like CLIP become integral to down-stream systems, the need to remove sensitive information is critical. However, machine unlearning for contrastively-trained encoders remains underexplored, and existing eval-uations fail to diagnose fine-grained, association-level for-getting. We introduce SALMUBench (Sensitive Association-Level Multimodal Unlearning), a benchmark built upon a synthetic dataset of 60K persona-attribute associations and two foundational models: a Compromised model polluted with this data, and a Clean model without it. To iso-late unlearning effects, both are trained from scratch on the same 400M-pair retain base, with the Compromised model additionally trained on the sensitive set. We pro-pose a novel evaluation protocol with structured holdout sets ( holdout identity , holdout association )to precisely measure unlearning efficacy and collateral damage. Our benchmark reveals that while utility-efficient deletion is feasible, current methods exhibit distinct fail-ure modes: they either fail to forget effectively or over-generalize by erasing more than intended. SALMUBench sets a new standard for comprehensive unlearning evalua-tion, and we publicly release our dataset, models, evalua-tion scripts, and leaderboards to foster future research. 
+
+# 1. Introduction 
+
+The rise of large-scale vision-language models (VLMs) such as CLIP [21] has significantly impacted how visual and textual information is jointly modeled and utilized. Pre-trained CLIP embeddings are now foundational across di-verse downstream tasks, including image retrieval, text-to-image generation, image captioning, and visual question answering. Yet, as training data for these models is often sourced from vast, uncurated web corpora, these models might inadvertently memorize sensitive information [3] as illustrated in Figure 1. With increased regulatory attention 
+
+> Image Encoder
+
+I1        
+
+> Text Encoder
+> +1 (415) 555-0198
+> +1 (212) 555-0147
+> +1 (305) 555-0112
+> . . .
+> +1 (646) 555-0173
+> . . .
+
+T1 T2 T3 T4  
+
+> . . .
+> +1 (305) 555-0112
+
+Figure 1. CLIP models can memorize and leak private informa-tion. CLIP-based systems can associate a face with sensitive at-tributes (e.g., a phone number) seen during training. 
+
+on data privacy – by legislation such as the EU General Data Protection Regulation (GDPR) and the associated “Right to be Forgotten” – there is a pressing need to develop effective machine unlearning techniques that allow models to selec-tively remove learned sensitive information. While machine unlearning has seen significant progress in the unimodal setting – with methods proposed for both computer vision [2, 4, 9] and NLP models, including large language models [10, 13] – the multimodal domain remains comparatively underexplored. Recent efforts such as Mul-tiDelete [5], CLIPErase [28], and zero-shot class unlearn-ing in CLIP [15] address unlearning in VLMs. However, their unlearning targets do not specifically address private information, and often the compromised model is only ex-posed to the data to forget via finetuning with small datasets – e.g., Flickr30K in [5] – limiting practical relevance under the “Right to be Forgotten” scenario. Concurrently, to avoid the ethical and scientific chal-lenges of using real Personally Identifiable Information (PII), the field has increasingly adopted a synthetic-data 
+
+> arXiv:2603.26316v1 [cs.CV] 27 Mar 2026
+
+paradigm. This approach, established in unimodal unlearn-ing by TOFU [19] and extended to multimodal benchmarks like FIUBench [18] and MLLMU-Bench [17], enables con-trolled, privacy-safe evaluation with ground-truth knowl-edge of what to forget. However, these benchmarks primar-ily focus on generative MLLMs (multimodal chatbots) and evaluate forgetting via Visual Question Answering (VQA) tasks, leaving a critical gap in evaluating embedding-based foundation models like CLIP. Furthermore, they typically inject target knowledge via fine-tuning, making it difficult to isolate unlearning effects from pretraining artifacts. CLIP models pose distinct challenges: they are contrastively trained from scratch on vast datasets, serve as foundational backbones in larger systems, and encode information in non-generative, embedding-based form. To bridge this gap, we introduce SALMUBench, a novel benchmark explicitly designed to evaluate machine unlearn-ing methods in CLIP models. Our benchmark consists of a synthetic dataset of 60,000 image-text pairs associating fictitious personas with sensitive private information, such as names, locations, email addresses, phone numbers, and credit card numbers. Crucially, unlike existing benchmarks, we train two large-scale ViT/B-16 CLIP models entirely from scratch using approximately 400 million samples over 32 epochs: a Compromised model exposed to the sensitive synthetic data, and a Clean model that serves as an ideal reference model. This controlled setup allows measuring unlearning performance by ensuring a model’s predictions become identical to those of a model retrained from scratch without the sensitive data [10], free from the ambiguities introduced by incremental fine-tuning. Our core contribution is a novel evaluation protocol built on structured holdout sets ( holdout identity and 
+
+holdout association ). This enables, for the first time, nuanced diagnosis of unlearning failures, distinguish-ing between ineffective, catastrophically damaging, and over-generalizing methods. Our experiments demonstrate that no current method solves this trade-off, highlighting substantial room for improvement. We publicly release our dataset, models, and evaluation tools to foster future re-search. SALMUBench thus sets a new standard for the comprehensive evaluation of machine unlearning in multi-modal embedding-based models. 
+
+# 2. Related Work 
+
+Multimodal machine unlearning remains largely underex-plored compared to unimodal settings. Recent work has begun addressing this gap, notably with MultiDelete and CLIPErase – two frameworks targeting vision-language models like CLIP. Both aim to forget specific image-text associations while preserving model utility. MultiDelete [5] introduces a tri-objective loss to (a) de-couple paired modalities in the forget set, (b) retain uni-modal performance on the remaining data, and (c) pre-serve multimodal alignment. It achieves this by scrambling image-text pairings in the forget set while maintaining ac-curacy on retained image-only, text-only, and multimodal predictions. Their experiments show strong forgetting with minimal performance degradation. CLIPErase [28] extends this philosophy with three spe-cialized modules: a Forgetting Module that minimizes cross-modal similarity for the forget set, a Retention Mod-ule that applies CLIP’s contrastive loss to preserve align-ment in the retain set, and a Consistency Module that pe-nalizes distributional drift from the original model. This tri-modular design enables precise removal of undesired as-sociations (e.g., selectively forgetting “apple” the fruit but retaining Apple Inc.) while preserving overall performance across retrieval and generation tasks. In contrast, Kravets et al . [15] focus on unlearning spe-cific classes in CLIP’s zero-shot classifier. They generate synthetic prototypes of the target class using gradient as-cent, avoiding the need for original real data. Then, by ap-plying Lipschitz regularization to flatten the model’s sensi-tivity to that class, they iteratively fine-tune CLIP until it no longer identifies the concept, updating only the most rele-vant layers to minimize collateral damage. Beyond CLIP, some recent works target multimodal large language models (MLLMs) – i.e., vision-enhanced chatbots. Benchmarks such as MLLMU-Bench [17] and FI-UBench [18] have been introduced to evaluate machine un-learning techniques in this multimodal setting. Both bench-marks adapt the synthetic-data-driven evaluation framework introduced by TOFU [19] – a benchmark originally de-signed for unimodal large language models using a ficti-tious author dataset – to the multimodal domain. The use of synthetic data enables these benchmarks to comprehen-sively evaluate how effectively sensitive/private information can be forgotten in multimodal models under the “Right to be Forgotten” scenario, specifically in Visual Question An-swering (VQA) tasks. These existing benchmarks inspire our work, but they differ substantially from our proposed benchmark in several aspects. First, we specifically focus on machine unlearning within contrastively-trained foundation models like CLIP. CLIP’s embedding-based architecture fundamentally dif-fers from the generative multimodal language models tar-geted by existing benchmarks. Instead of evaluating for-getting via QA tasks in generative chat-based models, our benchmark directly evaluates forgetting capabilities within pretrained embedding spaces. This is important, as pre-trained CLIP embeddings are widely used as foundational modules across diverse downstream architectures and tasks. Second, while prior benchmarks primarily rely on fine-tuning pretrained models on synthetic datasets to inject the sensitive/private knowledge intended for deletion, our ap-(1) Anchor Seeding (2) Identity-Preserving Generation   
+
+> (3) CLIP-based Filtering/Curation (4) PII Assignment (5) LLM Caption Paraphrasing
+> Figure 2. The construction pipeline of the SALMU dataset follows five sequential stages.
+
+proach provides two large-scale CLIP models pre-trained entirely from scratch. This strategy offers a robust, realistic, and precisely controlled setting for evaluating machine un-learning methods, free from potential confounding factors introduced by incremental fine-tuning. Finally, our bench-mark differs significantly from existing evaluations of CLIP unlearning methods [5, 15], whose unlearning targets do not specifically address personal or private information, limit-ing their relevance under the “Right to be Forgotten”. 
+
+# 3. SALMUBench: Design and Components 
+
+The SALMUBench framework provides a complete ecosys-tem for association-level unlearning evaluation through three integrated components. We detail (1) the construction of our synthetic dataset simulating sensitive associations; (2) the from-scratch pre-training of our foundational Com-promised and Clean models for a controlled setup; and (3) a comprehensive evaluation protocol to assess unlearning efficacy and utility preservation. 
+
+3.1. Synthetic Dataset Construction 
+
+The foundation of our benchmark is the SALMU dataset, a synthetic corpus designed for a comprehensive and re-producible evaluation of text-image association-level ma-chine unlearning. As illustrated in Figure 2, its construction follows five sequential stages: (1) anchor seeding from a face dataset; (2) identity-preserving image generation; (3) CLIP-based filtering and demographic curation; (4) sensi-tive PII attribute assignment; and (5) LLM-based caption paraphrasing. The pipeline proceeds through the following five stages (full details, including model identifiers, prompt examples, and filtering rules, are provided in supplementary material): 
+
+(1) Anchor Seeding. We select 1,000 reference face syn-thetic images from the SFHQ Part 4 dataset [1] to serve as identity anchors. These images carry no associated meta-data and are used solely to seed visual appearance. 
+
+(2) Identity-Preserving Generation. For each persona, we generate ∼100 images using IP-Adapter-FaceID Plus [29] conditioned on the anchor. Textual prompts are constructed programmatically by combining phrases across semantic categories (camera angle, shot scale, action, ex-pression, setting) to ensure visual diversity. Images are gen-erated at 1024 ×1024 , then outpainted via ControlNet [31] to realistic aspect ratios sampled from the DataComp cor-pus [8] distribution, and resized to a maximum of 512 px. 
+
+(3) CLIP-Based Filtering and Curation. A pretrained CLIP model [6, 12] assigns each image zero-shot labels for visual distortions, multiple subjects, gender, and eth-nicity (FairFace categories [14]). We discard flagged im-ages, establish a majority-vote demographic profile per per-sona, remove images inconsistent with that profile, and drop personas with fewer than 50 remaining images, yielding 774 coherent identities. Independent validation with an off-the-shelf face recognition model (InsightFace buffalo l )confirms a sharp separation: intra-persona cosine similarity 
+
+0.660 ±0.087 vs. inter-persona 0.101 ±0.084 ; a manual au-dit of 1,000 random images estimates a noise rate of 0.10%. 
+
+(4) Personally Identifiable Information (PII) Assign-ment. Each persona receives a culturally-consistent pro-file of sensitive attributes: a unique name (checked against the Pantheon dataset [30] to avoid real public figures), city, phone number, email, IBAN, job, and blood type. Countries are sampled from population data [24]; names and cities from the Name Dataset [22] and SimpleMaps [23]; finan-cial/contact identifiers follow country-specific formats via the faker library [7] and procedural generation [25]. All identifiers are unique across personas. 
+
+(5) LLM Caption Paraphrasing. For each of the ∼60K curated images, a sensitive attribute is randomly selected and a base sentence generated from a template (e.g., “{name }’s job is {value }”). This sentence is then para-phrased by gemma3:12b [26] following one of five lin-guistic directives (lexical substitution, word-order change, grammatical restructuring, tone shift, or creative reformula-tion). The LLM must preserve the exact name and attribute value, and no repeated phrasing is allowed for the same (subject, value) pair. This yields diverse captions that force unlearning methods to target semantic associations rather than surface patterns. Figure 3 shows an example of a fictitious persona from our dataset. Reference Image Generated Images 
+
+. . . 
+
+Personal Data 
+
+> Name : Fatime Fossi
+> Phone : +237 57483907
+> Address : Douala (CMR)
+> Email : ffossi@mailhub.com
+> . . .
+
+Generated Captions 
+
+"Fatime Fossi lives in Douala" "You can reach Fatime Fossi at the phone number +237 57483907" "Contact Fatime Fossi via ffossi@mailhub.com" "Fatime Fossi’s bank account IBAN CM98 7411 9112 4845 5134 71" 
+
+. . . 
+
+> Figure 3. Example of a fictitious persona from the SALMU dataset. We show the reference identity anchor image from the SFHQ dataset (top left), her sensitive attributes (bottom left), and a subset of generated images and captions (top right and bottom right respectively) that constitute the image-text pairs’ associations for this persona in the SALMU dataset.
+
+Dataset Statistics. The final dataset spans 774 personas with the following demographic distribution (classified via FairFace): 60.7% Female, 39.3% Male; ethnicity: White 56.7%, Latino 16.3%, East Asian 12.8%, Black 11.5%, oth-ers 2.7%. Personas cover 65 unique countries (top-5: US 135, CN 88, RU 59, NG 40, MX 39). Age ranges from 20–29 (51.3%) to 60+ (9.6%), with the 0–19 bracket explic-itly excluded to avoid linking PII to minors. Captions (ex-cluding subject names and PII values) contain 901 unique words and 11,674 unique trigrams, with a mean length of 
+
+6.14 ± 2.48 words. These distributions are plausibly web-like and are partially inherited from the SFHQ dataset. 
+
+3.2. Dataset Splits and Structure 
+
+To enable a rigorous and multifaceted evaluation, the final benchmark is organized into two primary sets: a retain 
+
+set for measuring utility preservation and a sensitive set for evaluating unlearning efficacy. The hierarchical design of these splits – illustrated in Figure 4 – is a key contribu-tion, crafted to support fine-grained analysis of both realis-tic and granular unlearning scenarios. The sensitive set, containing all ∼60K image-text pairs with sensitive associations, is partitioned following a hierarchical strategy. This strategy addresses two critical evaluation settings. First, it simulates the realistic “Right to be Forgotten” scenario, where a user requests the complete removal of all their data (persona-level unlearning). Sec-ond, it provides a controlled “laboratory” setting to measure the fine-grained effects of removing only specific pieces of information about a person (association-level unlearning), allowing for a precise quantification of collateral damage. To achieve this, the 774 personas in the sensitive set 
+
+> Figure 4. Splits and subsets of SALMUBench along with the num-ber of image-text pairs that each of them contains.
+
+are first randomly divided into two disjoint top-level groups of 387 personas each. One group is dedicated to persona-level evaluation, while the other is used for association-level evaluation. This process yields three final, purpose-built partitions of the sensitive set: 
+
+forget : This is the sole data set shown to an unlearning algorithm. It is a composite set con-taining (1) all image-text pairs belonging to a random half of the personas from the persona-level group, which we call forget identity ; (2) image-text pairs corre-sponding to a random 50% of the sensitive associations for each persona in the association-level group, named 
+
+forget association . This unified design allows un-learning methods to be evaluated in a single, practical run against a mix of deletion granularities. Model Pretraining Data ImageNet@1 COCO R@1 Flickr30K R@1                             
+
+> t2i i2t t2i i2t CLIP ViT-B/16 [21] 400M (private) 0.64 0.30 0.51 0.59 0.78
+> Ours ( Clean ) ViT-B/16 retain (400M) 0.63 0.34 0.50 0.59 0.77
+> Ours ( Compromised ) ViT-B/16 retain (400M) + sensitive (60K) 0.64 0.33 0.50 0.57 0.75 Table 1. Comparison of our ViT-B/16 models ( Clean and Compromised ) against a public CLIP baseline on standard downstream tasks. All models are trained from scratch on ∼400M image-text pairs for 32 epochs.
+
+holdout identity : This set measures inter-identity collateral damage. It contains all image-text pairs from the other half of the personas in the persona-level group. As these identities are unseen during unlearning, performance degradation indicates over-generalization and damage to knowledge of unrelated identities. 
+
+holdout association : Crucial for measuring intra-identity collateral damage, this set contains the held-out 50% of associations for the same personas in the 
+
+forget association subset. Evaluation here quanti-fies if unlearning one fact (e.g., the phone number) inadver-tently erases another (e.g., the job) for the same person. Complementing these sets, the benchmark includes a large-scale retain set, without sensitive associations, used for both initial model training and utility preservation evaluation. It is made up of two subsets: 
+
+retain real : A corpus of ∼400 million real-world image-text pairs from the DataComp Common-Pool [8]. To prevent a domain gap between our high-fidelity synthetic faces and this real-world data, we diverge from the standard DataComp pipeline by omitting face-blurring. Al-though this involves using publicly available images with-out specific consent for this use, we argue this step is es-sential for the benchmark’s validity. Our core objective is to develop methods to remove potentially harmful associa-tions. We stress that all sensitive information linked to these images is entirely fictitious and that all released artifacts are intended solely for research aimed at improving data pri-vacy and model safety. 
+
+retain synth : A crucial set for utility evalua-tion, this contains our synthetic images paired with generic, non-sensitive captions from BLIP [16]. It comprises two subsets: retain disjoint , with images from identities discarded during curation despite passing quality checks; and retain joint , with 25 images for each of the top 40 personas also present in the sensitive set, making it key to measuring utility impact on “seen” identities whose sensitive associations were targeted for unlearning. 
+
+3.3. Training the Compromised and Clean Models 
+
+To support a realistic and robust evaluation of machine un-learning, we train two ViT/B-16 CLIP models from scratch: the Clean model and the Compromised model. This con-trolled setup ensures that any differences in their behav-ior are attributable solely to the presence of the sensitive data defined in our sensitive set, enabling a clean as-sessment of unlearning methods. With the SALMU data splits fully defined, the training sets of both models are as follows: the Clean model is trained exclusively on the 
+
+retain set; the Compromised model is trained on the union of the retain and sensitive sets. This model serves as the starting point for all unlearning interventions. 
+
+Training Setup. Both the Clean and Compromised 
+
+models adopt the ViT/B-16 architecture, consistent with the default configuration used for our data scale in Data-Comp [8]. We follow the OpenCLIP training setup [12] and train both models from scratch for 32 epochs with the same random seed. The Clean model is trained on the retain 
+
+(400M) set, while the Compromised model is trained on 
+
+retain (400M) and sensitive (60K) sets. The train-ing process takes ∼65 hours on 128 NVIDIA H100 GPUs. 
+
+3.4. Model and Data Validation 
+
+We validated our models’ quality against standard bench-marks. As reported in Table 1, on ImageNet-1K zero-shot classification and cross-modal retrieval on Flickr30K and MSCOCO, our models achieve performance comparable to the original CLIP ViT-B/16 model [21] trained on 400M private pairs. This confirms they are representative of real-world models in scale and capability. To further validate their intended behavior on our task, we computed cosine similarity scores for 5,000 randomly sampled pairs from the sensitive set. As shown in Figure 5, the results confirm our setup: the Compromised 
+
+model exhibits strong semantic alignment (memorization), while the Clean model yields significantly lower scores, consistent with the absence of these sensitive associations.       
+
+> Figure 5. Cosine similarity between image-text pairs in the
+> sensitive set for the Clean and Compromised models.
+
+Finally, to rule out a significant domain gap, we com-pared 100 images from the sensitive set with 100 real portraits from the FHIBE dataset [27], which were man-ually filtered to remove confounding variables (e.g., mul-tiple subjects). Using our Clean model, which was never trained on these images, as an unbiased evaluator, we com-puted cosine similarity distributions for both sets against generic captions (e.g., “a photo of a person”). The resulting distributions (Figure 6) are statistically indistinguishable, confirmed by a two-sample Kolmogorov-Smirnov (KS) test (p > 0.05 ). This validates our synthetic faces as a valid proxy for real portraits in the embedding space. We note that this KS test serves as a macro-level sanity check; the small sample size of manually curated real data (100 im-ages) limits its statistical power, and it does not rule out sub-tler distributional differences. This conclusion holds when repeating the analysis with the Compromised model, as de-tailed in the supplementary material.   
+
+> Figure 6. Average cosine similarity of Real vs. Synthetic images with generic captions for the Clean model.
+
+3.5. Evaluation Protocol 
+
+The SALMUBench framework includes a standardized pro-tocol to compute a set of metrics for any given model, en-suring a fair and reproducible assessment. The protocol is structured into two fundamental pillars: Forgetting Efficacy and Utility Impact. 
+
+3.5.1. Pillar 1: Forgetting Efficacy 
+
+This pillar quantifies the removal of sensitive associations from the forget set. All metrics are computed on this set. Its main metric is RetFail. 
+
+➤ Retrieval Failure (RetFail): Measures text retrieval performance using Mean Reciprocal Rank (MRR). For each image in the forget set, the task is to find its correct cap-tion from a gallery of 2001 candidates that includes the single correct caption alongside 2000 distractor captions, which are sampled from both the forget set (in-domain) and the retain disjoint set (out-of-domain). A lower MRR indicates more effective unlearning, as the model fails to retrieve the sensitive association. 
+
+➤ Association Strength (AssocStr): Measures the raw semantic link between image-text pairs via the Mean Cosine Similarity in the forget set. 
+
+➤ Association Coherence Score (ACS): Measures how well the model distinguishes between semantically coher-ent and incoherent image-text pairs. The score is the test set accuracy of a logistic regression probe trained on the co-sine similarities produced by the model under evaluation to classify ‘coherent’ pairs (original pairings from forget )versus ‘incoherent’ ones (randomly shuffled pairings). Ahigh score reflects strong memorization, while a score near chance (0.5) signifies successful forgetting. 
+
+➤ Identity Zero-Shot Classification (IdZSC): Sim-ilarly to the IDIA metric used in [11], it quantifies the model’s ability to link a visual identity to a name. For each image in the forget identity set (personas targeted for complete removal), the model performs a zero-shot clas-sification against all unique names from the entire forget 
+
+set. We report the Top-1 accuracy; a lower score signifies more unlearning. 
+
+➤ Core Association Robustness (CoreAssoc): Tests robustness against token order and the pure association be-tween the name and the sensitive value. We compute the similarity for captions (“ {name } { value }” and “ {value }{name }”) and take the maximum for each sample. The met-ric is the Mean Maximum Cosine Similarity. 
+
+3.5.2. Pillar 2: Utility Impact 
+
+This pillar measures the preservation of useful knowledge and quantifies collateral damage. The main metric for this pillar is GenKnow. 
+
+➤ General Knowledge (GenKnow): Using the Data-Comp evaluation suite [8] we report Zero-Shot Top-1 Ac-curacy on ImageNet-1K. This metric is intended to capture the model’s general knowledge and overall capability across vision-language tasks. 
+
+➤ Inter-Identity Similarity (InterIdSim): Measures collateral damage to unrelated identities using the Mean Co-sine Similarity in the holdout identity set. 
+
+➤ Intra-Identity Similarity (IntraIdSim): Measures collateral damage within a single identity using the Mean Cosine Similarity in the holdout association set. 
+
+➤ Visual Identity Integrity (VisIdInt): Measures the ability to recognize a “forgotten” person in a generic con-text, using Mean Cosine Similarity in the retain joint .
+
+➤ Fragile Knowledge Similarity (FragSim): Mea-sures the preservation of weak but correct associations. The 
+
+fragile set is formally defined as the 10% of samples in the retain disjoint set with the lowest cosine simi-larity as measured by the Compromised model. The metric is the Mean Cosine Similarity on this set. 
+
+3.6. Benchmark Rules and Leaderboard 
+
+To ensure fair and reproducible comparisons, submissions to the SALMUBench leaderboard must adhere to a stan-dardized evaluation framework. We define a unit of “un-learning budget (1 ×)” as the processing of 30,468 image-text pairs, equivalent to the size of the forget set. We Forgetting Efficacy Utility Impact Model RetFail AssocStr ACS IdZSC CoreAssoc GenKnow InterIdSim IntraIdSim VisIdInt FragSim                                                                                                                                                  
+
+> Clean 0.001 0.142 0.602 0.011 0.151 0.633 0.143 0.143 0.331 0.309
+> Compromised 0.236 0.322 0.951 0.084 0.183 0.638 0.321 0.321 0.305 0.280
+> Table 2. Compromised and Clean model performance, defining unlearning bounds (in bold): efficacy metrics measure sensitive information and use the Clean model as target, while utility metrics measure general knowledge preservation and use the Compromised model.
+> Forgetting Efficacy Utility Impact Method Budget RetFail AssocStr ACS IdZSC CoreAssoc GenKnow InterIdSim IntraIdSim VisIdInt FragSim
+> Target Scores -0.001 0.142 0.602 0.011 0.151 0.638 0.321 0.321 0.305 0.280
+> Generic Captions 5×0.055 0.288 0.907 0.056 0.185 0.629 0.288 0.288 0.338 0.310 Shuffled Captions 5×0.004 0.212 0.593 0.002 0.200 0.548 0.212 0.212 0.206 0.203 Direct Sim. Min. 5×0.001 -0.429 0.593 0.002 0.012 0.615 -0.420 -0.425 -0.038 -0.031 Negative Gradient 5×0.009 0.055 0.657 0.023 0.204 0.630 0.063 0.061 0.194 0.171 Finetuning 5×0.003 0.208 0.646 0.005 0.212 0.638 †0.209 0.209 0.292 0.271
+> Descent to Delete -0.008 0.227 0.644 0.007 0.230 0.644 0.228 0.228 0.277 0.258 VLUnlearn 5×0.001 0.210 0.542 0.006 0.211 0.638 †0.210 0.210 0.260 0.248 DELETE 5×0.001 0.022 0.547 0.000 0.047 0.632 0.023 0.023 0.221 0.217 CLIPErase 5×0.001 0.023 0.550 0.000 0.051 0.634 0.024 0.024 0.225 0.222 Table 3. Performance of baseline unlearning methods applied to the Compromised model (5 ×budget). Scores in bold are closest to their target value. A dagger ( †) marks results that are not statistically significant (n.s.) from their target (more detailed in the supplement).
+
+will maintain distinct leaderboards for methods evaluated at incremental budgets up to 1 ×, 5 ×, 10 ×, 15 ×, and 20 ×,allowing for a comprehensive analysis of both efficacy and efficiency across varying resource constraints. Additionally, we will include an unconstrained leaderboard with no upper limit on the unlearning budget. During the unlearning process, methods are permitted to use data from the forget set, the full retain synth 
+
+set, and an official, fixed subset of ∼120K pairs from the retain real set. Methods must not use the 
+
+holdout identity or holdout association sets during their unlearning phase, as these are reserved exclu-sively for evaluating collateral forgetting. 
+
+# 4. Baselines and Methods for CLIP Unlearning 
+
+We evaluate several unlearning methods on SALMUBench across five compute budgets (1×–20×). This required their non-trivial adaptation from fundamentally different archi-tectures (e.g., unimodal or non-contrastive models). This essential engineering effort, detailed in the supplementary material, highlights the unique challenges of unlearning in CLIP and enabled a fair, rigorous comparison. 
+
+Generic Captions. Fine-tunes on forget images with generic/non-sensitive captions to dilute learned associa-tions. 
+
+Shuffled Captions. Replaces true image–text pairs with randomly shuffled ones to introduce contrastive confusion. 
+
+Direct Similarity Minimization. Minimizes cosine similarity between sensitive image-text pairs. 
+
+Negative Gradient [9]. Applies gradient ascent on the 
+
+forget set to reverse learned representations. 
+
+Finetuning. Overwrites knowledge by retraining on a large retain set using standard contrastive objectives [9]. 
+
+Descent to Delete. Perturbs model weights with noise scaled by curvature and training set size [20]. 
+
+VLUnlearn. A state-of-the-art multimodal unlearning method [5], adapted for CLIP. 
+
+DELETE. A state-of-the-art unimodal unlearning method [32], adapted for CLIP. 
+
+CLIPErase. Our implementation of [28]. 
+
+# 5. Experimental Results 
+
+SALMUBench enables us to empirically characterize the task of association-level machine unlearning in CLIP mod-els, highlighting both the inherent difficulty and the perfor-mance of existing methods. 
+
+5.1. Foundational Models Performance 
+
+Table 2 provides foundational benchmarks by quantifying how much sensitive information the Compromised model leaks compared to the Clean model, establishing the precise empirical bounds (in bold) that unlearning methods must target. Ideally, these methods should transform the forget-ting efficacy metrics (measuring sensitive information leak-age) of the Compromised model to match those of the Clean 
+
+model, while preserving its original utility scores. We verified that these target scores are stable and not seed-dependent by comparing our Clean model against an independent OpenCLIP ViT-B/16 trained on LAION-400M; the sensitive-set metrics closely track ours (e.g., Ret-Fail 0.004 vs. 0.001), confirming a robust “clean regime” (see supplementary material). 
+
+5.2. Unlearning Methods Performance 
+
+Table 3 evaluates nine unlearning methods against their empirical bounds ( Target Scores ). Our nuanced protocol moves beyond a simple ‘forget-retain’ analysis to catego-rize their distinct failure modes. For clarity, we report 5 ×
+
+budget results here, with full results in the supplement. 
+
+Type 1: Catastrophically Damaging Methods. Some simple baselines achieve forgetting at an unacceptable cost to general utility. Methods like Shuffled Captions and Di-rect Similarity Minimization significantly reduce sensitive information leakage (RetFail ≤ 0.004) but do so by causing sharp drops in the model’s general knowledge (GenKnow), making them impractical. This represents a catastrophic failure, as the unlearning process inflicts widespread, in-discriminate damage. We validate this conclusion with a critical sanity-check (detailed in the supplement), where ap-plying unlearning methods to the Clean model, which was never exposed to sensitive data, still results in significant utility degradation, proving the methods’ inherent damage. 
+
+Type 2: Over-generalized Forgetting. This is a more subtle but critical failure where methods erase more than intended. The best performers (VLUnlearn, DELETE and CLIPErase) precisely reach the target efficacy metric (RetFail =0.001) with negligible impact on general utility (GenKnow ≥ 0.632). However, DELETE and CLIPErase still incur noticeable collateral damage to holdout associa-tions (InterIdSim and IntraIdSim ≤ 0.024), indicating they erase broader “templates” of sensitive associations, not just individual facts. The mechanism for this is a clear corre-lation: when a method pushes ‘AssocStr’ below the Clean 
+
+model’s baseline of 0.142, it over-corrects and erases re-lated, unseen associations. This is also clear in Nega-tive Gradient, which incurs significant collateral damage across both unrelated and related identities, and is taken to an extreme by Direct Similarity Minimization, which over-corrects so aggressively that it damages the embed-ding structure (negative InterIdSim, IntraIdSim, VisIdInt, and FragSim). This demonstrates a critical weakness of standard ‘forget-retain’ evaluations: they are blind to this over-generalization, as they lack the necessary structured holdout sets to detect such collateral damage. 
+
+Type 3: Ineffective Forgetting. Finally, some methods fail at the primary goal of removing sensitive data. For in-stance, finetuning with Generic Captions is the method with the least collateral damage, but it falls short in forgetting ef-ficacy compared to other baselines. This represents the most straightforward type of failure, where the method is simply not able to erase the target information. A learning-rate ablation (in the supplementary material) further validates our failure mode taxonomy by illustrating the trade-off curve between forgetting and utility metrics. Overall, our analysis reveals three key takeaways: (i) there is substantial room for improvement, as no current method avoids all three failure modes simultaneously; (ii) utility-efficient deletion (achieving ≥99% leakage reduc-tion with <1% drop in GenKnow) is feasible, but our analysis shows current techniques achieve it via over-generalization; and (iii) computational budget influences performance (see details in the supplementary material). 
+
+# 6. Conclusion 
+
+We introduced SALMUBench, the first benchmark for association-level machine unlearning in CLIP-like models under the “Right to be Forgotten” scenario. Our work demonstrates that standard ‘forget-retain’ evaluations are insufficient. The core contribution is our nuanced eval-uation protocol, featuring the holdout association 
+
+and holdout identity sets, which are the first to diag-nose failure types, distinguishing between ineffective, over-generalized, and catastrophically damaging methods. Our results show no current method solves this trade-off, leav-ing room for improvement. 
+
+SALMUBench Web Portal. We publicly release our dataset, models, evaluation scripts, and leaderboards via http://cvc- mmu.github.io/salmubench ,along with the full generation codebase to ensure repro-ducibility and facilitate benchmark extensions. 
+
+Future Work. SALMUBench currently targets CLIP-like dual encoders where embeddings are directly deployed in downstream systems. A natural extension is to evaluate un-learning in diffusion models that use CLIP as a visual back-bone, where sensitive associations may propagate into gen-erated content. Similarly, the benchmark focuses on struc-tured PII attributes (names, locations, contact details); ex-tending it to implicit or abstract sensitive concepts such as artistic styles, political affiliations, or health-related traits would test whether current methods generalize beyond ex-plicit key-value associations. Finally, while our evaluation focuses on erasure under the “Right to be Forgotten” sce-nario, adding a standardized recoverability diagnostic, mea-suring how quickly an unlearned model can re-learn forgot-ten associations via fine-tuning, would provide a valuable robustness axis to assess whether sensitive information has been truly removed or merely suppressed. Acknowledgments 
+
+This work has been supported by the Ramon yCajal research fellowship RYC2020-030777-I/AEI/ 10.13039/501100011033, the Beatriu de Pin´ os (2022 BP 00256) and the Consolidated Research Group 2021 SGR 01559 from the Research and University Department of the Catalan Government, and by project PID2023-146426NB-100 funded by MCIU/AEI/10.13039/501100011033 and FEDER, UE. This work has been funded by the European Lighthouse on Safe and Secure AI (ELSA), and European Large Open Multi-Modal Foundation Models For Robust Generalization On Arbitrary Data Streams (ELLIOT) from the European Union’s Horizon Europe programme under grant agreements No 101070617 and 101214398. We acknowledge EuroHPC JU for awarding the project ID EHPC-AI-2024A02-040 access to MareNostrum 5 hosted at BSC-CNS. The first author was supported by the Rosa Sensat Fellowship from the Computer Vision Center Talent Program of Internships. 
+
+# References 
+
+[1] David Beniaguev. Synthetic faces high quality (sfhq) part 4. 
+
+https://www.kaggle.com/dsv/4746494 , 2022. 3, 1[2] Lucas Bourtoule, Varun Chandrasekaran, Christopher A Choquette-Choo, Hengrui Jia, Adelin Travers, Baiwu Zhang, David Lie, and Nicolas Papernot. Machine unlearning. In 
+
+2021 IEEE symposium on security and privacy (SP) , pages 141–159. IEEE, 2021. 1 [3] Nicholas Carlini, Daphne Ippolito, Matthew Jagielski, Katherine Lee, Florian Tramer, and Chiyuan Zhang. Quan-tifying memorization across neural language models. In The Eleventh International Conference on Learning Representa-tions , 2022. 1 [4] Min Chen, Weizhuo Gao, Gaoyang Liu, Kai Peng, and Chen Wang. Boundary unlearning: Rapid forgetting of deep net-works via shifting the decision boundary. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 7766–7775, 2023. 1 [5] Jiali Cheng and Hadi Amiri. Multidelete for multimodal ma-chine unlearning. In European Conference on Computer Vi-sion , pages 165–184, 2024. 1, 2, 3, 7, 4 [6] Alex Fang, Albin Madappally Jose, Amit Jain, Ludwig Schmidt, Alexander Toshev, and Vaishaal Shankar. Data fil-tering networks. arXiv preprint arXiv:2309.17425 , 2023. 3, 1[7] Daniele Faraglia and Other Contributors. Faker. https: //github.com/joke2k/faker , 2014. 3, 1 [8] Samir Yitzhak Gadre, Gabriel Ilharco, Alex Fang, Jonathan Hayase, Georgios Smyrnis, Thao Nguyen, Ryan Marten, Mitchell Wortsman, Dhruba Ghosh, Jieyu Zhang, Eyal Or-gad, Rahim Entezari, Giannis Daras, Sarah Pratt, Vivek Ramanujan, Yonatan Bitton, Kalyani Marathe, Stephen Mussmann, Richard Vencu, Mehdi Cherti, Ranjay Krishna, Pang Wei Koh, Olga Saukh, Alexander Ratner, Shuran Song, Hannaneh Hajishirzi, Ali Farhadi, Romain Beaumont, Sewoong Oh, Alex Dimakis, Jenia Jitsev, Yair Carmon, Vaishaal Shankar, and Ludwig Schmidt. Datacomp: In search of the next generation of multimodal datasets, 2023. 3, 5, 6, 1, 2 [9] Aditya Golatkar, Alessandro Achille, and Stefano Soatto. Eternal sunshine of the spotless net: Selective forgetting in deep networks. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 9304– 9312, 2020. 1, 7, 4 [10] Chuan Guo, Tom Goldstein, Awni Hannun, and Laurens Van Der Maaten. Certified data removal from machine learning models. In Proceedings of the 37th International Conference on Machine Learning , pages 3832–3842, 2020. 1, 2 [11] Dominik Hintersdorf, Lukas Struppek, Manuel Brack, Felix Friedrich, Patrick Schramowski, and Kristian Kersting. Does clip know my face? J. Artif. Int. Res. , 80, 2024. 6 [12] Gabriel Ilharco, Mitchell Wortsman, Ross Wightman, Cade Gordon, Nicholas Carlini, Rohan Taori, Achal Dave, Vaishaal Shankar, Hongseok Namkoong, John Miller, Han-naneh Hajishirzi, Ali Farhadi, and Ludwig Schmidt. Open-clip, 2025. 3, 5, 1, 2 [13] Joel Jang, Dongkeun Yoon, Sohee Yang, Sungmin Cha, Moontae Lee, Lajanugen Logeswaran, and Minjoon Seo. Knowledge unlearning for mitigating privacy risks in lan-guage models. In The 61st Annual Meeting Of The Asso-ciation For Computational Linguistics , 2023. 1 [14] Kimmo Karkkainen and Jungseock Joo. Fairface: Face attribute dataset for balanced race, gender, and age for bias measurement and mitigation. In Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision (WACV) , pages 1548–1558, 2021. 3, 1 [15] Alexey Kravets and Vinay P Namboodiri. Zero-shot class un-learning in clip with synthetic samples. In 2025 IEEE/CVF Winter Conference on Applications of Computer Vision (WACV) , pages 6456–6464. IEEE, 2025. 1, 2, 3 [16] Junnan Li, Dongxu Li, Caiming Xiong, and Steven Hoi. Blip: Bootstrapping language-image pre-training for unified vision-language understanding and generation, 2022. 5, 4 [17] Zheyuan Liu, Guangyao Dou, Mengzhao Jia, Zhaoxuan Tan, Qingkai Zeng, Yongle Yuan, and Meng Jiang. Protecting privacy in multimodal large language models with mllmu-bench. In Proceedings of the 2025 Annual Conference of the North American Chapter of the Association for Compu-tational Linguistics (NAACL) , 2025. Accepted. 2 [18] Yingzi Ma, Jiongxiao Wang, Fei Wang, Siyuan Ma, Jiazhao Li, Jinsheng Pan, Xiujun Li, Furong Huang, Lichao Sun, Bo Li, et al. Benchmarking vision language model unlearning via fictitious facial identity dataset. In The Thirteenth Inter-national Conference on Learning Representations , 2025. 2 [19] Pratyush Maini, Zhili Feng, Avi Schwarzschild, Zachary Chase Lipton, and J Zico Kolter. TOFU: A task of fictitious unlearning for LLMs. In First Conference on Language Modeling , 2024. 2 [20] Seth Neel, Aaron Roth, and Saeed Sharifi-Malvajerdi. Descent-to-delete: Gradient-based methods for machine un-learning. In Algorithmic Learning Theory , pages 931–962. PMLR, 2021. 7, 4 [21] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry, Amanda Askell, Pamela Mishkin, Jack Clark, Gretchen Krueger, and Ilya Sutskever. Learning transferable visual models from natural language supervision, 2021. 1, 5, 2 [22] Philippe Remy. Name dataset. https://github.com/ philipperemy/name-dataset , 2021. 3, 1 [23] SimpleMaps. World cities database (basic). https:// simplemaps.com/data/world-cities , 2025. Ver-sion 1.901 (May 11, 2025). Accessed on June, 2025. 3, 1 [24] SimpleMaps. World countries database (basic). https:// simplemaps.com/data/countries , 2025. Version 1.0 (March 3, 2025). Accessed on June, 2025. 3, 1 [25] Stanford Blood Center. Blood types and population distribution. https : / / stanfordbloodcenter . org / donate - blood / blood - donation - facts / blood-types/ , 2025. Accessed on June, 2025. 3, 1 [26] Gemma Team. Gemma 3 technical report, 2025. 3, 1 [27] Alice Xiang, Jerone T. A. Andrews, Rebecca L. Bourke, William Thong, Julienne M. LaChance, Tiffany Georgievski, Apostolos Modas, Aida Rahmattalabbi, Yunhao Ba, Shruti Nagpal, Orestis Papakyriakopoulos, Dora Zhao, Jinru Xue, Victoria Matthews, Linxia Gong, Austin T. Hoag, Mircea Cimpoi, Swami Sankaranarayanan, Wiebke Hutiri, Mor-gan K. Scheuerman, Albert S. Abedi, Peter Stone, Pe-ter R. Wurman, Hiroaki Kitano, and Michael Spranger. Fair human-centric image dataset for ethical ai benchmarking. 
+
+Nature , 2025. 6, 2 [28] Tianyu Yang, Lisen Dai, Xiangqi Wang, Minhao Cheng, Yapeng Tian, and Xiangliang Zhang. CLIPErase: Efficient unlearning of visual-textual associations in CLIP. In Pro-ceedings of the 63rd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers) , pages 30438–30452, Vienna, Austria, 2025. Association for Com-putational Linguistics. 1, 2, 7, 4 [29] Hu Ye, Jun Zhang, Sibo Liu, Xiao Han, and Wei Yang. Ip-adapter: Text compatible image prompt adapter for text-to-image diffusion models, 2023. 3, 1 [30] Amy Zhao Yu, Shahar Ronen, Kevin Hu, Tiffany Lu, and C´ esar A. Hidalgo. Pantheon 1.0, a manually verified dataset of globally famous biographies. Scientific Data , 3(1): 150075, 2016. We used the Pantheon 2.0 dataset (2020 ver-sion), available at https://pantheon.world/data/ datasets , which is an update of the original dataset de-scribed in Yu et al. (2016). 3, 1 [31] Lvmin Zhang, Anyi Rao, and Maneesh Agrawala. Adding conditional control to text-to-image diffusion models, 2023. 3, 1, 2 [32] Yu Zhou, Dian Zheng, Qijie Mo, Renjie Lu, Kun-Yu Lin, and Wei-Shi Zheng. Decoupled distillation to erase: A general unlearning method for any class-centric tasks. In Proceed-ings of the Computer Vision and Pattern Recognition Con-ference , pages 20350–20359, 2025. 7, 4 SALMUBench: A Benchmark for Sensitive Association-Level Multimodal Unlearning 
+
+# Supplementary Material 
+
+This document provides additional details and extended results that support the findings presented in the main pa-per. It includes detailed information, additional experi-ments, and examples of the dataset generation pipeline, model training, statistical testing methodology, and imple-mentation specifics of all unlearning baselines. It also con-tains complete evaluation results, including all performance metrics reported under varying computational budgets. 
+
+# 7. Dataset Generation Details 
+
+This section provides additional details about the SALMU dataset construction pipeline to enhance reproducibility. The main paper provides a consolidated step-by-step sum-mary; here we give full procedural details. 
+
+7.1. Detailed Pipeline Description 
+
+Stage 1: Anchor Seeding. We selected 1,000 reference images from the SFHQ Part 4 dataset [1], chosen for its di-versity and high fidelity. These images carry no associated metadata and serve solely as identity anchors for the gener-ation process. 
+
+Stage 2: Identity-Preserving Image Generation. For each persona, we generated approximately 100 images us-ing IP-Adapter-FaceID Plus [29] conditioned on the anchor image. Each prompt was constructed by randomly com-bining phrases from multiple semantic categories, including camera angle (e.g., ‘low-angle’), shot scale (e.g., ‘full-body photo’), subject action (e.g., ‘walking purposefully’), facial expression, and environmental setting. This automated pro-cess yielded highly varied and complex textual prompts (ex-amples in Section 7.3), ensuring that models learn a robust, context-invariant representation of each identity. The base image generation model produces outputs at a native resolution of 1024 × 1024 pixels. To introduce realistic aspect ratios and avoid domain mismatch with web-scale data, we implemented a subsequent outpainting stage. Each square image was expanded via a process guided by a ControlNet [31] model to coherently fill the new canvas area. The target aspect ratio for each image was sampled from the distribution of the DataComp corpus [8]. Finally, all outpainted images were resized to have a maximum size of 512 pixels, ensuring pre-processing consistency with the large-scale web data used for model pretraining. 
+
+Stage 3: CLIP-Based Filtering and Curation. Raw generated images underwent classifier-driven curation. We used a pretrained CLIP model [6, 12] to assign each im-age four zero-shot labels: (1) visual distortions, (2) multi-ple individuals, (3) gender, and (4) race category based on FairFace [14]. Our filtering protocol discarded any image flagged for distortion or multiple subjects. For each of the 1,000 personas, we aggregated demographic (gender, race) predictions from its remaining images, using a majority vote to establish a definitive profile, handling generation incon-sistencies. We then enforced intra-identity consistency by discarding any image not conforming to its persona’s es-tablished profile. Personas with fewer than 50 high-quality, consistent images were removed, filtering our pool to 774 visually and demographically coherent identities. 
+
+Stage 4: PII Assignment. For each curated persona, we generated a rich, consistent, and unique profile of sensitive attributes to simulate a comprehensive range of Personally Identifiable Information (PII), including names, jobs, loca-tions, contact details, and financial identifiers. The pro-cess was grounded in demographic realism. Each persona’s assigned ethnicity determined a plausible set of countries, from which one was sampled based on population data [24]. Subsequently, we generated a full name and city of resi-dence using weighted samples from the Name Dataset [22] and the SimpleMaps World Cities database [23]. Each name’s uniqueness was guaranteed across the dataset and checked against the Pantheon dataset [30] to avoid overlap with public figures. Other attributes were procedurally generated for real-ism: blood types were sampled from real-world distribu-tions [25], jobs were assigned with the faker library [7], and financial/contact information was created with struc-tural validity. Phone numbers and IBANs followed country-specific formats, emails were derived from names, and all identifiers were unique across personas. 
+
+Stage 5: LLM Caption Paraphrasing. For each of the 
+
+∼60,000 curated images, we first randomly selected a sen-sitive attribute from its persona’s profile (e.g., ‘job’) and generated a base sentence from a predefined template (e.g., “{name }’s job is {value }”). Then, using the LLM 
+
+gemma3:12b [26], this sentence was paraphrased follow-ing one of five randomly selected linguistic directives: lex-ical substitution, word-order change, grammatical restruc-turing, tone shift, or creative reformulation. The LLM was constrained to include the exact name and attribute value, ensuring factual integrity. To maximize diversity, it was also instructed to avoid repeating captions for the same fact. This process yields a rich variety of captions (e.g., “ {name }
+
+is employed as a doctor” vs. “The profession of {name } is doctor”), making the underlying semantic link the target for unlearning. 
+
+7.2. Models Used in Data Generation 
+
+The image generation and outpainting pipeline leveraged several models available on the Hug-ging Face Hub. To maintain persona consistency, the initial images were generated by applying the 
+
+h94/IP-Adapter-FaceID 1 adapter over a
+
+SG161222/RealVisXL V5.0 2 base text-to-image model. For the subsequent outpainting stage, which intro-duced realistic aspect ratios, we used a process guided by the xinsir/controlnet-union-sdxl-1.0 3
+
+ControlNet [31] conditioning an efficient 
+
+SG161222/RealVisXL V5.0 Lightning 4 base model. Finally, the generic, non-sensitive captions for the retain synth set were created using the 
+
+Salesforce/blip-image-captioning-large 5
+
+model. 
+
+7.3. Image Generation Prompt Examples 
+
+As mentioned in the main paper, text prompts for the identity-preserving image generation were created pro-grammatically to ensure diversity. Below are some exam-ples of the complex prompts used. Each prompt combines elements like camera angle, shot scale, action, expression, and setting. • “Photorealistic low-angle wide shot photo of a single per-son on the top edge with negative space, in a cozy bed-room, lying, looking away from the camera, with straight and level head, pensive and thoughtful expression, sunny day, context-appropriate clothing, natural lighting, (skin texture:1.5).” 
+
+• “Photorealistic high-angle portrait photo of a single per-son on the bottom edge with negative space, in a sta-dium, standing with arms crossed, looking into the dis-tance, tilting their head to the left, surprised and amazed expression, foggy day, context-appropriate clothing, nat-ural lighting, (skin texture:1.5).” 
+
+• “Photorealistic side profile wide shot photo of a single person on the right edge with negative space, inside a modern office, walking purposefully, looking down, tilting their head slightly up, pensive and thoughtful expression, 
+
+> 1https://huggingface.co/h94/IP-Adapter-FaceID
+> 2https://huggingface.co/SG161222/RealVisXL_V5.0
+> 3https : / / huggingface . co / xinsir / controlnet -union-sdxl-1.0
+> 4https://huggingface.co/SG161222/RealVisXL_V5. 0_Lightning
+> 5https://huggingface.co/Salesforce/blip- image-captioning-large
+
+sunny day, context-appropriate clothing, natural lighting, (skin texture:1.5).” 
+
+# 8. Model training details 
+
+8.1. Training Data Composition. 
+
+The training data for these models relies on the splits de-tailed previously. For the retain real component of the 
+
+retain set, we leverage the large-scale CommonPool cor-pus from the DataComp benchmark [8]. This corpus con-tains approximately 1.3 billion image-text pairs, of which we recovered around 80%. Following the DataComp base-line strategy, we apply CLIPScore-based filtering, keeping the top 40% of pairs. This results in a high-quality dataset of approximately 400 million pairs, which we use as the foundation for both models’ general knowledge. With the SALMU data splits fully defined, the training sets of both models are as follows: • The Clean model, which represents the ideal unlearned state, is trained exclusively on the retain set. • The Compromised model, which is polluted with sensi-tive information, is trained on the union of the retain 
+
+and sensitive sets. This model serves as the starting point for all unlearning interventions. 
+
+Training Setup. Both the Clean and Compromised mod-els adopt the ViT/B-16 architecture, consistent with the de-fault configuration used for the large-scale flavor of the Dat-aComp benchmark [8]. We follow the training setup from the OpenCLIP repository [12] and train both models from scratch for 32 epochs, where the Clean model uses retain 
+
+(400M) and the Compromised model uses retain (400M) + sensitive (60K). The training process takes approxi-mately 65 hours using 128 NVIDIA H100 GPUs. Key train-ing hyperparameters are as follows: batch size : 8192; 
+
+learning rate : 5e-4; and warmup steps : 500. Most of these settings match those used in the large-scale DataComp ViT/B-16 training regime, except for the number of epochs that we set to 32 as in the original CLIP model [21] and OpenCLIP [12] when trained on similar data scales (400M), ensuring both fidelity to real-world CLIP pretraining and comparability with existing CLIP model baselines. 
+
+# 9. Data Validation and Domain Gap Analysis 
+
+In Section 3.4 of the main paper, we discuss the validity of using synthetic faces as a proxy for real portraits. To quan-tify the domain gap, we compared the cosine similarity dis-tributions of 100 real portraits from the FHIBE dataset [27] against 100 randomly sampled images from our synthetic 
+
+sensitive set. Both sets were paired with the following generic captions to isolate visual domain differences from semantic association effects: • “person” 
+
+• “a person” 
+
+• “real person” 
+
+• “a photo of a person” 
+
+• “an image of a person” 
+
+We performed a two-sample Kolmogorov-Smirnov (KS) test to compare the distributions generated by both the 
+
+Clean and Compromised models. The results are as follows: 
+
+Clean Model Analysis. As visually demonstrated in Fig-ure 6 of the main paper, the distributions for the Clean 
+
+model overlap significantly. Quantitatively, the test yields a KS statistic of 0.0900 with a p-value of 0.8154 . Since 
+
+p > 0.05 , we cannot reject the null hypothesis, indicat-ing no statistically significant difference between the em-bedding distributions of real and synthetic faces. • Real Images: μ = 0 .2128 , σ = 0 .0175 
+
+• Synthetic Images: μ = 0 .2128 , σ = 0 .0141 
+
+Compromised Model Analysis. We repeated this anal-ysis using the Compromised model to ensure that the in-clusion of sensitive data during training did not distort the visual domain representation. As shown in Figure 7, the distributions remain aligned. The test yielded a KS statistic of 0.1700 with a p-value of 0.1112 . Again, with p > 0.05 ,the distributions are statistically indistinguishable. • Real Images: μ = 0 .2005 , σ = 0 .0154 
+
+• Synthetic Images: μ = 0 .1966 , σ = 0 .0139 
+
+These results confirm that our synthetic dataset serves as a valid, privacy-safe proxy for real-world portraits in the context of embedding-based unlearning.   
+
+> Figure 7. Average cosine similarity of Real vs. Synthetic images with generic captions for the Compromised model.
+
+9.1. Clean Model Stability 
+
+To assess whether the Clean model’s efficacy metrics re-flect a stable baseline rather than a single-run artifact, we compared it against an independent OpenCLIP ViT-B/16 model trained on LAION-400M. As shown in Table 4, this independent model’s sensitive-set metrics closely track our 
+
+Clean model (e.g., RetFail 0.004 vs. 0.001), confirming that the evaluation targets represent a robust “clean regime.” While strict statistical indistinguishability from a retrained model is the theoretical ideal, these results indicate that the practical goal is restoring the model to this stable baseline state.                          
+
+> Model RetFail AssocStr ACS IdZSC CoreAssoc
+> Clean 0.001 0.142 0.602 0.011 0.151 LAION-400M 0.004 0.149 0.632 0.005 0.169
+> Compromised 0.236 0.322 0.951 0.084 0.183 Table 4. Sensitive-set efficacy metrics for the Clean ,Compro-mised , and an independent OpenCLIP (LAION-400M) model. The similarity between Clean and LAION-400M confirms the tar-get scores are stable and representative.
+
+# 10. Statistical Analysis Framework 
+
+To rigorously interpret the benchmark results, we define a formal statistical framework for comparing any Unlearned 
+
+model against the foundational Compromised and Clean 
+
+models. The ultimate goal is for an Unlearned model to become statistically indistinguishable from its ideal target: the Clean model for efficacy metrics and the original Com-promised model for utility metrics. Consequently, the ideal outcome for all statistical tests is a non-significant result (p-value ≥ 0.05), indicating that the unlearning method has perfectly reached its target state for a given metric. 
+
+Analyzing Forgetting Efficacy. The goal is for an Un-learned model’s behavior on sensitive data to converge to that of the Clean model. • For the retrieval metric (RetFail), we perform a two-sided Wilcoxon signed-rank test on the paired sample-wise ranks. We test if the distribution of ranks for the 
+
+Unlearned model is statistically different from that of the Clean model. The ideal result is non-significant, as this indicates that the Unlearned model’s retrieval per-formance has successfully converged to the state of the 
+
+Clean model, which never saw the sensitive data. • For metrics based on boolean outcomes (ACS, IdZSC), we compare the sample-wise results using McNemar’s test to determine if there is a significant difference in out-come rates. The ideal result is non-significant, indicating the models are statistically equivalent. • For metrics based on similarity scores (AssocStr, Core-Assoc), we compare the score distributions using a two-sample Kolmogorov-Smirnov (K-S) test. The ideal result is non-significant, suggesting the distributions are identi-cal. 
+
+Analyzing Utility Impact. The goal is to preserve the general capabilities of the Compromised model, ensuring that the unlearning process does not introduce any signifi-cant collateral damage or unintended changes. • To assess for any change in general knowledge (Gen-Know), we use McNemar’s test to compare the predic-tion outcomes of the Unlearned model against the Com-promised model on ImageNet-1K. The ideal result is non-significant. • For the remaining utility metrics (InterIdSim, IntraId-Sim, VisIdInt, FragSim), we assess for any performance change using a two-sided paired t-test. This test deter-mines if there is any significant difference (either an in-crease or a decrease) in the mean of the sample-wise sim-ilarity scores between the Unlearned and Compromised 
+
+models. The ideal result remains non-significant, indicat-ing that the model’s performance on these utility tasks has been perfectly preserved. 
+
+# 11. Baselines and Methods for CLIP Unlearn-ing 
+
+We evaluate several unlearning strategies and a finetun-ing baseline on SALMUBench. Since established multi-modal unlearning frameworks (e.g., MultiDelete [5]) were not originally designed for CLIP’s specific architecture, we performed the necessary adaptations to map their objectives to the dual-encoder setting. We evaluate each method under varying computational budgets (1 ×, 5 ×, 10 ×, 15 ×, 20 ×). 
+
+Generic Captions. This baseline fine-tunes the model on 
+
+forget images paired with generic, non-sensitive captions precomputed with BLIP [16]. The training objective is to minimize the standard contrastive loss, using AdamW opti-mizer with a learning rate of 3e-7 and a batch size of 256. 
+
+Shuffled Captions. This method trains on batches from the forget set where captions are randomly shuffled, cre-ating hard-negative pairs to break the learned associations. The model minimizes the contrastive loss on these shuffled pairs using the AdamW optimizer, a batch size of 256, and a learning rate of 5e-7 .
+
+Direct Similarity Minimization. This method’s objec-tive is to directly minimize the mean cosine similarity between the sensitive image and text embeddings. This provides a direct “anti-similarity” signal trained with the AdamW optimizer, a batch size of 256, and a learning rate of 3e-8 .
+
+Negative Gradient . Inspired by the approach presented in [9], it unlearns by reversing the gradient direction on the forget set. During training, we apply gradient as-cent (maximize the loss instead of minimizing it) to push the model away from the representations learned on the 
+
+forget data. We use batch size of 256 and AdamW opti-mizer with a learning rate of 3e-8. 
+
+Finetuning [9]. It finetunes the pretrained model on an 80K-example retain set (randomly sampled from the orig-inal training data, excluding the forget set), using a low learning rate of 5e-7, weight decay of 0.001, and batch size of 32. 
+
+Descent to Delete [20]. This is a weight-space unlearn-ing method that perturbs model parameters with carefully scaled Gaussian noise to obscure the influence of specific data. The noise level is computed based on model smooth-ness, curvature, and the size of the original training set to ensure that the final model is statistically indistinguishable from one trained without the forgotten data. 
+
+VLUnlearn [5]. It enforces forgetting by increasing the distance between image-text embeddings for the forget 
+
+set. The original method relies on visual-language models with cross-attention fusion layers (e.g., ALBEF or BLIP) to compute joint representations. Since CLIP lacks such fu-sion modules, we modify the implementation to use the av-erage of image and text features as a proxy for the fused en-coder output. We maintain the original training objectives: modality decoupling, multimodal knowledge retention, and unimodal knowledge retention. We use the default hyper-parameters provided by the authors in the official reposi-tory 6.
+
+DELETE [32]. DELETE is an unimodal class-centric unlearning method that decouples the forgetting and re-tention objectives. In our CLIP adaptation, the forget 
+
+set is used to minimize the image-text similarity for sen-sitive pairs (forgetting), while the retain set is distilled from the frozen original model to preserve behavior on non-sensitive pairs (retention). We omit the original logit-masking step and instead operate directly on CLIP’s cosine similarity scores. The model is trained with MSE losses on both forgetting and retention terms, using the AdamW opti-mizer with a learning rate of 3e-8 and batch size of 256. 
+
+CLIPErase [28]. A targeted unlearning framework for contrastive multimodal models. It jointly optimizes three objectives: (1) reducing similarity for sensitive image-text pairs (forgetting), (2) matching the original model’s simi-larity on the retain set (retention), and (3) preserving uni-modal image and text embeddings to prevent representation drift (consistency). In our implementation, we compute all three terms using MSE losses on CLIP’s cosine similarity scores and embeddings, following the paper’s design but without modifying the model architecture. Training uses the AdamW optimizer with a learning rate of 3e-8 and batch size of 256. 
+
+> 6https://github.com/CLU-UML/MultiDelete
+
+Forgetting Efficacy Utility Impact Method Budget RetFail AssocStr ACS IdZSC CoreAssoc GenKnow InterIdSim IntraIdSim VisIdInt FragSim 
+
+Target Scores - 0.001 0.142 0.602 0.011 0.151 0.638 0.321 0.321 0.305 0.280 
+
+Generic Captions 1× 0.143 0.308 0.932 0.073 0.179 0.635 0.308 0.308 0.325 0.292 5× 0.055 0.288 0.907 0.056 0.185 0.629 0.288 0.288 0.338 0.310 10 × 0.042 0.275 0.896 0.050 0.185 0.625 0.276 0.275 0.341 0.313 15 × 0.038 0.267 0.885 0.044 0.184 0.621 0.269 0.267 0.342 0.315 20 × 0.035 0.258 0.877 0.042 0.182 0.617 0.260 0.258 0.342 0.313 Shuffled Captions 1× 0.005 0.213 0.644 0.003 0.192 0.587 0.213 0.213 0.210 0.206 5× 0.004 0.212 0.593 0.002 0.200 0.548 0.212 0.212 0.206 0.203 10 × 0.005 0.217 0.574 0.002 0.206 0.513 0.217 0.217 0.207 0.204 15 × 0.006 0.229 0.564 0.001 0.216 0.479 0.229 0.229 0.215 0.213 20 × 0.013 0.250 0.551 0.000 0.231 0.432 0.250 0.250 0.229 0.227 Direct Similarity Minimization 1× 0.087 0.262 0.948 0.074 0.167 0.638 0.264 0.263 0.283 0.259 5× 0.001 -0.429 0.593 0.002 0.012 0.615 -0.420 -0.425 -0.038 -0.031 10 × 0.001 -0.860 0.529 0.000 -0.061 0.573 -0.855 -0.858 -0.263 -0.250 15 × 0.001 -0.944 0.520 0.000 -0.098 0.526 -0.942 -0.943 -0.323 -0.310 20 × 0.001 -0.967 0.516 0.000 -0.140 0.469 -0.966 -0.967 -0.355 -0.344 Negative Gradient 1× 0.179 0.313 0.929 0.072 0.189 0.638 0.314 0.313 0.306 0.277 
+
+5× 0.009 0.055 0.657 0.023 0.204 0.630 0.063 0.061 0.194 0.171 10 × 0.007 -0.206 0.554 0.014 0.164 0.619 -0.201 -0.196 0.078 0.082 15 × 0.006 -0.450 0.526 0.009 0.143 0.604 -0.449 -0.440 -0.049 -0.024 20 × 0.006 -0.646 0.511 0.006 0.149 0.587 -0.649 -0.638 -0.162 -0.128 Finetuning 1× 0.004 0.218 0.647 0.006 0.222 0.646 0.220 0.220 0.287 0.266 5× 0.003 0.208 0.646 0.005 0.212 0.638 0.209 0.209 0.292 0.271 10 × 0.002 0.203 0.647 0.005 0.209 0.637 0.204 0.204 0.294 0.273 15 × 0.002 0.200 0.647 0.005 0.208 0.637 0.201 0.201 0.295 0.274 20 × 0.002 0.199 0.648 0.004 0.207 0.637 0.201 0.201 0.295 0.274 Descent to Delete - 0.008 0.227 0.644 0.007 0.230 0.644 0.228 0.228 0.277 0.258 VLUnlearn 5× 0.001 0.210 0.542 0.006 0.211 0.638 0.210 0.210 0.260 0.248 10 × 0.001 0.209 0.528 0.007 0.212 0.641 0.209 0.209 0.262 0.248 15 × 0.001 0.209 0.524 0.007 0.213 0.641 0.208 0.209 0.262 0.248 20 × 0.001 0.208 0.525 0.006 0.212 0.643 0.208 0.208 0.263 0.248 DELETE 5× 0.001 0.022 0.547 0.000 0.047 0.632 0.023 0.023 0.221 0.217 10 × 0.001 0.014 0.536 0.000 0.044 0.642 0.015 0.014 0.240 0.234 15 × 0.001 0.013 0.529 0.000 0.049 0.643 0.014 0.013 0.249 0.242 20 × 0.001 0.012 0.524 0.000 0.050 0.643 0.013 0.013 0.248 0.240 CLIPErase 5× 0.001 0.023 0.550 0.000 0.051 0.634 0.024 0.024 0.225 0.222 10 × 0.001 0.019 0.534 0.000 0.056 0.642 0.020 0.020 0.245 0.237 15 × 0.001 0.018 0.527 0.000 0.065 0.643 0.020 0.019 0.253 0.243 20 × 0.001 0.019 0.525 0.000 0.069 0.642 0.020 0.020 0.253 0.243 Table 5. Performance of baseline unlearning methods across different computational budgets. 
+
+# 12. Experimental Results 
+
+12.1. Unlearning Baselines Performance 
+
+To complement the main paper’s evaluation, where we fo-cus on the 5× compute budget due to its generally favorable trade-off between forgetting efficacy and utility preserva-tion, we provide in Table 5 the complete performance break-down across all considered computational budgets ( 1× to 
+
+20 ×). This extended view offers insights into how each method scales under increasing resource availability. In this analysis, the ‘Target Scores’ serve as the ideal em-pirical bounds: they correspond to the Clean model for For-getting Efficacy metrics (representing perfect removal) and the Compromised model for Utility Impact metrics (repre-Forgetting Efficacy Utility Impact Method Budget RetFail AssocStr ACS IdZSC CoreAssoc GenKnow InterIdSim IntraIdSim VisIdInt FragSim                                                             
+
+> Clean (Reference) -0.001 0.142 0.602 0.011 0.151 0.633 0.143 0.143 0.331 0.309
+> Generic Captions 5×0.001 0.147 0.616 0.011 0.156 0.626 0.148 0.148 0.324 0.301
+> Shuffled Captions 5×0.002 0.185 0.521 0.001 0.185 0.606 0.185 0.185 0.183 0.184 Direct Sim. Min. 5×0.001 -0.371 0.512 0.005 -0.259 0.611 -0.369 -0.368 0.074 0.074 Negative Gradient 5×0.001 -0.114 0.529 0.007 -0.045 0.629 -0.116 -0.112 0.254 0.248 Table 6. Performance of 4 baseline unlearning methods applied to the Clean model (5 ×budget). The first row lists the metrics of the unmodified Clean model. Deviations from these values indicate unintended damage to the model’s embedding space.
+
+senting original knowledge preservation). While some methods exhibit relatively stable behavior across budgets (e.g., Finetuning, DELETE, CLIPErase), others show strong budget-dependent dynamics. Notably, Direct Similarity Minimization performs best at low bud-gets but deteriorates significantly as training progresses – highlighting the method’s tendency to over-optimize, result-ing in excessive structural damage to the embedding space. Similarly, methods like Generic Captions and Shuffled Captions show mild gains with larger budgets, though their forgetting performance often saturates early, suggesting limited capacity for deeper erasure without stronger super-visory signals. Overall, we chose the 5× budget for the main paper as it tends to represent the best trade-off across most meth-ods: high forgetting performance without significant col-lateral damage. However, we emphasize that each method can, in principle, be re-tuned per budget setting. For example, hyperparameters like learning rate, number of epochs, or regularization strength could be adjusted to yield more optimal trade-offs at higher budgets. Nevertheless, this study intentionally fixes per-method hyperparameters across all budgets to isolate the effect of compute scale and avoid confounding factors. We leave hyperparameter tun-ing for budget-aware unlearning as a direction for future SALMUBench submissions. 
+
+12.2. Sanity Check: Unlearning on the Clean Model 
+
+A critical failure mode identified in our main paper is the tendency of unlearning algorithms to damage model util-ity regardless of whether the sensitive data was actually present. We applied unlearning baselines to the Clean 
+
+model. Since this model represents the desired unlearned state, a safe method should effectively act as an iden-tity function, preserving the metrics of the original Clean 
+
+model. Table 6 presents the results. The first row displays the original scores of the Clean model, serving as the reference for stability. 
+
+Analysis. The results reveal a clear dichotomy between methods, with a notable nuance regarding utility preserva-tion: 1. Low-Risk Methods: Generic Captions proves to be the most stable approach regarding embedding structure, maintaining scores very close to the Clean model refer-ence (e.g., InterIdSim 0.148 vs. Reference 0.143 ). How-ever, it is not entirely cost-free, as it induces a slight degradation in general knowledge (GenKnow drops from 0.633 to 0.626 ). Shuffled Captions causes more significant drift across both utility and structural metrics, confirming that the noise from mismatched pairs is more harmful than the use of generic labels. 2. Catastrophically Damaging Methods: Direct Similar-ity Minimization and Negative Gradient fail this check significantly. Negative Gradient presents a deceptive profile: while it preserves GenKnow reasonably well (0.629 ), it aggressively distorts the embedding space, driving several metrics to negative values. Direct Sim-ilarity Minimization is even more destructive, causing a larger drop in utility and an even more extreme in-version of structure. The fact that these methods drive the Clean model’s natural baseline alignment (AssocStr 
+
+0.142 ) into negative territory ( −0.114 and −0.371 ) con-firms they do not selectively unlearn but rather blindly disrupt the feature space. 
+
+# 13. Learning-Rate Sensitivity Ablation 
+
+To validate our failure mode taxonomy beyond a sin-gle hyperparameter setting, we performed a learning-rate (LR) sweep at 5 × budget for two representative methods: Generic Captions (classified as Type 3: Ineffective) and Negative Gradient (classified as Type 2: Over-generalized). For each method, we varied the learning rate across a wide range and measured RetFail (forgetting efficacy) and Gen-Know (utility preservation). As shown in Figure 8, the results confirm our taxonomy. Generic Captions exhibits a clear performance ceiling: in-creasing the learning rate degrades utility (GenKnow) with-out ever reaching the forgetting target (RetFail), confirming Figure 8. Learning-rate sensitivity (5 × budget): RetFail (left) and GenKnow (right) for Generic Captions and Negative Gradi-ent. Dashed lines indicate target scores. Generic Captions hits a forgetting ceiling regardless of LR, confirming Type 3 (Ineffec-tive). Negative Gradient shows that reaching the forgetting target forces GenKnow well below the target, confirming Type 2 (Over-generalized). 
+
+its classification as Type 3 (Ineffective). Negative Gradi-ent confirms Type 2 (Over-generalized): while intermediate learning rates might appear balanced, reaching the target RetFail forces AssocStr well below the Clean baseline and eventually collapses GenKnow. These results demonstrate that the identified failure modes are robust properties of the methods, not artifacts of a single hyperparameter choice.
