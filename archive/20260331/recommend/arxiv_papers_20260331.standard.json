@@ -1,0 +1,272 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-03-31T20:35:29.695860+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 4,
+    "deep_cap": 6,
+    "deep_selected": 4,
+    "quick_candidates": 3,
+    "quick_skim_target": 11,
+    "quick_selected": 3
+  },
+  "deep_dive": [
+    {
+      "id": "2603.26142v2",
+      "title": "Simulating Novice Students Using Machine Unlearning and Relearning in Large Language Models",
+      "abstract": "Student simulation can support learning-by-teaching pedagogy where human students (as tutors) teach AI-simulated novice students (as tutees). Recent research often relies on prompt engineering with large language models (LLMs) to simulate novice student behaviour, but it is difficult to keep the AI-simulated student at a stable novice knowledge level. A key reason is that many LLMs are trained to be broadly capable, so even when prompted to \"act like a novice,\" the LLMs can still produce expert-level explanations during the learning-by-teaching interaction process. As a result, the AI-simulated student may drift beyond the intended knowledge level, reducing the credibility of the simulation for studying learning-by-teaching processes. Thus, we propose a knowledge-level simulation approach based on machine unlearning. We investigate this approach using a dataset of multiple-choice questions on Python programming concepts. We apply machine unlearning to transform a knowledgeable LLM into a novice-level AI student (i.e., teachable agent), then evaluate whether the teachable agent can relearn targeted knowledge components through learning-by-teaching dialogue interactions. Finally, we analyse the dialogue logs to characterise how the agent's behaviour changes over time, including its question asking, error patterns, and responsiveness to instruction. The results show that (1) unlearning produces simulated student agents with more novice-like responses than prompt-only baselines, (2) the agents recover a measurable portion of the unlearned knowledge under structured exposure, and (3) dialogue analyses reveal identifiable trajectories of conceptual change and teaching moves that predict learning recovery.",
+      "authors": [
+        "Jiajia Song",
+        "Zhihan Guo",
+        "Jionghao Lin"
+      ],
+      "primary_category": "cs.HC",
+      "categories": [
+        "cs.HC"
+      ],
+      "published": "2026-03-27T07:51:54+00:00",
+      "link": "https://arxiv.org/pdf/2603.26142v2",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "uses machine unlearning to simulate novice student behavior by removing expert knowledge",
+      "llm_evidence_cn": "利用机器遗忘技术移除专家知识，以模拟初学者行为",
+      "llm_evidence": "利用机器遗忘技术移除专家知识，以模拟初学者行为",
+      "canonical_evidence": "利用机器遗忘技术移除专家知识，以模拟初学者行为",
+      "llm_tldr_en": "Applies machine unlearning to LLMs to create stable novice student simulations for educational purposes.",
+      "llm_tldr_cn": "将机器遗忘应用于大模型，通过移除专家知识来稳定地模拟初学者行为。",
+      "llm_tldr": "将机器遗忘应用于大模型，通过移除专家知识来稳定地模拟初学者行为。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Machine unlearning techniques and algorithms in deep learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.27338v1",
+      "title": "CounterMoral: Editing Morals in Language Models",
+      "abstract": "Recent advancements in language model technology have significantly enhanced the ability to edit factual information. Yet, the modification of moral judgments, a crucial aspect of aligning models with human values, has garnered less attention. In this work, we introduce CounterMoral, a benchmark dataset crafted to assess how well current model editing techniques modify moral judgments across diverse ethical frameworks. We apply various editing techniques to multiple language models and evaluate their performance. Our findings contribute to the evaluation of language models designed to be ethical.",
+      "authors": [
+        "Michael Ripa",
+        "Jim Davies"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-03-28T17:13:30+00:00",
+      "link": "https://arxiv.org/pdf/2603.27338v1",
+      "tags": [
+        "keyword:MU CE"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "model editing techniques to modify moral judgments",
+      "llm_evidence_cn": "修改道德判断的模型编辑技术",
+      "llm_evidence": "修改道德判断的模型编辑技术",
+      "canonical_evidence": "修改道德判断的模型编辑技术",
+      "llm_tldr_en": "Introduces a benchmark for evaluating model editing techniques in modifying moral judgments.",
+      "llm_tldr_cn": "引入了一个基准，用于评估模型编辑技术在修改道德判断方面的表现。",
+      "llm_tldr": "引入了一个基准，用于评估模型编辑技术在修改道德判断方面的表现。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Model editing for knowledge update and correction",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.27599v1",
+      "title": "You Only Erase Once: Erasing Anything without Bringing Unexpected Content",
+      "abstract": "We present YOEO, an approach for object erasure. Unlike recent diffusion-based methods which struggle to erase target objects without generating unexpected content within the masked regions due to lack of sufficient paired training data and explicit constraint on content generation, our method allows to produce high-quality object erasure results free of unwanted objects or artifacts while faithfully preserving the overall context coherence to the surrounding content. We achieve this goal by training an object erasure diffusion model on unpaired data containing only large-scale real-world images, under the supervision of a sundries detector and a context coherence loss that are built upon an entity segmentation model. To enable more efficient training and inference, a diffusion distillation strategy is employed to train for a few-step erasure diffusion model. Extensive experiments show that our method outperforms the state-of-the-art object erasure methods. Code will be available at https://zyxunh.github.io/YOEO-ProjectPage/.",
+      "authors": [
+        "Yixing Zhu",
+        "Qing Zhang",
+        "Wenju Xu",
+        "Wei-Shi Zheng"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-29T09:42:57+00:00",
+      "link": "https://arxiv.org/pdf/2603.27599v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "object erasure in diffusion models",
+      "llm_evidence_cn": "扩散模型中的物体擦除",
+      "llm_evidence": "扩散模型中的物体擦除",
+      "canonical_evidence": "扩散模型中的物体擦除",
+      "llm_tldr_en": "Introduces YOEO for high-quality object erasure in images using diffusion models without artifacts.",
+      "llm_tldr_cn": "介绍了一种名为YOEO的方法，利用扩散模型在图像中实现高质量的物体擦除且无伪影。",
+      "llm_tldr": "介绍了一种名为YOEO的方法，利用扩散模型在图像中实现高质量的物体擦除且无伪影。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Concept erasure and removal from pre-trained models",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.28605v1",
+      "title": "Unsafe2Safe: Controllable Image Anonymization for Downstream Utility",
+      "abstract": "Large-scale image datasets frequently contain identifiable or sensitive content, raising privacy risks when training models that may memorize and leak such information. We present Unsafe2Safe, a fully automated pipeline that detects privacy-prone images and rewrites only their sensitive regions using multimodally guided diffusion editing. Unsafe2Safe operates in two stages. Stage 1 uses a vision-language model to (i) inspect images for privacy risks, (ii) generate paired private and public captions that respectively include and omit sensitive attributes, and (iii) prompt a large language model to produce structured, identity-neutral edit instructions conditioned on the public caption. Stage 2 employs instruction-driven diffusion editors to apply these dual textual prompts, producing privacy-safe images that preserve global structure and task-relevant semantics while neutralizing private content. To measure anonymization quality, we introduce a unified evaluation suite covering Quality, Cheating, Privacy, and Utility dimensions. Across MS-COCO, Caltech101, and MIT Indoor67, Unsafe2Safe reduces face similarity, text similarity, and demographic predictability by large margins, while maintaining downstream model accuracy comparable to training on raw data. Fine-tuning diffusion editors on our automatically generated triplets (private caption, public caption, edit instruction) further improves both privacy protection and semantic fidelity. Unsafe2Safe provides a scalable, principled solution for constructing large, privacy-safe datasets without sacrificing visual consistency or downstream utility.",
+      "authors": [
+        "Mih Dinh",
+        "SouYoung Jin"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.CY",
+        "cs.LG"
+      ],
+      "published": "2026-03-30T15:54:47+00:00",
+      "link": "https://arxiv.org/pdf/2603.28605v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "removes sensitive information from images via diffusion-based editing",
+      "llm_evidence_cn": "通过基于扩散的编辑从图像中删除敏感信息",
+      "llm_evidence": "通过基于扩散的编辑从图像中删除敏感信息",
+      "canonical_evidence": "通过基于扩散的编辑从图像中删除敏感信息",
+      "llm_tldr_en": "Automates image anonymization by detecting and rewriting sensitive regions using diffusion models.",
+      "llm_tldr_cn": "通过使用扩散模型检测和重写敏感区域，实现图像匿名化的自动化。",
+      "llm_tldr": "通过使用扩散模型检测和重写敏感区域，实现图像匿名化的自动化。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Algorithms for removing sensitive information from neural networks",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2603.25579v1",
+      "title": "The Rules-and-Facts Model for Simultaneous Generalization and Memorization in Neural Networks",
+      "abstract": "A key capability of modern neural networks is their capacity to simultaneously learn underlying rules and memorize specific facts or exceptions. Yet, theoretical understanding of this dual capability remains limited. We introduce the Rules-and-Facts (RAF) model, a minimal solvable setting that enables precise characterization of this phenomenon by bridging two classical lines of work in the statistical physics of learning: the teacher-student framework for generalization and Gardner-style capacity analysis for memorization. In the RAF model, a fraction $1 - \\varepsilon$ of training labels is generated by a structured teacher rule, while a fraction $\\varepsilon$ consists of unstructured facts with random labels. We characterize when the learner can simultaneously recover the underlying rule - allowing generalization to new data - and memorize the unstructured examples. Our results quantify how overparameterization enables the simultaneous realization of these two objectives: sufficient excess capacity supports memorization, while regularization and the choice of kernel or nonlinearity control the allocation of capacity between rule learning and memorization. The RAF model provides a theoretical foundation for understanding how modern neural networks can infer structure while storing rare or non-compressible information.",
+      "authors": [
+        "Gabriele Farné",
+        "Fabrizio Boncoraglio",
+        "Lenka Zdeborová"
+      ],
+      "primary_category": "stat.ML",
+      "categories": [
+        "stat.ML",
+        "cond-mat.dis-nn",
+        "cs.LG"
+      ],
+      "published": "2026-03-26T15:56:23+00:00",
+      "link": "https://arxiv.org/pdf/2603.25579v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "characterizes the capacity for simultaneous generalization and memorization",
+      "llm_evidence_cn": "表征同时泛化和记忆的能力",
+      "llm_evidence": "表征同时泛化和记忆的能力",
+      "canonical_evidence": "表征同时泛化和记忆的能力",
+      "llm_tldr_en": "Provides a theoretical model to understand how neural networks balance learning rules and memorizing facts.",
+      "llm_tldr_cn": "提供了一个理论模型来理解神经网络如何平衡学习规则和记忆事实。",
+      "llm_tldr": "提供了一个理论模型来理解神经网络如何平衡学习规则和记忆事实。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Selective forgetting in neural networks",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2603.26074v1",
+      "title": "Not All Entities are Created Equal: A Dynamic Anonymization Framework for Privacy-Preserving Retrieval-Augmented Generation",
+      "abstract": "Retrieval-Augmented Generation (RAG) enhances the utility of Large Language Models (LLMs) by retrieving external documents. Since the knowledge databases in RAG are predominantly utilized via cloud services, private data in sensitive domains such as finance and healthcare faces the risk of personal information leakage. Thus, effectively anonymizing knowledge bases is crucial for privacy preservation. Existing studies equate the privacy risk of text to the linear superposition of the privacy risks of individual, isolated sensitive entities. The \"one-size-fits-all\" full processing of all sensitive entities severely degrades utility of LLM. To address this issue, we introduce a dynamic anonymization framework named TRIP-RAG. Based on context-aware entity quantification, this framework evaluates entities from the perspectives of marginal privacy risk, knowledge divergence, and topical relevance. It identifies highly sensitive entities while trading off utility, providing a feasible approach for variable-intensity privacy protection scenarios. Our theoretical analysis and experiments indicate that TRIP-RAG can effectively reduce context inference risks. Extensive experimental results demonstrate that, while maintaining privacy protection comparable to full anonymization, TRIP-RAG's Recall@k decreases by less than 35% compared to the original data, and the generation quality improves by up to 56% over existing baselines.",
+      "authors": [
+        "Xinyuan Zhu",
+        "Zekun Fei",
+        "Enye Wang",
+        "Ruiqi He",
+        "Zheli Liu"
+      ],
+      "primary_category": "cs.CR",
+      "categories": [
+        "cs.CR"
+      ],
+      "published": "2026-03-27T05:03:24+00:00",
+      "link": "https://arxiv.org/pdf/2603.26074v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Dynamic anonymization for privacy-preserving retrieval-augmented generation",
+      "llm_evidence_cn": "隐私保护检索增强生成的动态匿名化",
+      "llm_evidence": "隐私保护检索增强生成的动态匿名化",
+      "canonical_evidence": "隐私保护检索增强生成的动态匿名化",
+      "llm_tldr_en": "Proposes a dynamic anonymization framework to protect sensitive entities in RAG systems.",
+      "llm_tldr_cn": "提出一种动态匿名化框架，用于保护RAG系统中的敏感实体隐私。",
+      "llm_tldr": "提出一种动态匿名化框架，用于保护RAG系统中的敏感实体隐私。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Privacy-preserving machine learning and the right to be forgotten",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2603.27481v1",
+      "title": "On Token's Dilemma: Dynamic MoE with Drift-Aware Token Assignment for Continual Learning of Large Vision Language Models",
+      "abstract": "Multimodal Continual Instruction Tuning aims to continually enhance Large Vision Language Models (LVLMs) by learning from new data without forgetting previously acquired knowledge. Mixture of Experts (MoE) architectures naturally facilitate this by incrementally adding new experts and expanding routers while keeping the existing ones frozen. However, despite expert isolation, MoE-based continual learners still suffer from forgetting due to routing-drift: old-task tokens become mistakenly attracted to newly added experts, degrading performance on prior tasks. We analyze the failure mode at the token level and reveal the token's dilemma: ambiguous and old tokens in new-task data offer minimal learning benefit yet induce forgetting when routed to new experts, due to their ambiguous routing assignment during training. Motivated by this, we propose LLaVA-DyMoE, a dynamic MoE framework that incrementally expands the MoE with drift-aware token assignment. We characterize token types via their routing score distributions and apply targeted regularization. Specifically, a token-level assignment guidance steers ambiguous and old tokens away from new experts to preserve established routing patterns and alleviate routing-drift, while complementary routing score regularizations enforce expert-group separation and promote new-expert specialization. Extensive experiments demonstrate that our LLaVA-DyMoE effectively mitigates routing-drift-induced forgetting, achieving over a 7% gain in mean final accuracy and a 12% reduction in forgetting compared to baselines. The project page is https://zhaoc5.github.io/DyMoE.",
+      "authors": [
+        "Chongyang Zhao",
+        "Mingsong Li",
+        "Haodong Lu",
+        "Dong Gong"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-03-29T02:30:55+00:00",
+      "link": "https://arxiv.org/pdf/2603.27481v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "continual learning without forgetting",
+      "llm_evidence_cn": "不发生遗忘的持续学习",
+      "llm_evidence": "不发生遗忘的持续学习",
+      "canonical_evidence": "不发生遗忘的持续学习",
+      "llm_tldr_en": "Analyzes routing-drift in MoE architectures to prevent forgetting in continual learning for LVLMs.",
+      "llm_tldr_cn": "分析了MoE架构中的路由漂移，以防止大型视觉语言模型在持续学习中产生遗忘。",
+      "llm_tldr": "分析了MoE架构中的路由漂移，以防止大型视觉语言模型在持续学习中产生遗忘。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Selective forgetting in neural networks",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
