@@ -6,43 +6,43 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-03-31
-- 运行时间：2026-03-31 20:36:30 UTC
+- 最新运行日期：2026-04-01
+- 运行时间：2026-04-01 20:19:40 UTC
 - 运行状态：成功
 - 本次总论文数：7
-- 精读区：4
-- 速读区：3
+- 精读区：1
+- 速读区：6
 
 ### 今日简报（AI）
-今日深度探索大模型“认知模拟”与“道德编辑”，涵盖从模拟初学者到价值观修正的 7 项前沿进展。
-满分论文揭示了利用机器遗忘模拟学生学习的新路径，同时道德编辑技术实现了对模型价值观的精准调控。
-建议优先研读关于模拟初学者的 10 分佳作，掌握模型知识管理与对齐的最新方法论。
-- 详情：[/202603/31/README](/202603/31/README)
+今日聚焦大模型知识编辑的可视化突破，同步覆盖联邦学习安全与隐私交易等前沿议题。
+核心推荐高分系统 KEditVis，它通过可视化交互让 LLM 的知识修正过程变得直观且可控。
+建议普通读者从可视化工具入手理解模型“改错”逻辑，并关注 AI 时代的个人数据隐私保护。
+- 详情：[/202604/01/README](/202604/01/README)
 
 ### 精读区论文标签
-1. [Simulating Novice Students Using Machine Unlearning and Relearning in Large Language Models](/202603/31/2603.26142v2-simulating-novice-students-using-machine-unlearning-and-relearning-in-large-language-models)  
-   标签：评分：10.0/10、query:mu-ce
-   evidence：利用机器遗忘技术移除专家知识，以模拟初学者行为
-2. [CounterMoral: Editing Morals in Language Models](/202603/31/2603.27338v1-countermoral-editing-morals-in-language-models)  
+1. [KEditVis: A Visual Analytics System for Knowledge Editing of Large Language Models](/202604/01/2603.29689v1-keditvis-a-visual-analytics-system-for-knowledge-editing-of-large-language-models)  
    标签：评分：9.0/10、query:mu-ce
-   evidence：修改道德判断的模型编辑技术
-3. [You Only Erase Once: Erasing Anything without Bringing Unexpected Content](/202603/31/2603.27599v1-you-only-erase-once-erasing-anything-without-bringing-unexpected-content)  
-   标签：评分：8.0/10、query:mu-ce
-   evidence：扩散模型中的物体擦除
-4. [Unsafe2Safe: Controllable Image Anonymization for Downstream Utility](/202603/31/2603.28605v1-unsafe2safe-controllable-image-anonymization-for-downstream-utility)  
-   标签：评分：8.0/10、query:mu-ce
-   evidence：通过基于扩散的编辑从图像中删除敏感信息
+   evidence：大语言模型知识编辑的可视化分析系统
 
 ### 速读区论文标签
-1. [The Rules-and-Facts Model for Simultaneous Generalization and Memorization in Neural Networks](/202603/31/2603.25579v1-the-rules-and-facts-model-for-simultaneous-generalization-and-memorization-in-neural-networks)  
+1. [AI Security in the Foundation Model Era: A Comprehensive Survey from a Unified Perspective](/202604/01/2603.24857v1-ai-security-in-the-foundation-model-era-a-comprehensive-survey-from-a-unified-perspective)  
+   标签：评分：7.0/10、query:mu-ce
+   evidence：关于AI安全的综合综述，包括数据与模型的相互依赖性
+2. [FedFG: Privacy-Preserving and Robust Federated Learning via Flow-Matching Generation](/202604/01/2603.27986v1-fedfg-privacy-preserving-and-robust-federated-learning-via-flow-matching-generation)  
+   标签：评分：7.0/10、query:mu-ce
+   evidence：隐私保护联邦学习与数据泄露防范
+3. [Privacy as Commodity: MFG-RegretNet for Large-Scale Privacy Trading in Federated Learning](/202604/01/2603.28329v1-privacy-as-commodity-mfg-regretnet-for-large-scale-privacy-trading-in-federated-learning)  
    标签：评分：6.0/10、query:mu-ce
-   evidence：表征同时泛化和记忆的能力
-2. [Not All Entities are Created Equal: A Dynamic Anonymization Framework for Privacy-Preserving Retrieval-Augmented Generation](/202603/31/2603.26074v1-not-all-entities-are-created-equal-a-dynamic-anonymization-framework-for-privacy-preserving-retrieval-augmented-generation)  
+   evidence：联邦学习中的隐私交易与差分隐私预算
+4. [GEditBench v2: A Human-Aligned Benchmark for General Image Editing](/202604/01/2603.28547v1-geditbench-v2-a-human-aligned-benchmark-for-general-image-editing)  
    标签：评分：6.0/10、query:mu-ce
-   evidence：隐私保护检索增强生成的动态匿名化
-3. [On Token's Dilemma: Dynamic MoE with Drift-Aware Token Assignment for Continual Learning of Large Vision Language Models](/202603/31/2603.27481v1-on-tokens-dilemma-dynamic-moe-with-drift-aware-token-assignment-for-continual-learning-of-large-vision-language-models)  
+   evidence：图像编辑任务和视觉一致性的基准测试
+5. [Privacy Guard & Token Parsimony by Prompt and Context Handling and LLM Routing](/202604/01/2603.28972v1-privacy-guard--token-parsimony-by-prompt-and-context-handling-and-llm-routing)  
    标签：评分：6.0/10、query:mu-ce
-   evidence：不发生遗忘的持续学习
+   evidence：隐私保护与上下文处理以防止数据泄露
+6. [Task Scarcity and Label Leakage in Relational Transfer Learning](/202604/01/2603.29914v1-task-scarcity-and-label-leakage-in-relational-transfer-learning)  
+   标签：评分：6.0/10、query:mu-ce
+   evidence：梯度投影方法从表示更新中移除标签预测方向
 
 
 <div class="dpr-home-promo-card">
