@@ -1,0 +1,398 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-04-02T19:53:20.618298+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 3,
+    "deep_cap": 6,
+    "deep_selected": 3,
+    "quick_candidates": 7,
+    "quick_skim_target": 11,
+    "quick_selected": 7
+  },
+  "deep_dive": [
+    {
+      "id": "2604.00430v1",
+      "title": "Secure Forgetting: A Framework for Privacy-Driven Unlearning in Large Language Model (LLM)-Based Agents",
+      "abstract": "Large language model (LLM)-based agents have recently gained considerable attention due to the powerful reasoning capabilities of LLMs. Existing research predominantly focuses on enhancing the task performance of these agents in diverse scenarios. However, as LLM-based agents become increasingly integrated into real-world applications, significant concerns emerge regarding their accumulation of sensitive or outdated knowledge. Addressing these concerns requires the development of mechanisms that allow agents to selectively forget previously learned knowledge, giving rise to a new term LLM-based agent unlearning. This paper initiates research on unlearning in LLM-based agents. Specifically, we propose a novel and comprehensive framework that categorizes unlearning scenarios into three contexts: state unlearning (forgetting specific states or items), trajectory unlearning (forgetting sequences of actions) and environment unlearning (forgetting entire environments or categories of tasks). Within this framework, we introduce a natural language-based unlearning method that trains a conversion model to transform high-level unlearning requests into actionable unlearning prompts, guiding agents through a controlled forgetting process. Moreover, to evaluate the robustness of the proposed framework, we introduce an unlearning inference adversary capable of crafting prompts, querying agents, and observing their behaviors in an attempt to infer the forgotten knowledge. Experimental results show that our approach effectively enables agents to forget targeted knowledge while preserving performance on untargeted tasks, and prevents the adversary from inferring the forgotten knowledge.",
+      "authors": [
+        "Dayong Ye",
+        "Tainqing Zhu",
+        "Congcong Zhu",
+        "Feng He",
+        "Qi He",
+        "Shang Wang",
+        "Bo Liu",
+        "Wanlei Zhou"
+      ],
+      "primary_category": "cs.MA",
+      "categories": [
+        "cs.MA",
+        "cs.CR"
+      ],
+      "published": "2026-04-01T03:17:35+00:00",
+      "link": "https://arxiv.org/pdf/2604.00430v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "framework for privacy-driven unlearning in LLM-based agents",
+      "llm_evidence_cn": "LLM智能体中隐私驱动的机器遗忘框架",
+      "llm_evidence": "LLM智能体中隐私驱动的机器遗忘框架",
+      "canonical_evidence": "LLM智能体中隐私驱动的机器遗忘框架",
+      "llm_tldr_en": "Proposes a framework for LLM agents to selectively forget sensitive or outdated knowledge.",
+      "llm_tldr_cn": "提出了一个让大模型智能体选择性遗忘敏感或过时知识的框架。",
+      "llm_tldr": "提出了一个让大模型智能体选择性遗忘敏感或过时知识的框架。",
+      "llm_tags": [
+        "query:mu-ce:composite"
+      ],
+      "matched_query_tag": "query:mu-ce:composite",
+      "matched_query_text": "Papers central to 查找关于机器遗忘（Machine Unlearning）和概念擦除（Concept Erasure）的相关论文, especially work that connects or combines: Machine unlearning techniques and algorithms in deep learning; Concept erasure and removal from pre-trained models; Efficient data removal from trained machine learning models; Model editing for knowledge update and correction; Selective forgetting in neural networks; Privacy-preserving machine learning and the right to be forgotten; State of the art methods for machine unlearning and concept erasure; Algorithms for removing sensitive information from neural networks.",
+      "matched_requirement_id": "req-composite-mu-ce",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.00131v1",
+      "title": "Oblivion: Self-Adaptive Agentic Memory Control through Decay-Driven Activation",
+      "abstract": "Human memory adapts through selective forgetting: experiences become less accessible over time but can be reactivated by reinforcement or contextual cues. In contrast, memory-augmented LLM agents rely on \"always-on\" retrieval and \"flat\" memory storage, causing high interference and latency as histories grow. We introduce Oblivion, a memory control framework that casts forgetting as decay-driven reductions in accessibility, not explicit deletion. Oblivion decouples memory control into read and write paths. The read path decides when to consult memory, based on agent uncertainty and memory buffer sufficiency, avoiding redundant always-on access. The write path decides what to strengthen, by reinforcing memories contributing to forming the response. Together, this enables hierarchical memory organization that maintains persistent high-level strategies while dynamically loading details as needed. We evaluate on both static and dynamic long-horizon interaction benchmarks. Results show that Oblivion dynamically adapts memory access and reinforcement, balancing learning and forgetting under shifting contexts, highlighting that memory control is essential for effective LLM-agentic reasoning. The source code is available at https://github.com/nec-research/oblivion.",
+      "authors": [
+        "Ashish Rana",
+        "Chia-Chien Hung",
+        "Qumeng Sun",
+        "Julian Martin Kunkel",
+        "Carolin Lawrence"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI"
+      ],
+      "published": "2026-03-31T18:37:35+00:00",
+      "link": "https://arxiv.org/pdf/2604.00131v1",
+      "tags": [
+        "keyword:MU CE"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Selective forgetting through decay-driven memory activation in agents",
+      "llm_evidence_cn": "通过衰减驱动的记忆激活在智能体中实现选择性遗忘",
+      "llm_evidence": "通过衰减驱动的记忆激活在智能体中实现选择性遗忘",
+      "canonical_evidence": "通过衰减驱动的记忆激活在智能体中实现选择性遗忘",
+      "llm_tldr_en": "Introduces a framework for LLM agents to simulate human-like selective forgetting via memory decay.",
+      "llm_tldr_cn": "为大模型智能体引入了一个通过记忆衰减模拟人类选择性遗忘的框架。",
+      "llm_tldr": "为大模型智能体引入了一个通过记忆衰减模拟人类选择性遗忘的框架。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Selective forgetting in neural networks",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.00938v1",
+      "title": "WARP: Guaranteed Inner-Layer Repair of NLP Transformers",
+      "abstract": "Transformer-based NLP models remain vulnerable to adversarial perturbations, yet existing repair methods face a fundamental trade-off: gradient-based approaches offer flexibility but lack verifiability and often overfit; methods that do provide repair guarantees are restricted to the final layer or small networks, significantly limiting the parameter search space available for repair. We present WARP (Weight-Adjusted Repair with Provability), a constraint-based repair framework that extends repair beyond the last layer of Transformer models. WARP formulates repair as a convex quadratic program derived from a first-order linearization of the logit gap, enabling tractable optimization over a high-dimensional parameter space. Under the condition that the first-order approximation holds, this formulation induces three per-sample guarantees: (i) a positive margin constraint ensuring correct classification on repaired inputs, (ii) preservation constraints over a designated remain set, and (iii) a certified robustness radius derived from Lipschitz continuity. To ensure feasibility across varying model architectures, we introduce a sensitivity-based preprocessing step that conditions the optimization landscape accordingly. We further show that the iterative optimization procedure converges to solutions satisfying all repair constraints under mild assumptions. Empirical evaluation on encoder-only Transformers with varying layer architectures validates that these guarantees hold in practice while improving robustness to adversarial inputs. Our results demonstrate that guaranteed, generalizable Transformer repair is achievable through principled constraint-based optimization.",
+      "authors": [
+        "Hsin-Ling Hsu",
+        "Min-Yu Chen",
+        "Nai-Chia Chen",
+        "Yan-Ru Chen",
+        "Yi-Ling Chang",
+        "Fang Yu"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-04-01T14:12:49+00:00",
+      "link": "https://arxiv.org/pdf/2604.00938v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "guaranteed inner-layer repair of NLP Transformers",
+      "llm_evidence_cn": "NLP Transformer的保证内层修复",
+      "llm_evidence": "NLP Transformer的保证内层修复",
+      "canonical_evidence": "NLP Transformer的保证内层修复",
+      "llm_tldr_en": "Presents WARP, a framework for provable repair of Transformer internal layers to correct model behavior.",
+      "llm_tldr_cn": "提出WARP框架，用于对Transformer内部层进行可证明的修复以纠正模型行为。",
+      "llm_tldr": "提出WARP框架，用于对Transformer内部层进行可证明的修复以纠正模型行为。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Model editing for knowledge update and correction",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2604.00326v1",
+      "title": "Inference-Aware & Privacy-Preserving Deletion in Databases",
+      "abstract": "Deletion is a fundamental database operation, yet modern systems often fail to provide the privacy guarantee that users expect from it. A deleted value may disappear from query results and even from physical storage, yet remain inferable from dependencies, derived data, or traces exposed by the deletion event itself. Meaningful deletion, therefore, requires more than logical removal or physical erasure; it requires a privacy guarantee that limits what remains inferable after deletion. In this paper, we take an inference-centric view of deletion, focusing on two leakage channels: leakage from the post-deletion state and leakage from the deletion pattern itself. We use this lens to distinguish logical, physical, and semantic deletion, organize the design space of deletion operations, and highlight open research challenges for building deletion mechanisms with meaningful privacy guarantees in database systems.",
+      "authors": [
+        "Vishal Chakraborty",
+        "Youri Kaminsky",
+        "Arnav Abhijit Dhariya",
+        "Sharad Mehrotra",
+        "Felix Naumann",
+        "Sarvesh Pandey"
+      ],
+      "primary_category": "cs.DB",
+      "categories": [
+        "cs.DB"
+      ],
+      "published": "2026-03-31T23:58:32+00:00",
+      "link": "https://arxiv.org/pdf/2604.00326v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Privacy-preserving deletion and inference-centric view of data removal",
+      "llm_evidence_cn": "隐私保护删除与以推理为中心的数据移除视角",
+      "llm_evidence": "隐私保护删除与以推理为中心的数据移除视角",
+      "canonical_evidence": "隐私保护删除与以推理为中心的数据移除视角",
+      "llm_tldr_en": "Explores privacy guarantees for data deletion in databases to prevent inference of removed information.",
+      "llm_tldr_cn": "探讨数据库中数据删除的隐私保证，以防止移除信息的二次推理。",
+      "llm_tldr": "探讨数据库中数据删除的隐私保证，以防止移除信息的二次推理。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Privacy-preserving machine learning and the right to be forgotten",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2603.27707v1",
+      "title": "Low-Rank Adaptation Reduces Catastrophic Forgetting in Sequential Transformer Encoder Fine-Tuning: Controlled Empirical Evidence and Frozen-Backbone Representation Probes",
+      "abstract": "Sequential fine-tuning of pretrained language encoders often overwrites previously acquired capabilities, but the forgetting behavior of parameter-efficient updates remains under-characterized. We present a controlled empirical study of Low-Rank Adaptation (LoRA) in sequential transformer encoder fine-tuning with companion representation probes that test a frozen-backbone explanation of its robustness. In five full-validation BERT-base reruns on an RTE->MRPC->CoLA->SST-2 sequence, full fine-tuning yields 19.9%+/-4.8% average forgetting, whereas standard LoRA (r=8, query/value modules) yields 0.6%+/-1.4% (paired t-test, p=0.002, Cohen's d_s=3.12). Task-level analyses confirm this reduction is not merely an aggregate effect. Secondary experiments on RoBERTa-base show the same pattern, and the strongest EWC baseline remains at 15.5%+/-1.4% forgetting. A six-task extension reveals that low average forgetting can hide strong task-level heterogeneity. Fine-grained freezing ablations show a marked forgetting drop once frozen parameters exceed roughly 95%, with classifier-only and shallow-adapter baselines approaching LoRA. Companion task-similarity probes in GPT-2 and RoBERTa show the same directional story: frozen-backbone regimes preserve higher inter-task similarity than full fine-tuning, gradual unfreezing weakens stability, and full fine-tuning exhibits its clearest divergence at the final transformer layer. These results support a restrained mechanistic interpretation: LoRA helps largely because backbone freezing preserves a more stable shared feature scaffold. We position standard LoRA as both a strong empirical baseline for sequential encoder adaptation and a useful probe of how selective plasticity shapes interference in transformer continual learning.",
+      "authors": [
+        "Ashish Pandey"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-03-29T14:14:36+00:00",
+      "link": "https://arxiv.org/pdf/2603.27707v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "characterizing forgetting behavior in parameter-efficient updates like LoRA",
+      "llm_evidence_cn": "表征 LoRA 等参数高效更新中的遗忘行为",
+      "llm_evidence": "表征 LoRA 等参数高效更新中的遗忘行为",
+      "canonical_evidence": "表征 LoRA 等参数高效更新中的遗忘行为",
+      "llm_tldr_en": "Investigates how LoRA reduces catastrophic forgetting during sequential fine-tuning of language encoders.",
+      "llm_tldr_cn": "研究了 LoRA 如何在语言编码器的顺序微调过程中减少灾难性遗忘。",
+      "llm_tldr": "研究了 LoRA 如何在语言编码器的顺序微调过程中减少灾难性遗忘。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Selective forgetting in neural networks",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2604.00422v1",
+      "title": "Shapley-Guided Neural Repair Approach via Derivative-Free Optimization",
+      "abstract": "DNNs are susceptible to defects like backdoors, adversarial attacks, and unfairness, undermining their reliability. Existing approaches mainly involve retraining, optimization, constraint-solving, or search algorithms. However, most methods rely on gradient calculations, restricting applicability to specific activation functions (e.g., ReLU), or use search algorithms with uninterpretable localization and repair. Furthermore, they often lack generalizability across multiple properties. We propose SHARPEN, integrating interpretable fault localization with a derivative-free optimization strategy. First, SHARPEN introduces a Deep SHAP-based localization strategy quantifying each layer's and neuron's marginal contribution to erroneous outputs. Specifically, a hierarchical coarse-to-fine approach reranks layers by aggregated impact, then locates faulty neurons/filters by analyzing activation divergences between property-violating and benign states. Subsequently, SHARPEN incorporates CMA-ES to repair identified neurons. CMA-ES leverages a covariance matrix to capture variable dependencies, enabling gradient-free search and coordinated adjustments across coupled neurons. By combining interpretable localization with evolutionary optimization, SHARPEN enables derivative-free repair across architectures, being less sensitive to gradient anomalies and hyperparameters. We demonstrate SHARPEN's effectiveness on three repair tasks. Balancing property repair and accuracy preservation, it outperforms baselines in backdoor removal (+10.56%), adversarial mitigation (+5.78%), and unfairness repair (+11.82%). Notably, SHARPEN handles diverse tasks, and its modular design is plug-and-play with different derivative-free optimizers, highlighting its flexibility.",
+      "authors": [
+        "Xinyu Sun",
+        "Wanwei Liu",
+        "Haoang Chi",
+        "Tingyu Chen",
+        "Xiaoguang Mao",
+        "Shangwen Wang",
+        "Lei Bu",
+        "Jingyi Wang",
+        "Yang Tan",
+        "Zhenyi Qi"
+      ],
+      "primary_category": "cs.SE",
+      "categories": [
+        "cs.SE",
+        "cs.LG"
+      ],
+      "published": "2026-04-01T03:05:48+00:00",
+      "link": "https://arxiv.org/pdf/2604.00422v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "interpretable fault localization and neural repair",
+      "llm_evidence_cn": "可解释的故障定位与神经修复",
+      "llm_evidence": "可解释的故障定位与神经修复",
+      "canonical_evidence": "可解释的故障定位与神经修复",
+      "llm_tldr_en": "Proposes SHARPEN for interpretable neural repair of defects like backdoors and unfairness without retraining.",
+      "llm_tldr_cn": "提出SHARPEN方法，无需重新训练即可对后门和不公平性等缺陷进行可解释的神经修复。",
+      "llm_tldr": "提出SHARPEN方法，无需重新训练即可对后门和不公平性等缺陷进行可解释的神经修复。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Model editing for knowledge update and correction",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2603.27790v1",
+      "title": "Inference-time Trajectory Optimization for Manga Image Editing",
+      "abstract": "We present an inference-time adaptation method that tailors a pretrained image editing model to each input manga image using only the input image itself. Despite recent progress in pretrained image editing, such models often underperform on manga because they are trained predominantly on natural-image data. Re-training or fine-tuning large-scale models on manga is, however, generally impractical due to both computational cost and copyright constraints. To address this issue, our method slightly corrects the generation trajectory at inference time so that the input image can be reconstructed more faithfully under an empty prompt. Experimental results show that our method consistently outperforms existing baselines while incurring only negligible computational overhead.",
+      "authors": [
+        "Ryosuke Furuta"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-29T18:02:56+00:00",
+      "link": "https://arxiv.org/pdf/2603.27790v1",
+      "tags": [
+        "keyword:MU CE"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "inference-time adaptation for image editing",
+      "llm_evidence_cn": "推理阶段的图像编辑自适应",
+      "llm_evidence": "推理阶段的图像编辑自适应",
+      "canonical_evidence": "推理阶段的图像编辑自适应",
+      "llm_tldr_en": "Adapts pretrained image editing models to manga style at inference time without full retraining.",
+      "llm_tldr_cn": "在推理阶段将预训练图像编辑模型适配至漫画风格，无需完全重训练。",
+      "llm_tldr": "在推理阶段将预训练图像编辑模型适配至漫画风格，无需完全重训练。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Model editing for knowledge update and correction",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2604.00419v1",
+      "title": "G-Drift MIA: Membership Inference via Gradient-Induced Feature Drift in LLMs",
+      "abstract": "Large language models (LLMs) are trained on massive web-scale corpora, raising growing concerns about privacy and copyright. Membership inference attacks (MIAs) aim to determine whether a given example was used during training. Existing LLM MIAs largely rely on output probabilities or loss values and often perform only marginally better than random guessing when members and non-members are drawn from the same distribution. We introduce G-Drift MIA, a white-box membership inference method based on gradient-induced feature drift. Given a candidate (x,y), we apply a single targeted gradient-ascent step that increases its loss and measure the resulting changes in internal representations, including logits, hidden-layer activations, and projections onto fixed feature directions, before and after the update. These drift signals are used to train a lightweight logistic classifier that effectively separates members from non-members. Across multiple transformer-based LLMs and datasets derived from realistic MIA benchmarks, G-Drift substantially outperforms confidence-based, perplexity-based, and reference-based attacks. We further show that memorized training samples systematically exhibit smaller and more structured feature drift than non-members, providing a mechanistic link between gradient geometry, representation stability, and memorization. In general, our results demonstrate that small, controlled gradient interventions offer a practical tool for auditing the membership of training-data and assessing privacy risks in LLMs.",
+      "authors": [
+        "Ravi Ranjan",
+        "Utkarsh Grover",
+        "Xiaomin Lin",
+        "Agoritsa Polyzou"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-04-01T03:01:27+00:00",
+      "link": "https://arxiv.org/pdf/2604.00419v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "membership inference via gradient-induced feature drift",
+      "llm_evidence_cn": "通过梯度诱导特征漂移进行成员推理",
+      "llm_evidence": "通过梯度诱导特征漂移进行成员推理",
+      "canonical_evidence": "通过梯度诱导特征漂移进行成员推理",
+      "llm_tldr_en": "Introduces a white-box membership inference method to detect if data was used in LLM training.",
+      "llm_tldr_cn": "引入一种白盒成员推理方法，用于检测数据是否被用于LLM训练。",
+      "llm_tldr": "引入一种白盒成员推理方法，用于检测数据是否被用于LLM训练。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Privacy-preserving machine learning and the right to be forgotten",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2604.00955v1",
+      "title": "Enhancing Gradient Inversion Attacks in Federated Learning via Hierarchical Feature Optimization",
+      "abstract": "Federated Learning (FL) has emerged as a compelling paradigm for privacy-preserving distributed machine learning, allowing multiple clients to collaboratively train a global model by transmitting locally computed gradients to a central server without exposing their private data. Nonetheless, recent studies find that the gradients exchanged in the FL system are also vulnerable to privacy leakage, e.g., an attacker can invert shared gradients to reconstruct sensitive data by leveraging pre-trained generative adversarial networks (GAN) as prior knowledge. However, existing attacks simply perform gradient inversion in the latent space of the GAN model, which limits their expression ability and generalizability. To tackle these challenges, we propose \\textbf{G}radient \\textbf{I}nversion over \\textbf{F}eature \\textbf{D}omains (GIFD), which disassembles the GAN model and searches the hierarchical features of the intermediate layers. Instead of optimizing only over the initial latent code, we progressively change the optimized layer, from the initial latent space to intermediate layers closer to the output images. In addition, we design a regularizer to avoid unreal image generation by adding a small ${l_1}$ ball constraint to the searching range. We also extend GIFD to the out-of-distribution (OOD) setting, which weakens the assumption that the training sets of GANs and FL tasks obey the same data distribution. Furthermore, we consider the challenging OOD scenario of label inconsistency and propose a label mapping technique as an effective solution. Extensive experiments demonstrate that our method can achieve pixel-level reconstruction and outperform competitive baselines across a variety of FL scenarios.",
+      "authors": [
+        "Hao Fang",
+        "Wenbo Yu",
+        "Bin Chen",
+        "Xuan Wang",
+        "Shu-Tao Xia",
+        "Qing Liao",
+        "Ke Xu"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-04-01T14:32:15+00:00",
+      "link": "https://arxiv.org/pdf/2604.00955v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "privacy leakage and gradient inversion attacks",
+      "llm_evidence_cn": "隐私泄露与梯度反向攻击",
+      "llm_evidence": "隐私泄露与梯度反向攻击",
+      "canonical_evidence": "隐私泄露与梯度反向攻击",
+      "llm_tldr_en": "Investigates privacy vulnerabilities in federated learning by enhancing gradient inversion attacks.",
+      "llm_tldr_cn": "通过增强梯度反向攻击，研究联邦学习中的隐私漏洞。",
+      "llm_tldr": "通过增强梯度反向攻击，研究联邦学习中的隐私漏洞。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Algorithms for removing sensitive information from neural networks",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2604.01152v1",
+      "title": "Brainstacks: Cross-Domain Cognitive Capabilities via Frozen MoE-LoRA Stacks for Continual LLM Learning",
+      "abstract": "We present Brainstacks, a modular architecture for continual multi-domain fine-tuning of large language models that packages domain expertise as frozen adapter stacks composing additively on a shared frozen base at inference. Five interlocking components: (1) MoE-LoRA with Shazeer-style noisy top-2 routing across all seven transformer projections under QLoRA 4-bit quantization with rsLoRA scaling; (2) an inner loop performing residual boosting by freezing trained stacks and adding new ones; (3) an outer loop training sequential domain-specific stacks with curriculum-ordered dependencies; (4) null-space projection via randomized SVD constraining new stacks to subspaces orthogonal to prior directions, achieving zero forgetting in isolation; (5) an outcome-based sigmoid meta-router trained on empirically discovered domain-combination targets that selectively weights stacks, enabling cross-domain composition. Two boundary experiments: (6) PSN pretraining on a randomly initialized model; (7) per-domain RL (DPO/GRPO) validating compatibility with post-SFT alignment. Validated on TinyLlama-1.1B (4 domains, 9 stacks) and Gemma 3 12B IT (5 domains, 10 stacks), MoE-LoRA achieves 2.5x faster convergence than parameter-matched single LoRA, residual boosting breaks through the single-stack ceiling, and the routed system recovers generation quality destroyed by ungated stack accumulation. The central finding: the outcome-based router discovers that domain stacks encode transferable cognitive primitives (instruction-following clarity, numerical reasoning, procedural logic, chain-of-thought structure) rather than domain-specific knowledge, with medical prompts routing to chat+math stacks in 97% of cases despite zero medical data in those stacks.",
+      "authors": [
+        "Mohammad R. Abu Ayyash"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI"
+      ],
+      "published": "2026-04-01T17:08:25+00:00",
+      "link": "https://arxiv.org/pdf/2604.01152v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "null-space projection to achieve zero forgetting in continual learning",
+      "llm_evidence_cn": "通过零空间投影实现持续学习中的零遗忘",
+      "llm_evidence": "通过零空间投影实现持续学习中的零遗忘",
+      "canonical_evidence": "通过零空间投影实现持续学习中的零遗忘",
+      "llm_tldr_en": "A modular architecture using MoE-LoRA and null-space projection to prevent forgetting in continual learning.",
+      "llm_tldr_cn": "一种使用MoE-LoRA和零空间投影来防止持续学习中遗忘的模块化架构。",
+      "llm_tldr": "一种使用MoE-LoRA和零空间投影来防止持续学习中遗忘的模块化架构。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Selective forgetting in neural networks",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

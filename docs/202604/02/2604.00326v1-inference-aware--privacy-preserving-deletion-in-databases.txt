@@ -1,0 +1,277 @@
+Title: Inference-Aware & Privacy-Preserving Deletion in Databases
+
+URL Source: https://arxiv.org/pdf/2604.00326v1
+
+Published Time: Thu, 02 Apr 2026 00:20:35 GMT
+
+Number of Pages: 5
+
+Markdown Content:
+# Inference-Aware & Privacy-Preserving Deletion in Databases 
+
+## Vishal Chakraborty 
+
+University of California, Irvine USA vchakrab@uci.edu 
+
+## Youri Kaminsky 
+
+Hasso Plattner Institute, University of Potsdam Germany youri.kaminsky@hpi.de 
+
+## Arnav Abhijit Dhariya 
+
+University of California, Irvine USA dhariyaa@uci.edu 
+
+## Sharad Mehrotra 
+
+University of California, Irvine USA sharad@ics.uci.edu 
+
+## Felix Naumann 
+
+Hasso Plattner Institute, University of Potsdam Germany felix.naumann@hpi.de 
+
+## Sarvesh Pandey ∗
+
+Banaras Hindu University, Varanasi India sarveshpandey@bhu.ac.in 
+
+## Abstract 
+
+Deletion is a fundamental database operation, yet modern systems often fail to provide the privacy guarantee that users expect from it. A deleted value may disappear from query results and even from physical storage while still being inferable from dependencies, de-rived data, or traces exposed by the deletion event itself. Meaningful deletion, therefore, requires more than logical removal or physical erasure; it requires a privacy guarantee that limits what remains inferable after deletion. In this paper, we take an inference-centric view of deletion, focusing on two leakage channels: leakage from the post-deletion state and leakage from the deletion pattern itself. We use this lens to distinguish logical, physical, and semantic dele-tion, organize the design space of deletion operations, and highlight open research challenges for building deletion mechanisms with meaningful privacy guarantees in database systems. 
+
+## 1 Introduction 
+
+Deletion in databases has traditionally been treated as a well-scoped action: removing a record or value from logical state, and eventually from physical storage. In modern data systems, however, deletion is no longer a single operation, but a family of transformations over many artifacts: base tables, views, caches, indices, logs, summaries, and learned models. A privacy-driven request such as “delete my salary” must therefore contend not only with the target cell, but also with dependencies that make the salary re-inferable from retained attributes, and with derived artifacts (views, learned AI models, etc.) that may already encode its information [ 3 , 5, 7]. The result is a gap between deletion as removal and deletion as a privacy guarantee. This gap matters more than ever. Data regulations have elevated the concept of deleting personal data from a storage-management feature to a compliance obligation [ 6]. Yet removing a value from query results, or even reclaiming its bytes from storage, does not erase the information that value contributed. In practice, deleted information may persist through what the system still exposes. In our view, this residual exposure arises through two broad channels: the remaining visible state and the deletion footprint itself. The re-sult is a mismatch between what users, regulators, and applications expect from deletion and what database systems actually deliver. 
+
+> ∗Work done while the author was a Fulbright Visiting Scholar at University of Califor-nia, Irvine.
+
+Example 1.1. A company maintains employee records (Figure 1) with attributes EID , Team , Title , Level , Manager ,Location , and 
+
+SalaryBand . Dependencies D1-D3 express which data are depen-dent. Suppose we want to delete the target cell 𝑐 ∗ = 𝑒 5 [SalaryBand ].To delete the target cell 𝑐 ∗ ( Example 1.1), in a conventional sys-tem like PostgreSQL [ 17 ] one would remove tuple 𝑒 5 using DELETE 
+
+and then insert the tuple (𝑒 5, Ads , SWE , L4 , m10 , NYC , Null ). This removes 𝑐 ∗ from the logical state. But, this by itself, does not resolve the semantic question: after the target value is removed from the visible state, what information about it remains inferable from what the system retains and exposes? 
+
+Consider Example 1.1 again. The dependencies in Figure 1 creates multiple inference paths that can be used for inferring deleted values. When SalaryBand is set to Null , it may be inferred directly through dependency D1 or D2, and transitively through D3 ◦D2: 
+
+Manager ⇒ Level ⇒ SalaryBand . Logical deletion does not ensure that its information content has disappeared from the system. Physical deletion does not solve the problem either: deleted tu-ples may linger in MVCC [ 18 ] systems until reclamation runs (e.g., until VACUUM executes in PostgreSQL [ 20 ]), or persist as tombstones in LSM-based engines until compaction [ 23 ]. Timely byte reclama-tion is itself an open problem [ 3 , 22 ], though one orthogonal to our focus. Even perfect reclamation does not ensure the deleted value is no longer inferable from what remains. One may then ask if the answer is to delete more dependent data. However, such attempts, which involve deleting all data belonging to a user, as explored in systems such as DELF and K9db [ 2, 8 ], are not satisfactory by themselves: they can lead to a large amount of additional deletion, trigger downstream maintenance, while re-maining unclear what semantic guarantee is being provided. A more selective alternative, perhaps, is to delete additional data specifically to block inference paths created by dependencies. While this addresses an important part of the problem, it opens further challenges. First, blocking all re-inference paths may require many auxiliary deletions beyond the target cell, degrading data utility. Second, the pattern of those auxiliary deletions can itself become a side channel. Consider Example 1.1 again. Suppose that dependency 𝐷 1 is value-dependent and predictive only for salary bands B3 and above. If the mechanism deletes Team and Title to block that path, the deletion footprint itself reveals that the hidden value likely belongs to the range where this dependency is active.  
+
+> arXiv:2604.00326v1 [cs.DB] 31 Mar 2026 Preprint, SeQureDB, SIGMOD ’26 Chakraborty et al.
+
+EID Team Title Level Manager Location SalaryBand 
+
+𝑒 1 Ads SWE L4 𝑚 10 NYC B4 
+
+𝑒 2 Ads SWE L4 𝑚 10 NYC B4 
+
+𝑒 3 Ads SWE L5 𝑚 10 NYC B5 
+
+𝑒 4 Infra SRE L4 𝑚 12 SEA B4 
+
+𝑒 5 Ads SWE L4 𝑚 10 NYC B4               
+
+> ID Dependency Intuition
+> D1 (Team ,Title ) ⇒ SalaryBand Pay bands are standardized by job family within a team D2 Level ⇒SalaryBand Leveling ladders map levels to narrow compensation bands D3 Manager ⇒Level Managers supervise within limited level ranges
+
+Figure 1: Database instance and dependencies used in Example 1.1. 
+
+Thus, auxiliary deletions may reveal which value the target cell may have had. These observations suggest that a deletion mechanism should be evaluated along at least three dimensions: a meaningful semantic guarantee about what remains inferable and through which chan-nels; acceptable deletion cost , since auxiliary deletions reduce utility and alter downstream artifacts; and acceptable systems overhead ,since deletion interacts with maintenance, refresh, reclamation, compaction, and other operational processes that determine when and how erasure takes effect. In our view, these requirements are best understood by treating deletion as an inference-control problem .Our work has taken a first step in this direction and explored how to formalize deletion relative to a declared dependency model [ 7]. 
+
+Our work shows that meaningful deletion not only admits a formal interpretation beyond logical removal, but also underscores that the broader problem space remains fragmented. 
+
+## 2 Mind the Semantic Gap 
+
+Fig. 2 makes explicit the stages implicit in our discussion on Ex. 1.1. It presents deletion as an inference timeline , from insertion through logical and physical deletion to semantic mitigation. The central question is not only whether the deleted value is accessible, but how much inferential support remains after logical/physical deletion. 
+
+Pre-insertion indirect inference. The timeline begins before insertion. Even if the value had never been stored, some information about it may already be inferable from the system state and other observations. Fig. 2 captures this as the pre-insertion reference point 
+
+level at Insert . This gives a natural rollback target: remove the additional inferability introduced by storage, without claiming to erase side information outside the database. 
+
+time  
+
+> inference about  𝑐 ∗
+> baseline prior
+> the semantic gap
+> Insert
+> pre-insertion reference point
+> direct access
+> logical-only
+> gradually decreasing re-inference
+> DELETE CASCADE [19] MVCC [18] tombstones [23]
+> Logical Delete
+> VACUUM [21] compaction [23] deadlines [22]
+> Physical Delete
+> P2E2 [7]
+> Delete All
+> DELF [8] K9db [2]
+> # Additional deletions
+> delete all user related data
+> gradually increasing # deletions
+
+Figure 2: Inference timeline & #additional deletions . Logical and physical delete. At Logical Delete , mechanisms such as DELETE , CASCADE , and MVCC visibility rules make 𝑐 ∗ dis-appear from query results [ 18 , 19 ]. This prevents direct retrieval, but not inference: in Ex. 1.1, dependencies D1–D3 still allow Salary-Band to be inferred from the remaining attributes, and derived artifacts may preserve comparable signals. At Physical Delete ,the system removes the bytes corresponding to 𝑐 ∗. In MVCC en-gines, this may occur only when reclamation runs, e.g., VACUUM 
+
+in PostgreSQL [ 18 , 21 ]; in LSM-based engines, deletion becomes durable only after compaction [ 23 ]. Recent systems expose this delay as part of the deletion guarantee [3, 22]. 
+
+The semantic gap. Physical deletion alone does not guarantee meaningful erasure. Once the bytes of 𝑐 ∗ are removed, the value itself may still be recoverable from remaining dependencies, derived artifacts, or deletion traces. We refer to this gap where storage-level deletion has completed, but inference-level deletion has not, as the 
+
+semantic gap (shaded orange in Fig. 2). 
+
+Rollback targets and cost. The blue dashed line in Fig. 2 repre-sents inference-controlled deletion : after physical deletion, the sys-tem further actively reduces support for inferring 𝑐 ∗. The marker labelled P2E2 denotes insertion-referenced rollback [ 7]: reduce post-deletion inference to the pre-insertion indirect inference level, re-moving the incremental inferability introduced by storing 𝑐 ∗ with-out claiming to erase what was already inferable before insertion. At the other extreme, DELF and K9db illustrate broad deletion across user-related data and stores [ 2 , 8]. The red dashed line in Fig. 2 shows this trade-off schematically. This mechanism can reduce evidence about 𝑐 ∗ further. The space between these endpoints is, in our view, the most promising: bounded-leakage mechanisms that trade a controlled increase in inferability for a substantial reduction in auxiliary deletion cost. 
+
+Observation dimensions. The timeline also brings forth the im-portance of an adversary’s observation dimension. Fig. 2 suggests three surfaces: a forensic/storage dimension , spanning the inter-val between logical and physical deletion and motivating timeli-ness guarantees for physically removing the bits associated to the data [ 21 –23 ]; a logical/query dimension , on which inference persists through remaining dependencies; a derived-artifact/trace dimension ,on which outputs, refresh events, or traces may still leak predictive evidence. A deletion contract must therefore specify both when bytes disappear and what inferential support may remain. In the next section, we take a closer look at the semantic gap. 
+
+## 3 Analyzing the Semantic Gap 
+
+We now analyze what an adversary observes after logical/physical deletion, how those observations support inference, and how guar-antees should be stated relative to an explicit semantics model. Inference-Aware & Privacy-Preserving Deletion in Databases Preprint, SeQureDB, SIGMOD ’26 
+
+Residual state and deletion pattern. Consider a deletion request for a sensitive cell 𝑐 ∗. A mechanism transforms the database and may choose an auxiliary deletion set 𝑆 besides 𝑐 ∗. After the mech-anism executes, the adversary sees two observables. The first is the residual state 𝑉 : the data that remains visible after deletion, including base tables and any externally visible derived artifacts such as aggregates. The second is the deletion pattern 𝑃 : what the deletion operation itself reveals. In the simplest case, 𝑃 includes the auxiliary set 𝑆 . More generally, it may include coarser summaries, such as the size of 𝑆 or its attribute footprint. Figure 3 depicts the two leakage channels. 
+
+Residual-state leakage occurs when the remaining state 𝑉 still supports inference about 𝑐 ∗. Example 1.1 shows this directly: even after removing the target value, the remaining attribute values may still reveal it through dependencies. 
+
+Pattern leakage occurs when the mitigation pattern itself is infor-mative. In dependency-rich settings, different inference paths may lead to different auxiliary deletion sets. An adversary who observes 
+
+𝑃 can therefore infer which path was active, even if the residual state 𝑉 appears plausible. Related ideas appear in work on deceptive deletions , where deletion events are treated as signals and decoys are used to reduce adversarial advantage [14]. For our setting, the relevant observation is that reducing residual-state leakage may make the deletion pattern more revealing. Inference is not always restricted to tuples. Aggregates, sum-maries, and released outputs can also support inference, even when direct access is absent, a classic concern in statistical database secu-rity and inference control [ 1 , 9]. Here, such channels belong to 𝑉 
+
+when they appear in released outputs, and may also affect 𝑃 when deletions trigger visible refreshes or changes in aggregate behavior. 
+
+Bounded belief updates. A privacy-preserving deletion guarantee need not require the adversary’s posterior belief about 𝑐 ∗ to be small, which may often be unrealistic. The adversary may already have a strong prior based on external information. What matters is how much the system changes that belief. Let 𝜋 be the adversary’s prior over 𝑐 ∗, and let 𝜋 ′ be the posterior after observing (𝑉 , 𝑃 ). A bounded-leakage contract constrains the update from 𝜋 to 𝜋 ′. This offers a natural way to formalize semantic rollback in Figure 2: the goal is to limit the additional evidence the        
+
+> Database (before)
+> 𝑐 ∗
+> Post-deletion
+> delete 𝑐 ∗
+> + auxiliary deletions inferential structure in data
+> accounted slack
+> wrt. Σ
+> semantics lens M
+> explicit + implicit deps binary / weighted / incomplete
+> regularities in data
+> 𝑃
+> deletion pattern
+> 𝑉
+> visible state
+> auxiliary deletions may be a signal
+> belief update
+> prior (explicit + implicit) →posterior
+
+Figure 3: The Semantic Gap. 
+
+system provides after deletion, relative to a stated reference point such as pre-insertion inference [7]. This view is also close in spirit to differential privacy (DP), which controls how much an observation can change an adversary’s be-liefs, regardless of prior side information [ 10 ]. DP provides a useful reference point for bounded-leakage deletion: the contract should bound posterior shifts induced by (𝑉 , 𝑃 ), regardless of the deleted value, while minimizing the cost of auxiliary deletions. 
+
+Where semantics fit. The observables (𝑉 , 𝑃 ) matter only through the semantics an adversary uses to interpret them. We model this through a semantics model M: a set of dependencies or inference rules that connect observable state to the deleted cell. This immediately raises a coverage question: does M account for all inference routes that matter, or only the subset represented by the system? The accounted/slack split suggests two complementary formalizations of deletion guarantees. 
+
+Accounted guarantees (model-relative). One can state guarantees 
+
+relative to the modeled semantics lens M (or its represented depen-dency set Σ). Here, the adversary is restricted to inference routes expressible in Σ, and the guarantee bounds belief shifts induced by 
+
+𝑉 and 𝑃 under that model. Such a claim is meaningful when Σ is the object the system can enforce, and it makes explicit that the guarantee is conditional on the model being a sound approximation of the relevant inference paths. 
+
+Slack-aware guarantees (model-mismatch). Alternatively, one can treat slack as an explicit model-mismatch term. Let Σ★ denote an idealized dependency set capturing the true inferential structure in the data, and write Σ ⊆ Σ★ for the modeled subset. A slack-aware guarantee then decomposes the total belief shift into a controlled component (attributable to Σ) and a residual component (attribut-able to Σ★ \ Σ). This motivates a parameterized guarantee of the form: Leak (𝑉 , 𝑃 ; Σ★) ≤ Leak (𝑉 , 𝑃 ; Σ) + Slack (𝑉 , 𝑃 ; Σ★\Σ), where the first term is enforced by the mechanism, and the second is either bounded (e.g., via coverage assumptions or sampling confidence on mined rules) or reported as residual risk. Figure 4 presents the design space of deletion (and mechanisms); 
+
+the side panel summarizes how to read the figure . The open areas (Areas 1,2,& 3) motivate the open challenges. 
+
+## 4 Open Challenges 
+
+Fig. 4 shows: most systems control only the residual state 𝑉 , and conservatively over-delete to ensure no leakage due to 𝑃 ; most semantic mechanisms rely on binary dependency models. In particular, the lack of mechanisms that control deletion ob-servables beyond residual state 𝑉 (Areas 1 & 2) motivates R1 , which broadens attention from logical deletion patterns 𝑃 to physical main-tenance traces. The absence of weighted semantic models (Area 3) motivates R2 , while R3 recognizes that such semantic guarantees must be maintained as data and artifacts evolve. Finally, because these guarantees span multiple components and observation sur-faces, R4 provides the attestation layer needed to make them com-posable and auditable (often required for compliance [6]). 
+
+(R1) Trace-private timeliness. Goal: satisfy physical timeliness guarantees while limiting what other channels’ leakage reveals. Phys-ical deletion is carried out through background processes such as vacuuming, compaction, tombstone garbage collection, index Preprint, SeQureDB, SIGMOD ’26 Chakraborty et al. 
+
+> Intrinsic properties
+> Invocation context
+
+C1 Rollback objective 
+
+C2 Observables controlled 
+
+C3 Semantics model M
+
+C4 Recoverability 
+
+C5 Expiry-awareness 
+
+C6 Implementation layer 
+
+I1 Initiator 
+
+I2 Trigger 
+
+Logical Physical Semantic          
+
+> delete /cascade [19 ], Mongo TTL [ 15 ], DELF [ 8], K9db [ 2], Edna [ 24 ]Lethe [ 23 ], Timely del. [ 22 ], Cassandra [ 12 ]P2E2 [ 7]
+
+Remaining visible data ( 𝑉 ) Deletion pattern ( 𝑃 ) Both ( 𝑉 +𝑃 )     
+
+> delete /cascade [19 ], Mongo TTL [ 15 ], DELF [ 8], K9db [ 2], Edna [ 24 ], Lethe [ 23 ], Timely del. [ 22 ], Cassandra [ 12 ], P2E2 [ 7]
+
+Area 1 
+
+> open
+
+Area 2 
+
+> open
+
+Slack Binary (0/1) Weighted            
+
+> Mongo TTL [ 15 ], Lethe [ 23 ], Timely del. [ 22 ], Cassandra [ 12 ]
+> delete /cascade [19 ], DELF [ 8], K9db [ 2], Edna [ 24 ], P2E2 [ 7]
+
+Area 3 
+
+> open
+
+Irreversible Reversible window          
+
+> delete /cascade [19 ], Mongo TTL [ 15 ], K9db [ 2], Lethe [ 23 ], Timely del. [ 22 ], Cassandra [ 12 ], P2E2 [ 7]DELF [ 8](temp. reversible) , Edna [ 24 ](reveal)
+
+External (caller) Native (engine)       
+
+> delete /cascade [19 ], DELF [ 8], K9db [ 2], Edna [ 24 ]
+> Mongo TTL [ 15 ], Lethe [ 23 ], Timely del. [ 22 ], Cassandra [ 12 ], P2E2 [ 7]
+
+LSM-tree MVCC/heap App-layer             
+
+> Lethe [ 23 ], Cassandra [ 12 ]delete /cascade [19 ], Timely del. [ 22 ]Mongo TTL [ 15 ], DELF [ 8], K9db [ 2], Edna [ 24 ], P2E2 [ 7]
+
+Data subject System / policy 
+
+> All mechanisms support any initiator, depending on deployment.
+
+Demand-driven Retention-driven 
+
+> Any mechanism can be scheduled; T5 captures native expiry support.
+
+Reading the taxonomy 
+
+Structure: C1–C6 capture intrinsic properties of a deletion mechanism; I1–I2 are invocation-context overlays. 
+
+Interpretation: The upper axes describe what a mechanism rolls back, controls, and assumes semantically; the lower axes describe how it operates in practice. 
+
+Open areas: Most systems control only 𝑉 , not 𝑃 . Joint control of (𝑉 , 𝑃 ) remains largely open. Most semantic mechanisms rely on binary models; weighted semantics remain open. 
+
+Takeaway: The taxonomy is not only a classification of existing systems; it also marks the open regions that motivate the agenda that follows. 
+
+Figure 4: Taxonomy & Design Space. 
+
+rebuilds, and cache refresh [ 20 , 23 ]. These processes are often ob-servable through logs, metrics, throughput changes, or maintenance events. Their timing may also correlate with deletion workload. As a result, an observer may learn the fact that a deletion occurred, and possibly the time when it occurred. This creates a side channel that current systems do not model explicitly. One challenge is to define the right observability model for maintenance traces. Unlike 𝑉 or 𝑃 , the trace is a time series of system events. A second challenge is to design mechanisms that make such traces less revealing. A deletion-aware scheduler may need to support deadline windows rather than exact deadlines, batch and coalesce requests, and inject cover work that makes deletion-induced activity harder to distinguish from background maintenance. The core question is how much randomness, padding, or reordering is enough under realistic observation models. 
+
+(R2) Deletion planning under weighted and scoped semantics. 
+
+Goal: compute low-cost mitigation plans for derived artifacts under weighted dependencies and declared workload scope. Deletion rarely stops at a base table [ 11 , 13 ]. Views, caches, dashboards, feature stores, and aggregates may all carry inferential support for the deleted value. Reducing re-inference may therefore require updates or invalidations across multiple artifacts. Existing approaches ei-ther delete aggressively for safety or follow a fixed dependency model [ 7 ]. Neither gives a principled way to minimize the mitiga-tion footprint under a bounded-leakage target. This raises three connected challenges. First, systems need weighted dependencies . Binary models force a threshold decision: they ei-ther treat every dependency as certain, leading to excessive dele-tion, or ignore weak dependencies, even though many weak chan-nels may combine to cause non-trivial leakage. Second, systems need workload-scoped contracts . In practice, guarantees are often promised only with respect to a declared product surface, such as a set of views, query templates, or APIs. These scopes must be explicit and maintained as the workload evolves. Third, systems need planning and certification . We need an erasure planner that chooses a low-cost set of artifact updates and invalidations subject Inference-Aware & Privacy-Preserving Deletion in Databases Preprint, SeQureDB, SIGMOD ’26 
+
+to a leakage bound, and produces a certificate explaining why the plan satisfies that bound. 
+
+(R3) Maintained erasure under distribution drift. Goal: preserve semantic guarantees as data, dependencies, and downstream models evolve. Semantic deletion cannot be treated as a one-time action. A guarantee that holds at deletion time may fail later. New tuples may strengthen a previously weak dependency [ 4, 16 ]. A model update may make the deleted value easier to predict from surviving attributes. A newly materialized artifact may introduce an inference path that did not exist when the original mitigation was computed. Erasure can therefore be treated as a maintained property. The main difficulty is that inference risk is not monotone in data updates. New data may increase or decrease risk. Standard incremental view maintenance does not solve this problem as it tracks correctness, not leakage. A practical solution would need incremental sum-maries of inference strength, drift triggers that detect when a prior guarantee is no longer valid, and mitigation procedures that restore the guarantee without recomputing everything from scratch. 
+
+(R4) Composable deletion attestation. Goal: produce machine-checkable certificates that compose across database components and downstream artifacts. Deletion compliance is difficult to verify end-to-end. A DBMS may record that a DELETE was executed. A storage engine may record that bytes were reclaimed. A pipeline may record that a cache was refreshed. But these events do not automatically compose into a single claim that a target value is no longer inferable from the overall system. This motivates a new abstraction: deletion attestation . An at-testation should name the relevant system components and state two kinds of claims: a timeliness clause , which says when physical reclamation is completed, and a semantic clause , which states a leakage bound under a named dependency model and observation surface. Each component should expose a local attestation that can be verified from its own metadata. The broader challenge is to make these local attestations compose without global recompu-tation. This requires a common semantic vocabulary and explicit interfaces between the DBMS and downstream data products. Together, R1–R4 outline a path towards deletion as an explicit, inference-aware systems capability with well-formed, user-facing tunable privacy guarantees rather than a best-effort operation. 
+
+## Acknowledgments 
+
+Chakraborty was supported by a fellowship from HPI@UCI. Pandey was supported by funding from the United States–India Educational Foundation (USIEF) and the U.S. Department of State’s Fulbright Visiting Scholar Program. This work was supported by NSF Grants No. 2032525, 1545071, 1527536, 1952247, 2008993, 2133391, 2245372, and 2245373. 
+
+## References 
+
+[1] Nabil R. Adam and John C. Wortmann. 1989. Security-Control Methods for Statistical Databases: A Comparative Study. Comput. Surveys 21, 4 (1989), 515– 556. doi:10.1145/76894.76895 [2] Kinan Dak Albab, Ishan Sharma, Justus Adam, Benjamin Kilimnik, Aaron Je-yaraj, Raj Paul, Artem Agvanian, Leonhard Spiegelberg, and Malte Schwarzkopf. 2023. K9db: Privacy-Compliant Storage for Web Applications by Construction. In Proceedings of the USENIX Symposium on Operating Systems Design and Imple-mentation (OSDI) . USENIX, Boston, MA, USA, 99–116. [3] Manos Athanassoulis, Subhadeep Sarkar, Zichen Zhu, and Dimitris Staratzis. 2022. Building Deletion-Compliant Data Systems. IEEE Data Engineering Bulletin 
+
+45, 1 (2022), 21–36. http://sites.computer.org/debull/A22mar/p21.pdf [4] Tobias Bleifuß, Thorsten Papenbrock, Thomas Bläsius, Martin Schirneck, and Felix Naumann. 2024. Discovering Functional Dependencies through Hitting Set Enumeration. Proceedings of the International Conference on Management of Data (SIGMOD) 2, 1 (2024), 1–24. [5] Vishal Chakraborty, Stacy Ann-Elvy, Sharad Mehrotra, Faisal Nawab, Mohammad Sadoghi, Shantanu Sharma, Nalini Venkatsubhramanian, and Farhan Saeed. 2024. Data-CASE: Grounding Data Regulations for Compliant Data Processing Systems. In Proceedings of the International Conference on Extending Database Technology (EDBT) . OpenProceedings, Paestum, Italy, 108–115. https://openproceedings. org/2024/conf/edbt/Camera_EDBT_Data_CASE_4.pdf [6] Vishal Chakraborty, Stacy Ann-Elvy, Sharad Mehrotra, Faisal Nawab, Mohammad Sadoghi, Shantanu Sharma, Nalini Venkatsubhramanian, and Farhan Saeed. 2024. Data-CASE: Grounding Data Regulations for Compliant Data Processing Systems. In Proceedings of the International Conference on Extending Database Technology (EDBT) . OpenProceedings, Paestum, Italy, 108–115. [7] Vishal Chakraborty, Youri Kaminsky, Sharad Mehrotra, Felix Naumann, Faisal Nawab, Primal Pappachan, Mohammad Sadoghi, and Nalini Venkatasubramanian. 2025. Meaningful Data Erasure in the Presence of Dependencies. PVLDB 18, 10 (2025), 3435 – 3448. [8] Katriel Cohn-Gordon, Georgios Damaskinos, Divino Neto, Joshi Cordova, Benoît Reitz, Benjamin Strahs, Daniel Obenshain, Paul Pearce, and Ioannis Papagiannis. 2020. DELF: Safeguarding Deletion Correctness in Online Social Networks. In 
+
+Proceedings of the USENIX Conference on Security Symposium . USENIX, USA, Article 60, 18 pages. [9] Josep Domingo-Ferrer (Ed.). 2002. Inference Control in Statistical Databases: From Theory to Practice . Lecture Notes in Computer Science, Vol. 2316. Springer, Berlin, Heidelberg. doi:10.1007/3-540-47804-3 [10] Cynthia Dwork and Aaron Roth. 2014. The Algorithmic Foundations of Differen-tial Privacy. Foundations and Trends in Theoretical Computer Science 9, 3–4 (2014), 211–407. doi:10.1561/0400000042 [11] Benny Kimelfeld. 2012. A dichotomy in the complexity of deletion propagation with functional dependencies. In Proceedings of the 31st ACM SIGMOD-SIGACT-SIGAI Symposium on Principles of Database Systems (Scottsdale, Arizona, USA). Association for Computing Machinery, New York, NY, USA, 191–202. [12] Avinash Lakshman and Prashant Malik. 2010. Cassandra: a decentralized struc-tured storage system. ACM SIGOPS Operating Systems Review 44, 2 (2010), 35–40. [13] Neha Makhija and Wolfgang Gatterbauer. 2025. Is Integer Linear Programming All You Need for Deletion Propagation? A Unified and Practical Approach. PVLDB 
+
+18, 10 (2025), 2667–2680. [14] Mohsen Minaei, S. Chandra Mouli, Mainack Mondal, Bruno Ribeiro, and Aniket Kate. 2021. Deceptive Deletions for Protecting Withdrawn Posts on Social Media Platforms. In Proceedings of the Network and Distributed System Security Sympo-sium (NDSS) . https://www.ndss-symposium.org/ndss-paper/deceptive-deletions-for-protecting-withdrawn-posts-on-social-media-platforms/. [15] MongoDB. 2026. TTL Indexes — MongoDB Manual. https://www.mongodb.com/ docs/current/core/index-ttl/, accessed 2026-03-05. [16] Eduardo H. M. Pena, Fabio Porto, and Felix Naumann. 2024. Discovering Denial Constraints in Dynamic Datasets. In Proceedings of the International Conference on Data Engineering (ICDE) . IEEE, Utrecht, Netherlands, 3546–3558. [17] PostgreSQL [n. d.]. PostgreSQL: The World’s Most Advanced Open Source Relational Database. https://www.postgresql.org/, last accessed on 2022-05-05. [18] PostgreSQL Global Development Group. 2026. PostgreSQL Documentation: Concurrency Control — Introduction. https://www.postgresql.org/docs/current/ mvcc-intro.html. Section 13.1, current documentation; accessed March 5, 2026. [19] PostgreSQL Global Development Group. 2026. PostgreSQL Documentation: Constraints — Foreign Keys. https://www.postgresql.org/docs/current/ddl-constraints.html. Section 5.5.5, current documentation; accessed March 5, 2026. [20] PostgreSQL Global Development Group. 2026. PostgreSQL Documentation: Rou-tine Vacuuming. https://www.postgresql.org/docs/current/routine-vacuuming. html. Section 24.1, current documentation; accessed March 5, 2026. [21] PostgreSQL Global Development Group. 2026. PostgreSQL Documentation: VACUUM. https://www.postgresql.org/docs/current/sql-vacuum.html. SQL command reference, current documentation; accessed March 5, 2026. [22] Subhadeep Sarkar and Manos Athanassoulis. 2022. Query Language Support for Timely Data Deletion. In Proceedings of the International Conference on Extending Database Technology (EDBT) . 418–429. [23] Subhadeep Sarkar, Tarikul Islam Papon, Dimitris Staratzis, and Manos Athanas-soulis. 2020. Lethe: A Tunable Delete-Aware LSM Engine. In Proceedings of the International Conference on Management of Data (SIGMOD) . ACM, New York, NY, USA, 893–908. [24] Lillian Tsai, Hannah Gross, Eddie Kohler, Frans Kaashoek, and Malte Schwarzkopf. 2023. Edna: Disguising and Revealing User Data in Web Applications. In Proceed-ings of the 29th ACM Symposium on Operating Systems Principles (SOSP) . 434–450. doi:10.1145/3600006.3613146

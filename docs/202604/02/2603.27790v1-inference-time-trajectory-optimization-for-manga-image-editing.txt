@@ -1,0 +1,589 @@
+Title: Inference-time Trajectory Optimization for Manga Image Editing
+
+URL Source: https://arxiv.org/pdf/2603.27790v1
+
+Published Time: Tue, 31 Mar 2026 01:38:17 GMT
+
+Number of Pages: 9
+
+Markdown Content:
+# Inference-time Trajectory Optimization for Manga Image Editing 
+
+# Ryosuke Furuta 
+
+furuta@mantra.co.jp Mantra Inc. and The University of Tokyo Tokyo, JAPAN 
+
+## Abstract 
+
+We present an inference-time adaptation method that tailors a pre-trained image editing model to each input manga image using only the input image itself. Despite recent progress in pretrained image editing, such models often underperform on manga because they are trained predominantly on natural-image data. Re-training or fine-tuning large-scale models on manga is, however, generally im-practical due to both computational cost and copyright constraints. To address this issue, our method slightly corrects the generation trajectory at inference time so that the input image can be recon-structed more faithfully under an empty prompt. Experimental results show that our method consistently outperforms existing baselines while incurring only negligible computational overhead. 
+
+## CCS Concepts 
+
+• Computing methodologies → Computer vision problems .
+
+## Keywords 
+
+Manga image editing, Inference-time adaptation 
+
+ACM Reference Format: 
+
+Ryosuke Furuta. 2018. Inference-time Trajectory Optimization for Manga Image Editing. In Proceedings of Make sure to enter the correct conference title from your rights confirmation email (Conference acronym ’XX). ACM, New York, NY, USA, 9 pages. https://doi.org/XXXXXXX.XXXXXXX 
+
+## 1 Introduction 
+
+Manga image editing is an important task in visual content creation. Manga, a form of Japanese comics, has attracted a broad global au-dience, creating demand for a variety of image editing techniques. For instance, when manga is localized into other languages, text embedded in the image must be removed seamlessly as a prepro-cessing step. Moreover, a method that directly transforms line art into a completed manga image with screentones would provide practical assistance to creators. Recently, the computer vision community has seen rapid progress in image editing methods built on large pretrained image generation models [ 9 ]. In particular, methods based on Rectified Flow [ 19 , 21 ], which enables high-quality image generation, have become the dom-inant paradigm [ 3, 8, 13 , 26 , 30 , 39 ]. These methods perform editing  
+
+> Permission to make digital or hard copies of all or part of this work for personal or classroom use is granted without fee provided that copies are not made or distributed for profit or commercial advantage and that copies bear this notice and the full citation on the first page. Copyrights for components of this work owned by others than the author(s) must be honored. Abstracting with credit is permitted. To copy otherwise, or republish, to post on servers or to redistribute to lists, requires prior specific permission and/or a fee. Request permissions from permissions@acm.org.
+> Conference acronym ’XX, Woodstock, NY
+> ©2018 Copyright held by the owner/author(s). Publication rights licensed to ACM. ACM ISBN 978-1-4503-XXXX-X/2018/06 https://doi.org/XXXXXXX.XXXXXXX
+
+(a) Input (b) Baseline (c) Ours 
+
+Figure 1: Editing results with an empty prompt. ©Kato Masaki 
+
+by re-generating an image that follows a target prompt from an in-put image associated with a source prompt using a pretrained image generation model. More recently, models such as Qwen Image Edit and FLUX.1 Kontext, which are trained explicitly for image edit-ing (hereafter, image editing models ), have emerged [ 15 , 20 , 34 , 40 ]. These pretrained image editing models can be driven by direct editing instructions (e.g., “Remove text.” for removing text from an image), enabling more intuitive and flexible editing than methods based on generic image generation models. However, these pretrained image editing models often do not work well when directly applied to manga image editing. For ex-ample, when we feed the manga image in Fig. 1a to the model and provide an “empty prompt” that specifies no edit, the model still transforms the image into a natural-image-like result as shown in Fig. 1b. A plausible reason is that the data used to train these im-age editing models consist mostly of natural images, while manga images are relatively scarce. Nevertheless, collecting manga images and fine-tuning an image editing model to address this issue is not practical. Image editing models such as Qwen Image Edit and FLUX.1 Kontext are large and require substantial computational resources for training. Even if efficient adaptation methods such as LoRA [ 32 ] are used, collecting manga images and using them for training still raises copyright concerns. To address this issue, we propose a method that adapts an image editing model to the input manga image at inference time using only that single image. All major image editing models, including Qwen Image Edit and FLUX.1 Kontext, are obtained by augmenting large pretrained image generation models such as Qwen Image [ 40 ]and FLUX.1 [ 14 ] with additional modules and then further training them for image editing. Accordingly, rather than directly editing the input image, these models internally generate an edited image from noise while conditioning on the input image. In manga editing tasks such as text removal and screentone synthesis, the global structure of the input and edited images should remain almost unchanged, while only local details need to be modified (Fig. 2). Based on the observation that diffusion/flow models generate global structure  
+
+> arXiv:2603.27790v1 [cs.CV] 29 Mar 2026 Conference acronym ’XX, June 03–05, 2018, Woodstock, NY Furuta et al.
+> (a) Text removal
+> (b) Screentone synthesis
+
+Figure 2: Examples of manga image editing. In each pair, the left image is the input and the right image is the ground truth. ©Kato Masaki ©Yabuno Tenya, Watanabe Tatsuya 
+
+in early timesteps and fine details in later timesteps [ 22 , 28 , 37 ], we encourage the generation trajectory of the edited image to remain close, in the first few steps, to the generation trajectory that reconstructs the input image under an empty prompt. Concretely, we compute a trajectory that faithfully reconstructs the input image under an empty prompt and use it to correct the trajectory of the edited image. We evaluate the proposed method on two applications, text re-moval and screentone synthesis, and verify that it outperforms both the baseline and recent image editing methods. Our method does not update model parameters at inference time, nor does it require any additional forward or backward passes through the neural network. Because it only slightly modifies the generation trajectory, the additional computational cost beyond that of the base image editing model is negligible. Moreover, the method imposes no architectural constraints and can be applied to any Rectified Flow-based image editing model. Our contributions are summarized as follows: 
+
+• To the best of our knowledge, this is the first inference-time adaptation method for image editing models. 
+
+• We achieve training-free inference-time adaptation with ex-tremely small additional cost by slightly correcting the gen-eration trajectory so that the original image is faithfully reconstructed under an empty prompt. 
+
+Algorithm 1 Inference-time trajectory optimization 
+
+Input: Pretrained Rectified-flow model 𝒗 𝜃 , input image 𝑿 in , noise 
+
+𝒁 0, and edit prompt 𝑐  
+
+> 1:
+
+for 𝑖 ∈ { 0, · · · , 𝑁 − 1} do  
+
+> 2:
+
+𝒗 ← 𝒗 𝜃 (𝒁 𝑡 𝑖 , 𝑡 𝑖 , 𝑐, 𝑿 in ) 
+
+> 3:
+
+if 𝑖 < 𝑀 then  
+
+> 4:
+
+𝒖 ← 𝒗 𝜃 (𝒁 𝑡 𝑖 , 𝑡 𝑖 , ∅, 𝑿 in ) 
+
+> 5:
+
+𝒁 ∗ 
+
+> 𝑡 𝑖
+
+← 𝑿 in − ( 𝑡 𝑁 − 𝑡 𝑖 )𝒖  
+
+> 6:
+
+𝒁 𝑡 𝑖 ← ( 1 − 𝛼 )𝒁 𝑡 𝑖 + 𝛼 𝒁 ∗ 
+
+> 𝑡 𝑖
+> 7:
+
+𝒁 𝑡 𝑖 +1 ← 𝒁 𝑡 𝑖 + ( 𝑡 𝑖 +1 − 𝑡 𝑖 )𝒗  
+
+> 8:
+
+return 𝒁 𝑡 𝑁 
+
+• The proposed method supports generic manga image editing, and in our experiments it even outperforms models trained specifically for individual manga editing tasks. 
+
+## 2 Related Work 2.1 Test-Time Adaptation 
+
+Test-time adaptation, which aims to handle distribution shifts be-tween training and inference data, has been studied extensively in image classification [ 17 ]. A representative line of work updates a subset of model parameters, such as those in batch normaliza-tion layers, at inference time using the predicted class probabili-ties [ 25 , 38 ]. More recently, methods have also been proposed to update either the input image or model parameters at inference time by leveraging feedback or guidance from image generation models [ 6 , 27 , 35 ]. However, these methods typically suffer from one or more of the following limitations: architectural constraints, task specificity to image classification, or substantial additional computational cost at inference time. Chen et al. [ 2 ] proposed an efficient method for large pretrained segmentation models that updates image embeddings (latent repre-sentations). However, their method is designed for image segmen-tation and cannot be directly applied to image editing models. In contrast to these prior works, we present the first test-time adaptation method for recently emerged image editing models. Our method also enjoys two practical advantages: it does not update the model itself and introduces only negligible additional computation. 
+
+## 2.2 Manga Image Editing 
+
+A wide range of tasks have been studied in manga image editing. Representative examples include automatic colorization [ 4, 5, 7,11 , 29 , 31 , 33 ], text removal [ 12 , 42 ], screentone synthesis [ 18 , 36 ], and retargeting [ 24 , 41 ]. Unlike these task-specific approaches, our method adapts a pretrained image editing model to manga images at inference time, enabling a single model to handle a wide range of manga image editing tasks simply by changing the editing instruc-tion prompt. In addition, our approach does not require collecting manga images or training a dedicated model for the target task. In our experiments, we evaluate two applications, text removal and screentone synthesis, and compare against models trained specifi-cally for each individual task. Inference-time Trajectory Optimization for Manga Image Editing Conference acronym ’XX, June 03–05, 2018, Woodstock, NY 
+
+## 3 Method 3.1 Preliminaries: Generation Process of Image Editing Models 
+
+Rectified Flow-based image editing models such as Qwen Image Edit and FLUX.1 Kontext do not edit the input image directly. Instead, conditioned on the input image, they generate an edited image from noise. This generation process can be written as the following ordinary differential equation: 
+
+𝑑 𝒁 𝑡 = 𝒗 𝜃 (𝒁 𝑡 , 𝑡, 𝑐, 𝑿 in )𝑑𝑡, (1) where 𝑡 ∈ [ 0, 1] denotes time, 𝑐 is the editing prompt, 𝒁 0 ∼ N ( 0, 𝑰 )
+
+is Gaussian noise, and 𝒁 1 = 𝑿 edit is the edited image. Here, 𝒗 𝜃 de-notes the velocity predicted by the pretrained image editing model. In practice, time 𝑡 is discretized into 𝑁 timesteps 𝑡 = (𝑡 0, · · · , 𝑡 𝑁 ),and generation is performed with an Euler solver: 
+
+𝒁 𝑡 𝑖 +1 = 𝒁 𝑡 𝑖 + ( 𝑡 𝑖 +1 − 𝑡 𝑖 )𝒗 𝜃 (𝒁 𝑡 𝑖 , 𝑡 𝑖 , 𝑐, 𝑿 in ). (2) Starting from 𝑡 0 = 0 and ending at 𝑡 𝑁 = 1, we iterate the above update for 𝑖 ∈ { 0, · · · , 𝑁 −1} to obtain the edited image 𝒁 1 (= 𝑿 edit ).
+
+## 3.2 Correcting the Generation Trajectory 
+
+The key difficulty is that when 𝑿 in lies outside the training distri-bution, as is often the case for manga images, the predicted velocity 
+
+𝒗 𝜃 (𝒁 𝑡 𝑖 , 𝑡 𝑖 , 𝑐, 𝑿 in ) becomes inaccurate, leading to trajectories and out-puts that are unsuitable for manga images. Our method addresses this issue by optimizing the generation trajectory. A key property of manga editing tasks such as text removal and screentone synthesis is that the global structure of the input image 𝑿 in and the edited image 𝑿 edit is expected to remain largely unchanged. In other words, the edited output should preserve the overall composition of the input while changing only local details. Given the observation that diffusion/flow models generate global structure in early timesteps and fine details in later timesteps [ 22 ,28 , 37 ], it is desirable for the trajectory of the edited image to stay close to that of the input image during the first 𝑀 (< 𝑁 )
+
+steps, 𝑡 = (𝑡 0, · · · , 𝑡 𝑀 ). We therefore compute a trajectory that reconstructs the input image under an empty prompt and use it to correct the trajectory of the edited image. More specifically, at timestep 𝑡 𝑖 , let ˆ𝒁 1 denote the endpoint ap-proximation obtained from the predicted velocity under an empty prompt, 𝒗 𝜃 (𝒁 𝑡 𝑖 , 𝑡 𝑖 , ∅, 𝑿 in ):
+
+ˆ𝒁 1 = 𝒁 𝑡 𝑖 + ( 𝑡 𝑁 − 𝑡 𝑖 )𝒗 𝜃 (𝒁 𝑡 𝑖 , 𝑡 𝑖 , ∅, 𝑿 in ). (3) Under a one-step approximation that treats 𝒗 𝜃 (𝒁 𝑡 𝑖 , 𝑡 𝑖 , ∅, 𝑿 in ) as locally constant around 𝒁 𝑡 𝑖 , we define the correction target 𝒁 ∗ 
+
+> 𝑡 𝑖
+
+by minimizing the discrepancy between ˆ𝒁 1 and 𝑿 in :
+
+𝒁 ∗ 
+
+> 𝑡 𝑖
+
+= arg min 
+
+> 𝒁 𝑡 𝑖
+
+|| 𝑿 in − ˆ𝒁 1 || 22 (4) 
+
+= 𝑿 in − ( 𝑡 𝑁 − 𝑡 𝑖 )𝒗 𝜃 (𝒁 𝑡 𝑖 , 𝑡 𝑖 , ∅, 𝑿 in ). (5) Using this result, we correct the original trajectory 𝒁 𝑡 𝑖 as follows: 
+
+𝒁 𝑡 𝑖 ← ( 1 − 𝛼 )𝒁 𝑡 𝑖 + 𝛼 𝒁 ∗ 
+
+> 𝑡 𝑖
+
+, (6) where 𝛼 is a hyperparameter that controls the correction strength. 
+
+## 3.3 Algorithm and Computational Cost 
+
+The full procedure is summarized in Algorithm 1. The red lines indicate the additional computation introduced by our method. The forward pass with the edit prompt 𝑐 (line 2) and the forward pass with the empty prompt ∅ (line 4) can be executed in parallel on a GPU by concatenating 𝑐 and ∅ into a minibatch. As a result, the only practical overhead comes from lines 5 and 6, which are simple matrix operations and thus negligible on a GPU. 
+
+## 4 Mathematical Interpretation 
+
+In this section, we show that the proposed trajectory correction can be interpreted as a local optimization that decreases the reconstruc-tion error under an empty prompt at each timestep. We further show that this update takes a form analogous to the vector-field steering formulation in FlowChef [26]. At time 𝑡 𝑖 , let the predicted velocity under the empty prompt be 
+
+𝑢 𝑖 := 𝑣 𝜃 (𝑍 𝑡 𝑖 , 𝑡 𝑖 , ∅, 𝑋 in ) (7) and define Δ𝑖 := 𝑡 𝑁 − 𝑡 𝑖 . We then define the one-step endpoint prediction under the empty prompt as 
+
+ˆ𝑍 (∅)  
+
+> 1
+
+(𝑍 ) := 𝑍 + Δ𝑖 𝑢 𝑖 (8) This corresponds to the one-step approximation used in our method. We therefore define the local surrogate objective corresponding to the reconstruction error with respect to the input image 𝑋 in as 
+
+˜𝐿 𝑖 (𝑍 ) := 𝑋 in − ˆ𝑍 (∅)  
+
+> 1
+
+(𝑍 ) 22 (9) 
+
+= ∥𝑋 in − ( 𝑍 + Δ𝑖 𝑢 𝑖 )∥ 22 (10) Also, in what follows, we denote the corrected form of Eq. (6) by 
+
+𝑍 + 
+
+> 𝑡 𝑖
+
+:= (1 − 𝛼 )𝑍 𝑡 𝑖 + 𝛼𝑍 ∗ 
+
+> 𝑡 𝑖
+
+(11) 
+
+Proposition 1. The correction target of the proposed method given by Eq. (5), 
+
+𝑍 ∗ 
+
+> 𝑡 𝑖
+
+= 𝑋 in − Δ𝑖 𝑢 𝑖 
+
+is the unique minimizer of the local objective ˜𝐿 𝑖 .
+
+Proof. ˜𝐿 𝑖 (𝑍 ) is a strictly convex quadratic function of 𝑍 , and its minimum is attained at the point satisfying 
+
+𝑍 + Δ𝑖 𝑢 𝑖 = 𝑋 in (12) Solving for 𝑍 gives 
+
+𝑍 = 𝑋 in − Δ𝑖 𝑢 𝑖 (13) which coincides with Eq. (5). Therefore, Eq. (5) is the unique mini-mizer of ˜𝐿 𝑖 . □
+
+Proposition 2. Eq. (6) is equivalent to gradient descent on the local objective ˜𝐿 𝑖 with step size 𝛼 /2:
+
+𝑍 + 
+
+> 𝑡 𝑖
+
+= 𝑍 𝑡 𝑖 − 𝛼 
+
+2 ∇𝑍 ˜𝐿 𝑖 (𝑍 𝑡 𝑖 ) (14) 
+
+Proof. Differentiating ˜𝐿 𝑖 (𝑍 ) with respect to 𝑍 gives 
+
+∇𝑍 ˜𝐿 𝑖 (𝑍 ) = 2(𝑍 + Δ𝑖 𝑢 𝑖 − 𝑋 in ) (15) On the other hand, by Proposition 1, 
+
+𝑍 ∗ 
+
+> 𝑡 𝑖
+
+= 𝑋 in − Δ𝑖 𝑢 𝑖 (16) and therefore 
+
+∇𝑍 ˜𝐿 𝑖 (𝑍 𝑡 𝑖 ) = 2(𝑍 𝑡 𝑖 − 𝑍 ∗ 
+
+> 𝑡 𝑖
+
+) (17) Conference acronym ’XX, June 03–05, 2018, Woodstock, NY Furuta et al. 
+
+Thus, 
+
+𝑍 𝑡 𝑖 − 𝛼 
+
+2 ∇𝑍 ˜𝐿 𝑖 (𝑍 𝑡 𝑖 ) = 𝑍 𝑡 𝑖 − 𝛼 (𝑍 𝑡 𝑖 − 𝑍 ∗ 
+
+> 𝑡 𝑖
+
+) (18) 
+
+= (1 − 𝛼 )𝑍 𝑡 𝑖 + 𝛼𝑍 ∗ 
+
+> 𝑡 𝑖
+
+. (19) The right-hand side coincides with Eq. (6), proving the claim. □
+
+Corollary 1. When 0 ≤ 𝛼 ≤ 1, the local objective after the update in Eq. (6) satisfies 
+
+˜𝐿 𝑖 (𝑍 + 
+
+> 𝑡 𝑖
+
+) = (1 − 𝛼 )2 ˜𝐿 𝑖 (𝑍 𝑡 𝑖 ) (20) In particular, if 0 < 𝛼 < 1, then a single update strictly decreases 
+
+˜𝐿 𝑖 , while if 𝛼 = 1, a single update reaches the minimum. 
+
+Proof. From Eq. (6) and 𝑍 ∗ 
+
+> 𝑡 𝑖
+
+= 𝑋 in − Δ𝑖 𝑢 𝑖 , we have 
+
+𝑍 + 
+
+> 𝑡 𝑖
+
++ Δ𝑖 𝑢 𝑖 − 𝑋 in = (1 − 𝛼 )𝑍 𝑡 𝑖 + 𝛼𝑍 ∗ 
+
+> 𝑡 𝑖
+
++ Δ𝑖 𝑢 𝑖 − 𝑋 in (21) 
+
+= (1 − 𝛼 )𝑍 𝑡 𝑖 + 𝛼 (𝑋 in − Δ𝑖 𝑢 𝑖 ) + Δ𝑖 𝑢 𝑖 − 𝑋 in (22) 
+
+= (1 − 𝛼 )( 𝑍 𝑡 𝑖 + Δ𝑖 𝑢 𝑖 − 𝑋 in ) (23) Taking squared norms on both sides yields 
+
+˜𝐿 𝑖 (𝑍 + 
+
+> 𝑡 𝑖
+
+) = (1 − 𝛼 )2 ˜𝐿 𝑖 (𝑍 𝑡 𝑖 ) (24) 
+
+□
+
+Taken together, Eq. (5), which defines the correction target, is the minimizer of the local surrogate objective ˜𝐿 𝑖 that represents the empty-prompt reconstruction error of the input image, and Eq. (6) can be understood as gradient descent on that objective with step size 𝛼 /2. In particular, under the one-step approximation, the local surrogate loss is reduced by exactly a factor of (1 − 𝛼 )2 after each correction. 
+
+## 4.1 Connection to the true one-step objective. 
+
+More precisely, the true one-step objective under the empty prompt is given by 
+
+𝐿 true  
+
+> 𝑖
+
+(𝑍 ) := 𝑋 in −  𝑍 + Δ𝑖 𝑣 𝜃 (𝑍, 𝑡 𝑖 , ∅, 𝑋 in ) 22 (25) Assume that 𝑣 𝜃 (· , 𝑡 𝑖 , ∅, 𝑋 in ) is differentiable at 𝑍 𝑡 𝑖 , and define 
+
+𝐽 𝑖 := 𝜕𝑣 𝜃 (𝑍, 𝑡 𝑖 , ∅, 𝑋 in )
+
+𝜕𝑍 𝑍 =𝑍 𝑡 𝑖 
+
+(26) Then, by the chain rule, 
+
+∇𝑍 𝐿 true  
+
+> 𝑖
+
+(𝑍 𝑡 𝑖 ) = (𝐼 + Δ𝑖 𝐽 𝑖 )⊤ ∇𝑍 ˜𝐿 𝑖 (𝑍 𝑡 𝑖 ) (27) Indeed, 
+
+∇𝑍 𝐿 true  
+
+> 𝑖
+
+(𝑍 )
+
+= 2
+
+
+
+𝐼 + Δ𝑖 
+
+𝜕𝑣 𝜃 (𝑍, 𝑡 𝑖 , ∅, 𝑋 in )
+
+𝜕𝑍 
+
+⊤  𝑍 + Δ𝑖 𝑣 𝜃 (𝑍, 𝑡 𝑖 , ∅, 𝑋 in ) − 𝑋 in 
+
+ (28) and at 𝑍 = 𝑍 𝑡 𝑖 we have 𝑣 𝜃 (𝑍 𝑡 𝑖 , 𝑡 𝑖 , ∅, 𝑋 in ) = 𝑢 𝑖 , so 
+
+∇𝑍 𝐿 true  
+
+> 𝑖
+
+(𝑍 𝑡 𝑖 ) = (𝐼 + Δ𝑖 𝐽 𝑖 )⊤ 2(𝑍 𝑡 𝑖 + Δ𝑖 𝑢 𝑖 − 𝑋 in )
+
+= (𝐼 + Δ𝑖 𝐽 𝑖 )⊤ ∇𝑍 ˜𝐿 𝑖 (𝑍 𝑡 𝑖 )
+
+Therefore, 
+
+∇𝑍 𝐿 true  
+
+> 𝑖
+
+(𝑍 𝑡 𝑖 ) − ∇ 𝑍 ˜𝐿 𝑖 (𝑍 𝑡 𝑖 ) ≤ Δ𝑖 ∥𝐽 𝑖 ∥ · ∇𝑍 ˜𝐿 𝑖 (𝑍 𝑡 𝑖 ) (29) Hence, in regions where Δ𝑖 ∥𝐽 𝑖 ∥ is small, the surrogate gradient 
+
+∇𝑍 ˜𝐿 𝑖 (𝑍 𝑡 𝑖 ) is a good approximation to the true local gradient ∇𝑍 𝐿 true  
+
+> 𝑖
+
+(𝑍 𝑡 𝑖 ).
+
+## 4.2 Connection to FlowChef. 
+
+In FlowChef [ 26 ], the endpoint ˆ𝑥 0 from an intermediate state 𝑥 𝑡 is approximated as 
+
+ˆ𝑥 0 = 𝑥 𝑡 + 𝑡 𝑢 𝜃 (𝑥 𝑡 , 𝑡 ) (30) Assuming local linearity and slowly varying Jacobians, the authors of FlowChef derive 
+
+∇𝑥 𝑡 𝐿 ≈  𝐼 + 𝑡 𝐽 𝑢 𝜃 
+
+⊤ ∇ ˆ𝑥 0 𝐿 (31) and ultimately obtain the update 
+
+𝑥 𝑡 −Δ𝑡 = 𝑥 𝑡 + Δ𝑡 𝑢 𝜃 (𝑥 𝑡 , 𝑡 ) − 𝑠 ∇ ˆ𝑥 0 𝐿 (32) In our method, Proposition 2 implies that the discrete update in the first 𝑀 steps of Algorithm 1 can be written as 
+
+𝑍 𝑡 𝑖 +1 = 𝑍 𝑡 𝑖 + ( 𝑡 𝑖 +1 − 𝑡 𝑖 ) 𝑣 𝜃 (𝑍 𝑡 𝑖 , 𝑡 𝑖 , 𝑐, 𝑋 in ) − 𝛼 
+
+2 ∇𝑍 ˜𝐿 𝑖 (𝑍 𝑡 𝑖 ), (𝑖 < 𝑀 )
+
+(33) Here, the second term on the right-hand side is the original gener-ation vector field driven by the edit prompt 𝑐 , and the third term corresponds to a steering term that reduces the empty-prompt reconstruction error. Furthermore, based on the relation 
+
+∇𝑍 𝐿 true  
+
+> 𝑖
+
+(𝑍 𝑡 𝑖 ) = (𝐼 + Δ𝑖 𝐽 𝑖 )⊤ ∇𝑍 ˜𝐿 𝑖 (𝑍 𝑡 𝑖 )
+
+our method can be interpreted as a Jacobian-skipping form of vector-field steering, in which the surrogate gradient is used in place of the true local gradient under the approximation 
+
+(𝐼 + Δ𝑖 𝐽 𝑖 )⊤ ≈ 𝐼 (34) This interpretation is local in time and does not by itself guarantee global optimality or convergence. 
+
+## 4.3 Why the empty prompt helps. 
+
+To understand why we use the empty prompt in the correction term, consider what happens if the correction target is defined using the edit prompt 𝑐 instead: 
+
+𝑍 ∗,(𝑐 ) 
+
+> 𝑡 𝑖
+
+:= 𝑋 in − Δ𝑖 𝑣 𝜃 (𝑍 𝑡 𝑖 , 𝑡 𝑖 , 𝑐, 𝑋 in ) (35) Let 
+
+𝛿 𝑖 := 𝑣 𝜃 (𝑍 𝑡 𝑖 , 𝑡 𝑖 , 𝑐, 𝑋 in ) − 𝑣 𝜃 (𝑍 𝑡 𝑖 , 𝑡 𝑖 , ∅, 𝑋 in ), (36) which represents the prompt-induced change in the vector field at timestep 𝑡 𝑖 . Since 
+
+𝑣 𝜃 (𝑍 𝑡 𝑖 , 𝑡 𝑖 , 𝑐, 𝑋 in ) = 𝑢 𝑖 + 𝛿 𝑖 , (37) the prompt-conditioned target can be written as 
+
+𝑍 ∗,(𝑐 ) 
+
+> 𝑡 𝑖
+
+= 𝑋 in − Δ𝑖 (𝑢 𝑖 + 𝛿 𝑖 ) = 𝑍 ∗ 
+
+> 𝑡 𝑖
+
+− Δ𝑖 𝛿 𝑖 . (38) This decomposition clarifies the difference between the two choices. The empty-prompt target 𝑍 ∗ 
+
+> 𝑡 𝑖
+
+is determined only by the vector field that reconstructs the input image without applying any edit. By contrast, the prompt-conditioned target 𝑍 ∗,(𝑐 ) 
+
+> 𝑡 𝑖
+
+includes the additional term −Δ𝑖 𝛿 𝑖 , which depends directly on the edit prompt. As a result, moving the latent state toward 𝑍 ∗,(𝑐 ) 
+
+> 𝑡 𝑖
+
+introduces a cor-rection that partially counteracts the prompt-induced motion. This conflict is particularly problematic in the early steps. Be-cause Δ𝑖 = 𝑡 𝑁 − 𝑡 𝑖 is large when 𝑡 𝑖 is close to the starting time, the extra term −Δ𝑖 𝛿 𝑖 can dominate the correction. At the same time, dif-fusion/flow models are known to determine global structure mainly in the early timesteps. Therefore, if the correction is defined using the edit prompt, the sampler is encouraged to both follow the edit Inference-time Trajectory Optimization for Manga Image Editing Conference acronym ’XX, June 03–05, 2018, Woodstock, NY 
+
+Table 1: Evaluation of generation results under an empty prompt 
+
+Method Full image Text region PSNR ↑ SSIM ↑ LPIPS ↓ PSNR ↑ SSIM ↑
+
+Baseline 11.84 48.02 41.13 8.71 28.90 Ours 22.27 86.25 7.32 18.50 78.13 
+
+prompt and cancel part of its effect during the very stage where the global layout is being formed. This can weaken the intended edit or make the trajectory unnecessarily unstable. In contrast, using the empty prompt removes the prompt-dependent term 𝛿 𝑖 from the correction target. The resulting correction only encourages consistency with the input image under non-edit re-construction, i.e., it acts as a structural anchor rather than an edit-suppressing force. This is well aligned with manga editing tasks such as text removal and screentone synthesis, where the desired output should preserve the global structure of the input image while modifying only local regions. For such tasks, the empty-prompt correction helps retain the original composition and content, while leaving the prompt-driven local edit relatively unconstrained. Taken together, the empty prompt is effective because it sep-arates two roles: the edit prompt drives the desired transforma-tion, whereas the empty-prompt correction stabilizes the trajectory around the input-consistent structure without directly opposing the edit direction. 
+
+## 5 Experiments: Mask-Free Text Removal 5.1 Dataset 
+
+Mask-free text removal aims to remove text written in an input manga image in a natural manner. No segmentation mask for the text regions is provided at inference time. Using the Manga109s dataset [ 1 , 23 ], we constructed 3,204 pairs of input manga images with text and ground-truth manga im-ages without text as follows. First, we used the text annotations in Manga109s to extract the largest rectangular crop without an-notated text regions from each two-page manga spread. However, Manga109s also contains unannotated text such as handwritten text, so some cropped images could still include text. We there-fore manually inspected the crops and removed those that still contained text. The resulting 3,204 cropped images were used as the ground-truth text-free manga images, and the corresponding input images with text were created by rendering text on top of them. The rendered text content was randomly sampled from the text annotations originally present in the corresponding two-page spread before cropping. The font was randomly selected from 24 fonts that looked natural for manga images. 
+
+## 5.2 Implementation Details 
+
+As the baseline, we used the open-source image editing model Qwen Image Edit 2509. All hyperparameters were kept at their default values. For our method, we set the number of corrected steps to 
+
+𝑀 = 3 and the correction strength to 𝛼 = 0.01 .
+
+## 5.3 Preliminary Evaluation 
+
+As a sanity check, we first verify that the proposed method faith-fully reconstructs the input image when an empty prompt is given. Specifically, we evaluate the discrepancy between the generated image under an empty prompt and the input image with ren-dered text . The results are shown in Table 1. Compared with the baseline, our method reconstructs the input image with text much more accurately. The qualitative results in Fig. 1 further support this observation. 
+
+## 5.4 Comparison with Other Methods 
+
+We remove text by feeding an image with text and using the editing prompt “Remove text. Keep everything else unchanged.”, and then evaluate the discrepancy with the ground-truth text-free image .We compare against the following methods: 
+
+Baseline : directly applying Qwen Image Edit 2509. 
+
+Noise Inversion : instead of generating the edited image from pure noise, this method starts generation from an intermediate point on the straight path connecting the noise 𝒁 0 and the input image 𝑿 in .More specifically, generation starts from (1 − 𝑡 𝑖 )𝒁 0 + 𝑡 𝑖 𝑿 in , which corresponds to advancing along the path for the first 𝑖 steps. We report the best-performing setting, 𝑖 = 1.
+
+FlowChef [ 26 ] and FlowEdit [ 13 ]: image editing methods based on image generation models. Their original implementations use the image generation model FLUX.1 [dev], but we also compare variants using Qwen Image 2512. This makes the comparison better aligned with the image editing model Qwen Image Edit 2509 used by our method. The source prompt is “A manga image with text.” and the target prompt is “A manga image without text.” 
+
+SickZil-Machine [12] : a model designed and trained specifically for mask-free text removal in manga images. We use the publicly available pretrained weights. Inpainting methods that require masks, such as Manga Inpaint-ing [42], cannot be directly applied to this task. Table 2 reports the quantitative comparison. Compared with the baseline, our method consistently improves performance. FlowChef and FlowEdit fail to perform text removal well on manga images. Be-cause SickZil-Machine performs inpainting only within the initially segmented text regions, it achieves strong scores when evaluated over the full image. However, when the evaluation is restricted to the text regions, our method performs better, indicating that it removes text more naturally. Figure 3 shows qualitative comparisons of the edited images. While the baseline often edits regions more aggressively than nec-essary, our method removes text while preserving the overall struc-ture of the input image. SickZil-Machine sometimes leaves text behind when text-region segmentation fails, and it also struggles to faithfully complete facial regions. 
+
+## 5.5 Inference Speed 
+
+We measure runtime on an NVIDIA H200 GPU. The average in-ference time per image is 32.21 seconds for the baseline model and 32.23 seconds with our method. As discussed in Sec. 3.3, this confirms that the additional computational cost of the proposed method is negligible. Conference acronym ’XX, June 03–05, 2018, Woodstock, NY Furuta et al. 
+
+Table 2: Quantitative evaluation of text removal 
+
+Method Model Full image Text region PSNR ↑ SSIM ↑ LPIPS ↓ PSNR ↑ SSIM ↑
+
+Baseline Qwen Image Edit 2509 19.62 72.76 7.16 19.07 60.77 Noise Inversion Qwen Image Edit 2509 20.29 75.66 7.23 18.94 61.80 Ours Qwen Image Edit 2509 22.07 80.61 6.00 20.04 64.15 
+
+FlowChef [26] Qwen Image 2512 13.97 52.11 39.68 5.68 8.42 FlowEdit [13] Qwen Image 2512 10.66 35.24 10.69 8.96 16.57 FlowChef [26] FLUX.1 [dev] 16.91 75.44 19.43 4.83 5.54 FlowEdit [13] FLUX.1 [dev] 14.48 68.98 28.18 5.59 7.59 SickZil-Machine [12] Finetuned CNNs 24.94 95.30 5.05 16.16 48.8       
+
+> Input GT Baseline Ours FlowChef [26] FlowEdit [13] Sick-Zil [12]
+
+Figure 3: Qualitative comparison for text removal. ©Nagano Noriko ©Omi Ayuko Table 3: Effect of the prompt used for trajectory correction 
+
+Method Full image Text region PSNR ↑ SSIM ↑ LPIPS ↓ PSNR ↑ SSIM ↑
+
+Baseline 19.62 72.76 7.16 19.07 60.77 Edit prompt 21.57 80.68 6.74 18.69 61.99 Empty prompt 22.07 80.61 6.00 20.04 64.15 
+
+## 5.6 Why Use an Empty Prompt 
+
+To verify the effect of using an empty prompt, we evaluate a variant of Eq. (5) in which the edit prompt 𝑐 is used instead of the empty prompt ∅. Unless otherwise noted, all evaluations in this section measure the discrepancy with the ground-truth text-free image. Table 3 shows the quantitative results. When trajectory correction is performed using the edit prompt, the error inside the text region increases. This happens because the generated result is corrected to be closer to the input image, causing the output to stay too close to the original image and thus leaving text behind (Fig. 4). 
+
+## 5.7 Effect of Optimized Trajectory Computation 
+
+We next analyze the effect of the optimized trajectory computed by Eqs. (4) and (5). Instead of Eqs. (4) and (5), we also consider correcting the trajectory using the straight path between the noise 
+
+Input image Edit prompt Empty prompt 
+
+Figure 4: Effect of the prompt used for trajectory correction. 
+
+©Okuda Momoko 
+
+𝒁 0 and the input image 𝑿 in :
+
+𝒁 ∗ 
+
+> 𝑡 𝑖
+
+= (1 − 𝑡 𝑖 )𝒁 0 + 𝑡 𝑖 𝑿 in . (39) Trajectory correction is then performed in the same way as Eq. (6). Table 4 summarizes the results. Using the optimized trajectory yields better performance than correcting the trajectory with the straight path. Because Rectified Flow models are trained using straight paths as supervision, the optimized trajectory should co-incide with the straight path if a pretrained Rectified Flow model behaves ideally. However, on data that are rarely seen during train-ing, such as manga images, Rectified Flow models may deviate from Inference-time Trajectory Optimization for Manga Image Editing Conference acronym ’XX, June 03–05, 2018, Woodstock, NY 
+
+Table 4: Effect of the optimized trajectory 
+
+Method Full image Text region PSNR ↑ SSIM ↑ LPIPS ↓ PSNR ↑ SSIM ↑
+
+Baseline 19.62 72.76 7.16 19.07 60.77 Straight path 19.69 73.13 7.74 19.13 61.12 Optimized path 22.07 80.61 6.00 20.04 64.15 Table 5: Effect of hyperparameters 
+
+Method Hyper- Full image Text region param. PSNR ↑ SSIM ↑ LPIPS ↓ PSNR ↑ SSIM ↑
+
+Baseline 19.62 72.76 7.16 19.07 60.77 Ours 
+
+𝑀 = 1 20.89 76.87 6.94 19.71 62.56 
+
+𝑀 = 3 22.07 80.61 6.00 20.04 64.15 
+
+𝑀 = 5 22.31 81.67 6.01 19.82 63.59 
+
+𝑀 = 7 22.37 82.42 6.45 19.23 61.31 
+
+𝑀 = 9 22.38 83.10 6.93 18.48 57.92 Ours 
+
+𝛼 = 0.001 19.67 72.92 7.87 19.08 60.83 
+
+𝛼 = 0.01 22.07 80.61 6.00 20.04 64.15 
+
+𝛼 = 0.1 22.74 86.64 9.76 18.40 54.58 this ideal behavior, making the optimized trajectory more effective in practice. 
+
+## 5.8 Effect of Hyperparameters 
+
+We study the effect of varying the number of corrected timesteps 
+
+𝑀 and the correction strength 𝛼 . The results are shown in Table 5. Increasing the number of corrected timesteps from 𝑀 = 1 to 𝑀 = 3
+
+improves both PSNR and SSIM for the full image and the text region. When 𝑀 is further increased to 5, 7, and 9, the generated image becomes too close to the input image; as a result, the full-image PSNR and SSIM continue to improve, but some text remains, which degrades PSNR and SSIM in the text region. A similar trend is ob-served for a larger correction strength, 𝛼 = 0.1: the generated image becomes overly similar to the input, leading to better full-image scores but worse performance in the text region due to residual text. When 𝛼 = 0.001 , the correction is too weak and the benefit of the proposed method becomes limited. 
+
+## 5.9 Applicability to Various Image Editing Models 
+
+Table 6 shows the effect of applying the proposed method to image editing models other than Qwen Image Edit 2509. The proposed method improves performance for many image editing models. 
+
+## 6 Experiments: Screentone Synthesis 6.1 Dataset 
+
+Screentone synthesis takes a line-art image as input and outputs a final manga image with screentones. Following Tsubota et al. [ 36 ], we constructed 1,355 pairs of input line art and ground-truth manga images with screentones as follows. We cropped character bounding boxes from six titles in Manga109s to obtain 1,355 ground-truth manga images with screentones. We then converted them into input line-art images using Manga Line Extraction [16]. 
+
+## 6.2 Comparison Methods 
+
+As the baseline model, we use Qwen Image Edit 2511. The editing prompt is “Convert the line art into a finished Japanese black and white monochrome manga image.” We compare against the image editing methods described in Sec. 5.4. For FlowChef and FlowEdit, the source prompt is “A line art image.” and the target prompt is “A finished Japanese black and white monochrome manga image.” We also compare with Sketch2Manga [ 18 ], a model designed and trained specifically for screentone synthesis from line art. We use the publicly available pretrained weights. We could not run the screentone synthesis method of Tsubota et al. [ 36 ] because, even after contacting the authors, we could not obtain the screentone pattern data required for inference. 
+
+## 6.3 Results 
+
+As with colorization, screentone synthesis does not have a sin-gle correct output; instead, there are many plausible and natural ways to place screentones. The ground-truth manga image with screentones constructed in Sec. 6.1 is only one such realization, so directly measuring the discrepancy between the output image and the paired ground-truth using pixel-wise metrics such as PSNR or SSIM is not appropriate. That said, outputs should still follow the same overall distribution as the ground-truth data. We therefore evaluate the distance between the distribution of generated images and that of the ground-truth images using FID and CMMD [10]. Table 7 shows the quantitative comparison. Our method yields small but consistent improvements over the baseline. It achieves the best FID and competitive CMMD. Figure 5 provides qualitative comparisons. While the baseline sometimes fails to preserve the composition of the input image, our method can generate screentones while maintaining the original structure. Compared with other image editing methods, our method produces more natural screentone-filled images qualitatively. Table 8 shows the results of applying the proposed method to other image editing models. The proposed method also improves performance for these models. 
+
+## 7 Conclusion 
+
+We presented a method that adapts pretrained image editing models to manga images at inference time. Our method computes a tra-jectory that reconstructs the input image under an empty prompt and uses it to correct the generation trajectory during the first few steps. This encourages the model to match the global structure of the input image while still allowing local edits. No additional Conference acronym ’XX, June 03–05, 2018, Woodstock, NY Furuta et al. 
+
+Table 6: Evaluation on various models for text removal 
+
+Method Model Full image Text region PSNR ↑ SSIM ↑ LPIPS ↓ PSNR ↑ SSIM ↑
+
+Baseline Qwen Image Edit 2509 19.62 72.76 7.16 19.07 60.77 Ours Qwen Image Edit 2509 22.07 80.61 6.00 20.04 64.15 
+
+Baseline Qwen Image Edit 2511 21.19 82.63 10.16 18.51 62.86 
+
+Ours Qwen Image Edit 2511 21.39 83.05 9.84 18.54 62.55 Baseline FLUX.1 Kontext [dev] 26.42 90.47 6.60 21.00 66.97 Ours FLUX.1 Kontext [dev] 27.36 93.81 4.21 21.48 68.97 
+
+Baseline FLUX.2 Klein 9B 26.90 94.67 3.48 19.72 66.32 Ours FLUX.2 Klein 9B 27.07 94.91 3.44 19.61 66.38       
+
+> Input GT Baseline Ours FlowChef [26] FlowEdit [13] Sketch2Manga [18]
+
+Figure 5: Qualitative comparison for screentone synthesis. ©Saki Kaori ©Kurita Riku Table 7: Quantitative evaluation of screentone synthesis 
+
+Method Model FID ↓ CMMD ↓
+
+Baseline Qwen Image Edit 2511 36.08 0.3140 Noise Inversion Qwen Image Edit 2511 36.71 0.3123 
+
+Ours Qwen Image Edit 2511 36.07 0.3129 FlowChef [26] Qwen Image 2512 81.88 0.9993 FlowEdit [13] Qwen Image 2512 61.32 0.4669 FlowChef [26] FLUX.1 [dev] 93.46 0.3928 FlowEdit [13] FLUX.1 [dev] 68.28 1.3403 Sketch2Manga [18] Finetuned SD1.5 139.09 2.1467 forward or backward passes are required, and the computational overhead of the proposed method is extremely small. As future 
+
+Table 8: Applying the proposed method to various models for screentone synthesis 
+
+Method Model FID ↓ CMMD ↓
+
+Baseline Qwen Image Edit 2511 36.08 0.3140 Ours Qwen Image Edit 2511 36.07 0.3129 
+
+Baseline FLUX.1 Kontext [dev] 92.97 0.3746 Ours FLUX.1 Kontext [dev] 83.69 0.3704 
+
+Baseline FLUX.2 Klein 2B 47.22 0.5630 Ours FLUX.2 Klein 2B 46.89 0.5547 
+
+work, we plan to extend the method to other applications such as automatic manga colorization. Inference-time Trajectory Optimization for Manga Image Editing Conference acronym ’XX, June 03–05, 2018, Woodstock, NY 
+
+## References 
+
+[1] Kiyoharu Aizawa, Azuma Fujimoto, Atsushi Otsubo, Toru Ogawa, Yusuke Matsui, Koki Tsubota, and Hikaru Ikuta. 2020. Building a Manga Dataset “Manga109” with Annotations for Multimedia Applications. IEEE MultiMedia 27, 2 (2020), 8–18. doi:10.1109/mmul.2020.2987895 [2] Kecheng Chen, Xinyu Luo, Tiexin Qin, Jie Liu, Hui Liu, Victor Ho Fun Lee, Hong Yan, and Haoliang Li. 2025. Test-time adaptation for foundation medical segmentation model without parametric updates. In Proceedings of the IEEE/CVF International Conference on Computer Vision . 20075–20084. [3] Yingying Deng, Xiangyu He, Changwang Mei, Peisong Wang, and Fan Tang. 2025. FireFlow: Fast Inversion of Rectified Flow for Image Semantic Editing. In 
+
+International Conference on Machine Learning . PMLR, 13110–13128. [4] Chie Furusawa, Kazuyuki Hiroshiba, Keisuke Ogaki, and Yuri Odagiri. 2017. Comicolorization: semi-automatic manga colorization. In SIGGRAPH Asia 2017 Technical Briefs . 1–4. [5] Maksim Golyadkin, Ianis Plevokas, and Ilya Makarov. 2025. Closing the Domain Gap in Manga Colorization via Aligned Paired Dataset. In 2025 IEEE/CVF Winter Conference on Applications of Computer Vision (WACV) . IEEE, 5580–5590. [6] Jiayi Guo, Junhao Zhao, Chaoqun Du, Yulin Wang, Chunjiang Ge, Zanlin Ni, Shiji Song, Humphrey Shi, and Gao Huang. 2025. Everything to the synthetic: Diffusion-driven test-time adaptation via synthetic-domain alignment. In Pro-ceedings of the Computer Vision and Pattern Recognition Conference . 30503–30513. [7] Paulina Hensman and Kiyoharu Aizawa. 2017. cGAN-based manga colorization using a single training image. In 2017 14th IAPR International Conference on Document Analysis and Recognition (ICDAR) , Vol. 3. IEEE, 72–77. [8] Vincent Tao Hu, Wei Zhang, Meng Tang, Pascal Mettes, Deli Zhao, and Cees Snoek. 2024. Latent space editing in transformer-based flow matching. In Pro-ceedings of the AAAI conference on artificial intelligence , Vol. 38. 2247–2255. [9] Yi Huang, Jiancheng Huang, Yifan Liu, Mingfu Yan, Jiaxi Lv, Jianzhuang Liu, Wei Xiong, He Zhang, Liangliang Cao, and Shifeng Chen. 2025. Diffusion model-based image editing: A survey. IEEE Transactions on Pattern Analysis and Machine Intelligence (2025). [10] Sadeep Jayasumana, Srikumar Ramalingam, Andreas Veit, Daniel Glasner, Ayan Chakrabarti, and Sanjiv Kumar. 2024. Rethinking fid: Towards a better evaluation metric for image generation. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition . 9307–9315. [11] Yuusuke Kataoka, Takashi Matsubara, and Kuniaki Uehara. 2017. Automatic manga colorization with color style by generative adversarial nets. In 2017 18th IEEE/ACIS International Conference on Software Engineering, Artificial Intelligence, Networking and Parallel/Distributed Computing (SNPD) . IEEE, 495–499. [12] U-Ram Ko and Hwan-Gue Cho. 2020. SickZil-machine: a deep learning based script text isolation system for comics translation. In International Workshop on Document Analysis Systems . Springer, 413–425. [13] Vladimir Kulikov, Matan Kleiner, Inbar Huberman-Spiegelglas, and Tomer Michaeli. 2025. FlowEdit: Inversion-free text-based editing using pre-trained flow models. In Proceedings of the IEEE/CVF International Conference on Computer Vision . 19721–19730. [14] Black Forest Labs. 2024. FLUX. https://github.com/black-forest-labs/flux. [15] Black Forest Labs, Stephen Batifol, Andreas Blattmann, Frederic Boesel, Saksham Consul, Cyril Diagne, Tim Dockhorn, Jack English, Zion English, Patrick Esser, et al . 2025. FLUX. 1 Kontext: Flow Matching for In-Context Image Generation and Editing in Latent Space. arXiv preprint arXiv:2506.15742 (2025). [16] Chengze Li, Xueting Liu, and Tien-Tsin Wong. 2017. Deep extraction of manga structural lines. ACM Transactions on Graphics (TOG) 36, 4 (2017), 1–12. [17] Jian Liang, Ran He, and Tieniu Tan. 2025. A comprehensive survey on test-time adaptation under distribution shifts. International Journal of Computer Vision 
+
+133, 1 (2025), 31–64. [18] Jian Lin, Xueting Liu, Chengze Li, Minshan Xie, and Tien-Tsin Wong. 2024. Sketch2manga: Shaded manga screening from sketch with diffusion models. In 
+
+2024 IEEE International Conference on Image Processing (ICIP) . IEEE, 2389–2395. [19] Yaron Lipman, Ricky TQ Chen, Heli Ben-Hamu, Maximilian Nickel, and Matt Le. 2023. Flow Matching for Generative Modeling. In International Conference on Learning Representations .[20] Shiyu Liu, Yucheng Han, Peng Xing, Fukun Yin, Rui Wang, Wei Cheng, Jiaqi Liao, Yingming Wang, Honghao Fu, Chunrui Han, et al . 2025. Step1x-edit: A practical framework for general image editing. arXiv preprint arXiv:2504.17761 (2025). [21] Xingchao Liu, Chengyue Gong, and Qiang Liu. 2023. Flow straight and fast: Learn-ing to generate and transfer data with rectified flow. In International Conference on Learning Representations .[22] Yuhang Ma, Bo Cheng, Shanyuan Liu, Hongyi Zhou, Liebucha Wu, Xiaoyu Wu, Dawei Leng, and Yuhui Yin. 2025. NAMI: Efficient Image Generation via Bridged Progressive Rectified Flow Transformers. arXiv preprint arXiv:2503.09242 (2025). [23] Yusuke Matsui, Kota Ito, Yuji Aramaki, Azuma Fujimoto, Toru Ogawa, Toshihiko Yamasaki, and Kiyoharu Aizawa. 2017. Sketch-based Manga Retrieval using Manga109 Dataset. Multimedia Tools and Applications 76, 20 (2017), 21811–21838. doi:10.1007/s11042-016-4020-z [24] Yusuke Matsui, Toshihiko Yamasaki, and Kiyoharu Aizawa. 2011. Interactive manga retargeting. In ACM SIGGRAPH 2011 Posters . 1–1. [25] Shuaicheng Niu, Jiaxiang Wu, Yifan Zhang, Yaofo Chen, Shijian Zheng, Peilin Zhao, and Mingkui Tan. 2022. Efficient test-time model adaptation without forgetting. In International conference on machine learning . PMLR, 16888–16905. [26] Maitreya Patel, Song Wen, Dimitris N Metaxas, and Yezhou Yang. 2025. FlowChef: Steering of rectified flow models for controlled generations. In Proceedings of the IEEE/CVF International Conference on Computer Vision . 15308–15318. [27] Mihir Prabhudesai, Tsung-Wei Ke, Alex Li, Deepak Pathak, and Katerina Fragki-adaki. 2023. Diffusion-tta: Test-time adaptation of discriminative models via generative feedback. Advances in Neural Information Processing Systems 36 (2023), 17567–17583. [28] Yurui Qian, Qi Cai, Yingwei Pan, Yehao Li, Ting Yao, Qibin Sun, and Tao Mei. 2024. Boosting diffusion models with moving average sampling in frequency domain. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition . 8911–8920. [29] Yingge Qu, Tien-Tsin Wong, and Pheng-Ann Heng. 2006. Manga colorization. 
+
+ACM Transactions on Graphics (ToG) 25, 3 (2006), 1214–1220. [30] Litu Rout, Yujia Chen, Nataniel Ruiz, Constantine Caramanis, Sanjay Shakkottai, and Wen-Sheng Chu. 2025. Semantic image inversion and editing using rec-tified stochastic differential equations. In International Conference on Learning Representations .[31] Kazuhiro Sato, Yusuke Matsui, Toshihiko Yamasaki, and Kiyoharu Aizawa. 2014. Reference-based manga colorization by graph correspondence using quadratic programming. In SIGGRAPH Asia 2014 Technical Briefs . 1–4. [32] Yelong Shen, Phillip Wallis, Zeyuan Allen-Zhu, Yuanzhi Li, Shean Wang, et al .2023. LoRA: Low-rank adaptation of large language models.. In International Conference on Learning Representations .[33] Yugo Shimizu, Ryosuke Furuta, Delong Ouyang, Yukinobu Taniguchi, Ryota Hinami, and Shonosuke Ishiwatari. 2021. Painting style-aware manga colorization based on generative adversarial networks. In 2021 IEEE International Conference on Image Processing (ICIP) . IEEE, 1739–1743. [34] Meituan LongCat Team, Hanghang Ma, Haoxian Tan, Jiale Huang, Junqiang Wu, Jun-Yan He, Lishuai Gao, Songlin Xiao, Xiaoming Wei, Xiaoqi Ma, et al . 2025. Longcat-image technical report. arXiv preprint arXiv:2512.07584 (2025). [35] Yun-Yun Tsai, Fu-Chen Chen, Albert YC Chen, Junfeng Yang, Che-Chun Su, Min Sun, and Cheng-Hao Kuo. 2024. Gda: Generalized diffusion for robust test-time adaptation. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition . 23242–23251. [36] Koki Tsubota, Daiki Ikami, and Kiyoharu Aizawa. 2019. Synthesis of screentone patterns of manga characters. In 2019 IEEE international symposium on multimedia (ISM) . IEEE, 212–2123. [37] Binxu Wang and John J Vastola. 2023. Diffusion models generate images like painters: an analytical theory of outline first, details later. In arXiv preprint arXiv:2303.02490 .[38] Dequan Wang, Evan Shelhamer, Shaoteng Liu, Bruno Olshausen, and Trevor Darrell. 2021. Tent: Fully Test-Time Adaptation by Entropy Minimization. In 
+
+International Conference on Learning Representations .[39] Jiangshan Wang, Junfu Pu, Zhongang Qi, Jiayi Guo, Yue Ma, Nisha Huang, Yuxin Chen, Xiu Li, and Ying Shan. 2025. Taming Rectified Flow for Inversion and Editing. In International Conference on Machine Learning . PMLR, 64044–64058. [40] Chenfei Wu, Jiahao Li, Jingren Zhou, Junyang Lin, Kaiyuan Gao, Kun Yan, Sheng-ming Yin, Shuai Bai, Xiao Xu, Yilei Chen, et al . 2025. Qwen-image technical report. arXiv preprint arXiv:2508.02324 (2025). [41] Minshan Xie, Menghan Xia, Chengze Li, Xueting Liu, and Tien-Tsin Wong. 2025. Screentone-Preserved Manga Retargeting. In Computer Graphics Forum , Vol. 44. Wiley Online Library, e70096. [42] Minshan Xie, Menghan Xia, Xueting Liu, Chengze Li, and Tien-Tsin Wong. 2021. Seamless manga inpainting with semantics awareness. ACM Transactions on Graphics (TOG) 40, 4 (2021), 1–11.
