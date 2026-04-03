@@ -1,0 +1,637 @@
+Title: TRU: Targeted Reverse Update for Efficient Multimodal Recommendation Unlearning
+
+URL Source: https://arxiv.org/pdf/2604.02183v1
+
+Published Time: Fri, 03 Apr 2026 01:18:49 GMT
+
+Number of Pages: 12
+
+Markdown Content:
+# TRU: Targeted Reverse Update for Efficient Multimodal Recommendation Unlearning 
+
+# Zhanting Zhou 
+
+University of Electronic Science and Technology of China Chengdu, Sichuan, China 
+
+# KaHou Tam 
+
+University of Macau Macau, China 
+
+# Ziqiang Zheng 
+
+University of Electronic Science and Technology of China Chengdu, Sichuan, China 
+
+# Zeyu Ma 
+
+University of Electronic Science and Technology of China Chengdu, Sichuan, China 
+
+# Yang Yang 
+
+University of Electronic Science and Technology of China Chengdu, Sichuan, China 
+
+## Abstract 
+
+Multimodal recommendation systems (MRS) jointly model user-item interaction graphs and rich item content, but this tight cou-pling makes user data difficult to remove once learned. Approximate machine unlearning offers an efficient alternative to full retraining, yet existing methods for MRS mainly rely on a largely uniform reverse update across the model. We show that this assumption is fundamentally mismatched to modern MRS: deleted-data influ-ence is not uniformly distributed, but concentrated unevenly across 
+
+ranking behavior , modality branches , and network layers . This non-uniformity gives rise to three bottlenecks in MRS unlearning: target-item persistence in the collaborative graph, modality imbalance across feature branches, and layer-wise sensitivity in the parameter space. To address this mismatch, we propose targeted reverse update (TRU), a plug-and-play unlearning framework for MRS. Instead of applying a blind global reversal, TRU performs three coordinated interventions across the model hierarchy: a ranking fusion gate to suppress residual target-item influence in ranking, branch-wise modality scaling to preserve retained multimodal rep-resentations, and capacity-aware layer isolation to localize reverse updates to deletion-sensitive modules. Experiments across two rep-resentative backbones, three datasets, and three unlearning regimes show that TRU consistently achieves a better retain-forget trade-off than prior approximate baselines, while security audits further confirm deeper forgetting and behavior closer to a full retraining on the retained data. 
+
+## CCS Concepts 
+
+• Computing methodologies → Artificial intelligence ; • Secu-rity and privacy → Privacy protections .
+
+## Keywords 
+
+Machine Unlearning, Privacy Protection, Responsible Multimdeia, Multimodal Recommendation. 
+
+## 1 Introduction 
+
+Multimodal recommendation systems (MRS) have become increas-ingly important in modern personalized platforms [ 14 , 21 , 29 ]. By jointly modeling user-item interaction graphs and rich item content, such as images and text, they capture user preferences more accu-rately than interaction-only recommendation systems [ 21 , 36 , 37 ]. Why? Fails in Unlearning 
+
+𝑫 𝒇 
+
+My data still reappears…!! 
+
+𝑫 o
+
+1. Deletion Request 
+
+2. Advance Unlearning 
+
+𝑫 𝒇 
+
+> Bag
+
+…
+
+> Headphones
+
+…
+
+du
+
+Item-Centric 
+
+> (2) Item
+> Modality
+> (1) Item
+> Persistence
+> (3) Layer
+> Sensitivity
+
+Figure 1: Conceptual overview of MRS unlearning. Left: adeletion request triggers unlearning, but verification for the unlearned model fails. Right: Ignoring the item-centric struc-ture leads to these unlearning failures. 
+
+However, this deep personalization also creates a serious privacy risk, as the tightly coupled multimodal signals in MRS may encode users’ private and sensitive behaviors [ 10 ]. As data privacy regu-lations grant users the right to request deletion of their personal data [ 2, 3, 9], the MRS must ensure not only that the data itself is removed, but also that its influence on the trained model is fully erased. A straightforward way to satisfy such deletion requests is to retrain the entire model from scratch after each request. However, this strategy is computationally unsustainable in real-world sys-tems, especially when deletion requests are frequent. As a result, 
+
+machine unlearning has emerged as a practical alternative for re-moving data influence without full retraining [ 1, 23 ]. For practical unlearning in deployed MRS, it must satisfy three requirements simultaneously: efficiency , forgetting fidelity , and retaining utility . Specifically, it should process deletion requests without full retraining, thoroughly remove the influence of the target data, and preserve recommendation quality on the remaining data. The core challenge is that these objectives are inherently in tension [5, 20]. Existing studies have explored unlearning from different perspec-tives, but they remain insufficient for MRS. Partition-based isolation approaches, e.g. , RecEraser [ 4], UltraRE [ 18 ], struggle to handle the strong dependencies in multimodal settings. Relation-aware graph unlearning methods are designed for structural removal, but they 
+
+> arXiv:2604.02183v1 [cs.AI] 2 Apr 2026 Zhou et al.
+
+# Repair Update 
+
+# Reverse Update 
+
+Section 3.2 
+
+Section 3.3 
+
+Section 3.4 
+
+Section 3.5 
+
+> (2) Modality Calibrating
+> (1) Ranking Gating
+> (3) Sensitivity Isolating
+> Equation (3)
+> Equation (4)
+> Equation (5)-(6)
+
+Figure 2: Overview of TRU. We diagnose three failure modes of uniform reverse unlearning in MRS: target-item effects persistence (Section 3.2), weak item-modality fusion (Section 3.3), and layer sensitivity (Section 3.4). We map them to Ranking Gate , Branch-wise Scaling , and Layer Selection in a unified reverse update (Section 3.5). 
+
+do not address the cross-modal coupling that is central to MRS. Al-though these approaches are relevant to user-item graph structures, they fail to capture the heterogeneous multimodal components that shape item representations. Conversely, recent multimodal unlearn-ing efforts like MultiDelete [ 6] focus on erasing paired multimodal samples while preserving cross-modal alignment, yet they com-pletely overlook the collaborative graph structure and the resulting ranked recommendation behavior. Consequently, these disparate solutions leave a critical gap : they fail to address how a deletion request should be jointly propagated and safely decoupled across both the interaction structure and the rich multimodal content in an MRS. To bridge this gap, MMRecUn recently emerged as the first ap-proximate unlearning framework tailored specifically for MRS [ 26 ]. By directly applying a reverse optimization step on the forgotten data alongside a forward repair step on the retained data, it suc-cessfully bypasses the prohibitive costs of data partitioning [ 26 ]. However, this efficiency relies on a critical, yet flawed, assumption: it applies a largely uniform reverse optimization signal across the entire network [ 26 ]. We argue that this uniform treatment fun-damentally clashes with the inherently heterogeneous nature of modern MRS. For instance, MGCN treats multimodal fusion with a shared modality-aware graph convolution, but MIG-GT highlights a deeper fact: different modalities propagate information at differ-ent scales and therefore require distinct receptive fields, thereby introducing modality-independent graph components and global transformers [13]. Recent studies [ 13 , 15 , 32 ] further substantiate this heterogene-ity, showing that optimizing all modalities under a single shared objective can induce modality imbalance and lead to insufficient op-timization of less dominant branches. The increasing strength and heterogeneity of modern backbones further complicate MRS. Specif-ically, we demonstrate that approximate unlearning in MRS is not auniform optimization problem. The influence of deleted data is un-evenly distributed across ranking behavior , modality branches , and 
+
+network layers . Based on these observations, we further pinpoint three major bottlenecks in MRS unlearning: target-item persis-tence in the collaborative graph, modality imbalance among feature branches, and concentrated sensitivity across network layers. To address these challenges, we propose targeted reverse update (TRU ), a plug-and-play unlearning framework for effective mul-timodal recommendation unlearning. Instead of applying a blind global reverse update, TRU designs three coordinated interventions across ranking outputs, modality branches, and network layers: a prediction-aware ranking fusion gate to suppress collaborative popu-larity inertia, a representation-level branch-wise modality scaling to protect fragile retained features, and a parameter-specific capacity-aware layer isolation to localize reverse update to deletion-sensitive modules. In this way, TRU decides what to forget aggressively and 
+
+where to preserve carefully across different architectural levels, rather than treating the whole model as uniformly malleable. Extensive experiments across two representative backbones, three datasets, and three unlearning regimes show that TRU con-sistently achieves superior performance in retained utility, privacy TRU: Targeted Reverse Update for Efficient Multimodal Recommendation Unlearning 
+
+removal, security audits, and efficiency. These results reveal a key insight: an effective MRS unlearning depends not on a stronger uniform reverse update, but on the precise targeting with multi-granularity. TRU narrows the gap between approximate unlearning and fully retraining in MRS by applying reverse update only where deletion actually resides: ranking outputs, modality branches, and sensitive layers. Our contributions are summarized as follows: 
+
+• Comprehensive analysis . We demonstrate that deleted-data influence in MRS unlearning is uneven across ranking , modal-ities , and layers , exposing three key bottlenecks: target-item persistence, modality imbalance, and layer-wise sensitivity. 
+
+• Targeted reverse update framework. We present TRU, a plug-and-play unlearning framework that aligns reverse update with model heterogeneity. TRU combines ranking gate for popularity inertia, branch-wise modality scaling for modality imbalance, and capacity-aware layer Selection for deletion-sensitive layers. 
+
+• Superior trade-offs across settings . Across models and un-learning regimes, TRU consistently improves the retain–forget trade-off over prior approximate baselines, while unlearning se-curity audits confirm deeper forgetting and behavior closer to retraining. 
+
+## 2 Related Work 2.1 Heterogeneity in MRS Architectures 
+
+Multimodal Recommendation Systems (MRS) deeply couple col-laborative interaction graphs with rich item-side content [ 13 , 31 ](e.g. , images and text) to capture fine-grained user preferences [ 36 ]. While early approaches relied on simple feature concatenation [ 21 ], recent surveys indicate that state-of-the-art backbones have evolved into highly structured, heterogeneous architectures [ 14 , 21 , 37 ]. Specifically, graph-based models like MMGCN [ 28 ], GRCN [ 27 ], and MGCN [ 31 ] employ modality-aware convolutions and multi-view graphs to govern information propagation. Building upon these modality-aware designs, more advanced architectures push this structural decoupling even further. For instance, models like MIG-GT [ 13 ] explicitly demonstrate that distinct modalities dictate completely independent receptive fields and tailored graph neigh-borhoods, rather than sharing a unified topology. Consequently, optimizing these deeply decoupled branches via a single shared objective often leads to severe modality imbalance [ 32 ]. From an unlearning perspective, applying uniform reverse updates across these decoupled architectures inevitably causes asymmetric dis-ruption to the retained multimodal branches and fusion pathways. This fundamental mismatch dictates that safely erasing a specific data record intrinsically demands targeted interventions rather than global parameter degradation. 
+
+## 2.2 Illusion of Uniformity in Unlearning 
+
+While machine unlearning aims to efficiently erase specific data influences, its execution in recommendation is inherently compli-cated by collaborative graph effects [ 20 ], where removing a single user or item implicitly cascades through the network, inadvertently altering the representations of other retained nodes. Existing litera-ture largely bifurcates into partition-and-retrain frameworks ( e.g. ,RecEraser [ 4], UltraRE [ 18 ]) and approximate parameter updates (e.g. , SCIF [ 19 ], IFRU [ 34 ]). Parallel efforts in graph unlearning, like GNNDelete [ 7 ] and ScaleGUN [ 30 ], have advanced structural erasure by explicitly modeling node and edge removals. However, these graph-centric paradigms implicitly assume feature homogene-ity. When applied to an MRS, they struggle to safely disentangle the collaborative topology from the deeply decoupled multimodal branches. Conversely, multimodal unlearning methods like Multi-Delete [ 6] address cross-modal decoupling, but completely overlook the collaborative ranking objectives essential for recommendation. To bridge this specific gap, MMRecUn [ 26 ] recently emerged as the first approximate unlearning framework tailored for MRS, cou-pling a reverse BPR update [ 25 ] on the forgotten data with a forward repair step. However, this framework relies on a simplifying as-sumption: it broadcasts a uniform reverse optimization signal across the entire backbone. Intuitively, since different modality branches possess distinct learning dynamics and representation spaces, sub-jecting them to an identical reverse penalty inevitably over-corrects fragile modality-specific features while under-correcting others. This uneven absorption of the unlearning signal fails to fully cleanse the model, leaving stubborn residual ranking traces of the deleted data. To genuinely resolve this, the unlearning process in MRS must abandon uniformity in favor of targeted interventions , explic-itly calibrating the reverse updates to accommodate the distinct sensitivities of these decoupled branches. 
+
+## 3 Methodology 
+
+We first define the problem formulation and explain the motivation of designing our TRU in Section 3.1, where the framework overview is shown in Figure 2. 
+
+## 3.1 Problem Formulation 
+
+Let D denote original training interactions, and let 𝑑 𝑢 ⊂ D be the deletion set specified by a user-, item-, or interaction-level request. We refer to the process of data deletion as unlearning , which means that it forces the original model to forget the requested private data while preserving performance on the retained data: 
+
+D′ = D \ 𝑑 𝑢 , (1) and the goal of approximate MRS unlearning is to obtain an updated model whose behavior approaches the model retrained entirely on 
+
+D′, while avoiding the prohibitive cost of full retraining [1]. In generic machine unlearning [ 1, 11 , 35 ], the influence of a deleted record typically remains confined to a single training sam-ple. However, this objective becomes more challenging in MRS, where the influence of any target user, item, or interaction is inher-ently entangled with others. Concretely, in MRS, the influence propagates jointly through both the collaborative user–item graph and the deeply coupled modality branches, requiring the model to precisely remove the targeted effect while preserving the shared representations essential for the retained data. Following the existing approximate MRS unlearning approach MMRecUn [ 26 ], we adopt a reverse-repair unlearning protocol. Specifically, at each epoch, the model first update on 𝑑 𝑢 in the reverse direction of its gradient ( i.e. , gradient ascent) to remove its influence, and then performs a repair update on D′ to recover the Zhou et al. du𝓓 ≪′
+
+> Item Popularity on Amazon-Clothing
+> CCDF
+> Item Interaction
+> 12.4% ↓
+> 18.3% ↓
+> >90% ↓
+
+Figure 3: Item persistence on Amazon-Clothing. Left: the for-get set is much sparser than the retain set in item popularity. Right: even retraining leaves non-zero Top-20 exposure for target items. 
+
+performance on the retained data after the deletion: 
+
+𝜃 ← 𝜃 + 𝜂𝛼 ∇𝜃 LMRS (𝑑 𝑢 ),𝜃 ← 𝜃 − 𝜂 (1 − 𝛼 )∇ 𝜃 LMRS (D ′), (2) where 𝜂 is the learning rate and 𝛼 controls the protocol trade-off. In this paper, we use item-side modalities to denote the three item-level signal sources handled by separate branches in the back-bone. Our empirical analysis reveals that the key bottleneck in MRS unlearning lies in its item-centric nature: target items are not fully removed from ranking outcomes because their collaborative dependencies with others, and their influences are unevenly propa-gated across different item modalities. To overcome this challenge, our TRU discards uniform global penalties and instead applies tar-geted reverse interventions that selectively counteract item-side effects while maintaining the structural coherence of the remaining collaborative graph. Specifically, we propose three key strategies: 
+
+suppressing persistent target-item effects (Section 3.2), calibrating modality-specific gradients (Section 3.3), and isolating sensitive layers 
+
+(Section 3.4) for precise and robust unlearning in MRS. 
+
+## 3.2 Suppressing Persistent Target-Item Effects 
+
+We empirically identify a persistent failure mode in MRS unlearn-ing, where target items linked to deleted users continue to appear in the final recommendation lists due to lingering collaborative dependencies. To support this finding, we present Figure 3, which visualizes how the exposure of these items changes before and after data deletion. Even after a full retraining on the Amazon-Clothing dataset, the target items still dominate the Top-20 rankings, show-ing only a marginal exposure reduction of 12.4% and 18.3% based on MGCN [ 31 ] and MIG-GT [ 13 ], respectively. We attribute the persistent target-item effects to the collaborative user-item graph. As illustrated in the left panel of Figure 3, the deleted interactions associated with the deleted users ( 𝑑 𝑢 ) represent a minor fraction (less than 10%) of the overall engagement for most items, leaving a sparsity gap exceeding 90% when compared to the retained data (D′). This imbalance explains why deleting user edges fails to sup-press item exposure: the residual popularity of those items is largely reinforced by other users who remain in the MRS. Weak Modality Fusion 
+
+Figure 4: Item modality imbalance. Lower-left / upper-right: cross-modal alignment in MGCN / MIG-GT. Off-diagonal similarities remain weak in both backbones. 
+
+(1) Collaborative popularity: Shared connections with re-tained users keep target items visible, making simple edge deletion ineffective. (2) Output suppression: Directly penalizing the item’s rank-ing score is necessary to counter its residual popularity. 
+
+## 3.3 Calibrating Modality-Specific Gradients 
+
+Besides ranking persistence, we empirically identify a further bot-tleneck: item modalities absorb unlearning signals unevenly. As revealed in Figure 2, applying the same reverse penalty across the 
+
+ID , image , and text branches leads to a pronounced imbalance, where we provide direct quantitative evidence in Figure 4. We adopt centered kernel alignment (CKA) [ 8, 17 ] to demonstrate that the representations across these three branches are barely aligned. Specifically, both MGCN and MIG-GT exhibit very low cross-modal similarities, with most values falling below 0.1.The weak cross-modal alignment is not merely an artifact but a structural consequence of the decoupled architectures discussed in Section 2.1. By design, modern MRS isolates propagation path-ways to capture modality-specific preferences [ 13 , 31 , 32 ], thereby operating in distinct and weakly aligned representation spaces. Con-sequently, applying a uniform reverse optimization step across such heterogeneous branches is inherently unbalanced. Fragile modality branches tend to be over-corrected, degrading the representations of retained items, while dominant branches remain under-corrected, thus leaving traces of the deleted items partially preserved. (1) Uneven forgetting: Text, image, and ID features are pro-cessed independently and do not respond equally to the same unlearning penalty. (2) Modality-specific calibration: The unlearning process must adaptively modulate gradient magnitudes for each modality to prevent representation degradation. 
+
+## 3.4 Isolating Sensitive Layers 
+
+Building on the asymmetric behaviors observed in item rankings and modalities, we hypothesize that the unlearning signal prop-agates unevenly across the model’s parameter space. To validate our hypothesis, we present Figure 5 to quantify the layer-wise im-balance in parameter update, showing that conventional methods (e.g. , MMRecUn) excessively shift early embedding modules under TRU: Targeted Reverse Update for Efficient Multimodal Recommendation Unlearning Targeted Reverse 
+
+> Modality Correction
+> Golden Baseline
+> Prior SOTA
+> Ours
+
+Figure 5: Layer sensitivity mismatch. MMRecUn over-shifts early item embedding modules relative to retraining, while TRU stays closer to the retraining profile. 
+
+uniform reverse update, whereas our TRU isolates interventions to achieve a balanced correction across layers. For instance, at the 
+
+Image Embedding layer, MMRecUn’s normalized parameter shift spikes to 0.166 , deviating severely from the exact retraining baseline (0.089 ). In contrast, our TRU effectively mitigates this structural over-reaction. By isolating the interventions, TRU reduces the shift to 0.132 , successfully pulling the parameter trajectory much closer to the golden retraining profile. These results quantitatively prove that a safe unlearning process must surgically act on sensitive mod-ules rather than blindly updating the entire backbone, since the deletion sensitivity is concentrated in specific network modules. (1) Layer-wise sensitivity: Deletion effects concentrate in specific modules, especially early embedding layers. (2) Targeted isolation: Unlearning should confine reverse update to these sensitive layers to preserve stable repre-sentations. 
+
+## 3.5 Unified Targeted Reverse Update 
+
+To address the three unlearning bottlenecks identified above, we propose the targeted reverse update (TRU) framework. Building on our systematic analyses in Section 3.2–3.4, TRU explicitly aligns unlearning signals with the underlying architectural heterogene-ity. More crucially, TRU functions as a plug-and-play framework: it reformulates reverse optimization without modifying the back-bone architecture, the retained learning objective, or the forward inference process. 
+
+Mitigating Ranking Persistence with a Fusion Gate . To mitigate the collaborative inertia that maintains the visibility of deleted items (Section 3.2), we eliminate residual signals at the point of fusion. We augment the reverse objective with an ℓ1 penalty specifically applied to fusion-related parameters: 
+
+˜Lrank MRS = LMRS (𝑑 𝑢 ) + 𝜆 fusion ∥𝜃 fusion ∥1, (3) where 𝜃 fusion ⊂ 𝜃 denotes key fusion parameters, such as projection matrices and gating weights. This targeted penalty forces the model to actively disconnect the target item from the retained collabora-tive topology during the reverse pass. 
+
+Mitigating Modality Imbalance with Branch-Wise Scal-ing. As established in Section 3.3, distinct item modalities react asymmetrically to identical reverse perturbations. To protect fragile retained features while ensuring thorough erasure, we adaptively 
+
+Algorithm 1 TRU : Targeted Reverse Update 
+
+Require: Backbone 𝐵 𝜃 ; original loss LMRS ; reverse ratio 𝛼 ; top proportion 𝑝 ; min capacity 𝜏 min  
+
+> 1:
+
+for each epoch do  
+
+> 2:
+
+Estimate branch-wise scalers {𝛾 𝑚 } from decoupled re-tain/forget gradient energies (Eq. 4)  
+
+> 3:
+
+Estimate module sensitivities {𝑒 rev  
+
+> 𝑘
+
+} on the base forget ob-jective (Eq. 5)  
+
+> 4:
+
+Form the adaptive module mask {𝑧 𝑘 } using 𝑝 and 𝜏 min 
+
+(Eq. 6)  
+
+> 5:
+
+for forgetting batch 𝑏 𝑢 ∼ 𝑑 𝑢 do  
+
+> 6:
+
+Compute the gated reverse loss ˜Lrank MRS (Eq. 3)  
+
+> 7:
+
+Apply the masked-and-scaled reverse update (Eq. 7)  
+
+> 8:
+
+for retaining bact 𝑏 ′ ∼ 𝐷 ′ do  
+
+> 9:
+
+Update 𝜃 with the original retain objective (Eq. 2)  
+
+> 10:
+
+return updated backbone 𝐵 𝜃 
+
+calibrate the reverse gradient magnitude for each modality branch 
+
+𝑚 ∈ { ID, image, text }:
+
+𝛾 𝑚 = max 
+
+
+
+𝛾 min , min 
+
+
+
+1, 𝑅 𝑚 
+
+𝐹 𝑚 + 𝜀 
+
+ 
+
+, (4) where 𝑅 𝑚 = ∥∇ 𝜃 𝑚 LMRS ∥2 and 𝐹 𝑚 = ∥ − ∇ 𝜃 𝑚 LMRS ∥2 represent the aggregated gradient energies on the retain and base forget objectives, respectively. Here, 𝐹 𝑚 is estimated without the gate penalty to genuinely reflect the branch’s structural reverse sensi-tivity. When the retain gradient energy surpasses its forget coun-terpart ( 𝑅 𝑚 > 𝐹 𝑚 ), it indicates that thorough erasure has been largely achieved. Consequently, the diminishing forget gradient dynamically prompts the scaling formulation to prioritize utility preservation on the retain set. 
+
+Addressing Layer Sensitivity via Capacity-Aware Isolation. 
+
+To prevent the parameter over-shifting observed in Section 3.4, we restrict the reverse update exclusively to the most deletion-sensitive modules. We first quantify the structural sensitivity of each module 
+
+𝑘 :
+
+𝑒 rev  
+
+> 𝑘
+
+= E𝑏 ∼D fgt ∇𝜃 𝑘 LMRS (𝑑 𝑢 ) 2 . (5) We then construct an adaptive binary mask to isolate the interven-tion: 
+
+𝑧 𝑘 = 1
+
+h
+
+𝑘 ∈ AdaptiveTop 
+
+
+
+{𝑒 rev  
+
+> 𝑗
+
+}, 𝑝, 𝜏 min 
+
+i 
+
+, (6) where AdaptiveTop (·) selects the top-𝑝 sensitive modules and dy-namically expands the subset until it encompasses a minimum capacity threshold 𝜏 min of the model parameters. This design avoids both overly diffuse global update and an undersized unlearning capacity. 
+
+Unified Update Mechanism and Algorithm Overview In-tegrating the above three key strategies, the final targeted reverse step for any module 𝑘 is elegantly formulated as: 
+
+𝜃 𝑘 ← 𝜃 𝑘 + 𝜂𝛼 𝑧 𝑘 𝛾 𝑚 (𝑘 ) ∇𝜃 𝑘 ˜Lrank MRS , (7) where ˜Lrank MRS explicitly suppresses output visibility, 𝛾 𝑚 (𝑘 ) calibrates the branch-specific feature erasure, and 𝑧 𝑘 strictly isolates the pa-rameter update. The complete algorithm overview of our TRU is summarized in Algorithm 1. At the beginning of each unlearning epoch, TRU first computes the branch-wise scaling factors ( Line 2 )Zhou et al. 
+
+Table 1: Performance comparison between the prior SOTA MRS unlearning method (MMRecUn) and Ours across diverse deletion regimes. TRU consistently pushes both Retain and Forget metrics closer to the exact retraining frontier, proving that its superiority stems from a fundamentally better trade-off control rather than isolated metric manipulation. The background colors denote the magnitude of performance improvement achieved by our method over the MMRecUn baseline. Darker/lighter colors represent larger/smaller performance differences (best performance is highlighted in bold). All ranking metrics are reported to four decimal places. Entries shown as 0 denote values below 0.00005 after rounding, not exact zero. Backbone Dataset Method RETAIN Recall@20 ↑ RETAIN NDCG@20 ↑ FORGET Recall@20 ↓ FORGET NDCG@20 ↓                                                                                                                                                                                                                                   
+
+> User Item Inter. User Item Inter. User Item Inter. User Item Inter. MGCN [31] Baby [12] Original 0.0944 0.0975 0.0960 0.0411 0.0430 0.0425 0.5912 0.0030 0.0934 0.4695 0.0008 0.0731 MMRecUn [26] 0.0883 0.0915 0.0893 0.0401 0.0411 0.0400 00.0002 0000
+> Ours 0.0944 0.0974 0.0966 0.0411 0.0429 0.0426 000000
+> Clothing [12] Original 0.0895 0.0918 0.0907 0.0406 0.0417 0.0412 0.8056 0.0035 0.1457 0.6441 0.0009 0.1158 MMRecUn [26] 0.0909 0.0887 0.0904 0.0401 0.0405 0.0407 000000
+> Ours 0.0945 0.0942 0.0906 0.0436 0.0428 0.0413 000000
+> Sports [12] Original 0.1071 0.1093 0.1091 0.0471 0.0484 0.0484 0.4352 0.0002 0.0773 0.3186 0.0001 0.0554 MMRecUn [26] 0.1071 0.1101 0.1024 0.0484 0.0499 0.0465 000000
+> Ours 0.1080 0.1103 0.1091 0.0492 0.0493 0.0485 00000.0001 0
+> MIG-GT [13] Baby [12] Original 0.0987 0.0949 0.0968 0.0435 0.0409 0.0423 0.6787 0.6189 0.6158 0.5223 0.3235 0.3226 MMRecUn [26] 0.0825 0.0926 0.0816 0.0383 0.0410 0.0374 0.0775 00.0240 0.0515 00.0155 Ours 0.1008 0.0994 0.0991 0.0442 0.0441 0.0437 0.0132 00.0038 0.0095 00.0024
+> Clothing [12] Original 0.0903 0.0903 0.0889 0.0413 0.0409 0.0402 0.8383 0.7652 0.7917 0.6603 0.3804 0.4452 MMRecUn [26] 0.0847 0.0872 0.0820 0.0383 0.0393 0.0379 0.5234 0.0001 0.1457 0.4572 00.1025 Ours 0.0917 0.0905 0.0885 0.0417 0.0412 0.0406 0.0022 00.0976 0.0014 00.0877
+> Sports [12] Original 0.1092 0.1089 0.1100 0.0493 0.0492 0.0491 0.7510 0.6248 0.6502 0.6021 0.2939 0.3532 MMRecUn [26] 0.1074 0.1093 0.1015 0.0476 0.0489 0.0452 0.0457 00.1155 0.0301 00.0770 Ours 0.1036 0.1087 0.1086 0.0494 0.0496 0.0492 0.0051 00.0042 0.0034 00.0021
+
+and the capacity-aware module mask ( Lines 3–4 ) to identify the sensitive modules that will receive targeted reverse update. Dur-ing the reverse optimization phase ( Lines 5–7 ), the model applies gated, scaled, and masked update to the forget set, followed by a standard repair update on the retained data ( Lines 8–9 ). Our proposed unified protocol ensures thorough data erasure while pre-serving the deeply shared representations of the recommendation backbone. 
+
+## 4 Experiments 
+
+In this section, we first introduce a fair and rigorous evaluation protocol for MRS unlearning and present a comparative analysis against baselines. Due to space constraints, comprehensive repro-ducibility details are provided in the Supplementary, including forget-side comparisons and hyperparameter sensitivity study. 
+
+## 4.1 Experimental Setup 
+
+We compare six baselines: Original , Retrain , UltraRE [ 18 ], Mul-tiDelete [ 6], ScaleGUN [ 30 ], and MMRecUn [ 26 ]. Here, Original 
+
+denotes the model trained on the full training set, and Retrain de-notes a full retraining from scratch on the retained set. We use three distinct categories within the Amazon dataset [ 12 ] that are used to benchmark MMRS, specifically Baby , Sports , and Clothing .Following the CURE4Rec benchmark [ 5], our evaluation frame-work balances two critical competing objectives: forgetting com-pleteness (ensuring targeted data is thoroughly removed), re-tained utility (preserving the model’s overall recommendation ac-curacy), and efficiency (the wall-clock time to achieve the behavior of a retrained model). To demonstrate real-world applicability, we (a) MGCN (b) MIG-GT 
+
+Figure 6: Normalized radar across all datasets, backbones, and unlearning regimes. TRU exhibits the most balanced overall profile between forget-side and retain-side objectives, suggesting that its advantage stems from superior trade-off control rather than isolated improvements under specific settings. Best viewed in color. 
+
+systematically assess TRU across three distinct unlearning regimes: 
+
+user-level (simulating complete account deletion, denoted U-U; the main challenge scenario of MRS unlearning), item-level (simulat-ing global content takedowns, denoted I-I; this is different from 
+
+Item-centric , which we discussed in Section 3), and interaction-level 
+
+(allowing for granular user preference correction, denoted U-I). To ensure a rigorous assessment of the inherent utility-forgetting trade-off, we avoid single-metric evaluations that might obscure TRU: Targeted Reverse Update for Efficient Multimodal Recommendation Unlearning 
+
+Table 2: Illustrative user-level cases demonstrating the trade-off collapse in unlearning baselines. Higher Recall@20-R and lower Recall@20-F are preferred. All ranking metrics are reported to four decimal places. Entries shown as 0 denote values below 0.00005 after rounding, not exact zero. 
+
+Backbone Method Recall@20-R ↑ Recall@20-F ↓
+
+MIG-GT [13] (sports [12]) Original 0.1091 0.6834 Retrain 0.1046 0.0012 ↑ 0.0095 0.6723 ↓
+
+UltraRE [18] 0.0780 0.0254 ↓ 0.0035 0.6783 ↓
+
+MultiDelete [6] 0.1019 0.0015 ↓ 0.0086 0.6732 ↓
+
+ScaleGUN [30] 0.1085 0.0051 ↑ 0.7303 0.0485 ↑
+
+MMRecUn [26] 0.1074 0.0040 ↑ 0.0457 0.6361 ↓
+
+Ours 0.1036 0.0002 ↑ 0.0072 0.6746 ↓
+
+MGCN [31] (clothing [12]) Original 0.0929 0.8056 Retrain 0.0856 0.0073 ↓ 0.0045 0.8011 ↓
+
+UltraRE [18] 0.0829 0.0100 ↓ 0.8049 0.0007 ↓
+
+MultiDelete [6] 0.0892 0.0037 ↓ 0.8045 0.0011 ↓
+
+ScaleGUN [30] 0.0884 0.0045 ↓ 0.8289 0.0233 ↑
+
+MMRecUn [26] 0.0909 0.0020 ↓ 0 0.8056 ↓
+
+Ours 0.0945 0.0016 ↑ 0 0.8056 ↓
+
+degradation in model utility. Consequently, our protocol neces-sitates a dual-perspective approach, balancing FORGET efficacy against RETAIN performance: 
+
+• Utility Balance: We assess the Retain-Forget trade-off using standard ranking indicators [ 26 ] ( e.g. , Recall@20, NDCG@20). A successful approximate unlearning method must symmetri-cally approach the gold-standard performance frontier of exact retraining. We rounded 0.0000 to 0. 
+
+• Security-Oriented Erasure: Beyond surface-level utility, we rigorously audit deep structural forgetting via Membership Infer-ence Attacks (MIA) [ 33 ] and Backdoor evaluations (BKD) [ 5, 22 ]. Specifically, we target an MIA Balanced Accuracy ( BalAcc ) near-ing 0.5 (indicating fully neutralized membership leakage) and a post-unlearning Attack Success Rate ( ASR ) nearing 0 (indicating completely eradicated malicious triggers). 
+
+## 4.2 General Unlearning Performance 
+
+Table 1 and Figure 6 demonstrate that TRU yields a stronger re-tain–forget trade-off in most settings across both MGCN [ 31 ] and MIG-GT [ 13 ] backbones. We distill three key quantitative insights. 
+
+(1) TRU removes residual target signals more effectively. Com-pared with prior approximate baselines, TRU pushes forget-side performance much closer to retraining, especially on harder set-tings where residual traces remain strong after uniform reverse updates. This trend is particularly evident on the more decoupled MIG-GT backbone, where baseline methods often leave non-trivial Forget Recall@20 after unlearning, while TRU reduces it substan-tially. (2) TRU preserves retain-side utility more faithfully. 
+
+When compared against the original model, TRU generally keeps Retain Recall@20 and Retain NDCG@20 much more stable than uniform-update baselines, indicating that its reverse updates are better localized and cause less collateral damage to useful retained knowledge. (3) The advantage is consistent across deletion regimes. This pattern is not confined to a single setting: across 
+
+Table 3: Security-oriented erasure audit using membership inference attack (MIA) balanced accuracy and backdoor at-tack success rate (ASR). For MIA, values closer to 0.5 indicate weaker membership leakage; for BKD, lower ASR is better. Retrain is reported as the exact-unlearning reference to con-textualize approximate methods. 
+
+Backbone Method BalAcc → 0.5 ASR → 0.0
+
+MIG-GT [13] (sports [12]) Retrain 0.6153 0.1622 UltraRE [18] 0.6044 0.0109 ↓ 1.0000 0.8378 ↑
+
+MultiDelete [6] 0.5686 0.0467 ↓ 0.0811 0.0811 ↓
+
+ScaleGUN [30] 0.5786 0.0367 ↓ 0.2432 0.0810 ↑
+
+MMRecUn [26] 0.5626 0.0527 ↓ 0.2162 0.0540 ↑
+
+Ours 0.5253 0.0900 ↓ 0.0811 0.0811 ↓
+
+MGCN [31] (clothing [12]) Retrain 0.5156 0UltraRE [18] 0.9440 0.4284 ↑ 0.1333 0.1333 ↑
+
+MultiDelete [6] 0.9452 0.4296 ↑ 0.1333 0.1333 ↑
+
+ScaleGUN [30] 0.9442 0.4286 ↑ 0.1333 0.1333 ↑
+
+MMRecUn [26] 0.9430 0.4274 ↑ 0.1333 0.1333 ↑
+
+Ours 0.9388 0.4232 ↑ 0.1333 0.1333 ↑
+
+user-, item-, and interaction-level unlearning, TRU more reliably balances forgetting and retention, instead of improving one side by severely hurting the other. The radar plots in Figure 6 further visualize this point by showing that TRU expands the trade-off boundary more consistently toward the retraining frontier. 
+
+## 4.3 In-Depth Analysis on Challenging Scenarios 
+
+While the general results demonstrate TRU’s overall superiority, evaluating approximate unlearning solely through macro-averaged metrics can mask underlying algorithmic vulnerabilities. To ensure a transparent and rigorous audit, we devise two highly challeng-ing specific scenarios: MIG-GT [ 13 ] on the Sports dataset [ 12 ] and MGCN [ 31 ] on the Clothing dataset [ 12 ]. We select this in-depth analysis because it consistently exposes the fragility of prior meth-ods, frequently triggering a catastrophic collapse in the unlearning trade-off. We deconstruct TRU’s robust performance under these de-manding stress tests across three critical dimensions: utility balance, security-oriented erasure, and practical efficiency. 
+
+(1) Navigating the Trade-off Collapse: As detailed in Table 2, generic baselines physically polarize into two failure extremes when faced with the highly decoupled MIG-GT [ 13 ] (Sports [ 12 ]) archi-tecture. Methods like UltraRE [ 18 ] and MultiDelete [ 6] forget ag-gressively (Forget Recall@20 drops near 0) but catastrophically destroy the Retain utility. Conversely, ScaleGun [ 30 ] preserves Re-tain performance but completely fails to unlearn, leaving a massive Forget Recall of 0.7303 . TRU is the uniquely capable framework that safely navigates this bottleneck: it sustains a highly competitive Retain Recall of 0.1036 while strictly suppressing the Forget Recall down to 0.0072 . Similarly, on MGCN [31] (Clothing [12]), TRU ex-plicitly achieves exact zero Forget Recall without redirecting the optimization penalty to the retained collaborative data. 
+
+(2) Neutralizing Deep Adversarial Traces: Surface-level rank-ing metrics alone do not guarantee that deleted data becomes unrecoverable, so Table 3 further audits privacy leakage and at-tackability using MIA and backdoor metrics. On MIG-GT [ 13 ](Sports [ 12 ]), prior approximate baselines such as MultiDelete [ 6]Zhou et al. Instant performance  
+
+> recovery & retention
+> TRU drops to
+> fully retrain rapaidly TRU is >50x faster
+> than fully retrain
+> and rapid convergence
+> Multidelete fails
+> TRU forgets faster
+> than prior SOTA
+> MMRecUn plateau
+
+Figure 7: Wall-clock trajectories of retain-side and forget-side Recall@20 under the user-level unlearning. Table 4: Component ablation on the Baby dataset under the user-level setting, focusing on forget-side effectiveness. All variants already reduce ASR after to zero in the BKD audit, so the remaining BKD difference reflects the residual poisoned influence on clean inputs after unlearning. All ranking met-rics are reported to four decimal places. Entries shown as 0 denote values below 0.00005 after rounding, not exact zero.                                  
+
+> Backbone Ablation Recall@20-F ↓Clean after ↓
+> MGCN [31] Full Model 00.0871
+> w/o Ranking Gating 0.0746 0.0746 ↑0.0904 0.0033 ↑
+> w/o Modality Scaling 0.0074 0.0074 ↑0.0903 0.0032 ↑
+> w/o Layer Selection 0.0075 0.0075 ↑0.0906 0.0035 ↑
+> MIG-GT [13] Full Model 0.0077 0.0934
+> w/o Ranking Gate 0.0153 0.0076 ↑0.0953 0.0019 ↑
+> w/o Modality Scaling 0.0081 0.0004 ↑0.0950 0.0016 ↑
+> w/o Layer Selection 0.0093 0.0016 ↑0.0959 0.0025 ↑
+
+and ScaleGun [ 30 ] still exhibit noticeable membership leakage ( Bal-Acc > 0.56 ) and non-trivial backdoor vulnerability ( ASR up to 
+
+0.2432 ). In contrast, TRU reduces the BalAcc to 0.5253 , making it the closest approximate result to both the ideal random-guessing level ( 0.5) and the exact Retrain reference ( 0.5156 ) in this setting, while also tied for the lowest ASR (0.0811 ). On the more challenging MGCN [ 31 ] (Clothing [ 12 ]) setting, TRU remains the strongest ap-proximate baseline in relative terms, but all approximate methods are still far from the ideal MIA regime. We therefore interpret this result as evidence of partial mitigation rather than complete privacy removal. 
+
+(3) Accelerating Practical Convergence: Figure 7 demon-strates that TRU translates its targeted interventions into strictly su-perior computational efficiency. Prior methods like MMRecUn [ 26 ]expend substantial computational budgets blindly perturbing weakly relevant interactions and insensitive layers, leading to sluggish and unstable optimization. By structurally isolating the reverse updates—via fusion gating, modality scaling, and capacity-aware masking—TRU entirely eliminates this computational waste. Con-sequently, on MIG-GT [ 13 ] (Sports [ 12 ]), TRU rapidly suppresses Forget Recall while stabilizing Retain utility in a high-value band significantly earlier than all competitors, achieving the optimal operating region at a fraction of the exact retraining latency. 
+
+## 4.4 Ablation Studies 
+
+To validate the structural necessity of TRU’s individual compo-nents, Table 4 deconstructs the framework under the user-level deletion setting, the main challenge scenario of MRS unlearning. 
+
+(1) Ranking Gate Governs Surface Exposure: Removing the fusion gate triggers the most severe failure in output-side erasure. On MGCN [ 31 ], the Forget Recall@20 drastically spikes from 0
+
+in the full model to 0.0746 without the gate, confirming that ac-tively sparsifying cross-modal fusion is the primary defense against collaborative popularity inertia. (2) Layer Selection Eradicates Deep Residuals: While all ablated variants successfully reduce explicit backdoor triggers to zero, auditing the clean-data outputs (Clean after ) reveals deeper latent traces. Removing the capacity-aware module mask causes the clearest spike in this deep residual across both backbones ( e.g. , 0.0934 → 0.0959 on MIG-GT [ 13 ]). This quantitatively proves that unlearning remains superficial unless re-verse updates are strictly isolated to structurally sensitive modules. 
+
+(3) Modality Scaling Enforces Consistent Guardrails: Omitting branch-wise scaling yields strictly consistent degradations across both surface utility and deep security views. On MGCN [ 31 ], its re-moval simultaneously worsens Forget Recall@20 ( 0 → 0.0074 ) and the clean residual trace ( 0.0871 → 0.0903 ), substantiating that de-coupled multimodal branches intrinsically cannot absorb uniform gradients without risking incomplete deletion. Together, these met-rics validate that TRU’s three components act as an indispensable, strictly complementary triad. 
+
+## 5 Conclusion 
+
+In this paper, we study approximate unlearning in multimodal rec-ommendation systems. We show that the main difficulty of MRS unlearning is not simply how to apply a stronger reverse update, but how to remove the influence of deleted data without damaging the shared representations needed by retained users and items. Our analysis reveals that uniform reverse updates are fundamentally mismatched with MRS, where deletion failures are reflected as item-side residual traces, uneven modality responses, and concentrated layer-wise sensitivity. Based on these observations, we propose TRU, which refines the reverse pass through Ranking Gate, Modal-ity Scaling, and Layer Selection. Extensive experiments show that TRU achieves a better trade-off between forgetting, retained utility, and efficiency, narrowing the gap between practical approximate unlearning and retraining-level deletion in multimodal recommen-dation. Future work will extend targeted unlearning beyond efficient deletion toward a broader responsible multimedia setting. In partic-ular, it is promising to study how MRS can support auditable and continuously deployable unlearning under evolving data, model updates, and richer modalities, while jointly considering privacy, transparency, fairness, and robustness. TRU: Targeted Reverse Update for Efficient Multimodal Recommendation Unlearning 
+
+## References 
+
+[1] Bourtoule, L., Chandrasekaran, V., Choqette-Choo, C. A., Jia, H., Travers, A., Zhang, B., Lie, D., and Papernot, N. Machine unlearning. In 2021 IEEE symposium on security and privacy (SP) (2021), IEEE, pp. 141–159. [2] California Department of Justice . California consumer privacy act (ccpa), 2020. [3] Calzada, I. Citizens’ data privacy in china: The state of the art of the personal information protection law (pipl). Smart Cities 5 , 3 (2022), 1129–1150. [4] Chen, C., Sun, F., Zhang, M., and Ding, B. Recommendation unlearning. In 
+
+Proceedings of the ACM web conference 2022 (2022), pp. 2768–2777. [5] Chen, C., Zhang, J., Zhang, Y., Zhang, L., Lyu, L., Li, Y., Gong, B., and Yan, C. 
+
+Cure4rec: A benchmark for recommendation unlearning with deeper influence. 
+
+Advances in Neural Information Processing Systems 37 (2024), 99128–99144. [6] Cheng, J., and Amiri, H. Multidelete for multimodal machine unlearning. In 
+
+European Conference on Computer Vision (2024), Springer, pp. 165–184. [7] Cheng, J., Dasoulas, G., He, H., Agarwal, C., and Zitnik, M. Gnndelete: A general strategy for unlearning in graph neural networks. arXiv preprint arXiv:2302.13406 (2023). [8] Davari, M., Horoi, S., Natik, A., Lajoie, G., Wolf, G., and Belilovsky, E. 
+
+Reliability of cka as a similarity measure in deep learning. arXiv preprint arXiv:2210.16156 (2022). [9] European Parliament and Council of the European Union . Regulation (eu) 2016/679 (general data protection regulation), 2016. Art. 17 - Right to erasure (’right to be forgotten’). [10] Ge, Y., Liu, S., Fu, Z., Tan, J., Li, Z., Xu, S., Li, Y., Xian, Y., and Zhang, Y. A survey on trustworthy recommender systems. ACM Transactions on Recommender Systems 3 , 2 (2024), 1–68. [11] Graves, L., Nagisetty, V., and Ganesh, V. Amnesiac machine learning. In Pro-ceedings of the AAAI Conference on Artificial Intelligence (2021), vol. 35, pp. 11516– 11524. [12] Hou, Y., Li, J., He, Z., Yan, A., Chen, X., and McAuley, J. Bridging language and items for retrieval and recommendation. arXiv preprint arXiv:2403.03952 (2024). [13] Hu, J., Hooi, B., He, B., and Wei, Y. Modality-independent graph neural networks with global transformers for multimodal recommendation. In Proceedings of the AAAI Conference on Artificial Intelligence (2025), vol. 39, pp. 11790–11798. [14] Huang, C., Huang, H., Yu, T., Xie, K., Wu, J., Zhang, S., Mcauley, J., Jannach, D., and Yao, L. A survey of foundation model-powered recommender systems: From feature-based, generative to agentic paradigms. arXiv preprint arXiv:2504.16420 
+
+(2025). [15] Kim, Y., Kim, T., Shin, W.-Y., and Kim, S.-W. Monet: Modality-embracing graph convolutional network and target-aware attention for multimedia recommenda-tion. In Proceedings of the 17th ACM International Conference on Web Search and Data Mining (2024), pp. 332–340. [16] Kingma, D. P., and Ba, J. Adam: A method for stochastic optimization. arXiv preprint arXiv:1412.6980 (2014). [17] Kornblith, S., Norouzi, M., Lee, H., and Hinton, G. Similarity of neural network representations revisited. In International conference on machine learning 
+
+(2019), PMlR, pp. 3519–3529. [18] Li, Y., Chen, C., Zhang, Y., Liu, W., Lyu, L., Zheng, X., Meng, D., and Wang, J. 
+
+Ultrare: Enhancing receraser for recommendation unlearning via error decompo-sition. Advances in Neural Information Processing Systems 36 (2023), 12611–12625. [19] Li, Y., Chen, C., Zheng, X., Zhang, Y., Gong, B., Wang, J., and Chen, L. Selective and collaborative influence function for efficient recommendation unlearning. 
+
+Expert Systems with Applications 234 (2023), 121025. [20] Li, Y., Feng, X., Chen, C., and Yang, Q. A survey on recommendation unlearning: Fundamentals, taxonomy, evaluation, and open questions. IEEE Transactions on Knowledge and Data Engineering 38 , 2 (2025), 781–799. [21] Liu, Q., Hu, J., Xiao, Y., Zhao, X., Gao, J., Wang, W., Li, Q., and Tang, J. Multi-modal recommender systems: A survey. ACM Computing Surveys 57 , 2 (2024), 1–17. [22] Liu, Z., Wang, T., Huai, M., and Miao, C. Backdoor attacks via machine un-learning. In Proceedings of the AAAI Conference on Artificial Intelligence (2024), vol. 38, pp. 14115–14123. [23] Nguyen, T. T., Huynh, T. T., Ren, Z., Nguyen, P. L., Liew, A. W.-C., Yin, H., and Nguyen, Q. V. H. A survey of machine unlearning. ACM Transactions on Intelligent Systems and Technology 16 , 5 (2025), 1–46. [24] Ni, J., Li, J., and McAuley, J. Justifying recommendations using distantly-labeled reviews and fine-grained aspects. In Proceedings of the 2019 conference on empirical methods in natural language processing and the 9th international joint conference on natural language processing (EMNLP-IJCNLP) (2019), pp. 188–197. [25] Rendle, S., Freudenthaler, C., Gantner, Z., and Schmidt-Thieme, L. 
+
+Bpr: Bayesian personalized ranking from implicit feedback. arXiv preprint arXiv:1205.2618 (2012). [26] Sinha, Y., Mandal, M., and Kankanhalli, M. Multi-modal recommendation unlearning. arXiv preprint arXiv:2405.15328 (2024). [27] Wei, Y., Wang, X., Nie, L., He, X., and Chua, T.-S. Graph-refined convolutional network for multimedia recommendation with implicit feedback. In Proceedings of the 28th ACM international conference on multimedia (2020), pp. 3541–3549. [28] Wei, Y., Wang, X., Nie, L., He, X., Hong, R., and Chua, T.-S. Mmgcn: Multi-modal graph convolution network for personalized recommendation of micro-video. In Proceedings of the 27th ACM international conference on multimedia (2019), pp. 1437–1445. [29] Xu, J., Chen, Z., Yang, S., Li, J., Wang, W., Hu, X., Hoi, S., and Ngai, E. A survey on multimodal recommender systems: Recent advances and future directions. 
+
+arXiv preprint arXiv:2502.15711 (2025). [30] Yi, L., and Wei, Z. Scalable and certifiable graph unlearning: Overcoming the approximation error barrier. arXiv preprint arXiv:2408.09212 (2024). [31] Yu, P., Tan, Z., Lu, G., and Bao, B.-K. Multi-view graph convolutional network for multimedia recommendation. In Proceedings of the 31st ACM international conference on multimedia (2023), pp. 6576–6585. [32] Zhang, J., Liu, G., Liu, Q., Wu, S., and Wang, L. Modality-balanced learning for multimedia recommendation. In Proceedings of the 32nd ACM International Conference on Multimedia (2024), pp. 7551–7560. [33] Zhang, M., Ren, Z., Wang, Z., Ren, P., Chen, Z., Hu, P., and Zhang, Y. Mem-bership inference attacks against recommender systems. In Proceedings of the 2021 ACM SIGSAC Conference on Computer and Communications Security (2021), pp. 864–879. [34] Zhang, Y., Hu, Z., Bai, Y., Wu, J., Wang, Q., and Feng, F. Recommendation unlearning via influence function. ACM Transactions on Recommender Systems 3 ,2 (2024), 1–23. [35] Zhang, Y., Lu, Z., Zhang, F., Wang, H., and Li, S. Machine unlearning by reversing the continual learning. Applied Sciences 13 , 16 (2023), 9341. [36] Zhou, H., Zhou, X., Zeng, Z., Zhang, L., and Shen, Z. A comprehensive survey on multimodal recommender systems: Taxonomy, evaluation, and future directions. arXiv preprint arXiv:2302.04473 (2023). [37] Zou, K., and Sun, A. A survey of real-world recommender systems: Challenges, constraints, and industrial perspectives. arXiv preprint arXiv:2509.06002 (2025). Zhou et al. 
+
+## A Detailed Experiment Setup A.1 Setup. 
+
+We conducted experiments on a single NVIDIA GeForce RTX 4080 GPU with CUDA 12.1 and Python 3.10. Unless otherwise stated, we used Adam [ 16 ] with learning rate 𝜂 = 0.001 and batch size 
+
+𝑏 = 2048 . We used a unified experimental wrapper for all methods, consisting of base training, method-specific unlearning, an optional retain-side repair stage, and final evaluation. 
+
+Baselines. We compare six systems: Original , Retrain , UltraRE [ 18 ], MultiDelete [ 6], ScaleGUN [ 30 ], and MMRecUn [ 26 ]. Here, Orig-inal denotes the model trained on the full training set, and Re-train denotes exact retraining from scratch on the retain set. For approximate baselines, we evaluate them under the same outer experimental wrapper. When the repair stage is enabled, we apply an additional retain-only repair step after unlearning. This repair step is part of our unified evaluation protocol and should not be interpreted as a native component of every baseline. 
+
+Datasets. We use three Amazon categories widely adopted in multimodal recommendation benchmarks, namely Baby, Sports, and Clothing [ 12 , 24 ]. For each dataset, we split the interactions into training, validation, and test sets with a ratio of 8:1:1. The forget set and the retain set are both constructed from the original training split, so that all unlearning requests are issued only on training interactions. 
+
+Hyper-parameters. We tune three hyper-parameters in a small grid: (i) the top-ratio 𝑟 ∈ { 0.1, 0.2, . . . , 0.9} for Layer Selection, where 𝑟 is exactly the same quantity as the top proportion 𝑝 in the main text; it controls the proportion of top-sensitive layers retained by the adaptive selection operator (denoted as AdaptiveTop (·) in Eq. (6)); (ii) the mini-batch budget 𝑀 ∈ { 1, 2, 3, 4, 5} used to esti-mate layer sensitivity and modality statistics at the beginning of each epoch, which is the same per-epoch statistics budget used in the implementation; and (iii) whether Modality Scaling is enabled (retain-scale ∈ { on , off }), corresponding to whether branch-wise retain-guided scaling is activated during the reverse step. When 
+
+retain-scale is on , the reverse step uses branch-wise scaling fac-tors as in Eq. (4) . In addition, the minimum-capacity constraint in the main text is controlled by 𝜏 min in Eq. (6) , which is kept fixed here rather than tuned in this grid. All other settings remain fixed. 
+
+## A.2 Detailed Setup 
+
+A.2.1 Backbones and Model-Specific Setups. 
+
+Backbones considered. We evaluate two multimodal graph-based recommenders as backbones: (1) MIG-GT : Modality-Independent GNNs with Global Transformers [ 13 ], which decouples per-modality receptive fields and augments global context via a sampling-based Transformer; (2) MGCN : a multimodal graph-based recommender in the MMGCN family [ 31 ], which fuses ID-, image-, and text-side signals on the user-item graph. 
+
+Common protocol. Unless otherwise stated, we unify the embed-ding size to 𝑑 = 64 , optimize with BPR loss and ℓ2 regularization, and adopt full-ranking evaluation. All models are evaluated under the same data split, the same candidate pool construction, and the same top-𝐾 recommendation protocol. 
+
+A.2.2 Baselines and Detailed Experimental Setup. 
+
+MMRecUn (AAAI’25). MMRecUn is the most direct prior baseline tailored to multimodal recommendation unlearning. It performs a reverse-style update on the forget set together with a retain-side repair objective [ 26 ]. In our experiments, we set the mixing factor to 𝛼 = 0.2. We evaluate MMRecUn under the same data split and full-ranking protocol as the other baselines. 
+
+UltraRE (NeurIPS’23). UltraRE enhances RecEraser [ 4] through an error-decomposition view [ 18 ]. We follow its three-stage de-sign: (i) partition the training set into 𝑘 shards; (ii) train one shard model per partition; and (iii) learn a validation-based combiner 𝛽 
+
+for aggregation. In our multimodal recommendation setting, each shard model uses the same MGCN backbone, while the combiner operates on the resulting fused user/item representations. We set 
+
+𝑘 =10 , Sinkhorn regularization 𝜀 =0.1, clustering outer iterations to 
+
+10 , sub-model training epochs to 3, and the combiner learning rate to 10 −2 with weight decay 0.
+
+MultiDelete (ECCV’24). MultiDelete is a multimodal machine unlearning method that decouples cross-modal associations while preserving unimodal competence [ 6]. We instantiate its loss on top of MGCN by combining decoupling, multimodal knowledge retention, and unimodal knowledge retention terms. We set 𝜆 dec =
+
+𝜆 mkr = 𝜆 ukr = 1.0 and use readout=concat to match the fused representation used in our recommender. 
+
+ScaleGUN (adapted baseline). ScaleGUN is originally a certified graph unlearning method designed for graph settings such as edge, node, and node-feature unlearning [ 30 ]. In our experiments, we use an edge-style adaptation of ScaleGUN within the same recommendation-oriented evaluation wrapper. Therefore, the reported results should be interpreted as an adapted baseline under a unified multimodal recommendation protocol, rather than a theorem-preserving repro-duction of the original certified graph setting. 
+
+Why these multimodal adjustments? Some baselines were not originally proposed for multimodal recommendation. To make them comparable in our setting, we adapt them at the representation and evaluation levels while preserving their original design intent as much as possible. Specifically, UltraRE is instantiated on multimodal user/item representations produced by the recommender backbone; MultiDelete is applied directly to fused and per-modality streams; and ScaleGUN is adapted to the edge-style unlearning setting used in our recommendation pipeline. 
+
+Evaluation protocol. We evaluate both recommendation utility and unlearning effectiveness under the same full-ranking protocol. Standard validation and test metrics are computed on the original validation and test splits. For forget-side and retain-side audits, we additionally build evaluation loaders directly from the correspond-ing (𝑢, 𝑖 ) pairs in the forget and retain sets. In these two subset evaluations, the positive pairs are not masked again, because they are exactly the targets to be audited. Unless otherwise stated, lower scores on the forget set indicate stronger forgetting, while higher scores on the validation, test, and retain sets indicate better utility preservation. TRU: Targeted Reverse Update for Efficient Multimodal Recommendation Unlearning 
+
+Table 5: Three Amazon multimodal recommendation datasets: overall and split-level statistics 
+
+Dataset Split #Users #Items #Interactions Avg act/user Avg act/item Sparsity (%) Baby Overall 19 445 7 050 160 792 8.2691 22.8074 99.8827 Training 19 445 7 047 118 551 6.0967 16.8229 99.9135 Validation 19 445 5 483 20 559 1.0573 3.7496 99.9807 Testing 19 445 5 549 21 682 1.1150 3.9074 99.9799 Sports Overall 35 598 18 357 296 337 8.3245 16.1430 99.9547 Training 35 598 18 352 218 409 6.1354 11.9011 99.9666 Validation 35 598 13 342 37 899 1.0646 2.8406 99.9920 Testing 35 598 13 738 40 029 1.1245 2.9137 99.9918 Clothing Overall 39 387 23 033 278 677 7.0754 12.0990 99.9693 Training 39 387 23 020 197 338 5.0102 8.5725 99.9782 Validation 39 387 16 702 40 150 1.0194 2.4039 99.9939 Testing 39 387 16 803 41 189 1.0458 2.4513 99.9938 (a) MGCN 
+
+> Amazon-Baby
+> (b) MGCN
+> Amazon-Clothing
+> (c) MGCN
+> Amazon-Sports
+> (d) MIG-GT
+> Amazon-Baby
+> (e) MIG-GT
+> Amazon-Clothing
+> (f) MIG-GT
+> Amazon-Sports
+
+Figure 8: Normalized forget-side comparison between TRU and MMRecUn [ 26 ] across all settings. TRU is consistently competitive and generally stronger on the reported forget-side metrics, indicating that its advantage is not confined to a single dataset or backbone. Zoom in for details. 
+
+Forgetting regimes. We instantiate three granularities of forget-ting on the training interactions. Let Dtrain be the training set and 
+
+U, I the user and item universes. 
+
+(i) User-level forgetting (U-F). We sample a subset of users U𝑓 ⊂U and define DU 
+
+> 𝑓
+
+= {( 𝑢, 𝑖 ) ∈ D train : 𝑢 ∈ U 𝑓 }. The retain set is 
+
+D𝑟 = Dtrain \ D U 
+
+> 𝑓
+
+.
+
+(ii) Item-level forgetting (I-F). We sample a subset of items I𝑓 ⊂ I 
+
+and define DI 
+
+> 𝑓
+
+= {( 𝑢, 𝑖 ) ∈ D train : 𝑖 ∈ I 𝑓 }, with D𝑟 = Dtrain \ D I 
+
+> 𝑓
+
+.
+
+(iii) Interaction-level forgetting (UI-F). We directly sample a subset of interactions DUI  
+
+> 𝑓
+
+⊂ D train and define D𝑟 = Dtrain \ D UI  
+
+> 𝑓
+
+.
+
+Protocols: Original / Retrain / Unlearned. For each regime, we report three kinds of systems: (1) Original , trained on Dtrain ;(2) Retrain , trained from scratch on D𝑟 ; (3) Unlearned , obtained by applying the corresponding unlearning method to the original model with access to (D 𝑓 , D𝑟 ).1                
+
+> 2
+> 3
+> 4
+> 5
+> M
+> Baby
+> MIG-GT
+> Retain
+> MIG-GT
+> Forget
+> MGCN
+> Retain
+> MGCN
+> Forget
+> 1
+> 2
+> 3
+> 4
+> 5
+> M
+> Clothing
+> 0.1 0.3 0.5 0.7 0.9
+> r
+> 1
+> 2
+> 3
+> 4
+> 5
+> M
+> Sports
+> 0.1 0.3 0.5 0.7 0.9
+> r
+> 0.1 0.3 0.5 0.7 0.9
+> r
+> 0.1 0.3 0.5 0.7 0.9
+> r
+> Min
+> Max
+> Retain Perf.
+> Min
+> Max
+> Forget Perf.
+
+Figure 9: Hyper-parameter sensitivity of TRU over the tuned controls (𝑝, 𝑀 ) with modality scaling enabled. Across datasets and backbones, strong forget-side and retain-side perfor-mance appears in broad contiguous regions rather than iso-lated optima, indicating stable tuning behavior in practice. 
+
+## A.3 Additional Experimental Details 
+
+A.3.1 Comparison with MMRecUn. TRU consistently surpasses the most direct prior MMRS unlearning baseline. Figure 8 provides a normalized forget-side comparison between TRU and MMRecUn [ 26 ] across all settings. The key observation is not merely that TRU is competitive on average, but that it is consistently stronger on all four metrics . This result is important because MMRecUn is the most direct prior approximate method specifically introduced for multimodal recommendation unlearning, rather than a generic unlearning or recommendation baseline. Therefore, the advantage shown in Figure 8 indicates that TRU improves not only over broad baselines in the main tables, but also over the most relevant prior method designed for the same problem setting. More importantly, the superiority is uniform rather than selec-tive . TRU does not win by improving one metric while sacrificing the others. Instead, it remains better across the entire four-metric forget-side profile after normalization. This makes the comparison Zhou et al. 
+
+substantially stronger: the gain of TRU is not tied to one particu-lar view of forgetting, but persists under multiple complementary criteria. 
+
+A.3.2 Hyper-Parameter Sensitivity. TRU is stable and easy to tune in practice. Figure 9 visualizes the performance landscape of TRU over the top proportion 𝑝 and mini-batch budget 𝑀 . A clear and practically useful pattern emerges: favorable forget-side and retain-side results occupy broad contiguous regions instead of appearing only at a few isolated points. This means that TRU does not rely on brittle hyper-parameter coincidence. Its good performance can be reached by a relatively wide range of configurations, which makes parameter selection much easier in real use. This pattern also makes TRU more reproducible. When a method only works at a few scattered optima, tuning becomes expensive and unstable across datasets or backbones. In contrast, the landscapes in Figure 9 show visually coherent high-performing zones, indicating that TRU admits a structured operating region rather than a narrow sweet spot. From a practical perspective, this is exactly the kind of sensitivity pattern that is easier to deploy, easier to transfer, and less likely to fail under modest tuning deviations. Finally, the optimal regions are not identical across MGCN and MIG-GT. This difference is itself informative: it shows that 𝑝 and 𝑀 
+
+act as meaningful control variables that adapt to backbone-specific characteristics, rather than redundant knobs with little functional effect.

@@ -6,51 +6,46 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-04-02
-- 运行时间：2026-04-02 19:54:39 UTC
+- 最新运行日期：2026-04-03
+- 运行时间：2026-04-03 19:46:01 UTC
 - 运行状态：成功
-- 本次总论文数：10
-- 精读区：3
-- 速读区：7
+- 本次总论文数：8
+- 精读区：4
+- 速读区：4
 
 ### 今日简报（AI）
-今日聚焦 LLM 智能体的“遗忘艺术”，深度解析隐私驱动的卸载框架与自适应内存控制。
-重点推荐 Secure
-- 详情：[/202604/02/README](/202604/02/README)
+今日深度复盘 8 篇前沿论文，重点攻克扩散模型与多模态推荐系统中的“机器遗忘”难题。
+满分论文揭示了指令式遗忘在扩散模型中的局限，并提出 TRU 算法实现推荐系统的高效精准擦除。
+建议开发者关注大模型内部隐私表征与知识对齐技术，在提升模型智能的同时强化数据安全治理。
+- 详情：[/202604/03/README](/202604/03/README)
 
 ### 精读区论文标签
-1. [Secure Forgetting: A Framework for Privacy-Driven Unlearning in Large Language Model (LLM)-Based Agents](/202604/02/2604.00430v1-secure-forgetting-a-framework-for-privacy-driven-unlearning-in-large-language-model-llm-based-agents)  
+1. [Why Instruction-Based Unlearning Fails in Diffusion Models?](/202604/03/2604.01514v1-why-instruction-based-unlearning-fails-in-diffusion-models)  
    标签：评分：10.0/10、query:mu-ce
-   evidence：LLM智能体中隐私驱动的机器遗忘框架
-2. [Oblivion: Self-Adaptive Agentic Memory Control through Decay-Driven Activation](/202604/02/2604.00131v1-oblivion-self-adaptive-agentic-memory-control-through-decay-driven-activation)  
+   evidence：扩散模型中基于指令的遗忘
+2. [TRU: Targeted Reverse Update for Efficient Multimodal Recommendation Unlearning](/202604/03/2604.02183v1-tru-targeted-reverse-update-for-efficient-multimodal-recommendation-unlearning)  
+   标签：评分：10.0/10、query:mu-ce
+   evidence：高效的多模态推荐系统遗忘
+3. [Novel Memory Forgetting Techniques for Autonomous AI Agents: Balancing Relevance and Efficiency](/202604/03/2604.02280v1-novel-memory-forgetting-techniques-for-autonomous-ai-agents-balancing-relevance-and-efficiency)  
+   标签：评分：9.0/10、query:mu-ce
+   evidence：AI 智能体的自适应预算遗忘框架
+4. [Friends and Grandmothers in Silico: Localizing Entity Cells in Language Models](/202604/03/2604.01404v1-friends-and-grandmothers-in-silico-localizing-entity-cells-in-language-models)  
    标签：评分：8.0/10、query:mu-ce
-   evidence：通过衰减驱动的记忆激活在智能体中实现选择性遗忘
-3. [WARP: Guaranteed Inner-Layer Repair of NLP Transformers](/202604/02/2604.00938v1-warp-guaranteed-inner-layer-repair-of-nlp-transformers)  
-   标签：评分：8.0/10、query:mu-ce
-   evidence：NLP Transformer的保证内层修复
+   evidence：负消融产生特定实体的健忘症
 
 ### 速读区论文标签
-1. [Inference-Aware & Privacy-Preserving Deletion in Databases](/202604/02/2604.00326v1-inference-aware--privacy-preserving-deletion-in-databases)  
+1. [Do LLMs Know What Is Private Internally? Probing and Steering Contextual Privacy Norms in Large Language Model Representations](/202604/03/2604.00209v1-do-llms-know-what-is-private-internally-probing-and-steering-contextual-privacy-norms-in-large-language-model-representations)  
    标签：评分：7.0/10、query:mu-ce
-   evidence：隐私保护删除与以推理为中心的数据移除视角
-2. [Shapley-Guided Neural Repair Approach via Derivative-Free Optimization](/202604/02/2604.00422v1-shapley-guided-neural-repair-approach-via-derivative-free-optimization)  
-   标签：评分：7.0/10、query:mu-ce
-   evidence：可解释的故障定位与神经修复
-3. [Low-Rank Adaptation Reduces Catastrophic Forgetting in Sequential Transformer Encoder Fine-Tuning: Controlled Empirical Evidence and Frozen-Backbone Representation Probes](/202604/02/2603.27707v1-low-rank-adaptation-reduces-catastrophic-forgetting-in-sequential-transformer-encoder-fine-tuning-controlled-empirical-evidence-and-frozen-backbone-representation-probes)  
+   evidence：在表示中引导上下文隐私规范
+2. [Learning domain-invariant features through channel-level sparsification for Out-Of Distribution Generalization](/202604/03/2603.25083v1-learning-domain-invariant-features-through-channel-level-sparsification-for-out-of-distribution-generalization)  
    标签：评分：6.0/10、query:mu-ce
-   evidence：表征 LoRA 等参数高效更新中的遗忘行为
-4. [Inference-time Trajectory Optimization for Manga Image Editing](/202604/02/2603.27790v1-inference-time-trajectory-optimization-for-manga-image-editing)  
+   evidence：移除非因果捷径依赖
+3. [PRISM: Probability Reallocation with In-Span Masking for Knowledge-Sensitive Alignment](/202604/03/2604.01682v1-prism-probability-reallocation-with-in-span-masking-for-knowledge-sensitive-alignment)  
    标签：评分：6.0/10、query:mu-ce
-   evidence：推理阶段的图像编辑自适应
-5. [G-Drift MIA: Membership Inference via Gradient-Induced Feature Drift in LLMs](/202604/02/2604.00419v1-g-drift-mia-membership-inference-via-gradient-induced-feature-drift-in-llms)  
+   evidence：大语言模型中的知识敏感对齐与事实修正
+4. [Neuro-RIT: Neuron-Guided Instruction Tuning for Robust Retrieval-Augmented Language Model](/202604/03/2604.02194v1-neuro-rit-neuron-guided-instruction-tuning-for-robust-retrieval-augmented-language-model)  
    标签：评分：6.0/10、query:mu-ce
-   evidence：通过梯度诱导特征漂移进行成员推理
-6. [Enhancing Gradient Inversion Attacks in Federated Learning via Hierarchical Feature Optimization](/202604/02/2604.00955v1-enhancing-gradient-inversion-attacks-in-federated-learning-via-hierarchical-feature-optimization)  
-   标签：评分：6.0/10、query:mu-ce
-   evidence：隐私泄露与梯度反向攻击
-7. [Brainstacks: Cross-Domain Cognitive Capabilities via Frozen MoE-LoRA Stacks for Continual LLM Learning](/202604/02/2604.01152v1-brainstacks-cross-domain-cognitive-capabilities-via-frozen-moe-lora-stacks-for-continual-llm-learning)  
-   标签：评分：6.0/10、query:mu-ce
-   evidence：通过零空间投影实现持续学习中的零遗忘
+   evidence：神经元级对齐以解耦相关与无关信息
 
 
 <div class="dpr-home-promo-card">

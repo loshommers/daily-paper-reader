@@ -1,0 +1,299 @@
+Title: Why Instruction-Based Unlearning Fails in Diffusion Models?
+
+URL Source: https://arxiv.org/pdf/2604.01514v1
+
+Published Time: Fri, 03 Apr 2026 00:22:58 GMT
+
+Number of Pages: 6
+
+Markdown Content:
+## Why Instruction-Based Unlearning Fails in Diffusion Models? 
+
+Zeliang Zhang 1 Rui Sun 2 Jiani Liu 1 Qi Wu 3 Chenliang Xu 11University of Rochester 2UCLA 2UCSB 
+
+> {zeliang.zhang, jiani.liu chenliang.xu}@rochester.edu, ruis@g.ucla.edu, qwu132@ucsb.edu
+
+Abstract 
+
+Instruction-based unlearning has proven effec-tive for modifying the behavior of large lan-guage models at inference time, but whether this paradigm extends to other generative mod-els remains unclear. In this work, we investi-gate instruction-based unlearning in diffusion-based image generation models and show, through controlled experiments across multi-ple concepts and prompt variants, that diffu-sion models systematically fail to suppress tar-geted concepts when guided solely by natural-language unlearning instructions. By analyzing both the CLIP text encoder and cross-attention dynamics during the denoising process, we find that unlearning instructions do not induce sus-tained reductions in attention to the targeted concept tokens, causing the targeted concept representations to persist throughout genera-tion. These results reveal a fundamental limi-tation of prompt-level instruction in diffusion models and suggest that effective unlearning requires interventions beyond inference-time language control. 
+
+1 Introduction and Background 
+
+Diffusion models (Croitoru et al., 2023), empow-ered by large-scale training on massive datasets, have achieved remarkable success in generating high-quality content across a wide range of modali-ties (Zhao et al., 2023; Ruan et al., 2023). However, due to incomplete data curation and monitoring pro-cesses, training corpora may inadvertently contain sensitive (Du et al., 2013), non-consensual (Viola and Voto, 2023), or copyrighted content (Zhang et al., 2023). As a result, diffusion-based genera-tive models raise growing concerns regarding legal compliance, ethical deployment, and safe usage in real-world applications (Pujari et al., 2022). While constructing carefully curated and fully compliant datasets is a principled solution, retraining large diffusion models from scratch is often prohibitively expensive in terms of both computational cost and 
+
+Figure 1: Motivating experiment evaluating instruction-based unlearning in diffusion models. More examples, including experiments on SD-XL and explicit use of unlearning instructions, can be found in section A. 
+
+time (Ma et al., 2025). Consequently, it is increas-ingly important to investigate post hoc mechanisms that can modify or correct the behavior of already-trained models, enabling targeted content removal or behavioral adjustment without full retraining. A growing body of work has explored concept unlearning (Zhang et al., 2025) in diffusion models, with most approaches relying on fine-tuning-based interventions (Gao et al., 2025; Fuchi and Takagi, 2024; Liu and Tan, 2024; Schioppa et al., 2024). For example, Zhang et al. (2024a) suppresses tar-geted concepts by minimizing cross-attention acti-vations between the concept tokens and correspond-ing visual features during fine-tuning. Similarly, Gandikota et al. (2023) and Wu et al. (2025) pro-pose to modify diffusion models by aligning the visual feature distributions generated from targeted concepts with those produced by empty or neutral textual descriptions, thereby mitigating the issue of missing negative samples. While these meth-ods demonstrate promising results, they require additional fine-tuning of large diffusion models, incurring substantial computational and memory overhead. 1
+
+> arXiv:2604.01514v1 [cs.CL] 2 Apr 2026
+
+Inspired by the success of instruction-based un-learning in large language models (Pawelczyk et al., 2023), which enables effective behavior modifi-cation through simple natural language instruc-tions at inference time, a natural question arises (Q): can diffusion models similarly unlearn spe-cific concepts by following textual instructions at test time? In this work, we show that, despite their ability to condition on and respond to tex-tual prompts, instruction-based unlearning system-atically fails in diffusion-based image generation, despite their ability to condition on and respond to textual prompts. 
+
+2 Motivating Experiment 
+
+To answer the question Q—whether diffusion mod-els can unlearn specific concepts by following nat-ural language instructions at test time—we con-duct a simple yet diagnostic motivating experi-ment. Drawing inspiration from instruction-based unlearning in large language models, we prepend an explicit unlearning instruction to the generation prompt, requesting the model to forget all infor-mation related to a target concept prior to image synthesis. Concretely, we construct prompts of the follow-ing form: 
+
+“Please forget anything about [target con-cept]. Please help me generate a picture of [target concept].” 
+
+Here, the target concept may correspond to an ob-ject, an individual, or a visual style. If instruction-based unlearning were effective for diffusion mod-els, the generated images would be expected to suppress, avoid, or deviate from visual characteris-tics associated with the specified concept. Figure 1 presents a representative example using 
+
+Vincent van Gogh as the target concept. Despite the explicit instruction to forget all information about the artist, diffusion-based image generation mod-els continue to produce outputs that are strongly aligned with the forgotten concept. This alignment manifests both in realistic depictions of the artist and in images exhibiting highly distinctive stylistic attributes, such as characteristic brush strokes and color patterns. We observe qualitatively similar behavior across multiple diffusion-based models and prompt formulations. These results provide a negative but informative answer to Q. In contrast to instruction-tuned large language models, diffusion models fail to perform semantic negation or concept exclusion through natural language instructions at inference time. No-tably, this failure cannot be attributed to prompt ambiguity or insufficient emphasis, as rephrasing or reinforcing the unlearning instruction does not lead to meaningful suppression of the targeted con-cept. This motivating experiment suggests a funda-mental limitation of instruction-based control in diffusion models. While textual prompts can bias the generation process, they do not provide an ex-plicit mechanism to remove or negate concept-level information that has already been encoded in the model. 
+
+3 Debugging with the CLIP Encoder 
+
+The natural question that follows is: why does instruction-based unlearning fail in diffusion mod-els? To address this question, we examine how un-learning instructions are processed by the CLIP text encoder, which provides the textual conditioning signal for most diffusion-based image generation models (Zhang et al., 2024b). Let Etext (·) denote the CLIP text encoder, and let 
+
+c be a target concept with a corresponding concept anchor prompt pc (e.g., “a photo of c”). Given a generation prompt p, the diffusion model is con-ditioned on the text embedding Etext (p). Ideally, when an explicit unlearning instruction is included, the semantic representation of the target concept should be suppressed at the embedding level. For-mally, for an unlearning prompt punl and a base-line prompt pbase (without unlearning), effective instruction-based unlearning would imply    
+
+> cos( Etext (punl ), E text (pc)) <cos( Etext (pbase ), E text (pc)) ,
+> (1)
+
+where cos( ·, ·) denotes cosine similarity. To evaluate whether Eq. (1) holds in practice, we conduct two complementary analyses: a text-only analysis , which directly probes the behavior of the CLIP text encoder at the representation level, and an image-based analysis , which examines whether any representation-level failure propagates to the final generated images. 
+
+Text-only analysis. We evaluate instruction-based unlearning in the textual-conditioning space using the CLIP text encoder used Stable Diffusion v1.5, following Eq. (1) . Figure 2(a) summarizes the change in cosine similarity between prompt embeddings and concept anchor embeddings when 21
+
+> 0.10
+> 0.08
+> 0.06
+> 0.04
+> 0.02
+> 0.00
+> cosine similarity (unlearn  baseline)  (a) Alignment change
+
+(a) ∆ similarity (unlearn − baseline) panda  
+
+> dog
+> cat
+> house
+> Vincent van Gogh
+> Mickey Mouse
+> keyboard
+> computer
+> moon
+> car
+> 0.0
+> 0.1
+> 0.2
+> 0.3
+> 0.4
+> 0.5
+> 0.6
+> 0.7
+> 0.8
+> Cosine similarity
+> (b) Similarity by prompt type
+> baseline
+> unlearn
+> repeat
+
+(b) Similarity by prompt type panda  
+
+> dog
+> cat
+> house
+> Vincent van Gogh
+> Mickey Mouse
+> keyboard
+> computer
+> moon
+> car
+> 0.1
+> 0.0
+> 0.1
+> 0.2
+> 0.3
+> 0.4
+> Drop in cosine similarity
+> (c) Token ablation effects
+> remove concept words
+> remove unlearning words
+
+(c) Token ablation effects Figure 2: Text-only CLIP analysis of instruction-based unlearning. (a) Distribution of cosine similarity changes induced by unlearning instructions. (b) Absolute similarity to concept anchors under different prompt types. (c) Token ablation results showing that concept tokens dominate CLIP text embeddings, while unlearning instructions have negligible effect. 1
+
+> 0.010
+> 0.005
+> 0.000
+> 0.005
+> 0.010
+> CLIP image--text sim (unlearn  baseline)  (a) Image alignment change
+
+(a) ∆ similarity (unlearn − baseline) panda  
+
+> dog
+> cat
+> house
+> Vincent van Gogh
+> Mickey Mouse
+> keyboard
+> computer
+> moon
+> car
+> 0.00
+> 0.05
+> 0.10
+> 0.15
+> 0.20
+> 0.25
+> CLIP image--text similarity
+> (b) Image similarity by prompt
+> baseline
+> unlearn
+> repeat
+
+(b) Similarity by prompt type panda     
+
+> dog
+> cat
+> house
+> Vincent van Gogh
+> Mickey Mouse
+> keyboard
+> computer
+> moon
+> car
+> 0.05
+> 0.04
+> 0.03
+> 0.02
+> 0.01
+> 0.00
+> 0.01
+> CLIP image--text similarity
+> (c) Per-concept change vs baseline
+> unlearn baseline
+> negation baseline
+> repeat baseline
+
+(c) Change vs. baseline Figure 3: Image-based analysis using external CLIP image–text similarity on 8 samples per concept and prompt type. (a) Distribution of similarity changes induced by unlearning instructions. (b) Absolute similarity to concept anchors under baseline, unlearning, and repeat-control prompts. (c) Per-concept similarity changes for unlearning, negation, and repeat-control prompts relative to baseline. 
+
+adding unlearning instructions. Across 10 repre-sentative target concepts, unlearning prompts in-duce a small but consistent reduction in similarity (mean −0.045 , median −0.034 ), indicating that unlearning instructions slightly perturb the CLIP text embedding. However, as shown in Figure 2(b), the absolute similarity between unlearning prompts and concept anchors remains high and is comparable to that of a repeat-control prompt, which simply restates the concept without any unlearning instruction. This suggests that the observed reduction largely reflects prompt rephrasing effects rather than meaningful suppression of the target concept. To identify the source of this behavior, we per-form token ablation on the unlearning prompts. Fig-ure 2(c) shows that removing concept-related to-kens causes a substantial drop in cosine similarity (mean drop 0.241 ), whereas removing unlearning-related instruction tokens (e.g., “forget”, “any-thing”) results in negligible or even negative changes (mean −0.027 ). These results indicate that CLIP text embeddings are dominated by ex-plicit concept tokens, while unlearning instructions contribute little to suppressing the target concept at the representation level. 
+
+Image-based analysis. We next test whether instruction-based unlearning reduces concept evi-dence in the generated images . For each concept, we generate 8 images per prompt type and com-pute CLIP image–text similarity between each im-age and the corresponding concept anchor text, av-eraged across samples. Figure 3(a) summarizes the distribution of similarity changes induced by unlearning instructions. In contrast to the text-only setting, the image-based effect is near zero: the mean (median) change in CLIP similarity is 
+
+−6.1 × 10 −4 (−1.7 × 10 −3), and only 60% of con-cepts exhibit reduced similarity under unlearning prompts. Figure 3(b) shows that the absolute image-based similarity under unlearning prompts remains com-30 5 10 15 20 25 30 
+
+> Diffusion step
+> 0.006
+> 0.008
+> 0.010
+> 0.012
+> 0.014
+> 0.016
+> 0.018
+> 0.020
+> 0.022
+> Normalized cross-attention mass
+> baseline: concept
+> unlearn: concept
+> negation: concept
+> repeat: concept
+> unlearn: instruction
+
+(a) Mean attention mass vs. step baseline unlearn negation repeat  
+
+> 0.0025
+> 0.0050
+> 0.0075
+> 0.0100
+> 0.0125
+> 0.0150
+> 0.0175
+> 0.0200
+> 0.0225
+> AUC of concept-token attention
+
+(b) AUC distribution (concept to-kens) panda 
+
+> dog
+> cat
+> house
+> Vincent van Gogh
+> Mickey Mouse
+> keyboard
+> computer
+> moon
+> car
+> 0.010
+> 0.008
+> 0.006
+> 0.004
+> 0.002
+> 0.000
+> AUC (concept-token attention)
+> unlearn - baseline
+> negation - baseline
+> repeat - baseline
+
+(c) Per-concept ∆AUC (unlearn −
+
+baseline) Figure 4: Cross-attention analysis during diffusion denoising. (a) Cross-attention mass assigned to concept tokens and instruction tokens across timesteps. (b) Distribution of concept-token AUC under different prompt types. (c) Per-concept change in concept-token AUC relative to baseline. 
+
+parable to baseline and repeat-control prompts across concepts, indicating persistent concept evi-dence in the generated images. Finally, Figure 3(c) reports per-concept changes for unlearning, nega-tion, and repeat-control prompts relative to base-line; none of these prompt-based strategies consis-tently decreases concept alignment. 
+
+4 Cross-attention across diffusion steps 
+
+A plausible explanation for the failure of instruction-based unlearning is that the diffusion model still allocates cross-attention to the concept tokens during denoising , even when the prompt contains explicit unlearning instructions. We test this hypothesis by directly measuring how much cross-attention mass is assigned to (i) the target concept tokens and (ii) the instruction tokens over diffusion timesteps. 
+
+Cross-attention mass for concept vs. instruction tokens. For each diffusion step s, we extract the cross-attention maps from the U-Net and aggre-gate over layers/heads/spatial queries. Let Ic be the token indices corresponding to the target con-cept (e.g., panda ), and Iu be the token indices corresponding to the unlearning instruction (e.g., 
+
+forget , anything ). We define the normalized at-tention mass on a token set I at step s as 
+
+mI (s) = 1
+
+|Q| 
+
+X
+
+> q∈Q
+
+X
+
+> i∈I
+
+As(q, i ), (2) 
+
+where As(q, i ) is the cross-attention probability from query position q to token i at step s, and Q
+
+indexes spatial queries. We summarize the overall allocation across the denoising trajectory using the area under the curve (AUC): 
+
+AUC( I) = 1
+
+S
+
+> S
+
+X
+
+> s=1
+
+mI (s) (3) 
+
+with S diffusion steps. 
+
+Findings. Figure 4(a) shows that unlearning prompts allocate non-trivial attention mass to the instruction tokens, but the concept tokens still re-tain substantial mass throughout denoising. In ag-gregate, the concept-token AUC under unlearn-ing prompts decreases only slightly relative to baseline (mean ∆AUC ≈ − 4.1 × 10 −3; median 
+
+≈ − 2.5 × 10 −3), as shown in Figure 4(b–c). Im-portantly, the reduction is small compared to the overall concept attention mass and is not sufficient to reliably suppress concept evidence in the final images. Together with the CLIP-encoder results, the cross-attention probes support a consistent mecha-nism: instruction tokens are noticed (they receive attention), but they do not reliably override the model’s concept binding during denoising. This helps explain why inference-time instructions alone produce, at best, weak and inconsistent concept suppression in diffusion models. 
+
+5 Conclusion 
+
+We show that instruction-based unlearning is inef-fective for diffusion-based image generation mod-els: natural language prompts fail to reliably sup-press targeted concepts. Our analyses reveal that unlearning instructions have little impact on CLIP text representations and are further diluted dur-ing the diffusion denoising process, allowing con-cept information to persist throughout generation. These results highlight a fundamental limitation of prompt-level control in diffusion models and suggest that reliable unlearning will require inter-ventions beyond inference-time instructions. 
+
+Limitations . Our study focuses on prompt-level instruction-based unlearning in widely used text-4to-image diffusion pipelines with CLIP-style text encoders, and the conclusions may not directly ex-tend to architectures with fundamentally different conditioning mechanisms. We primarily evaluate a limited set of concepts, prompts, and diffusion mod-els, leaving broader coverage to future work. In addition, our analysis relies on CLIP-based similar-ity and attention probes, which may not capture all perceptual or semantic aspects of concept expres-sion. Finally, we do not explore hybrid approaches that combine instructions with lightweight model adaptation or architectural modifications. 
+
+References 
+
+Florinel-Alin Croitoru, Vlad Hondru, Radu Tudor Ionescu, and Mubarak Shah. 2023. Diffusion mod-els in vision: A survey. IEEE transactions on pat-tern analysis and machine intelligence , 45(9):10850– 10869. Nan Du, Le Song, Hyenkyun Woo, and Hongyuan Zha. 2013. Uncover topic-sensitive information diffusion networks. In Artificial intelligence and statistics ,pages 229–237. PMLR. Masane Fuchi and Tomohiro Takagi. 2024. Erasing con-cepts from text-to-image diffusion models with few-shot unlearning. arXiv preprint arXiv:2405.07288 ,2:1. Rohit Gandikota, Joanna Materzynska, Jaden Fiotto-Kaufman, and David Bau. 2023. Erasing con-cepts from diffusion models. In Proceedings of the IEEE/CVF international conference on computer vi-sion , pages 2426–2436. Hongcheng Gao, Tianyu Pang, Chao Du, Taihang Hu, Zhijie Deng, and Min Lin. 2025. Meta-unlearning on diffusion models: Preventing relearning unlearned concepts. In Proceedings of the IEEE/CVF Interna-tional Conference on Computer Vision , pages 2131– 2141. Shiqi Liu and Yihua Tan. 2024. Unlearning concepts from text-to-video diffusion models. arXiv preprint arXiv:2407.14209 .Nanye Ma, Shangyuan Tong, Haolin Jia, Hexiang Hu, Yu-Chuan Su, Mingda Zhang, Xuan Yang, Yandong Li, Tommi Jaakkola, Xuhui Jia, and 1 others. 2025. Scaling inference time compute for diffusion models. In Proceedings of the Computer Vision and Pattern Recognition Conference , pages 2523–2534. Martin Pawelczyk, Seth Neel, and Himabindu Lakkaraju. 2023. In-context unlearning: Language models as few shot unlearners. arXiv preprint arXiv:2310.07579 .Tejaskumar Pujari, Anshul Goel, and Deepak Kejriwal. 2022. Ethical and responsible ai in the age of ad-versarial diffusion models: Challenges, risks, and mitigation strategies. International Journal Science and Technology , 1(3):54–68. Ludan Ruan, Yiyang Ma, Huan Yang, Huiguo He, Bei Liu, Jianlong Fu, Nicholas Jing Yuan, Qin Jin, and Baining Guo. 2023. Mm-diffusion: Learning multi-modal diffusion models for joint audio and video generation. In Proceedings of the IEEE/CVF Confer-ence on Computer Vision and Pattern Recognition ,pages 10219–10228. Andrea Schioppa, Emiel Hoogeboom, and Jonathan Heek. 2024. Model integrity when unlearn-ing with t2i diffusion models. arXiv preprint arXiv:2411.02068 .Marco Viola and Cristina Voto. 2023. Designed to abuse? deepfakes and the non-consensual diffusion of intimate images. Synthese , 201(1):30. Yongliang Wu, Shiji Zhou, Mingzhuo Yang, Lianzhe Wang, Heng Chang, Wenbo Zhu, Xinting Hu, Xiao Zhou, and Xu Yang. 2025. Unlearning concepts in diffusion model via concept domain correction and concept preserving gradient. In Proceedings of the AAAI Conference on Artificial Intelligence ,volume 39, pages 8496–8504. Gong Zhang, Kai Wang, Xingqian Xu, Zhangyang Wang, and Humphrey Shi. 2024a. Forget-me-not: Learning to forget in text-to-image diffusion mod-els. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 1755–1764. Yang Zhang, Teoh Tze Tzun, Lim Wei Hern, Hao-nan Wang, and Kenji Kawaguchi. 2023. On copy-right risks of text-to-image diffusion models. arXiv preprint arXiv:2311.12803 .Zeliang Zhang, Gaowen Liu, Charles Fleming, Ra-mana Rao Kompella, and Chenliang Xu. 2025. Tar-geted forgetting of image subgroups in clip models. In Proceedings of the Computer Vision and Pattern Recognition Conference , pages 9870–9880. Zeliang Zhang, Zhuo Liu, Mingqian Feng, and Chen-liang Xu. 2024b. Can clip count stars? an empirical study on quantity bias in clip. In Findings of the Association for Computational Linguistics: EMNLP 2024 , pages 1081–1086. Zixiang Zhao, Haowen Bai, Yuanzhi Zhu, Jiangshe Zhang, Shuang Xu, Yulun Zhang, Kai Zhang, Deyu Meng, Radu Timofte, and Luc Van Gool. 2023. Ddfm: denoising diffusion model for multi-modality image fusion. In Proceedings of the IEEE/CVF in-ternational conference on computer vision , pages 8082–8093. 
+
+5Figure 5: Explicit use of unlearning instruction lets the model generate the targeted concept. 
+
+A More examples on the failure of diffusion unlearning 
+
+We conduct the following experiments on the SD-XL model using the https: //stable-diffusion-web.com/sdxl platform. 
+
+Explicit use of unlearning instruction . We follow the unlearning instructions introduced in Section 2 to unlearn more concepts used to prompt the diffu-sion model. More examples are shown in fig. 5. 
+
+Implicit use of unlearnining instruction . Instead of the explicit use of unlearning instruction, we also try the implicit use, that we use LLM to rewrite the prompt to avoid the generation of concepts. For example, to avoid the generation of Van Gogh, we use the following prompt, Please generate an image that does not rely on any information, style, or visual attributes associated with Vincent van Gogh . The results are shown in fig. 6. 
+
+> Figure 6: Implicit use of unlearning instruction still pushes the model to generate the targeted concept.
+
+6
