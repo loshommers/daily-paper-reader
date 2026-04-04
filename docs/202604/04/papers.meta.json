@@ -1,0 +1,23 @@
+{
+  "label": "2026-04-04",
+  "date": "2026-04-04",
+  "generated_at": "2026-04-04T20:07:58",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202604/04/2604.01116v1-protps-prototype-guided-text-prompt-selection-for-continual-learning",
+      "section": "quick",
+      "title_en": "ProTPS: Prototype-Guided Text Prompt Selection for Continual Learning",
+      "authors": "Jie Mei, Li-Leng Peng, Keith Fuller, Jenq-Neng Hwang",
+      "date": "2026-04-01",
+      "pdf": "https://arxiv.org/pdf/2604.01116v1",
+      "score": "6.0",
+      "evidence": "缓解持续学习中的灾难性遗忘",
+      "tldr": "本文针对持续学习中基于文本提示的方法，提出了ProTPS框架，旨在解决新旧类别文本提示语义重叠导致的灾难性遗忘问题。ProTPS通过学习类别特定的视觉原型来引导文本提示的选择与学习，从而增强训练灵活性并确保提示的唯一性。研究在类增量和跨数据集设置下表现优异，并引入了包含112种海洋生物的真实世界数据集Marine112，为类与域增量学习提供了更具挑战性的基准。",
+      "tags": "query:mu-ce",
+      "abstract_en": "For continual learning, text-prompt-based methods leverage text encoders and learnable prompts to encode semantic features for sequentially arrived classes over time. A common challenge encountered by existing works is how to learn unique text prompts, which implicitly carry semantic information of new classes, so that the semantic features of newly arrived classes do not overlap with those of trained classes, thereby mitigating the catastrophic forgetting problem. To address this challenge, we propose a novel approach Prototype-guided Text Prompt Selection (ProTPS)'' to intentionally increase the training flexibility thus encouraging the learning of unique text prompts. Specifically, our ProTPS learns class-specific vision prototypes and text prompts. Vision prototypes guide the selection and learning of text prompts for each class. We first evaluate our ProTPS in both class incremental (CI) setting and cross-datasets continual (CDC) learning setting. Because our ProTPS achieves performance close to the upper bounds, we further collect a real-world dataset with 112 marine species collected over a span of six years, named Marine112, to bring new challenges to the community. Marine112 is authentically suited for the class and domain incremental (CDI) learning setting and is under natural long-tail distribution. The results under three settings show that our ProTPS performs favorably against the recent state-of-the-art methods. The implementation code and Marine112 dataset will be released upon the acceptance of our paper.",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

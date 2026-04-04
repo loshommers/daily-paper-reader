@@ -1,6 +1,9 @@
 * <a class="dpr-sidebar-root-link" href="#/">首页</a>
 * <a class="dpr-sidebar-root-link dpr-sidebar-noactive-link" href="javascript:void(0)" data-dpr-hash="#/tutorial/README">使用教程</a>
 * Daily Papers
+  * 2026-04-04 <!--dpr-date:20260404-->
+    * 速读区
+      * <a class="dpr-sidebar-item-link dpr-sidebar-item-structured" href="#/202604/04/2604.01116v1-protps-prototype-guided-text-prompt-selection-for-continual-learning" data-sidebar-item="{&quot;title&quot;: &quot;ProTPS: Prototype-Guided Text Prompt Selection for Continual Learning&quot;, &quot;link&quot;: &quot;https://arxiv.org/abs/2604.01116v1-protps-prototype-guided-text-prompt-selection-for-continual-learning&quot;, &quot;score&quot;: &quot;6.0&quot;, &quot;tags&quot;: [{&quot;kind&quot;: &quot;query&quot;, &quot;label&quot;: &quot;mu-ce&quot;}], &quot;evidence&quot;: &quot;缓解持续学习中的灾难性遗忘&quot;}">ProTPS: Prototype-Guided Text Prompt Selection for Continual Learning</a>
   * 2026-04-03 <!--dpr-date:20260403-->
     * 精读区
       * <a class="dpr-sidebar-item-link dpr-sidebar-item-structured" href="#/202604/03/2604.01514v1-why-instruction-based-unlearning-fails-in-diffusion-models" data-sidebar-item="{&quot;title&quot;: &quot;Why Instruction-Based Unlearning Fails in Diffusion Models?&quot;, &quot;link&quot;: &quot;https://arxiv.org/abs/2604.01514v1-why-instruction-based-unlearning-fails-in-diffusion-models&quot;, &quot;score&quot;: &quot;10.0&quot;, &quot;tags&quot;: [{&quot;kind&quot;: &quot;query&quot;, &quot;label&quot;: &quot;mu-ce&quot;}], &quot;evidence&quot;: &quot;扩散模型中基于指令的遗忘&quot;}">Why Instruction-Based Unlearning Fails in Diffusion Models?</a>
