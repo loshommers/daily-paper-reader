@@ -1,0 +1,23 @@
+{
+  "label": "2026-04-05",
+  "date": "2026-04-05",
+  "generated_at": "2026-04-05T19:53:17",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202604/05/2603.29497v1-distilling-human-aligned-privacy-sensitivity-assessment-from-large-language-models",
+      "section": "quick",
+      "title_en": "Distilling Human-Aligned Privacy Sensitivity Assessment from Large Language Models",
+      "authors": "Gabriel Loiseau, Damien Sileo, Damien Riquet, Maxime Meyer, Marc Tommasi",
+      "date": "2026-03-31",
+      "pdf": "https://arxiv.org/pdf/2603.29497v1",
+      "score": "6.0",
+      "evidence": "从LLM中蒸馏隐私敏感性评估能力",
+      "tldr": "本研究针对文本隐私评估中大语言模型（LLM）计算成本高且难以大规模处理敏感数据的问题，提出了一种知识蒸馏方法。通过将 Mistral Large 3 (675B) 的隐私敏感度评估能力迁移到仅 150M 参数的轻量级编码器模型中，并在涵盖10个领域的隐私标注数据集上进行训练。实验证明，该轻量级模型在保持与人类判断高度一致的同时，显著降低了计算开销，可作为去标识化系统的有效评估指标。",
+      "tags": "query:mu-ce",
+      "abstract_en": "Accurate privacy evaluation of textual data remains a critical challenge in privacy-preserving natural language processing. Recent work has shown that large language models (LLMs) can serve as reliable privacy evaluators, achieving strong agreement with human judgments; however, their computational cost and impracticality for processing sensitive data at scale limit real-world deployment. We address this gap by distilling the privacy assessment capabilities of Mistral Large 3 (675B) into lightweight encoder models with as few as 150M parameters. Leveraging a large-scale dataset of privacy-annotated texts spanning 10 diverse domains, we train efficient classifiers that preserve strong agreement with human annotations while dramatically reducing computational requirements. We validate our approach on human-annotated test data and demonstrate its practical utility as an evaluation metric for de-identification systems.",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,55 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-04-05T19:52:54.800912+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 0,
+    "deep_cap": 6,
+    "deep_selected": 0,
+    "quick_candidates": 1,
+    "quick_skim_target": 11,
+    "quick_selected": 1
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2603.29497v1",
+      "title": "Distilling Human-Aligned Privacy Sensitivity Assessment from Large Language Models",
+      "abstract": "Accurate privacy evaluation of textual data remains a critical challenge in privacy-preserving natural language processing. Recent work has shown that large language models (LLMs) can serve as reliable privacy evaluators, achieving strong agreement with human judgments; however, their computational cost and impracticality for processing sensitive data at scale limit real-world deployment. We address this gap by distilling the privacy assessment capabilities of Mistral Large 3 (675B) into lightweight encoder models with as few as 150M parameters. Leveraging a large-scale dataset of privacy-annotated texts spanning 10 diverse domains, we train efficient classifiers that preserve strong agreement with human annotations while dramatically reducing computational requirements. We validate our approach on human-annotated test data and demonstrate its practical utility as an evaluation metric for de-identification systems.",
+      "authors": [
+        "Gabriel Loiseau",
+        "Damien Sileo",
+        "Damien Riquet",
+        "Maxime Meyer",
+        "Marc Tommasi"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-03-31T09:40:58+00:00",
+      "link": "https://arxiv.org/pdf/2603.29497v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "distilling privacy sensitivity assessment from LLMs",
+      "llm_evidence_cn": "从LLM中蒸馏隐私敏感性评估能力",
+      "llm_evidence": "从LLM中蒸馏隐私敏感性评估能力",
+      "canonical_evidence": "从LLM中蒸馏隐私敏感性评估能力",
+      "llm_tldr_en": "Distills privacy assessment capabilities into lightweight models to identify sensitive information efficiently.",
+      "llm_tldr_cn": "将隐私评估能力蒸馏到轻量级模型中，以高效识别敏感信息。",
+      "llm_tldr": "将隐私评估能力蒸馏到轻量级模型中，以高效识别敏感信息。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Algorithms for removing sensitive information from neural networks",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

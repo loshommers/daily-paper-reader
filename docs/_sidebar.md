@@ -1,6 +1,9 @@
 * <a class="dpr-sidebar-root-link" href="#/">首页</a>
 * <a class="dpr-sidebar-root-link dpr-sidebar-noactive-link" href="javascript:void(0)" data-dpr-hash="#/tutorial/README">使用教程</a>
 * Daily Papers
+  * 2026-04-05 <!--dpr-date:20260405-->
+    * 速读区
+      * <a class="dpr-sidebar-item-link dpr-sidebar-item-structured" href="#/202604/05/2603.29497v1-distilling-human-aligned-privacy-sensitivity-assessment-from-large-language-models" data-sidebar-item="{&quot;title&quot;: &quot;Distilling Human-Aligned Privacy Sensitivity Assessment from Large Language Models&quot;, &quot;link&quot;: &quot;https://arxiv.org/abs/2603.29497v1-distilling-human-aligned-privacy-sensitivity-assessment-from-large-language-models&quot;, &quot;score&quot;: &quot;6.0&quot;, &quot;tags&quot;: [{&quot;kind&quot;: &quot;query&quot;, &quot;label&quot;: &quot;mu-ce&quot;}], &quot;evidence&quot;: &quot;从LLM中蒸馏隐私敏感性评估能力&quot;}">Distilling Human-Aligned Privacy Sensitivity Assessment from Large Language Models</a>
   * 2026-04-04 <!--dpr-date:20260404-->
     * 速读区
       * <a class="dpr-sidebar-item-link dpr-sidebar-item-structured" href="#/202604/04/2604.01116v1-protps-prototype-guided-text-prompt-selection-for-continual-learning" data-sidebar-item="{&quot;title&quot;: &quot;ProTPS: Prototype-Guided Text Prompt Selection for Continual Learning&quot;, &quot;link&quot;: &quot;https://arxiv.org/abs/2604.01116v1-protps-prototype-guided-text-prompt-selection-for-continual-learning&quot;, &quot;score&quot;: &quot;6.0&quot;, &quot;tags&quot;: [{&quot;kind&quot;: &quot;query&quot;, &quot;label&quot;: &quot;mu-ce&quot;}], &quot;evidence&quot;: &quot;缓解持续学习中的灾难性遗忘&quot;}">ProTPS: Prototype-Guided Text Prompt Selection for Continual Learning</a>
