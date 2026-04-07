@@ -1,0 +1,1721 @@
+Title: A Bayesian Information-Theoretic Approach to Data Attribution
+
+URL Source: https://arxiv.org/pdf/2604.03858v1
+
+Published Time: Tue, 07 Apr 2026 00:45:51 GMT
+
+Number of Pages: 24
+
+Markdown Content:
+# A Bayesian Information-Theoretic Approach to Data Attribution 
+
+Dharmesh Tailor ∗ Nicol` o Felicioni Kamil Ciosek 
+
+University of Amsterdam Spotify Spotify 
+
+## Abstract 
+
+Training Data Attribution (TDA) seeks to trace model predictions back to influential training examples, enhancing interpretability and safety. We formulate TDA as a Bayesian information-theoretic problem: subsets are scored by the information loss they in-duce—the entropy increase at a query when removed. This criterion credits examples for resolving predictive uncertainty rather than label noise. To scale to modern networks, we approximate information loss using a Gaus-sian Process surrogate built from tangent fea-tures. We show this aligns with classical in-fluence scores for single-example attribution while promoting diversity for subsets. For even larger-scale retrieval, we relax to an information-gain objective and add a vari-ance correction for scalable attribution in vector databases. Experiments show com-petitive performance on counterfactual sensi-tivity, ground-truth retrieval and coreset se-lection, showing that our method scales to modern architectures while bridging princi-pled measures with practice. 
+
+## 1 INTRODUCTION 
+
+The problem of training data attribution (TDA) is to trace a model’s prediction back to its training data, thereby addressing a fundamental need for inter-pretability and transparency in modern machine learn-ing systems. In contrast to approaches that seek to understand a model’s internal workings in a mecha-nistic fashion, TDA is a form of explanation that is grounded in data. Attributed training examples can be used to provide explanations for recommendation systems, enable risk mitigation strategies that address safety, privacy, and fairness concerns, and facilitate ap-propriate compensation frameworks for creative work while detecting potential plagiarism or memorization. The de-facto technique for TDA is influence function— a classical tool from robust statistics (Hampel, 1974) and regression diagnostics (Cook and Weisberg, 1980) revived for modern machine learning by Koh and Liang (2017). By linearizing the stationarity condition at the trained parameters, influence function provides a local, first-order estimate of the counterfactual change in a model’s loss or prediction when a training point is in-finitesimally upweighted or removed, thereby sidestep-ping costly retraining.This convenience comes with caveats: the derivation depends on fully-converged pa-rameters which is not a realistic assumption in prac-tice; and requires the computation and inversion of large curvature matrices which is impractical for mod-ern architectures. A substantial body of work has since tackled some of these concerns by proposing alternate influence function estimators that relax such restric-tions or exploiting numerical approximations for com-putational efficiency. This includes approaches that backtrack through training trajectories (Hara et al., 2019); gradient-accumulation methods like TraceIn (Pruthi et al., 2020); expressive curvature surrogates such as EK-FAC (Grosse et al., 2023); leveraging ran-dom projections or improved linear system solvers (Schioppa et al., 2022). In this work, we replace the loss-based counterfac-tual notion of TDA with an explicitly information-theoretic one: for a test query we score a subset by the information lost about the latent prediction when that subset is withheld— i.e. , the increase in entropy at the query (measured in nats). This choice targets epistemic uncertainty attributable to missing train-ing data, and places our formulation in a broader tradition of Bayesian and information-theoretic ap-proaches to learning. Information measures have long been used to formalize principled learning objectives and guarantees— e.g. , information gain as an acqui- 
+
+> ∗Part of this work was carried out when Dharmesh Tailor was on internship at Spotify.
+> arXiv:2604.03858v1 [cs.LG] 4 Apr 2026
+
+A Bayesian Information-Theoretic Approach to Data Attribution 
+
+Information Loss       
+
+> Submodular? ✗No Vector query? ✗No (depends on D\S)
+
+Information Gain          
+
+> Submodular? ✓Yes (greedy (1 −1/e ))
+> Vector query? ✗No (candidate-dep. denom.)
+
+Approx. Information Gain          
+
+> (linear-response variance correction)
+> Submodular? No guarantee (approx.)
+> Vector query? ✓Yes (squared inner prod.)
+> high-noise regime (IG ≈IL)
+> linear-response (Approx. IG ≈IG)
+
+Query Influence Function Bayesian Information-Theoretic TDA (Ours) 
+
+Figure 1: Bayesian information-theoretic training data attribution (TDA). For a query input x∗, we quantify the contribution of a training subset S via its information loss : the increase in (posterior) predictive entropy at x∗
+
+when S is withheld from training, attributing credit to examples that resolve epistemic uncertainty rather than label noise. Left: we relate information loss to a submodular information gain relaxation whose leading-order term matches information loss in a high-noise regime, followed by a linear-response variance correction that implements greedy selection with a squared inner-product score, enabling efficient retrieval in a vector database. Right: CIFAR-10 (ResNet-9) examples showing the top-ranked training images under an influence-function estimator versus our information loss criterion. sition rule in Bayesian experimental design and ac-tive learning (MacKay, 1992; Houlsby et al., 2011), information-theoretic analyses of generalization via mutual information (Xu and Raginsky, 2017; Steinke and Zakynthinou, 2020), and the information bottle-neck view of representation learning and training dy-namics (Shwartz-Ziv and Tishby, 2017). Closer in spirit, Bayesian viewpoints have studied TDA under training stochasticity, treating attribution scores as random variables rather than fixed point estimates (Nguyen et al., 2023), and data point selection through posterior inference over instance-wise weights (Xu et al., 2024). These perspectives are complementary to our query-specific information-theoretic formulation of subset attribution. 
+
+Contributions. (i) We pose TDA as information loss at a query, the entropy increase induced by with-holding a subset. This can be implemented by in-stantiating a Gaussian Process surrogate from tangent features of the network (the empirical NTK), leading to a closed-form expression. (ii) We show that this criterion admits a principled relaxation to informa-tion gain : for fixed subset size and large observation noise, information loss and information gain share the same leading-order expansion. The score for a sub-set then depends only on the selected points them-selves, not on the remaining training data. (iii) To make our algorithm amenable to fast lookup, we de-rive a linear-response variance correction that turns each step into a squared inner-product search between a residual query vector and (precomputed) sketched Jacobians. All inversions are performed in a low-dimensional sketch space, and we demonstrate how selection can be implemented via approximate nearest-neighbour search over a vector database (querying with both the residual and its negation, then merging top candidates), giving a computational footprint com-parable to modern influence-based pipelines. (iv) Em-pirically, we evaluate three complementary settings: 
+
+leave-subset-out brittleness —counterfactual sensitivity of predictions when top-ranked subsets are removed; 
+
+backdoor attribution , where our method retrieves the ground-truth poisoned subset in controlled attacks; and coreset selection , where we test whether attributed subsets preserve downstream accuracy when used for retraining. 
+
+## 2 BACKGROUND 
+
+Setup. We consider supervised learning with train-ing data D = {(xi, y i)}Ni=1 , covering tasks from im-age classification to next-token prediction in language modeling. Let fθ denote a model with parameters 
+
+θ ∈ RP that is trained on D (e.g. by empirical risk minimization). Training data attribution (TDA) seeks to quantify the contribution of a subset S ⊂ D to the model’s behaviour at a designated test query x∗ (op-tionally with label y∗). We write this contribution as an attribution score I(S; x∗), intentionally agnostic about the precise notion of “behaviour”—it may refer to loss, prediction, or another task-relevant functional of fθ .Dharmesh Tailor, Nicol` o Felicioni, Kamil Ciosek 
+
+A counterfactual ideal and its relaxations. Let ˆθ be the parameters obtained by training on D and ˆθ\S
+
+the parameters obtained when the subset S is removed and the model is retrained under the same procedure. A natural “ground-truth” attribution for a loss-based notion of behaviour is the counterfactual change in test loss. Denoting z∗ = ( x∗, y ∗), we have, 
+
+ℓ∗(θ) := ℓ(θ; z∗), I(S; x∗) ≜ ℓ∗( ˆθ\S ) − ℓ∗( ˆθ), (1) which measures how the example-wise loss at x∗ would differ if S were not available for training. This choice requires access to y∗; when labels are unavailable one can replace the loss with a prediction-based quantity, 
+
+e.g. comparing model outputs f ˆθ\S (x∗) and f ˆθ (x∗) di-rectly. Regardless of the choice of attribution score, computing (1) is expensive: identifying the most in-fluential subset of size M ,arg max  
+
+> S⊂D :|S|=M
+
+I(S; x∗), (2) is combinatorial and intractable in general (except for the singleton case M =1). To avoid the cost, many practical TDA methods—most notably those based on first-order influence functions—adopt additive group scores. In this case, the subset attribution decomposes into pointwise terms and the size-M maximizer is ob-tained by simple top-M selection: 
+
+IIF (S; x∗) = X
+
+> zi∈S
+
+IIF ({zi}; x∗), (3) where zi = ( xi, y i). This rank-and-pick rule is com-putationally attractive—pointwise scores can be pre-computed once per test query and reused for any 
+
+M —but it discards pairwise and higher-order inter-actions between training examples. The resulting re-dundancy ( e.g. over-counting near-duplicates) has mo-tivated extensions that account for interactions, such as higher-order influence functions (Basu et al., 2020). We return to this limitation when introducing our information-theoretic criteria in the next section. 
+
+## 3 INFORMATION-THEORETIC DATA ATTRIBUTION 
+
+Training Data Attribution (TDA) is fundamentally about quantifying and allocating information: which subsets of data best contribute to resolving uncer-tainty. The most principled toolkit for measuring information is information theory, which provides a mathematically rigorous framework for quantifying uncertainty and information in nats. A common cri-tique of such an approach is its perceived lack of tractability, since information-theoretic objectives of-ten involve intractable conditioning on large datasets. However, as we will show, the approximations de-veloped later in this section reduce the implementa-tion to efficient primitives–queries in a vector database and linear algebra over small matrices–bringing the framework into practical reach. With this motivation in place, we now introduce the information-theoretic framework underlying our approach, beginning with an ideal criterion and then developing its practical re-laxation. We propose to score a subset S ⊂ D at a test query 
+
+x∗ by the information loss (InfoLoss), 
+
+IIL (S; x∗) = −H f∗ | x∗, D + Hf∗ | x∗, D \ S, (4) that is, the amount of information (in nats) about the latent f∗ := f (x∗) that would be lost if S were removed. Under a Gaussian model that we consider in this work, this directly corresponds to an increase in marginal uncertainty about the test query. 
+
+A Bayesian surrogate. In common practice with pretrained networks (or networks trained using stan-dard learning algorithms such as SGD), parameters are available as a point estimate ˆθ. The mapping 
+
+x 7 → f ˆθ (x) is therefore deterministic, rendering the en-tropy terms in Eq. (4) degenerate. To obtain meaning-ful information-theoretic quantities, we use a Bayesian surrogate that endows latent functions with uncer-tainty consistent with the local geometry of the trained model. 
+
+Neural networks as Gaussian processes. Our Bayesian surrogate is a Gaussian process induced by linearizing the network around ˆθ:
+
+k(x, x′) = ∇θ f ˆθ (x)∇θ f ˆθ (x′)⊤ (5) where k(·, ·) – often referred to as the (empirical) neu-ral tangent kernel (NTK) (Jacot et al., 2018) – is a linear kernel with tangent features given by Jacobians of the neural network. In contrast to the infinite-width NTK at initialization —which converges to a deter-ministic kernel and remains constant during training under the NTK parameterization (Jacot et al., 2018; Yang, 2019)—evaluating the Jacobians at the trained 
+
+ˆθ ties the kernel to the representation the model ac-tually uses. This is precisely what is justified by the linearized (Laplace) posterior around ˆθ (Khan et al., 2019; Immer et al., 2021) and its function-space coun-terpart (Pan et al., 2020). Since Eq. (4) depends only on the entropy of the la-tent f∗ under the GP surrogate, it suffices to com-pute the marginal variance. For a Gaussian likelihood (squared-error regression) with noise variance σ2, the standard Gaussian process regression (GPR) expres-sions apply (Rasmussen and Williams, 2006). Cru-cially, in this regression setting the marginal variance A Bayesian Information-Theoretic Approach to Data Attribution 
+
+is independent of the targets , so the entropy term—and therefore IIL —depends only on inputs, the kernel and 
+
+σ2.To keep the objective and its updates simple and to retain the Gaussian setting, we recast classification as regression ( e.g. with mean-centered one-hot targets) and use the GPR variance irrespective of the underly-ing likelihood. Under this surrogate, the entropy dif-ference in Eq. (4) reduces to a log-variance ratio. 
+
+Relation to influence-based TDA. It turns out that in the singleton case ( |S| = 1), Eq. (4) reduces to a form resembling a cross-influence term normalized by self-influence terms, i.e. the cosine-style normalization used in RelatIF (Barshan et al., 2020), especially when combined with a Gauss-Newton Hessian approxima-tion. In App. D, we show RelatIF is label-independent (assuming a single-output case), which provides an ex-planation for its reported behaviour of selecting fewer “globally” influential examples that are often outliers or mislabelled examples. However, an important dif-ference is that RelatIF is signed —it distinguishes posi-tively vs. negatively influential examples—whereas our (singleton) score is unsigned .
+
+Relaxation to information gain. While the infor-mation loss criterion in Eq. (4) is intuitively appealing, it has two critical issues. First, we have to condition on the near-complete dataset which is expensive. Sec-ond, information loss is not sub-modular and requires an intractable combinatorial optimization (we cannot expect a performance guarantee when optimising for it greedily). In principle, one could tackle the first prob-lem in an analogous way to how recent linear system solvers handles Hessian-vector products (HVPs), that is replacing full-batch accumulations by sub-sampling as is done with the LiSSA scheme by Agarwal et al. (2017)) 1. However, the second problem is more chal-lenging to address. To sidestep these issues, we instead take a conceptually simpler approach and propose to use the information gain (InfoGain) criterion. This scores a subset S ⊂ D 
+
+at a test query x∗ by, 
+
+IIG (S; x∗) = −H f∗ | x∗, S  + Hf∗ | x∗
+
+, (6) that is, the reduction (in nats) of the marginal un-certainty about f∗ := f (x∗) if we trained only on S.Information gain is a standard acquisition criterion in Bayesian experimental design and active learning    
+
+> 1One could go even further and consider reducing the candidate space via heuristic prefiltering strategies (Grosse et al., 2023) or sparse kernel/GP techniques to obtain land-mark points ( e.g. leverage scores by Alaoui and Mahoney (2015)).
+
+(MacKay, 1992); a key difference here is that we eval-uate it directly at the test marginal rather than on parameters. Crucially, for a fixed subset size and large observation noise, information loss and information gain share the same leading-order expansion. This makes InfoGain a principled high-noise relaxation of InfoLoss, formalized below. 
+
+Lemma 1. Fix a query x∗ and subset size M , and let 
+
+SM := {S ⊆ D : |S| = M }. Then, as σ2 → ∞ ,
+
+IIG (S; x∗) = ∥kS∗∥2
+
+2k∗∗ σ2 + O(σ−4),
+
+IIL (S; x∗) = ∥kS∗∥2
+
+2k∗∗ σ2 + O(σ−4),
+
+uniformly over S ∈ S M . In particular, if ∥kS∗∥2 has a unique maximizer S† over SM , then both criteria are maximized by S† for sufficiently large σ2.
+
+For proof, see App. A. The lemma justifies using In-foGain as a high-noise surrogate for InfoLoss: we no longer need to condition on the whole dataset, and the new objective is sub-modular, allowing for the stan-dard 1 − 1 
+
+> e
+
+guarantee for greedy algorithms (Nemhauser et al., 1978). 
+
+Greedy algorithm for information gain. Justi-fied by its sub-modularity, we now optimize Eq. (6) under the GP surrogate by greedy selection. Let A
+
+denote the set of acquired points (initially ∅). At each of the M rounds we pick the example whose inclusion most reduces the marginal variance at x∗. Using the formula for inverse of a partitioned matrix, we can ex-press this with A as conditioning set throughout: 
+
+x(m) ← arg min 
+
+> x∈D\A
+
+vA∪{ x}∗ (7) This is equivalent (see App. B for a full derivation) to 
+
+x(m) ← arg max 
+
+> x∈D\A
+
+ vA
+
+> x,∗
+
+2
+
+σ2 + vA
+
+> x
+
+, (8) where the covariance terms are given by: 
+
+vA 
+
+> x,∗
+
+= kx,∗ − k⊤A,x
+
+ KA + σ2I−1 kA,∗, (9) 
+
+vA 
+
+> x
+
+= kx,x − k⊤A,x
+
+ KA + σ2I−1 kA,x. (10) Here k·,· = k(·, ·) are kernel evaluations from Eq. (5), K
+
+is the corresponding Gram matrix, and I is the iden-tity. Intuitively, the numerator is the squared (condi-tional) covariance between fx and f∗, and the denom-inator contains the marginal variance of the candidate point. After choosing x(m), we update A ← A∪{ x(m)}
+
+and iterate until |A| =M .Dharmesh Tailor, Nicol` o Felicioni, Kamil Ciosek 
+
+Scalability via Jacobian sketches. To apply the greedy rule, we must repeatedly evaluate the covari-ance terms, which involves per-example Jacobians in 
+
+RP for the kernel evaluations and inversions whose di-mension scales with M . While computing per-example Jacobians is tractable on modern accelerators, storing 
+
+O(N ) of them is prohibitive in memory at contempo-rary scales ( e.g. pre-training corpora). We therefore adopt random-projection Jacobian sketches: draw a sketching matrix A ∈ RK×P with K ≪ P from a sub-gaussian family ( e.g. , Gaussian or Rademacher), and define 
+
+ϕx = 1/√KA∇θ f ˆθ (x)⊤
+
+so that k(x, x′) ≈ ϕ⊤
+
+> x
+
+ϕx′ , (11) which (by Johnson–Lindenstrauss) preserves pairwise inner products with high probability. Substituting these features into the “weight-space” form (via Wood-bury formula) yields the scalable approximations to Eqs. (9) and (10), 
+
+vA 
+
+> x,∗
+
+≈ ϕ⊤
+
+> x
+
+S−1 
+
+> A
+
+ϕ∗, vA 
+
+> x
+
+≈ ϕ⊤
+
+> x
+
+S−1 
+
+> A
+
+ϕx, (12) where 
+
+SA := 1
+
+> σ2
+
+X
+
+> x′∈A
+
+ϕx′ ϕ⊤ 
+
+> x′
+
++ I. (13) so all dot-products and inversions are only in a K-dimensional space with K ≪ P . Here SA is the posterior precision matrix of a Bayesian linear re-gressor built from the projected Jacobians ϕx on 
+
+A; consequently, removing a single example in sub-sequent greedy steps corresponds to a rank-one up-date, for which Sherman-Morrison formula yields ef-ficient O(K2) maintenance of S−1 
+
+> A
+
+. This addresses the memory consideration (no need to retain full P -dimensional Jacobians) and maintains the reasonable compute (cheap solves in the sketch space). Prac-tically, the projected Jacobians ϕx can be obtained without materializing full Jacobians, an approach ad-vocated in recent scalable TDA pipelines (Choe et al., 2024; Schioppa, 2024). 
+
+Vector database. Even under the InfoGain relax-ation, each greedy step in Eq. (8) still requires scan-ning all candidates in D \ A . Approximate nearest-neighbour (ANN) indices in high-performance vector databases (e.g., FAISS (Johnson et al., 2019)) can sub-stantially reduce this cost by turning the search into vector similarity queries. This perspective has recently been drawn on to scale TDA to LLM regimes (Sun et al., 2025; Liu et al., 2025). However, such system optimizations only apply to primitives that reduce to vector similarity search. While a full database imple-mentation is beyond our scope, we use this as a de-sign constraint. In Eq. (8), the numerator  vA
+
+> x,∗
+
+2 is 10 −2 10 0 10 2 10 4 10 6   
+
+> Observation noise σ2
+> 60
+> 70
+> 80
+> 90
+> 100 Relative Information (%)
+> Subset size 12510 22 46 100
+> (a) Information efficiency vs. observation noise 10 010 110 2
+> Subset Size
+> 60
+> 70
+> 80
+> 90 Relative Information (%) InfoGain InfoGain (approx)
+> (b) Information efficiency vs. subset size
+
+Figure 2: Information efficiency experiments on binary CIFAR-10. Top: selecting subsets via greedy InfoGain and varying the observation noise. Bottom: fixed ob-servation noise level ( σ2 = 10 3), using InfoGain and approximate InfoGain. amenable to this setting, 2 whereas the denominator 
+
+vA 
+
+> x
+
+is a candidate-specific quadratic form and is not directly expressible as a standard vector-search prim-itive. 
+
+Linear-response variance correction. In order to have an algorithm that can be implemented as queries to a vector database, we now derive a further approx-imation (see App. C for further details). Specifically, we derive a first-order (linear-response) perturbation of the test marginal variance in Eq. (7) by introducing a scalar weight on the candidate point and differen-tiating with respect to it, in the spirit of Giordano et al. (2018) (cf. Opper and Winther, 2003; Welling and Teh, 2004): 
+
+vA∪{ x}∗ ≈ vA∗ − 1
+
+> σ2
+
+ vA
+
+> x,∗
+
+2. (14) Substituting this approximation into Eq. (7) removes the candidate-dependent denominator and yields the   
+
+> 2FAISS (Johnson et al., 2019) supports an absolute inner-product metric for some indexes, which preserves the ranking induced by a squared inner product. Otherwise, a squared inner product can be emulated via two vanilla
+> inner-product queries. A Bayesian Information-Theoretic Approach to Data Attribution
+
+following greedy rule for the variance-corrected infor-mation gain, 
+
+x(∗) ← arg max 
+
+> x∈D\A
+
+ ϕ⊤
+
+> x
+
+rA∗
+
+2, (15) where 
+
+rA∗ = S−1 
+
+> A
+
+ϕ∗ = ϕ∗ − Φ⊤A
+
+ ΦAΦ⊤A + σ2I−1ΦA ϕ∗.
+
+Here ΦA stacks the projected Jacobians for A as an (M × K) matrix. The second line shows that rA∗ is a “residual” query obtained by removing from ϕ∗ the en-ergy explained by the acquired set (a kernel-ridge pro-jection). Operationally, each greedy step reduces to a squared inner-product search over the fixed database 
+
+{ϕx}x∈D\A with the single evolving query rA∗ —exactly the primitive supported by vector databases. 
+
+Approximation Quality. To evaluate how well In-foGain and approximate InfoGain with the linear-response correction track InfoLoss, we introduce a metric which we call relative information (Figure 2). Relative information tracks the fraction of information (measured in nats) recovered by approximations, rela-tive to the information loss criterion (approximated by greedy selection for tractability purposes). We eval-uate this on binary CIFAR-10 (class 0 vs. class 1) trained on a 3-layer MLP. Varying the observation noise (top row of Figure 2), InfoGain approaches In-foLoss across subset sizes, converging near 100% with 
+
+σ2 ≥ 10 4. This is consistent with the high-noise asymptotic equivalence in Lemma 1. At a fixed noise level ( σ2 = 10 3, bottom row of Figure 2), the approx-imate InfoGain closely tracks exact InfoGain across subset budgets, indicating that the variance-correction introduces minimal degradation while enabling vector-database-friendly selection. 
+
+Computational footprint. This approximate Info-Gain pipeline requires one extra pass over the training set to compute a K-dimensional projected Jacobian for each of the N training examples, which has the same order of cost as one training epoch and is compara-ble to influence-based pipelines that likewise rely on a preprocessing pass to compute projected features or approximate curvature factors. Storing these features costs O(N K ) memory. For a query and subset bud-get M , maintaining the sketch-space precision matrix and residual via rank-one updates costs O(M K 2) and is independent of N ; the only remaining N -dependent operation is candidate retrieval. In the most naive im-plementation this retrieval is O(N K ) per greedy step, whereas ANN indices can avoid full scans and make the search sublinear in N .
+
+Summary of methods and practical guidance. 
+
+We have developed three complementary instantia-tions of our information-theoretic criterion, which dif-fer in how they balance faithfulness to the leave-subset-out counterfactual objective, greedy optimiza-tion guarantees and scalability. Greedy InfoLoss most directly matches the counterfactual notion of entropy increase when subsets are withheld, but it is not sub-modular and therefore lacks greedy optimization guar-antees. Greedy InfoGain is a principled high-noise re-laxation whose leading-order term matches InfoLoss, while enabling submodular optimization with the stan-dard (1 − 1/e ) guarantee. Finally, approximate greedy InfoGain adds the linear-response variance correction, reducing each step to a squared inner-product query against a vector database. In practice, this makes ap-proximate greedy InfoGain approx the default choice: Fig. 2 shows that it closely tracks exact greedy In-foGain, while being the only variant that maps di-rectly to standard vector-database primitives and thus cleanly scales to very large candidate pools. Exact greedy InfoGain is preferable when the candidate set is moderate and one wants the exact submodular objec-tive, whereas InfoLoss is most appropriate when stay-ing as close as possible to the leave-subset-out counter-factual definition matters more than greedy optimiza-tion guarantees or retrieval efficiency. 
+
+## 4 EXPERIMENTS 
+
+We evaluate our Bayesian information-theoretic attri-bution methods—greedy 3 InfoLoss , greedy InfoGain ,and approximate greedy InfoGain (implementable with a vector database)—on three complementary tasks: (i) leave-subset-out brittleness , which probes how well an attribution method identifies training ex-amples whose removal most degrades performance; (ii) retrieving ground-truth attribution via a synthetic backdoor , which provides a controlled setting with known influential training instances; and (iii) coreset selection , which asks whether attributed subsets suf-fice for accurate retraining. All experiments operate in a final-model-only regime (Wei et al., 2024) where only the final checkpoint is available and methods must avoid retraining the baseline model for scoring (for in-stance as done in Choe et al. (2024)). We treat the observation noise σ2 in our attribution methods as a hyperparameter and tune this on a held-out split using a log-scaled grid from 10 −6 to 10 6 (see App. E for full details). 
+
+Baselines. We compare against standard TDA baselines used in prior work: Random , represen-tational similarity (RepSim / cosine similarity on penultimate-layer features) (Hanawa et al., 2021), gra-   
+
+> 3While information loss is not sub-modular (unlike in-formation gain), we can still optimize it greedily. Dharmesh Tailor, Nicol` o Felicioni, Kamil Ciosek 0100 200 300 No. of Training Examples Removed
+> 0.0
+> 0.2
+> 0.4
+> 0.6 Frac. Misclassified Test Examples
+
+FashionMNIST (MLP)     
+
+> InfoLoss InfoGain InfoGain (approx)
+> 0400 800 1200 No. of Training Examples Removed
+> 0.0
+> 0.1
+> 0.2
+> 0.3
+> 0.4 Baselines
+
+CIFAR-10 (ResNet-9)    
+
+> Kron-Influence TRAK RepSim
+> 040 80 120 No. of Training Examples Removed
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+
+RTE (BERT) 
+
+> GradDot Random
+
+Figure 3: Our Bayesian information-theoretic methods— InfoLoss , InfoGain , and InfoGain (approx) —recover strong attribution signal in identified subsets, as reflected by higher brittleness. We plot the fraction of previously correct test queries that become misclassified after removing the same-label training examples attributed by each method and retraining. Left: Fashion-MNIST (MLP), where our methods dominate and 
+
+KronInfluence is the closest baseline. Middle: CIFAR-10 (ResNet-9), where our methods lead across budgets with TRAK most competitive. Right: RTE (BERT), where KronInfluence is strongest at smaller budgets, while InfoLoss /InfoGain catch up and are competitive at larger budgets. Error bars represent standard error across repeated runs. dient dot-product ( GradDot / i.e. TracIn with final checkpoint only) (Pruthi et al., 2020), TRAK (Park et al., 2023), and KronInfluence (influence function with EK-FAC approximation) (Grosse et al., 2023) 4.
+
+Implementation. We avoid explicit multi-output Jacobians by working with a scalar measurement func-tion. For brittleness and backdoor retrieval, we com-pute training-example Jacobians with respect to the logit corresponding to the query’s ground-truth class (rather than Jacobians of all logits). For the core-set experiment, where attribution is defined with re-spect to a set of queries, we instead use the same multiclass reduction as TRAK . All Jacobians are projected using a Rademacher sketch, shared across projection-based methods (ours and TRAK ) within each dataset; we use projection dimension 4096 for CIFAR-10/Fashion-MNIST and 20480 for RTE. We reuse the efficient CUDA Jacobian/sketch implemen-tation from Park et al. (2023). Given the sketched features, our methods solve a Bayesian linear regres-sion in closed form; all variance computations use a numerically stable Cholesky factorization. For the vi-sion models in brittleness/backdoor (CIFAR-10 and Fashion-MNIST), before computing Jacobians we con-vert the trained network to the NTK parameterization  
+
+> 4For the brittleness task, influence-based methods di-rectly target loss increases upon removal, whereas our methods target information-theoretic criteria that are only indirectly related to accuracy. We nevertheless include this evaluation because it has become standard in the attribu-tion literature.
+
+(Jacot et al., 2018), which preserves predictions but in-troduces width-dependent scaling of Jacobians; we ap-ply this reparameterization post hoc solely for attribu-tion (we do not train in NTK parameterization). For the CIFAR-10 coreset experiment, we keep the origi-nal parameterization. For BERT on RTE, we do not apply NTK parameterization and restrict Jacobians to linear layers. 
+
+4.1 Leave-subset-out brittleness Setup. We follow the subset-removal counterfactual protocol first introduced in Singla et al. (2023) but the experimental setup is adapted from Bae et al. (2024). We evaluate on CIFAR-10 and Fashion-MNIST (the latter subsampled to 25% of the original training set) using a ResNet-9 and MLP respectively, and on GLUE-RTE using BERT (see App. E for further de-tails). In contrast to Bae et al. (2024), the candidate pool for subset selection is restricted to same-class 
+
+training examples as the query, following Singla et al. (2023), to mitigate the bias of certain methods towards attribution in the same-class (Hanawa et al., 2021). 
+
+Evaluation protocol. Here we describe the details of our evaluation protocol: (1) Train a base model on the full training set. (2) From the test split, identify correctly classified examples as queries (100 for CIFAR-10/Fashion-MNIST and 50 for RTE). A Bayesian Information-Theoretic Approach to Data Attribution cat → deer deer → dog automobile → bird 
+
+Figure 4: Examples of backdoored CIFAR-10 images with triggers. The trigger is a 3 ×3 black/white ran-dom pattern placed at the bottom-right corner. This causes the model to misclassify the image to the cor-rupted class. (3) For each query: (a) Perform attribution according to each method (for a fixed subset size). (b) Remove the attributed subset and retrain from scratch (performed for the number of query points). (c) Predict on the query point and flag if mis-classification occurs. (4) Finally we report the proportion of all query points that are misclassified. This is repeated for a linearly-spaced grid of subset sizes (if a query point becomes misclassified for a given subset size then this is terminated early). 
+
+Results. In Fig. 3, we observe that across all three datasets our Bayesian information-theoretic meth-ods perform strongly on the brittleness metric. On Fashion-MNIST (left), InfoLoss , InfoGain , and In-foGain (approx) all induce substantially more coun-terfactual errors than the baselines at every removal budget, with the gap widening as the subset size grows; 
+
+InfoGain (approx) is typically the top curve and closely tracks (or slightly exceeds) the exact Info-Gain . Among baselines, KronInfluence is the most competitive on Fashion-MNIST. On CIFAR-10 (mid-dle), our methods again lead throughout; InfoGain 
+
+is strongest at small–mid budgets while InfoLoss 
+
+edges out others at the largest budget. Here, how-ever, TRAK performs very close to our methods, with curves that mostly overlap. On RTE with BERT (right), the strongest baseline ( KronInfluence ) is highly competitive and tends to lead at smaller bud-gets, while InfoLoss and InfoGain close the gap and are competitive at larger budgets; InfoGain (approx) remains weaker than its exact counterpart but still outperforms the other baselines. Despite influence-derived approaches ( i.e. TRAK and Kro-nInfluence ) being tailored to loss increases, our information-centric objectives remain competitive and                                                   
+
+> Method Recall@50 ( ↑)MRR ( ↑)
+> Random 0.011 ±0.003 0.045 ±0.016
+> GradDot 0.010 ±0.002 0.217 ±0.033
+> RepSim 0.985 ±0.004 1.000 ±0.000
+> TRAK 0.009 ±0.002 0.189 ±0.036
+> KronInfluence 0.058 ±0.011 0.504 ±0.034
+> InfoLoss 1.000 ±0.000 0.999 ±0.001
+> InfoGain 0.974 ±0.007 0.998 ±0.001
+> InfoGain (approx) 0.974 ±0.007 0.998 ±0.001
+
+Table 1: Our Bayesian information-theoretic method 
+
+InfoLoss retrieves the ground-truth backdoor ex-amples almost perfectly on CIFAR-10—achieving the highest recall and matching the best baseline on MRR (no significant difference). Moreover, InfoGain and 
+
+InfoGain (approx) show no significant difference from the best methods on MRR, and their recall is close to the best baseline. We compare standard TDA baselines to our proposed methods (shaded). We de-note the best within each block (Baselines / Proposed) with underline and bold denotes the best overall. Re-ported metrics are accompanied by standard error from repeated runs. are often superior, indicating that the information cap-tured by our scores translates into substantial counter-factual sensitivity under subset removal (although the same-class candidate restriction may also amplify this effect). 
+
+4.2 Retrieving ground-truth attribution via backdoor 
+
+While brittleness measures whether the subsets iden-tified by an attribution method matter counterfactu-ally, it does not tell us whether the retrieved exam-ples are truly the ones driving the prediction. To test that more directly, we next turn to a synthetic back-door setting where the relevant training instances are known by construction. 
+
+Backdoor design. We use CIFAR-10 with a class-conditional (cyclic) BadNets (Gu et al., 2019) rule: for base class k, a backdoored image is relabelled to ( k+1) mod 10. The backdoor trigger is a 3 ×3black/white randomly-generated grid placed at the bottom-right corner, that is unique to each class (see Fig. 4). This is applied to 1% of the training set, dis-tributed evenly across classes (50 per class). With this configuration, the attack success rate on the poisoned test set is near-perfect whilst the clean test accuracy is unchanged. 
+
+Retrieval task and metrics. For each backdoored test query from base class k, the ground-truth attri-bution set are those poisoned training examples whose Dharmesh Tailor, Nicol` o Felicioni, Kamil Ciosek 100 200 500 1000 2000 5000 
+
+> Coreset Size
+> 10
+> 20
+> 30
+> 40
+> 50
+> 60
+> 70
+> 80
+> Test Accuracy (%)
+> InfoLoss InfoGain InfoGain (approx) Kron-Influence TRAK RepSim GradDot Random
+
+Figure 5: InfoGain and InfoGain (approx) con-struct substantially better CIFAR-10 coresets than ex-isting TDA baselines which perform worse than ran-dom selection. We plot test accuracy after retraining on the selected subset for coreset sizes ranging from 0.2% to 10% of the training set. Error bars show stan-dard error across repeated runs. base class is k. We report the standard IR metrics, 
+
+recall@50 and mean reciprocal rank ( MRR ), averaged over 100 queries (see App. E for further details). All other aspects of the experimental setup are identical to the brittleness experiment on CIFAR-10. 
+
+Results. In Table 1, InfoLoss attains near-perfect retrieval and yields significantly higher recall than all baselines in this synthetic backdoor-retrieval task. For ranking quality (MRR), the top methods— RepSim ,
+
+InfoLoss , and both InfoGain variants—are statisti-cally indistinguishable. The InfoGain and InfoGain (approx) methods also deliver performance close to the strongest baseline while maintaining MRR on par with the best methods. In contrast, influence-based TDA baselines struggle to retrieve the true influen-tial training points, underscoring the advantage of our Bayesian information-theoretic approach for this re-trieval setting. 
+
+4.3 Coreset selection 
+
+We next consider coreset selection through the lens of TDA: identifying a small training subset that still supports accurate retraining. 
+
+Setup. We consider CIFAR-10 with ResNet-9 and coresets ranging from 0 .2% to 10% of the training set. We extract 500 examples from the test set as the query set for attribution, and report test accuracy on the remaining held-out test examples after retraining on the selected coreset. For the TDA baselines ( TRAK ,
+
+KronInfluence , GradDot , and RepSim ), which do not explicitly define attribution to multiple query points at once, we average the per-query attribution scores before selecting the top-M examples. This is consistent with the usual additivity assumption in influence-based TDA and with the linear datamod-elling score used to evaluate such methods. App. E gives the full protocol and derives the tractable multi-query greedy selection criterion used by our methods. 
+
+Results. Fig. 5 shows that InfoGain is the strongest method across essentially the entire budget range, with the clearest gains at small coresets. At 
+
+M = 500 (1% of the training set), InfoGain reaches 35 .3% accuracy, compared with 30 .8% for Random ,23 .2% for KronInfluence , and 15 .7% for TRAK ;at M = 1000, the gap over Random remains substan-tial (44 .2% vs. 40 .8%). InfoGain (approx) closely tracks the exact greedy variant, especially at larger budgets. In contrast, InfoLoss is markedly weaker on this task, which is consistent with its leave-subset-out objective being tailored to identifying removals that maximally disrupt a prediction rather than subsets that are jointly informative for many queries. The TDA baselines all underperform Random , indi-cating that influence-based rankings do not cleanly transfer to coreset construction. At the same time, a comparison with class-balanced variants (see App. E) shows that much of this degradation is due to imbal-ance in the selected subsets: enforcing per-class quo-tas substantially improves all TDA baselines and often lifts the strongest ones above greedy InfoLoss . Nev-ertheless, even after this correction they still remain below both InfoGain variants. 
+
+## 5 CONCLUSION 
+
+We proposed a Bayesian information-theoretic ap-proach to training data attribution (TDA), framing at-tribution as the information loss incurred when subsets of training data are withheld. Using Gaussian process surrogates from neural tangent features, we derived closed-form estimators and scalable relaxations to in-formation gain, enabling efficient retrieval with Jaco-bian sketches and vector database queries. Empirical results on brittleness, backdoor retrieval and coreset selection show that our methods reliably identify influ-ential subsets, recover ground-truth poisoned data and construct small training sets that preserve downstream accuracy, while maintaining computational efficiency comparable to influence-based baselines. This work bridges principled information measures with scalable attribution, offering a foundation for future applica-tions in auditing, safety, and interpretability. A Bayesian Information-Theoretic Approach to Data Attribution 
+
+Acknowledgements 
+
+DT would like to thank Alice Wang and the other members of the Simplex Lab at Spotify. DT also ac-knowledges Emtiyaz Khan and Eric Nalisnick for dis-cussions around sensitivity-based variance estimates. 
+
+References 
+
+Naman Agarwal, Brian Bullins, and Elad Hazan. Second-Order Stochastic Optimization for Machine Learning in Linear Time. Journal of Machine Learn-ing Research , 2017. Ahmed Alaoui and Michael W Mahoney. Fast Ran-domized Kernel Ridge Regression with Statistical Guarantees. Advances in Neural Information Pro-cessing Systems , 2015. Juhan Bae, Wu Lin, Jonathan Lorraine, and Roger Grosse. Training Data Attribution via Approximate Unrolled Differentiation. ArXiv e-Prints , 2024. Elnaz Barshan, Marc-Etienne Brunet, and Gintare Karolina Dziugaite. RelatIF: Identify-ing Explanatory Training Examples via Relative Influence. In International Conference on Artificial Intelligence and Statistics , 2020. Samyadeep Basu, Xuchen You, and Soheil Feizi. On Second-Order Group Influence Functions for Black-Box Predictions. In International Conference on Machine Learning , 2020. Sang Keun Choe, Hwijeen Ahn, Juhan Bae, Kewen Zhao, Minsoo Kang, Youngseog Chung, Adithya Pratapa, Willie Neiswanger, Emma Strubell, Teruko Mitamura, et al. What is Your Data Worth to GPT? LLM-Scale Data Valuation with Influence Functions. ArXiv e-Prints , 2024. R Dennis Cook and Sanford Weisberg. Characteriza-tions of an Empirical Influence Function for Detect-ing Influential Cases in Regression. Technometrics ,1980. Ryan Giordano, Tamara Broderick, and Michael I Jordan. Covariances, Robustness, and Variational Bayes. Journal of Machine Learning Research , 2018. Roger Grosse, Juhan Bae, Cem Anil, Nelson Elhage, Alex Tamkin, Amirhossein Tajdini, Benoit Steiner, Dustin Li, Esin Durmus, Ethan Perez, et al. Study-ing Large Language Model Generalization with In-fluence Functions. ArXiv e-Prints , 2023. Tianyu Gu, Kang Liu, Brendan Dolan-Gavitt, and Siddharth Garg. Badnets: Evaluating Backdooring Attacks on Deep Neural Networks. IEEE Access ,2019. Frank R Hampel. The Influence Curve and its Role in Robust Estimation. Journal of the American Sta-tistical Association , 1974. Kazuaki Hanawa, Sho Yokoi, Satoshi Hara, and Ken-taro Inui. Evaluation of similarity-based explana-tions. In International Conference on Learning Rep-resentations , 2021. Satoshi Hara, Atsushi Nitanda, and Takanori Mae-hara. Data Cleansing for Models Trained with SGD. In Advances in Neural Information Processing Sys-tems , 2019. Neil Houlsby, Ferenc Husz´ ar, Zoubin Ghahramani, and M´ at´ e Lengyel. Bayesian Active Learning for Clas-sification and Preference Learning. ArXiv e-Prints ,2011. Alexander Immer, Maciej Korzepa, and Matthias Bauer. Improving predictions of Bayesian neural nets via local linearization. In International Confer-ence on Artificial Intelligence and Statistics , 2021. Arthur Jacot, Franck Gabriel, and Cl´ ement Hongler. Neural Tangent Kernel: Convergence and General-ization in Neural Networks. Advances in Neural In-formation Processing Systems , 2018. Jeff Johnson, Matthijs Douze, and Herv´ e J´ egou. Billion-Scale Similarity Search with GPUs. IEEE Transactions on Big Data , 2019. Mohammad Emtiyaz Khan, Alexander Immer, Ehsan Abedi, and Maciej Korzepa. Approximate Inference Turns Deep Networks into Gaussian Processes. Ad-vances in Neural Information Processing Systems ,2019. Pang Wei Koh and Percy Liang. Understanding Black-Box Predictions via Influence Functions. In Inter-national Conference on Machine Learning , 2017. Jaehoon Lee, Samuel Schoenholz, Jeffrey Penning-ton, Ben Adlam, Lechao Xiao, Roman Novak, and Jascha Sohl-Dickstein. Finite Versus Infinite Neural Networks: an Empirical Study. Advances in Neural Information Processing Systems , 2020. Jiacheng Liu, Taylor Blanton, Yanai Elazar, Se-won Min, Yen-Sung Chen, Arnavi Chheda-Kothary, Huy Tran, Byron Bischoff, Eric Marsh, Michael Schmitz, Cassidy Trier, Aaron Sarnat, Jenna James, Jon Borchardt, Bailey Kuehl, Evie Yu-Yen Cheng, Karen Farley, Taira Anderson, David Albright, Carissa Schoenick, Luca Soldaini, Dirk Groeneveld, Rock Yuren Pang, Pang Wei Koh, Noah A. Smith, Sophie Lebrecht, Yejin Choi, Hannaneh Hajishirzi, Ali Farhadi, and Jesse Dodge. OLMoTrace: Trac-ing Language Model Outputs Back to Trillions of Training Tokens. In Proceedings of the 63rd Annual Meeting of the Association for Computational Lin-guistics (Volume 3: System Demonstrations) . Asso-ciation for Computational Linguistics, 2025. Dharmesh Tailor, Nicol` o Felicioni, Kamil Ciosek 
+
+David JC MacKay. Information-Based Objective Functions for Active Data Selection. Neural Com-putation , 1992. George L Nemhauser, Laurence A Wolsey, and Mar-shall L Fisher. An analysis of approximations for maximizing submodular set functions—I. Mathe-matical Programming , 1978. Elisa Nguyen, Minjoon Seo, and Seong Joon Oh. ABayesian Approach to Analysing Training Data At-tribution in Deep Learning. Advances in Neural In-formation Processing Systems , 2023. Manfred Opper and Ole Winther. Variational Linear Response. Advances in Neural Information Process-ing Systems , 16, 2003. Pingbo Pan, Siddharth Swaroop, Alexander Immer, Runa Eschenhagen, Richard Turner, and Moham-mad Emtiyaz Khan. Continual Deep Learning by Functional Regularisation of Memorable Past. Ad-vances in Neural Information Processing Systems ,2020. Sung Min Park, Kristian Georgiev, Andrew Ilyas, Guillaume Leclerc, and Aleksander Madry. Trak: Attributing Model Behavior at Scale. ArXiv e-Prints , 2023. Daryl Pregibon. Logistic Regression Diagnostics. The Annals of Statistics , 1981. Garima Pruthi, Frederick Liu, Satyen Kale, and Mukund Sundararajan. Estimating Training Data Influence by Tracing Gradient Descent. In Advances in Neural Information Processing Systems , 2020. Carl Edward Rasmussen and Christopher KI Williams. 
+
+Gaussian Processes for Machine Learning . MIT Press, 2006. Andrea Schioppa. Efficient Sketches for Training Data Attribution and Studying the Loss Landscape. Ad-vances in Neural Information Processing Systems ,2024. Andrea Schioppa, Polina Zablotskaia, David Vilar, and Artem Sokolov. Scaling Up Influence Functions. In Proceedings of the AAAI Conference on Artificial Intelligence , 2022. Ravid Shwartz-Ziv and Naftali Tishby. Opening the black box of Deep Neural Networks via Information. 
+
+ArXiv e-Prints , 2017. Vasu Singla, Pedro Sandoval-Segura, Micah Gold-blum, Jonas Geiping, and Tom Goldstein. A Simple and Efficient Baseline for Data Attribution on Im-ages. ArXiv e-Prints , 2023. Thomas Steinke and Lydia Zakynthinou. Reasoning About Generalization via Conditional Mutual Infor-mation. In Conference on Learning Theory , 2020. Weiwei Sun, Haokun Liu, Nikhil Kandpal, Colin Raffel, and Yiming Yang. Enhancing Training Data Attribution with Representational Optimiza-tion. ArXiv e-Prints , 2025. Sellamanickam Sundararajan and Sathiya Keerthi. Predictive app roaches for choosing hyperparame-ters in gaussian processes. Advances in neural in-formation processing systems , 12, 1999. Dennis Wei, Inkit Padhi, Soumya Ghosh, Amit Dhu-randhar, Karthikeyan Natesan Ramamurthy, and Maria Chang. Final-Model-Only Data Attribution with a Unifying View of Gradient-Based Methods. 
+
+ArXiv e-Prints , 2024. Max Welling and Yee Whye Teh. Linear Response Algorithms for Approximate Inference in Graphical Models. Neural Computation , 2004. Aolin Xu and Maxim Raginsky. Information-theoretic analysis of generalization capability of learning algo-rithms. Advances in Neural Information Processing Systems , 2017. Xinnuo Xu, Minyoung Kim, Royson Lee, Brais Mar-tinez, and Timothy Hospedales. A Bayesian Ap-proach to Data Point Selection. Advances in Neural Information Processing Systems , 2024. Greg Yang. Scaling Limits of Wide Neural Networks with Weight Sharing: Gaussian Process Behavior, Gradient Independence, and Neural Tangent Kernel Derivation. ArXiv e-Prints , 2019. A Bayesian Information-Theoretic Approach to Data Attribution – Supplementary Materials – 
+
+## A HIGH-NOISE ASYMPTOTIC EQUIVALENCE BETWEEN INFORMATION LOSS AND INFORMATION GAIN 
+
+The goal of this section is to prove the following Lemma: 
+
+Lemma 1. Fix a query x∗ and subset size M , and let SM := {S ⊆ D : |S| = M }. Then, as σ2 → ∞ ,
+
+IIG (S; x∗) = ∥kS∗∥2
+
+2k∗∗ σ2 + O(σ−4),
+
+IIL (S; x∗) = ∥kS∗∥2
+
+2k∗∗ σ2 + O(σ−4),
+
+uniformly over S ∈ S M . In particular, if ∥kS∗∥2 has a unique maximizer S† over SM , then both criteria are maximized by S† for sufficiently large σ2.Proof. Fix the subset size M and define SM := {S ⊆ D : |S| = M }. For notational convenience, write 
+
+a(S) := ∥kS∗∥2, use v∗(·) for the marginal variance of f∗ = f (x∗) as a function of the conditioning set, and define ¯S = D \ S as the complement of the training subset. Then we can write the criteria as, 
+
+IIG (S; x∗) = − 12 log v∗(S)
+
+k∗∗ 
+
+, (16) 
+
+IIL (S; x∗) = 12 log v∗( ¯S)
+
+v∗(D) . (17) where we consider the marginal variances v∗(S) and v∗( ¯S) under an underlying GP model without prescribing the kernel further. Using the Neumann series ( I + A)−1 = P∞
+
+> k=0
+
+(−1) kAk for which convergence is assured when 
+
+ρ(A) < 1 where ρ(·) is the spectral radius, we can show: 
+
+ K + σ2I−1 = σ−2  I + σ−2K−1 (18) = σ−2  I − σ−2K + σ−4K2 + . . .  (19) = σ−2I + O(σ−4) (20) where the remainder is entrywise of order σ−4 and the expansion is valid whenever ρ(σ−2K) < 1, which holds for sufficiently large σ2. Because SM is finite, all O(σ−4) terms below can be taken uniformly over S ∈ S M .Using Eq. (20), we can write the marginal variance v∗(S) as, 
+
+v∗(S) = k∗∗ − k⊤
+
+> S∗
+
+ KS + σ2IM
+
+−1 kS∗ (21) = k∗∗ − σ−2a(S) + O(σ−4). (22) Hence, 
+
+IIG (S; x∗) = − 12 log 
+
+
+
+1 − a(S)
+
+k∗∗ σ2 + O(σ−4)
+
+
+
+(23) = a(S)2k∗∗ σ2 + O(σ−4), (24) Dharmesh Tailor, Nicol` o Felicioni, Kamil Ciosek 
+
+where the second line uses the Taylor expansion log(1 + u) = u + O(u2) together with u = O(σ−2). For v∗( ¯S), we first turn to the formula for the leave-M -out marginal variance (see derivation in App. A.1), 
+
+v∗( ¯S) = v∗(D) + [ K−1 
+
+> y
+
+kD∗ ]⊤
+
+> S
+
+ [K−1 
+
+> y
+
+]S,S 
+
+−1 [K−1 
+
+> y
+
+kD∗ ]S (25) where we denote Ky := KDD + σ2IN and overload S as an index in order to extract entries corresponding to rows/columns of S in D. Again using Eq. (20), we can expand the two factors on the right-hand side of Eq. (25). First, [K−1 
+
+> y
+
+]S,S = σ−2IM − σ−4KSS + O(σ−6) (26) =⇒  [K−1 
+
+> y
+
+]S,S 
+
+−1 = σ2  IM − σ−2KSS + O(σ−4)−1 (27) = σ2IM + KSS + O(σ−2). (28) and second, [K−1 
+
+> y
+
+kD∗ ]S = σ−2 IN − σ−2KDD + O(σ−4) 
+
+> S, :
+
+kD∗ (29) = σ−2  kS∗ − σ−2KSD kD∗ + O(σ−4) (30) = σ−2kS∗ + O(σ−4). (31) Substituting Eqs. (28) and (31) into Eq. (25) we obtain, 
+
+v∗( ¯S) − v∗(D) =  σ−2kS∗ + O(σ−4)⊤  σ2IM + KSS + O(σ−2)   σ−2kS∗ + O(σ−4) (32) = σ−2k⊤
+
+> S∗
+
+kS∗ + O(σ−4) (33) = σ−2a(S) + O(σ−4). (34) Moreover, applying Eq. (22) with S = D yields 
+
+v∗(D) = k∗∗ + O(σ−2). (35) Therefore, 
+
+IIL (S; x∗) = 12 log 
+
+
+
+1 + v∗( ¯S) − v∗(D)
+
+v∗(D)
+
+
+
+(36) = 12 log 
+
+
+
+1 + a(S)
+
+k∗∗ σ2 + O(σ−4)
+
+
+
+(37) = a(S)2k∗∗ σ2 + O(σ−4), (38) where in the second line we used Eqs. (34) and (35). Eqs. (24) and (38) prove the shared leading-order expansion. For the final claim, suppose a(S) has a unique maximizer S† over SM and define the gap ∆ := a(S†) − max   
+
+> S∈S M, S ̸=S†
+
+a(S) > 0. (39) Since k∗∗ > 0, by uniformity of Eqs. (24) and (38) there exist constants C > 0 and σ2asym > 0 such that for both criteria J ∈ {I IG , IIL } we may write, 
+
+J (S; x∗) = a(S)2k∗∗ σ2 + rJ ,σ (S), |rJ ,σ (S)| ≤ Cσ −4 (40) for all S ∈ S M and σ2 ≥ σ2asym . Now fix any S̸ = S†. Then for either criterion J ,
+
+J (S†; x∗) − J (S; x∗) = a(S†) − a(S)2k∗∗ σ2 + rJ ,σ (S†) − rJ ,σ (S) (41) 
+
+≥ a(S†) − a(S)2k∗∗ σ2 − 2Cσ −4 (42) 
+
+≥ ∆2k∗∗ σ2 − 2Cσ −4 (43) A Bayesian Information-Theoretic Approach to Data Attribution 
+
+The lower bound in Eq. (43) is positive whenever ∆2k∗∗ σ2 − 2Cσ −4 > 0 ⇐⇒ σ2 > 4Ck ∗∗ 
+
+∆ . (44) Therefore, if 
+
+σ2 > σ 2crit := max 
+
+
+
+σ2asym , 4Ck ∗∗ 
+
+∆
+
+
+
+, (45) then J (S†; x∗) − J (S; x∗) > 0 for every S̸ = S† and either criterion J . Hence both IIG (·; x∗) and IIL (·; x∗) are uniquely maximized by S† for all σ2 > σ 2crit . This proves the lemma. 
+
+A.1 Derivation of leave-M -out marginal variance 
+
+This is a generalization of the leave-one-out expression commonly used in cross-validation of GPs (Sundararajan and Keerthi, 1999) (also see Ch. 5.4.2 in Rasmussen and Williams (2006)) but in addition to leaving out multiple points, here we are concerned with evaluating variance at a test point rather than the omitted point(s). The derivation proceeds by exploiting the partitioned matrix inversion lemma to relate the marginal variance on the full data v∗(D) to the leave-M -out marginal variance v∗( ¯S). To recap the marginal variance on the full data is given by, 
+
+v∗(D) = k∗∗ − k⊤D∗ K−1 
+
+> y
+
+kD∗ , where Ky := KDD + σ2IN . (46) We consider a partition of Ky into the following block matrix with the first block corresponding to the retained points ¯S and the second block corresponding to the omitted points S (the expression for marginal variance allows for arbritrary ordering of the points so we can re-order the points as necessary): 
+
+Ky =
+
+ A BB⊤ C
+
+
+
+with 
+
+A = K ¯S ¯S + σ2IN −M
+
+B = K ¯SS 
+
+C = KSS + σ2IM
+
+(47) Then using the partitioned matrix inversion lemma, we have, 
+
+K−1 
+
+> y
+
+=
+
+A−1 + A−1BMB ⊤A−1 −A−1BM 
+
+−MB ⊤A−1 M
+
+
+
+(48) where M−1 = C − B⊤A−1B is the Schur complement of A in Ky . Substituting Eq. (48) into the expression for 
+
+v∗(D) given in Eq. (46) and expanding k⊤D∗ = [ k ¯S∗ kS∗]⊤ we have, 
+
+v∗(D) = k∗∗ − k⊤
+
+> ¯S∗
+
+A−1k ¯S∗ − (kS∗ − B⊤A−1k ¯S∗)⊤M(kS∗ − B⊤A−1k ¯S∗) (49) = v∗( ¯S) − (kS∗ − B⊤A−1k ¯S∗)⊤M(kS∗ − B⊤A−1k ¯S∗) (50) where we noticed that the first two terms on the right-hand side of the first line are exactly v∗( ¯S). Next, we consider the following, [K−1 
+
+> y
+
+]S, D kD∗ = −MB ⊤A−1 M k ¯S∗
+
+kS∗
+
+
+
+= M(kS∗ − B⊤A−1k ¯S∗) (51) =⇒ kS∗ − B⊤A−1k ¯S∗ = M−1[K−1 
+
+> y
+
+]S, D kD∗ (52) where the expression to the left of the equality in Eq. (52) is identical to that in the quadratic form in Eq. (50). We proceed to substitute Eq. (52) into Eq. (50) and rearrange it in terms of v∗( ¯S): 
+
+v∗( ¯S) = v∗(D) + ([ K−1 
+
+> y
+
+]S, D kD∗ )⊤M−1[K−1 
+
+> y
+
+]S, D kD∗ (53) = v∗(D) + [ K−1 
+
+> y
+
+kD∗ ]⊤
+
+> S
+
+ [K−1 
+
+> y
+
+]S,S 
+
+−1 [K−1 
+
+> y
+
+kD∗ ]S (54) where in the second line we used a simple manipulation to write [ K−1 
+
+> y
+
+]S, D kD∗ as [ K−1 
+
+> y
+
+kD∗ ]S and write M as a subblock of K−1 
+
+> y
+
+(see Eq. (48)). Dharmesh Tailor, Nicol` o Felicioni, Kamil Ciosek 
+
+## B DERIVATION OF THE GREEDY RULES UNDER GP SURROGATE 
+
+B.1 Information Gain 
+
+At each of the M rounds we pick the example whose inclusion most reduces the marginal variance at x∗ con-ditioned on the set of acquired points so far A and the candidate point x. This is given in Eq. (7) which is repeated here for convenience: 
+
+x(m) ← arg min 
+
+> x∈D\A
+
+vA∪{ x}∗
+
+where vA∪{ x}∗ = k∗∗ − k⊤A∪{ x},∗
+
+ KA∪{ x} + σ2I−1 kA∪{ x},∗. (55) Similar to App. A.1, we exploit the partitioned matrix inversion lemma to relate the “add-one-in” marginal variance vA∪{ x}∗ to vA∗ . We consider a partition of KA∪{ x} + σ2I into a block matrix with the first block corresponding to the set of acquired points A and the second block corresponding to the candidate point x:
+
+KA∪{ x} + σ2I =
+
+ A bb⊤ c
+
+
+
+with 
+
+A = KA + σ2Ib = kA,x
+
+c = kx,x + σ2
+
+(56) Using the partitioned matrix inversion lemma, we have: 
+
+ KA∪{ x} + σ2I−1 =
+
+A−1 + mA−1bb ⊤A−1 −mA−1b
+
+−mb⊤A−1 m
+
+
+
+(57) where m−1 = c − b⊤A−1b is the Schur complement of A in  KA∪{ x} + σ2I. Substituting Eq. (57) into Eq. (55) and expanding k⊤A∪{ x},∗ = [ kA,∗ kx,∗]⊤ we have: 
+
+vA∪{ x}∗ = k∗∗ − k⊤A,∗A−1kA,∗ − m  kx,∗ − b⊤A−1kA,∗
+
+2 . (58) We recognise the first two terms on the right-hand side of Eq. (58) as vA∗ and simplifying we obtain: 
+
+vA ∪ { x}∗ = vA∗ −
+
+ vA
+
+> x,∗
+
+2
+
+σ2 + vA
+
+> x
+
+with 
+
+vA∗ = k∗∗ − k⊤A,∗
+
+ KA + σ2I−1 kA,∗
+
+vA 
+
+> x,∗
+
+= kx,∗ − k⊤A,x
+
+ KA + σ2I−1 kA,∗
+
+vA 
+
+> x
+
+= kx,x − k⊤A,x
+
+ KA + σ2I−1 kA,x.
+
+(59) Since vA∗ is independent of x, we can ignore it in the greedy rule thereby obtaining Eq. (8) – the minus sign in front of the remaining term changes the problem from a minimization to a maximization. 
+
+B.2 Information Loss 
+
+Whilst the information loss criterion is not sub-modular, it can nevertheless be optimized greedily (just without guarantees) and therefore we compare against this in our experiments. The greedy rule corresponds to choosing the candidate point whose removal maximally increases the marginal variance at x∗. For notational convenience let A+ = A ∪ { x} then, 
+
+x(m) ← arg max 
+
+> x∈D\A
+
+vD\A +
+
+> ∗
+
+where vD\A + 
+
+> ∗
+
+= k∗∗ − k⊤D\A +,∗
+
+ KD\A + + σ2I−1 kD\A +,∗. (60) We can use a special case of App. A.1, that is the leave-one-out setting, to express vD\A + 
+
+> ∗
+
+with D \ A as the conditioning set throughout. This leads to, 
+
+vD\A + 
+
+> ∗
+
+= vD\A ∗ +
+
+
+
+vD\A 
+
+> x,∗
+
+2
+
+σ2 − vD\A 
+
+> x
+
+with 
+
+vD\A ∗ = k∗∗ − k⊤D\A ,∗
+
+ KD\A + σ2I−1 kD\A ,∗
+
+vD\A  
+
+> x,∗
+
+= kx,∗ − k⊤D\A ,x
+
+ KD\A + σ2I−1 kD\A ,∗
+
+vD\A  
+
+> x
+
+= kx,x − k⊤D\A ,x
+
+ KD\A + σ2I−1 kD\A ,x.
+
+(61) A Bayesian Information-Theoretic Approach to Data Attribution 
+
+Thus, the greedy rule can be stated as, 
+
+x(m) ← arg max 
+
+> x∈D\A
+
+
+
+vD\A 
+
+> x,∗
+
+2
+
+σ2 − vD\A 
+
+> x
+
+(62) 
+
+## C DERIVATION OF LINEAR-RESPONSE VARIANCE CORRECTION 
+
+We consider the “weight-space” form (via Woodbury formula) of the marginal variance given in Eq. (7): 
+
+vA∪{ x}∗ = ϕ⊤∗
+
+ SA + 1 
+
+> σ2
+
+ϕxϕ⊤
+
+> x
+
+−1 ϕ∗ (63) where we use ϕx to denote the tangent features (with slight abuse of notation) and SA is the posterior precision matrix. We can construct a perturbative variant of this expression by introducing a “weight” ϵ on the term corresponding to the candidate point. For notational convenience let us denote ¯ v∗ = vA∪{ x}∗ then, ¯vϵ 
+
+> ∗
+
+= ϕ⊤∗
+
+ SA + ϵ 1 
+
+> σ2
+
+ϕxϕ⊤
+
+> x
+
+−1 ϕ∗ (64) = ϕ⊤∗
+
+
+
+S−1 
+
+> A
+
+− ϵS−1 
+
+> A
+
+ϕxϕ⊤ 
+
+> x
+
+S−1
+
+> A
+
+σ2 + ϵϕ⊤ 
+
+> x
+
+S−1 
+
+> A
+
+ϕx
+
+
+
+ϕ∗ (65) = vA∗ − ϵ  vA
+
+> x,∗
+
+2
+
+σ2 + ϵv A
+
+> x
+
+(66) where in the last line we defined vA∗ = ϕ⊤∗ S−1 
+
+> A
+
+ϕ∗, vA 
+
+> x
+
+= ϕ⊤ 
+
+> x
+
+S−1 
+
+> A
+
+ϕx and vA 
+
+> x,∗
+
+= ϕ⊤ 
+
+> x
+
+S−1 
+
+> A
+
+ϕ∗. In the second line above, we used the Sherman-Morrison formula giving a form typical of recursive least-squares or Kalman filtering. The resulting expression can be interpreted as a weight-dependent functional that we can differentiate with respect to ϵ and evaluate at ϵ = 0 giving the following sensitivity-based variance estimate, 
+
+d¯vϵ
+
+> ∗
+
+dϵ = − σ2  vA
+
+> x,∗
+
+2
+
+(σ2 + ϵv A 
+
+> x
+
+)2 , d¯vϵ
+
+> ∗
+
+dϵ ϵ=0 
+
+= − 1
+
+σ2
+
+ vA
+
+> x,∗
+
+2 (67) Using this we can construct a first-order perturbative update to the predictive variance ¯ vϵ 
+
+> ∗
+
+≈ vA∗ + d¯vϵ
+
+> ∗
+
+/dϵ |ϵ=0 · ϵ.Evaluating this at ϵ = 1 we have, ¯v∗ = ¯ vϵ=1  
+
+> ∗
+
+≈ vA∗ − 1
+
+σ2
+
+ vA
+
+> x,∗
+
+2
+
+| {z }
+
+> ¯vapprox
+> ∗
+
+(68) This leads to the following (approximate) greedy rule, 
+
+x(m) ← arg max 
+
+> x∈D\A
+
+ ϕ⊤ 
+
+> x
+
+S−1 
+
+> A
+
+ϕ∗
+
+2 (69) 
+
+Alternative view of Eq. (68) when in the regime of large observation noise Starting from the marginal variance in Eq. (59) we can show, 
+
+vA∪{ x}∗ = vA∗ −
+
+ vA
+
+> x,∗
+
+2
+
+σ2 + vA
+
+> x
+
+= vA∗ − σ−2  vA
+
+> x,∗
+
+2
+
+ 11 + σ−2vA
+
+> x
+
+
+
+(70) = vA∗ − σ−2  vA
+
+> x,∗
+
+2  1 − σ−2vA 
+
+> x
+
++ O(σ−4) (71) = vA∗ − σ−2  vA
+
+> x,∗
+
+2 + O(σ−4) (72) where in the second line we used the geometric series (1 + a)−1 = P∞
+
+> k=0
+
+(−1) kak. Convergence is assured when 
+
+vA 
+
+> x
+
+< σ 2 where we used the fact that variance is non-negative. Terms that are of order O(σ−4) or smaller are neglected similar to App. A. The resulting expression in Eq. (72) has leading terms identical to the linear-response variance correction of Eq. (68). Dharmesh Tailor, Nicol` o Felicioni, Kamil Ciosek 
+
+Approximation error of the linear-response variance correction Let us denote ∆¯ vexact  
+
+> ∗
+
+= vA∪{ x}∗ − vA∗
+
+and ∆¯ vapprox  
+
+> ∗
+
+= ¯ vapprox  
+
+> ∗
+
+− vA∗ then we can show the relative error is given by, 
+
+|∆¯ vapprox  
+
+> ∗
+
+− ∆¯ vexact  
+
+> ∗
+
+|
+
+∆¯ vexact 
+
+> ∗
+
+= 1
+
+σ2 vA 
+
+> x
+
+(73) where we dropped the absolute value since the difference is non-negative by construction. This indicates that the quality of the approximation is determined by the marginal variance of the candidate point. When vA 
+
+> x
+
+is large then ¯ vapprox  
+
+> ∗
+
+overestimates the actual value. We can write the approximation error exactly as, 
+
+vA∪{ x}∗ − ¯vapprox  
+
+> ∗
+
+= 1
+
+σ2
+
+ vA
+
+> x,∗
+
+2 · vA
+
+> x
+
+σ2 + vA
+
+> x
+
+(74) For the sake of exposition, we can also give this error in Lagrange’s Form as follows, 
+
+Rϵ=1 2 = 12
+
+∂2 ¯vϵ
+
+> ∗
+
+∂ϵ 2 ϵ=ε
+
+for some 0 < ε < 1 (75) This second derivative is analytically given by, 
+
+∂2 ¯vϵ
+
+> ∗
+
+∂ϵ 2 = 2σ2  vA
+
+> x,∗
+
+2 vA
+
+> x
+
+(σ2 + ϵv A 
+
+> x
+
+)3 (76) Then we can bound the remainder in Eq. (75) as follows, 
+
+|Rϵ=1 2 | ≤ 12 max 
+
+> ε∈[0 ,1]
+
+∂2 ¯vϵ
+
+> ∗
+
+∂ϵ 2 ϵ=ε
+
+(77) = σ2  vA
+
+> x,∗
+
+2 vA 
+
+> x
+
+max 
+
+> ε∈[0 ,1]
+
+ 1(σ2 + εv A 
+
+> x
+
+)3
+
+| {z }
+
+> =1 /(σ2)3
+
+(78) 
+
+≤ 1
+
+σ4
+
+ vA
+
+> x,∗
+
+2 vA 
+
+> x
+
+(79) where we drop the absolute value since all the terms in Eq. (76) are non-negative. In the second line, we factor out terms independent of ε from the max and observe that the maximum value is attained when ε = 0. 
+
+## D CONNECTIONS BETWEEN OUR INFORMATION LOSS CRITERION AND INFLUENCE-BASED TDA 
+
+Let us consider the singleton case, i.e. S = {(x, y }), of Eq. (4) with the GP surrogate: 
+
+IIL ({(x, y }); x∗) = 12 log vD\{ x}∗
+
+vD∗
+
+!
+
+(80) 
+
+▷ substitute vD\{ x}∗ = vD∗ + ( vD
+
+> x,∗
+
+)2/(σ2 − vD 
+
+> x
+
+)= 12 log 1 + 
+
+ vD
+
+> x,∗
+
+2
+
+vD∗ (σ2 − vD 
+
+> x
+
+)
+
+!
+
+(81) where in the second line we substituted the first-round score derived in Eq. (61). Similar to App. C, we write the variance terms in weight-space form and use ϕx to denote tangent features, vD∗ = ϕ⊤∗ S−1 
+
+> D
+
+ϕ∗, vD 
+
+> x,∗
+
+= ϕ⊤ 
+
+> x
+
+S−1 
+
+> D
+
+ϕ∗
+
+and vD 
+
+> x
+
+= ϕ⊤ 
+
+> x
+
+S−1 
+
+> D
+
+ϕx, where SD = 1
+
+> σ2
+
+P 
+
+> x′∈D
+
+ϕx′ ϕ⊤ 
+
+> x′
+
++ I. Now we will show that Eq. (81) has resemblance to a cross-influence term normalized by self-influence terms. A Bayesian Information-Theoretic Approach to Data Attribution 
+
+Let us consider (1 st -order) influence function, the canonical approach to influence-based TDA, which performs attribution by the locally approximating the counterfactual change in test loss: 
+
+ℓ∗( ˆθ\z) − ℓ∗( ˆθ) ≈ g⊤∗ H−1ˆθ gz (82) where we define z = ( x, y ), denote the gradients of the per-example train and test loss by gz and g∗ respectively, and let H ˆθ be the Hessian evaluated at ˆθ (assuming convergence). Now Barshan et al. (2020) claims that when the dataset contains outliers or mislabelled examples, such examples are often most influential for test examples but these are poor explanatory examples for TDA. They reinterpret influence function from a geometric lens and propose to use cosine similarity instead to reduce the impact of “globally” influential examples. This takes the form of a cross-influence term normalized by self-influence terms: cos( H− 12 
+
+> ˆθ
+
+g∗, H− 12 
+
+> ˆθ
+
+gz) = g⊤∗ H−1ˆθ gz
+
+q
+
+g⊤∗ H−1ˆθ g∗ ·
+
+q
+
+g⊤ 
+
+> z
+
+H−1ˆθ gz
+
+(83) 
+
+▷ expand gradients by chain rule: g∗ = e∗ϕ∗ and gz = ezϕx
+
+=
+
+e∗
+
+
+
+ϕ⊤∗ H−1ˆθ ϕz
+
+
+
+ez
+
+r
+
+e∗
+
+
+
+ϕ⊤∗ H−1ˆθ ϕ∗
+
+
+
+e∗ ·
+
+r
+
+ez
+
+
+
+ϕ⊤ 
+
+> z
+
+H−1ˆθ ϕz
+
+
+
+ez
+
+(84) 
+
+▷ approximate Hessian by the Gauss-Newton matrix H ˆθ ≈ SD and substitute variance terms 
+
+≈ e∗ vD
+
+> x,∗
+
+ez
+
+e∗
+
+pvD∗ · ez
+
+pvD
+
+> x
+
+(85) 
+
+▷ observe the residuals cancel = vD
+
+> x,∗
+
+pvD∗ · pvD
+
+> x
+
+(86) where ez = f ˆθ (x) − y and e∗ = f ˆθ (x∗) − y∗ are the train and test residuals respectively (assuming single-output case). The resulting expression is independent of the training label (and test label), similar to Eq. (81). An important difference however is that this score is signed allowing one to distinguish positively-influential examples from negatively-influential examples, sometimes called “proponents”/“opponents” (Pruthi et al., 2020). Another difference is that whilst cosine similarity downweights train examples with high (marginal) variance, our criterion does the opposite. 
+
+## E ADDITIONAL EXPERIMENTAL DETAILS 
+
+Datasets and models. We used a ResNet-9 architecture for CIFAR-10, a two-hidden-layer MLP with ReLU activations for Fashion-MNIST, and BERT for RTE. For the vision models in brittleness/backdoor, we apply NTK reparameterization post hoc for attribution: we do not modify the ResNet-9 default initialization and simply apply the transformation assuming standard Normal initialization; for the MLP this follows Lee et al. (2020) where Kaiming-Normal initialization is used without any bias terms. For the CIFAR-10 coreset experiment, we instead keep the original parameterization. For BERT on RTE, we do not apply NTK parameterization and use linear layers only for Jacobian-based attribution. For training, the ResNet-9 was optimized using SGD with momentum (0.9), weight decay (5e-4), a batch size of 512, over 24 epochs. We employed a triangular learning rate schedule that linearly increased to a peak learning rate of 0.5 by epoch 5 and then decayed linearly to zero by the final epoch. For Fashion-MNIST, we used SGD with momentum (0.9), batch size 64, learning rate 0.03, weight decay 1e-3, and trained for 20 epochs. For RTE, we fine-tuned BERT for 3 epochs with batch size 32, learning rate 2 × 10 −5, and weight decay 0.01. The experiments were run on an internal cluster of GPUs of the following type: Tesla V100 SXM2 16 GB. 
+
+Baselines. We provide additional implementation details for the TDA baseline methods adapted from Bae et al. (2024). All baselines produce a ranking of training examples via additive pointwise scores, and attributed subsets are obtained by the rank-and-pick rule described in Sec. 2. In addition, all baselines are evaluated on the final checkpoint only, without any model retraining. Unless otherwise stated, all reported metrics are accompanied by standard error across five random seeds. Dharmesh Tailor, Nicol` o Felicioni, Kamil Ciosek 
+
+• Random : Selects examples uniformly at random. 
+
+• RepSim : Ranks examples by cosine similarity between penultimate-layer features of the query and training examples. 
+
+• GradDot : Ranks examples by the dot-product between query and train gradients ( i.e. TracIn (Pruthi et al., 2020) at the final checkpoint only). We use standard cross-entropy loss for train gradients and the same measurement function as TRAK for query gradients (detailed below). 
+
+• TRAK : An extension of generalized linear model (GLM) influence (Pregibon, 1981) to neural networks using random projections and the Generalized Gauss-Newton approximation. For multi-class classification (as in our setting), TRAK uses a measurement function that reduces multi-class outputs to a single logistic regression (see App. E.5 in Park et al. (2023)). We use a Rademacher sketch with projection dimension 4096 for CIFAR-10/Fashion-MNIST and 20480 for RTE (matching our methods per dataset), but do not use ensembling as originally proposed. This is implemented via the trak package (Park et al., 2023) with a fast CUDA extension that avoids materializing the projection matrix. 
+
+• KronInfluence : An influence function implementation using the EK-FAC approximation to the Hes-sian. Computation is restricted to fully-connected and convolutional layers, the layers supported by the 
+
+kroninfluence package (Grosse et al., 2023). We use the same measurement function as TRAK for query gradients and adopt the damping factor heuristic proposed in Grosse et al. (2023). 
+
+Hyperparameter tuning (observation noise). For each method we tune σ2 over the log-spaced grid 
+
+{10 −6, . . . , 10 6} using three random repeats per candidate value. For the brittleness experiments, we use a reduced set of 25 queries and obtain a held-out validation set by partitioning the original test set in half; we use margin change as the validation score and fix the subset size to 500 for CIFAR-10, 150 for Fashion-MNIST and 50 for RTE. For the coreset experiment, we use the same held-out validation split and fix the coreset size to 500. Tuned values are reused for the full runs reported in the main text. 
+
+Brittleness protocol details. Queries. We evaluate 100 correctly classified queries for CIFAR-10/Fashion-MNIST and 50 for RTE. Candidate pool. For each query we restrict training candidates to the same class as the query (Singla et al., 2023). Subset sizes. We vary M over a grid (CIFAR-10: M ∈ { 200 , 400 , 600 , 800 , 1000 , 1200 };Fashion-MNIST: M ∈ { 50 , 100 , 150 , 200 , 250 , 300 }; RTE: M ∈ { 20 , 40 , 60 , 80 , 100 , 120 }. Retraining. After remov-ing the top-M points, we retrain from the same initialization with identical data ordering and per-epoch shuffling (to isolate the effect of removal). 
+
+Backdoor protocol details. Let Q denote the set of 100 backdoored test queries. For each query q ∈ Q , let 
+
+G(q) be its ground-truth attribution set, i.e. the 50 poisoned training examples with the same base class as q. For each query q ∈ Q , let πq = ( i1, i 2, . . . ) denote the ranked list of training examples produced by a given method, and let rank q (i) denote the position of training example i in πq . For TDA baselines this ranking is obtained by sorting training examples by descending attribution score, whereas for our greedy information-theoretic methods it is given by the order of greedy selection. Let RK (q) = {i : rank q (i) ≤ K} denote the top-K retrieved set. We report, Recall@50 = 1
+
+|Q| 
+
+X
+
+> q∈Q
+
+|R 50 (q) ∩ G (q)||G (q)| , (87) which measures the fraction of ground-truth poisoned examples recovered in the top 50, averaged over queries. Let r⋆q = min i∈G (q) rank q (i) denote the rank of the highest-ranked ground-truth poisoned example for query q.We also report the cutoff-based mean reciprocal rank, MRR@100 = 1
+
+|Q| 
+
+X
+
+> q∈Q
+
+
+
+1
+
+r⋆q
+
+, if r⋆q ≤ 100 ,
+
+0, otherwise ,
+
+(88) which is the reciprocal rank of the first ground-truth poisoned example for each query, truncated to zero if no such example appears in the top 100. A Bayesian Information-Theoretic Approach to Data Attribution 
+
+Coreset protocol details. We extract 500 examples from the test set as the query set for attribution and report test accuracy on the remaining test examples after retraining on the selected coreset. We vary coreset sizes over M ∈ { 100 , 200 , 500 , 1000 , 2000 , 5000 }. For each seed, the coreset-trained model is retrained from the same initialization as the full-data model, using the same training procedure (optimizer, learning rate schedule, number of epochs, and data augmentation). For this experiment we use the same scalar multiclass measurement function as TRAK for all Jacobian-based methods and do not apply NTK reparameterization. We additionally report a class-balanced variant of this experiment in Fig. 6, where per-class quotas are enforced during selection; as discussed in Sec. 4.3, this substantially improves all TDA baselines, yet both InfoGain variants remain strongest overall. For the TDA baselines, attribution is defined pointwise, so we aggregate over the query set by averaging the per-query scores for each training example and then taking the top-M examples. Our greedy methods jointly optimise over all Ntest query points at each step, so the single-query greedy rules do not directly apply. Below we derive a tractable multi-query selection criterion for InfoGain ; the corresponding InfoLoss derivation is analogous and is therefore omitted. Let Φ∗ ∈ RNtest ×K stack the query features {ϕ∗q }Ntest  
+
+> q=1
+
+row-wise. The exact AOI greedy rule for InfoGain is then, 
+
+x(m) ← arg min 
+
+> x∈D\A
+
+log det 
+
+
+
+Φ∗S−1
+
+> A∪{ x}
+
+Φ⊤∗
+
+
+
+. (89) The objective depends on x through the AOI precision SA∪{ x}. We isolate the x-dependent terms via Sherman-Morrison and the matrix determinant lemma, then approximate the expensive query-query interaction: log det 
+
+
+
+Φ∗S−1
+
+> A∪{ x}
+
+Φ⊤∗
+
+
+
+(90) 
+
+▷ expand S−1 
+
+> A∪{ x}
+
+via Sherman-Morrison = log det Φ∗S−1 
+
+> A
+
+Φ⊤∗ −
+
+ Φ∗S−1 
+
+> A
+
+ϕx
+
+   Φ∗S−1 
+
+> A
+
+ϕx
+
+⊤
+
+σ2 + vA
+
+> x
+
+!
+
+(91) 
+
+▷ matrix determinant lemma = log det  Φ∗S−1 
+
+> A
+
+Φ⊤∗
+
+| {z } 
+
+> const. in x
+
++ log 1 −
+
+ Φ∗S−1 
+
+> A
+
+ϕx
+
+⊤  Φ∗S−1 
+
+> A
+
+Φ⊤∗
+
+−1  Φ∗S−1 
+
+> A
+
+ϕx
+
+
+
+σ2 + vA
+
+> x
+
+!
+
+(92) 
+
+▷ first term is constant in x; approximate  Φ∗S−1 
+
+> A
+
+Φ⊤∗
+
+−1 ≈ I (drop query-query interactions) 
+
+≈ const . + log 
+
+
+
+1 − ∥Φ∗S−1 
+
+> A
+
+ϕx∥22
+
+σ2 + vA
+
+> x
+
+
+
+. (93) This yields our tractable multi-query InfoGain criterion, 
+
+x(m) ← arg max 
+
+> x∈D\A
+
+∥Φ∗S−1 
+
+> A
+
+ϕx∥22
+
+σ2 + vA
+
+> x
+
+. (94) Applying the same linear-response variance correction as in App. C removes the candidate-dependent denomi-nator and yields the approximate variant, 
+
+x(m) ← arg max 
+
+> x∈D\A
+
+∥Φ∗S−1 
+
+> A
+
+ϕx∥22. (95) Dharmesh Tailor, Nicol` o Felicioni, Kamil Ciosek 100 200 500 1000 2000 5000 
+
+Coreset Size 
+
+> 10
+> 20
+> 30
+> 40
+> 50
+> 60
+> 70
+> 80
+> Test Accuracy (%)
+> InfoLoss InfoGain InfoGain (approx) Kron-Influence TRAK RepSim GradDot Random
+
+Figure 6: CIFAR-10 coreset selection with class-balanced TDA baselines. Enforcing equal per-class quotas substantially improves TRAK , KronInfluence , GradDot and RepSim , often lifting the strongest baselines above InfoLoss ; however, both InfoGain variants remain strongest overall. A Bayesian Information-Theoretic Approach to Data Attribution 
+
+## F VISUALIZATION OF TRAINING DATA ATTRIBUTION METHODS 
+
+InfoLoss frog frog frog frog frog frog frog 
+
+airplane airplane airplane airplane airplane airplane bird 
+
+deer deer deer deer deer deer deer 
+
+Query image Attributed examples 
+
+InfoGain frog frog frog frog frog frog frog 
+
+airplane airplane airplane airplane airplane airplane bird 
+
+deer deer deer deer deer deer deer 
+
+Query image Attributed examples 
+
+InfoGain (approx) frog frog frog frog frog frog frog 
+
+airplane airplane airplane airplane airplane airplane bird 
+
+deer deer deer deer deer deer deer 
+
+Query image Attributed examples 
+
+Figure 7: Visualization of training data attribution using our Bayesian information-theoretic methods on the CIFAR-10 dataset. Top: InfoLoss , Middle: InfoGain , Bottom: InfoGain (approx) .Dharmesh Tailor, Nicol` o Felicioni, Kamil Ciosek 
+
+KronInfluence frog frog frog frog frog frog frog 
+
+airplane airplane airplane airplane airplane airplane cat 
+
+deer deer deer deer deer deer deer 
+
+Query image Attributed examples 
+
+TRAK frog frog dog bird bird dog deer 
+
+airplane airplane bird truck horse cat bird 
+
+deer dog bird deer horse bird dog 
+
+Query image Attributed examples 
+
+TracIn frog frog frog frog frog frog frog 
+
+airplane airplane airplane airplane truck airplane airplane 
+
+deer deer deer deer deer deer deer 
+
+Query image Attributed examples 
+
+Figure 8: Visualization of training data attribution using baseline influence-based methods on the CIFAR-10 dataset. Top: KronInfluence , Middle: TRAK , Bottom: TracIn .A Bayesian Information-Theoretic Approach to Data Attribution 
+
+RepSim frog frog frog frog frog frog frog             
+
+> airplane airplane airplane airplane airplane airplane airplane
+> deer deer deer deer deer deer deer
+
+Query image Attributed examples 
+
+Figure 9: Visualization of training data attribution using representational similarity ( RepSim ) on the CIFAR-10 dataset.

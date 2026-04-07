@@ -1,0 +1,379 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-04-07T20:14:50.115055+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 7,
+    "deep_cap": 6,
+    "deep_selected": 7,
+    "quick_candidates": 3,
+    "quick_skim_target": 11,
+    "quick_selected": 3
+  },
+  "deep_dive": [
+    {
+      "id": "2604.03571v1",
+      "title": "Selective Forgetting for Large Reasoning Models",
+      "abstract": "Large Reasoning Models (LRMs) generate structured chains of thought (CoTs) before producing final answers, making them especially vulnerable to knowledge leakage through intermediate reasoning steps. Yet, the memorization of sensitive information in the training data such as copyrighted and private content has led to ethical and legal concerns. To address these issues, selective forgetting (also known as machine unlearning) has emerged as a potential remedy for LRMs. However, existing unlearning methods primarily target final answers and may degrade the overall reasoning ability of LRMs after forgetting. Additionally, directly applying unlearning on the entire CoTs could degrade the general reasoning capabilities. The key challenge for LRM unlearning lies in achieving precise unlearning of targeted knowledge while preserving the integrity of general reasoning capabilities. To bridge this gap, we in this paper propose a novel LRM unlearning framework that selectively removes sensitive reasoning components while preserving general reasoning capabilities. Our approach leverages multiple LLMs with retrieval-augmented generation (RAG) to analyze CoT traces, identify forget-relevant segments, and replace them with benign placeholders that maintain logical structure. We also introduce a new feature replacement unlearning loss for LRMs, which can simultaneously suppress the probability of generating forgotten content while reinforcing structurally valid replacements. Extensive experiments on both synthetic and medical datasets verify the desired properties of our proposed method.",
+      "authors": [
+        "Tuan Le",
+        "Wei Qian",
+        "Mengdi Huai"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-04-04T03:47:12+00:00",
+      "link": "https://arxiv.org/pdf/2604.03571v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "Selective forgetting for Large Reasoning Models",
+      "llm_evidence_cn": "大推理模型的选择性遗忘",
+      "llm_evidence": "大推理模型的选择性遗忘",
+      "canonical_evidence": "大推理模型的选择性遗忘",
+      "llm_tldr_en": "Explores selective forgetting to remove sensitive information from Large Reasoning Models' reasoning traces.",
+      "llm_tldr_cn": "探索选择性遗忘技术，以从大推理模型的推理轨迹中移除敏感信息。",
+      "llm_tldr": "探索选择性遗忘技术，以从大推理模型的推理轨迹中移除敏感信息。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Selective forgetting in neural networks",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.03956v1",
+      "title": "VLA-Forget: Vision-Language-Action Unlearning for Embodied Foundation Models",
+      "abstract": "Vision-language-action (VLA) models are emerging as embodied foundation models for robotic manipulation, but their deployment introduces a new unlearning challenge: removing unsafe, spurious, or privacy-sensitive behaviors without degrading perception, language grounding, and action control. In OpenVLA-style policies, behavior is produced through a fused visual encoder, a cross-modal projector, and a language backbone that predicts tokenized robot actions, so undesirable knowledge can be distributed across perception, alignment, and reasoning/action layers rather than confined to a single module. Consequently, partial unlearning applied only to the vision stack or only to the language backbone is often insufficient, while conventional unlearning baselines designed for standalone vision or language models may leave residual forgetting or incur unnecessary utility loss in embodied settings. We propose VLA-Forget, a hybrid unlearning framework that combines ratio-aware selective editing for perception and cross-modal specificity with layer-selective reasoning/action unlearning for utility-preserving forgetting. VLA-Forget jointly optimizes three objectives: targeted forgetting, perceptual preservation, and reasoning retention, through staged updates over the visual encoder, projector, and upper action-generating transformer blocks. Across forget-set behavior probes and retain-task evaluations, VLA-Forget improves forgetting efficacy by 10%, preserves perceptual specificity by 22%, retains reasoning and task success by 9%, and reduces post-quantization recovery by 55% relative to strong unlearning baselines.",
+      "authors": [
+        "Ravi Ranjan",
+        "Agoritsa Polyzou"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-04-05T04:23:18+00:00",
+      "link": "https://arxiv.org/pdf/2604.03956v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "unlearning challenge for embodied foundation models",
+      "llm_evidence_cn": "具身基础模型的遗忘挑战",
+      "llm_evidence": "具身基础模型的遗忘挑战",
+      "canonical_evidence": "具身基础模型的遗忘挑战",
+      "llm_tldr_en": "Introduces a framework for removing unsafe or sensitive behaviors from vision-language-action models via unlearning.",
+      "llm_tldr_cn": "引入了一个通过遗忘学习从视觉-语言-动作模型中移除不安全或敏感行为的框架。",
+      "llm_tldr": "引入了一个通过遗忘学习从视觉-语言-动作模型中移除不安全或敏感行为的框架。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Machine unlearning techniques and algorithms in deep learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.04030v1",
+      "title": "Jellyfish: Zero-Shot Federated Unlearning Scheme with Knowledge Disentanglement",
+      "abstract": "With the increasing importance of data privacy and security, federated unlearning emerges as a new research field dedicated to ensuring that once specific data is deleted, federated learning models no longer retain or disclose related information. In this paper, we propose a zero-shot federated unlearning scheme, named Jellyfish. It distinguishes itself from conventional federated unlearning frameworks in four key aspects: synthetic data generation, knowledge disentanglement, loss function design, and model repair. To preserve the privacy of forgotten data, we design a zero-shot unlearning mechanism that generates error-minimization noise as proxy data for the data to be forgotten. To maintain model utility, we first propose a knowledge disentanglement mechanism that regularises the output of the final convolutional layer by restricting the number of activated channels for the data to be forgotten and encouraging activation sparsity. Next, we construct a comprehensive loss function that incorporates multiple components, including hard loss, confusion loss, distillation loss, model weight drift loss, gradient harmonization, and gradient masking, to effectively align the learning trajectories of the objectives of ``forgetting\" and ``retaining\". Finally, we propose a zero-shot repair mechanism that leverages proxy data to restore model accuracy within acceptable bounds without accessing users' local data. To evaluate the performance of the proposed zero-shot federated unlearning scheme, we conducted comprehensive experiments across diverse settings. The results validate the effectiveness and robustness of the scheme.",
+      "authors": [
+        "Houzhe Wang",
+        "Xiaojie Zhu",
+        "Chi Chen"
+      ],
+      "primary_category": "cs.CR",
+      "categories": [
+        "cs.CR",
+        "cs.LG"
+      ],
+      "published": "2026-04-05T09:13:12+00:00",
+      "link": "https://arxiv.org/pdf/2604.04030v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "zero-shot federated unlearning with knowledge disentanglement",
+      "llm_evidence_cn": "具有知识解耦的零样本联邦遗忘",
+      "llm_evidence": "具有知识解耦的零样本联邦遗忘",
+      "canonical_evidence": "具有知识解耦的零样本联邦遗忘",
+      "llm_tldr_en": "Introduces Jellyfish, a zero-shot federated unlearning scheme using knowledge disentanglement and model repair.",
+      "llm_tldr_cn": "引入Jellyfish，一种利用知识解耦和模型修复的零样本联邦遗忘方案。",
+      "llm_tldr": "引入Jellyfish，一种利用知识解耦和模型修复的零样本联邦遗忘方案。",
+      "llm_tags": [
+        "query:mu-ce:composite"
+      ],
+      "matched_query_tag": "query:mu-ce:composite",
+      "matched_query_text": "Papers central to 查找关于机器遗忘（Machine Unlearning）和概念擦除（Concept Erasure）的相关论文, especially work that connects or combines: Machine unlearning techniques and algorithms in deep learning; Concept erasure and removal from pre-trained models; Efficient data removal from trained machine learning models; Model editing for knowledge update and correction; Selective forgetting in neural networks; Privacy-preserving machine learning and the right to be forgotten; State of the art methods for machine unlearning and concept erasure; Algorithms for removing sensitive information from neural networks.",
+      "matched_requirement_id": "req-composite-mu-ce",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.04255v1",
+      "title": "Towards Unveiling Vulnerabilities of Large Reasoning Models in Machine Unlearning",
+      "abstract": "Large language models (LLMs) possess strong semantic understanding, driving significant progress in data mining applications. This is further enhanced by large reasoning models (LRMs), which provide explicit multi-step reasoning traces. On the other hand, the growing need for the right to be forgotten has driven the development of machine unlearning techniques, which aim to eliminate the influence of specific data from trained models without full retraining. However, unlearning may also introduce new security vulnerabilities by exposing additional interaction surfaces. Although many studies have investigated unlearning attacks, there is no prior work on LRMs. To bridge the gap, we first in this paper propose LRM unlearning attack that forces incorrect final answers while generating convincing but misleading reasoning traces. This objective is challenging due to non-differentiable logical constraints, weak optimization effect over long rationales, and discrete forget set selection. To overcome these challenges, we introduce a bi-level exact unlearning attack that incorporates a differentiable objective function, influential token alignment, and a relaxed indicator strategy. To demonstrate the effectiveness and generalizability of our attack, we also design novel optimization frameworks and conduct comprehensive experiments in both white-box and black-box settings, aiming to raise awareness of the emerging threats to LRM unlearning pipelines.",
+      "authors": [
+        "Aobo Chen",
+        "Chenxu Zhao",
+        "Chenglin Miao",
+        "Mengdi Huai"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.CR"
+      ],
+      "published": "2026-04-05T20:21:18+00:00",
+      "link": "https://arxiv.org/pdf/2604.04255v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "vulnerabilities of Large Reasoning Models in Machine Unlearning",
+      "llm_evidence_cn": "大推理模型在机器遗忘中的漏洞",
+      "llm_evidence": "大推理模型在机器遗忘中的漏洞",
+      "canonical_evidence": "大推理模型在机器遗忘中的漏洞",
+      "llm_tldr_en": "Investigates security vulnerabilities and unlearning attacks specifically targeting Large Reasoning Models.",
+      "llm_tldr_cn": "研究针对大推理模型（LRM）的机器遗忘安全漏洞和攻击方法。",
+      "llm_tldr": "研究针对大推理模型（LRM）的机器遗忘安全漏洞和攻击方法。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Machine unlearning techniques and algorithms in deep learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.04575v1",
+      "title": "Erasure or Erosion? Evaluating Compositional Degradation in Unlearned Text-To-Image Diffusion Models",
+      "abstract": "Post-hoc unlearning has emerged as a practical mechanism for removing undesirable concepts from large text-to-image diffusion models. However, prior work primarily evaluates unlearning through erasure success; its impact on broader generative capabilities remains poorly understood. In this work, we conduct a systematic empirical study of concept unlearning through the lens of compositional text-to-image generation. Focusing on nudity removal in Stable Diffusion 1.4, we evaluate a diverse set of state-of-the-art unlearning methods using T2I-CompBench++ and GenEval, alongside established unlearning benchmarks. Our results reveal a consistent trade-off between unlearning effectiveness and compositional integrity: methods that achieve strong erasure frequently incur substantial degradation in attribute binding, spatial reasoning, and counting. Conversely, approaches that preserve compositional structure often fail to provide robust erasure. These findings highlight limitations of current evaluation practices and underscore the need for unlearning objectives that explicitly account for semantic preservation beyond targeted suppression.",
+      "authors": [
+        "Arian Komaei Koma",
+        "Seyed Amir Kasaei",
+        "Ali Aghayari",
+        "AmirMahdi Sadeghzadeh",
+        "Mohammad Hossein Rohban"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-04-06T10:16:42+00:00",
+      "link": "https://arxiv.org/pdf/2604.04575v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "evaluating concept unlearning methods in text-to-image diffusion models",
+      "llm_evidence_cn": "评估文本生成图像扩散模型中的概念擦除方法",
+      "llm_evidence": "评估文本生成图像扩散模型中的概念擦除方法",
+      "canonical_evidence": "评估文本生成图像扩散模型中的概念擦除方法",
+      "llm_tldr_en": "Studies the trade-off between unlearning effectiveness and compositional integrity in diffusion models.",
+      "llm_tldr_cn": "研究了扩散模型中遗忘有效性与组合完整性之间的权衡。",
+      "llm_tldr": "研究了扩散模型中遗忘有效性与组合完整性之间的权衡。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "State of the art methods for machine unlearning and concept erasure",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.04800v1",
+      "title": "Forgetting to Witness: Efficient Federated Unlearning and Its Visible Evaluation",
+      "abstract": "With the increasing importance of data privacy and security, federated unlearning has emerged as a novel research field dedicated to ensuring that federated learning models no longer retain or leak relevant information once specific data has been deleted. In this paper, to the best of our knowledge, we propose the first complete pipeline for federated unlearning, which includes a federated unlearning approach and an evaluation framework. Our proposed federated unlearning approach ensures high efficiency and model accuracy without the need to store historical data.It effectively leverages the knowledge distillation model alongside various optimization mechanisms. Moreover, we propose a framework named Skyeye to visualize the forgetting capacity of federated unlearning models. It utilizes the federated unlearning model as the classifier integrated into a Generative Adversarial Network (GAN). Afterward, both the classifier and discriminator guide the generator in generating samples. Throughout this process, the generator learns from the classifier's knowledge. The generator then visualizes this knowledge through sample generation. Finally, the model's forgetting capability is evaluated based on the relevance between the deleted data and the generated samples. Comprehensive experiments are conducted to illustrate the effectiveness of the proposed federated unlearning approach and the corresponding evaluation framework.",
+      "authors": [
+        "Houzhe Wang",
+        "Xiaojie Zhu",
+        "Chi Chen"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.CR"
+      ],
+      "published": "2026-04-06T16:06:07+00:00",
+      "link": "https://arxiv.org/pdf/2604.04800v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "federated unlearning approach and evaluation framework",
+      "llm_evidence_cn": "联邦遗忘学习方法及评估框架",
+      "llm_evidence": "联邦遗忘学习方法及评估框架",
+      "canonical_evidence": "联邦遗忘学习方法及评估框架",
+      "llm_tldr_en": "Proposes a complete pipeline for federated unlearning to ensure models no longer retain information from deleted data.",
+      "llm_tldr_cn": "提出完整的联邦遗忘学习流水线，确保模型不再保留已删除数据的相关信息。",
+      "llm_tldr": "提出完整的联邦遗忘学习流水线，确保模型不再保留已删除数据的相关信息。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Privacy-preserving machine learning and the right to be forgotten",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.03941v1",
+      "title": "SafeCtrl: Region-Aware Safety Control for Text-to-Image Diffusion via Detect-Then-Suppress",
+      "abstract": "The widespread deployment of text-to-image diffusion models is significantly challenged by the generation of visually harmful content, such as sexually explicit content, violence, and horror imagery. Common safety interventions, ranging from input filtering to model concept erasure, often suffer from two critical limitations: (1) a severe trade-off between safety and context preservation, where removing unsafe concepts degrades the fidelity of the safe content, and (2) vulnerability to adversarial attacks, where safety mechanisms are easily bypassed. To address these challenges, we propose SafeCtrl, a Region-Aware safety control framework operating on a Detect-Then-Suppress paradigm. Unlike global safety interventions, SafeCtrl first employs an attention-guided Detect module to precisely localize specific risk regions. Subsequently, a localized Suppress module, optimized via image-level Direct Preference Optimization (DPO), neutralizes harmful semantics only within the detected areas, effectively transforming unsafe objects into safe alternatives while leaving the surrounding context intact. Extensive experiments across multiple risk categories demonstrate that SafeCtrl achieves a superior trade-off between safety and fidelity compared to state-of-the-art methods. Crucially, our approach exhibits improved resilience against adversarial prompt attacks, offering a precise and robust solution for responsible generation.",
+      "authors": [
+        "Lingyun Zhang",
+        "Yu Xie",
+        "Zhongli Fang",
+        "Yu Liu",
+        "Ping Chen"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-04-05T03:06:17+00:00",
+      "link": "https://arxiv.org/pdf/2604.03941v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "model concept erasure for safety control",
+      "llm_evidence_cn": "用于安全控制的模型概念擦除",
+      "llm_evidence": "用于安全控制的模型概念擦除",
+      "canonical_evidence": "用于安全控制的模型概念擦除",
+      "llm_tldr_en": "Proposes SafeCtrl for region-aware safety control in diffusion models as an alternative to global concept erasure.",
+      "llm_tldr_cn": "提出SafeCtrl，用于扩散模型中的区域感知安全控制，作为全局概念擦除的替代方案。",
+      "llm_tldr": "提出SafeCtrl，用于扩散模型中的区域感知安全控制，作为全局概念擦除的替代方案。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Concept erasure and removal from pre-trained models",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2604.04514v1",
+      "title": "SuperLocalMemory V3.3: The Living Brain -- Biologically-Inspired Forgetting, Cognitive Quantization, and Multi-Channel Retrieval for Zero-LLM Agent Memory Systems",
+      "abstract": "AI coding agents operate in a paradox: they possess vast parametric knowledge yet cannot remember a conversation from an hour ago. Existing memory systems store text in vector databases with single-channel retrieval, require cloud LLMs for core operations, and implement none of the cognitive processes that make human memory effective.   We present SuperLocalMemory V3.3 (\"The Living Brain\"), a local-first agent memory system implementing the full cognitive memory taxonomy with mathematical lifecycle dynamics. Building on the information-geometric foundations of V3.2 (arXiv:2603.14588), we introduce five contributions: (1) Fisher-Rao Quantization-Aware Distance (FRQAD) -- a new metric on the Gaussian statistical manifold achieving 100% precision at preferring high-fidelity embeddings over quantized ones (vs 85.6% for cosine), with zero prior art; (2) Ebbinghaus Adaptive Forgetting with lifecycle-aware quantization -- the first mathematical forgetting curve in local agent memory coupled to progressive embedding compression, achieving 6.7x discriminative power; (3) 7-channel cognitive retrieval spanning semantic, keyword, entity graph, temporal, spreading activation, consolidation, and Hopfield associative channels, achieving 70.4% on LoCoMo in zero-LLM Mode A; (4) memory parameterization implementing Long-Term Implicit memory via soft prompts; (5) zero-friction auto-cognitive pipeline automating the complete memory lifecycle.   On LoCoMo, V3.3 achieves 70.4% in Mode A (zero-LLM), with +23.8pp on multi-hop and +12.7pp on adversarial. V3.2 achieved 74.8% Mode A and 87.7% Mode C; the 4.4pp gap reflects a deliberate architectural trade-off. SLM V3.3 is open source under the Elastic License 2.0, runs entirely on CPU, with over 5,000 monthly downloads.",
+      "authors": [
+        "Varun Pratap Bhardwaj"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.CL",
+        "cs.IR"
+      ],
+      "published": "2026-04-06T08:27:26+00:00",
+      "link": "https://arxiv.org/pdf/2604.04514v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "biologically-inspired forgetting and memory lifecycle dynamics",
+      "llm_evidence_cn": "仿生遗忘机制与记忆生命周期动态",
+      "llm_evidence": "仿生遗忘机制与记忆生命周期动态",
+      "canonical_evidence": "仿生遗忘机制与记忆生命周期动态",
+      "llm_tldr_en": "Implements a cognitive memory system for agents with mathematical models of forgetting and retrieval.",
+      "llm_tldr_cn": "为智能体实现具有遗忘和检索数学模型的认知记忆系统。",
+      "llm_tldr": "为智能体实现具有遗忘和检索数学模型的认知记忆系统。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Selective forgetting in neural networks",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2604.03190v1",
+      "title": "Gradient Boosting within a Single Attention Layer",
+      "abstract": "Transformer attention computes a single softmax-weighted average over values -- a one-pass estimate that cannot correct its own errors. We introduce \\emph{gradient-boosted attention}, which applies the principle of gradient boosting \\emph{within} a single attention layer: a second attention pass, with its own learned projections, attends to the prediction error of the first and applies a gated correction. Under a squared reconstruction objective, the construction maps onto Friedman's gradient boosting machine, with each attention pass as a base learner and the per-dimension gate as the shrinkage parameter. We show that a single Hopfield-style update erases all query information orthogonal to the stored-pattern subspace, and that further iteration under local contraction can collapse distinct queries in the same region to the same fixed point. We also show that separate projections for the correction pass can recover residual information inaccessible to the shared-projection approach of Tukey's twicing. On a 10M-token subset of WikiText-103, gradient-boosted attention achieves a test perplexity of $67.9$ compared to $72.2$ for standard attention, $69.6$ for Twicing Attention, and $69.0$ for a parameter-matched wider baseline, with two rounds capturing most of the benefit.",
+      "authors": [
+        "Saleh Sargolzaei"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-04-03T17:06:08+00:00",
+      "link": "https://arxiv.org/pdf/2604.03190v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "erases all query information orthogonal to the stored-pattern subspace",
+      "llm_evidence_cn": "擦除与存储模式子空间正交的所有查询信息",
+      "llm_evidence": "擦除与存储模式子空间正交的所有查询信息",
+      "canonical_evidence": "擦除与存储模式子空间正交的所有查询信息",
+      "llm_tldr_en": "Introduces gradient-boosted attention that can erase specific query information via Hopfield-style updates.",
+      "llm_tldr_cn": "引入梯度增强注意力机制，可通过Hopfield式更新擦除特定的查询信息。",
+      "llm_tldr": "引入梯度增强注意力机制，可通过Hopfield式更新擦除特定的查询信息。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Concept erasure and removal from pre-trained models",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2604.03858v1",
+      "title": "A Bayesian Information-Theoretic Approach to Data Attribution",
+      "abstract": "Training Data Attribution (TDA) seeks to trace model predictions back to influential training examples, enhancing interpretability and safety. We formulate TDA as a Bayesian information-theoretic problem: subsets are scored by the information loss they induce - the entropy increase at a query when removed. This criterion credits examples for resolving predictive uncertainty rather than label noise. To scale to modern networks, we approximate information loss using a Gaussian Process surrogate built from tangent features. We show this aligns with classical influence scores for single-example attribution while promoting diversity for subsets. For even larger-scale retrieval, we relax to an information-gain objective and add a variance correction for scalable attribution in vector databases. Experiments show competitive performance on counterfactual sensitivity, ground-truth retrieval and coreset selection, showing that our method scales to modern architectures while bridging principled measures with practice.",
+      "authors": [
+        "Dharmesh Tailor",
+        "Nicolò Felicioni",
+        "Kamil Ciosek"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "stat.ML"
+      ],
+      "published": "2026-04-04T20:42:05+00:00",
+      "link": "https://arxiv.org/pdf/2604.03858v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "scores subsets by information loss when removed",
+      "llm_evidence_cn": "通过移除时的信息损失对子集进行评分",
+      "llm_evidence": "通过移除时的信息损失对子集进行评分",
+      "canonical_evidence": "通过移除时的信息损失对子集进行评分",
+      "llm_tldr_en": "Formulates data attribution as an information-theoretic problem to identify influential training examples for removal.",
+      "llm_tldr_cn": "将数据归因公式化为信息论问题，以识别用于移除的有影响力的训练样本。",
+      "llm_tldr": "将数据归因公式化为信息论问题，以识别用于移除的有影响力的训练样本。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Efficient data removal from trained machine learning models",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
