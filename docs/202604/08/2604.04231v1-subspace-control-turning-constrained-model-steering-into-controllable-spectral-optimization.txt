@@ -1,0 +1,585 @@
+Title: Subspace Control: Turning Constrained Model Steering into Controllable Spectral Optimization
+
+URL Source: https://arxiv.org/pdf/2604.04231v1
+
+Published Time: Tue, 07 Apr 2026 01:27:25 GMT
+
+Number of Pages: 17
+
+Markdown Content:
+# SUBSPACE CONTROL : T URNING CONSTRAINED MODEL 
+
+# STEERING INTO CONTROLLABLE SPECTRAL OPTIMIZATION 
+
+A P REPRINT 
+
+Yancheng Huang 1,∗ Changsheng Wang 1,∗ Chongyu Fan 1 Yicheng Lang 1 Bingqi Shang 1
+
+Yang Zhang 2 Mingyi Hong 3 Qing Qu 4 Alvaro Velasquez 5 Sijia Liu 1,21OPTML, Michigan State University, 2MIT-IBM Watson AI Lab, IBM Research, 
+
+> 3
+
+University of Minnesota, 4University of Michigan, 5University of Colorado Boulder 
+
+> ∗
+
+Equal contribution Process            
+
+> Which Layers and Steps do Require Control
+> Process
+> (B) Where to Control: Spatial-Temporal Localization (C) How to Control: Spectral Optimization
+> Primary
+> Objective
+> Subspace
+> Constraint
+> Objective
+> Subspace
+> Merge Subspace
+> Process
+> Subspace Interference
+> Mitigation
+> Muon- style Subspace
+> Control Update
+> Process
+> (A) Performance Overview : SIFT Enhances Model Steering Across Tasks
+> (a) Machine Unlearning (b) Safety Alignment (c) Text- to- Speech Adaptation (d) Hallucination Mitigation
+> Better
+> Primary- Constraint
+> Alignment Score
+> (Negative: Conflicts )
+> Better
+> Better Better Better Better
+> Better
+> Better Better Better Better
+> Better Better
+
+Figure 1: Schematic overview of proposed subspace control framework, SIFT. ( A) Performance across four model steering tasks (detailed in Tables 1 and 2), compared with the baseline BLUR (Reisizadeh et al., 2025). ( B) When and where to control : SIFT enables selective intervention at targeted layers and training steps ( i.e. , spatial-temporal localization). ( C) How to control : Built on spectral optimizer Muon, SIFT leverages gradient orthogonalization (the matrix sign function) to mitigate subspace interference. 
+
+Abstract: Foundation models, such as large language models (LLMs), are powerful but often require customization before deployment to satisfy practical constraints such as safety, privacy, and task-specific requirements, leading to “constrained” optimization problems for model steering and adaptation. However, solving such problems remains largely underexplored and is particularly challenging due to interference between the primary objective and constraint objectives during optimization. In this paper, we propose a subspace control framework for constrained model training. Specifically, (i) we first analyze, from a model merging perspective, how spectral cross-task interference arises and show that it can be resolved via a one-shot solution that orthogonalizes the merged subspace; (ii) we establish a connection between this solution and gradient orthogonalization in the spectral optimizer Muon; and (iii) building on these insights, we introduce SIFT (spectral interference-free training), which leverages a localization scheme to selectively intervene during optimization, enabling controllable updates that mitigate objective–constraint conflicts. We evaluate SIFT across four representative applications: (a) machine unlearning, (b) safety alignment, (c) text-to-speech adaptation, and (d) hallucination mitigation. Compared to both control-based and control-free baselines, SIFT consistently achieves substantial and robust performance improvements across all tasks. 
+
+Code: https://github.com/OPTML-Group/SIFT 
+
+Correspondence: {huang341, wangc168, liusiji5}@msu.edu 
+
+> arXiv:2604.04231v1 [cs.LG] 5 Apr 2026
+
+## Contents 
+
+1 Introduction 22 Related Work 33 Formulation and Motivation: A Constraint-to-Control Perspective 44 Our Method: Subspace Control 55 Experiments 7
+
+5.1 Experiment setups . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 75.2 Experiment results on LLM unlearning . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 85.3 Experiment results on safety alignment . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 95.4 Experiment results on text-to-speech adaptation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 95.5 Hallucination mitigation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 10 
+
+6 Conclusion 11 A SIFT Algorithm 15 B Localization Patterns of SIFT for Safety Alignment 15 C Sensitivity Analysis on Safety Alignment vs. Subspace Dimension K 16 D Interleaved Speech–Text Data Construction 16 E Example Responses from the RAGTruth Dataset 16 F Localization Patterns of SIFT for Hallucination Mitigation 17 
+
+## 1 Introduction 
+
+Foundation models have achieved remarkable success across a wide range of applications. However, practical deployment rarely occurs in an unconstrained setting. Instead, pretrained models must be adapted to satisfy additional requirements. This naturally leads to constrained model steering problems, where a primary objective ( e.g. , preserving general utility) must be optimized alongside additional constraint objectives, e.g. , safety alignment (Ji et al., 2025; Huang et al.), knowledge editing or removal (Meng et al., 2022; Li et al., 2024), or cross-modal adaptation beyond text (Cuervo et al., 2025; Zeng et al., 2024b). Despite its importance, existing approaches to constrained model steering remain under-explored, leaving the underlying challenges poorly understood. This is reflected in the consistently poor trade-off between optimizing the primary objective and satisfying constraints. For example, in the context of LLM unlearning for removing harmful knowledge generation capabilities (Shi et al., 2024; Li et al., 2024; Liu et al., 2025b), it has been recently observed that enforcing unlearning requirements can significantly degrade the model’s original instruction-following abilities (Fan et al., 2025). Most existing model steering approaches approximate constraints via regularization or preference optimization (Ji et al., 2025; Li et al., 2024; Zhang et al., 2024b), effectively converting the problem into an “unconstrained” formulation for ease of optimization. However, such formulations often neglect conflicting optimization directions between the primary and constraint objectives, thereby inducing undesirable trade-offs in performance. Such trade-off challenges, observed in many model steering use cases, reflect a common underlying algorithmic and structural limitation . As we will provide evidence, gradients induced by different objectives exhibit systematic and localized misalignment, highlighting 2the need for more targeted and controllable optimization interventions in modern model steering algorithms. This observation raises a fundamental question: 
+
+(Q) How can we develop principled and controllable optimization strategies to resolve structured and localized conflicts between primary and constraint objectives in model steering? 
+
+To tackle (Q) , we introduce a subspace control perspective that transforms constrained model steering into a problem of 
+
+controllable spectral optimization . Our approach is motivated by a task interference perspective, which establishes a novel connection between two seemingly distinct paradigms: (i) one-shot model merging (Gargiulo et al., 2025; Marczak et al., 2025), where task interference arises from non-orthogonal subspaces, and (ii) iterative spectral optimization 
+
+via Muon (MomentUm Orthogonalized by Newton–Schulz) (Jordan et al., 2024; Liu et al., 2025a), where gradient orthogonalization (via the matrix sign function) naturally mitigates such interference. This connection reveals that conflicts between objectives can be systematically addressed through subspace orthogonalization , providing a principled foundation for controllable optimization. Building on the above, we propose SIFT (Spectral Interference-Free Training), a method that enables localized subspace interventions during model steering; see Fig. 1 for an overview. Instead of globally modifying gradients or discarding conflicting components, SIFT constructs an interference-aware spectral subspace and applies orthogonalization in a 
+
+targeted and adaptive manner (Fig. 1B-C). This enables joint optimization of the primary and constraint objectives while preserving informative descent directions from both, overcoming the limitations of existing approaches. Our 
+
+contributions are summarized below: 
+
+• From unconstrained to constraint-aware to controllable optimization. We formulate model steering as a constrained optimization problem and reveal the structural origin of objective conflicts through gradient misalignment across both temporal and spatial dimensions. 
+
+• Subspace control conceptualization. We establish a novel link between model merging and spectral optimiza-tion, showing that objective interference can be mitigated via subspace orthogonalization, realized through gradient orthogonalization in Muon. 
+
+• SIFT for localized subspace control. We propose SIFT, a spectral optimization method built on Muon that enables subspace interventions for targeted interference-aware optimization. 
+
+• Extensive evaluation across applications. We demonstrate the effectiveness of SIFT across four representative model steering tasks, machine unlearning, safety alignment, text-to-speech adaptation, and hallucination mitigation, achieving improved performance over both control-free and control-based baselines, as highlighted in Fig. 1A. 
+
+## 2 Related Work 
+
+Model steering and adaptation. Model steering and adaptation often need modifying pretrained foundation models to satisfy new requirements or behaviors beyond their original training (Yang et al., 2024; Sinii et al., 2025). In practice, such processes are often inherently constrained (Ji et al., 2025; Huang et al.; Li et al., 2024; Zhang et al., 2024b; Cuervo et al., 2025; Zeng et al., 2024b). However, due to the difficulty of handling objective–constraint conflicts (Lin et al., 2024; Siddiqui et al., 2026), existing post-training approaches, such as supervised fine-tuning (Anisuzzaman et al., 2025; Zhang et al., 2024a), reinforcement learning (Jia et al., 2025; Shakya et al., 2023), and parameter-efficient adaptation (Han et al., 2024; Xu et al., 2026), often fail to achieve an effective trade-off, as they treat constrained steering and adaptation as unconstrained training. BLUR (Reisizadeh et al., 2025) addresses this via bi-level optimization, projecting the primary gradient orthogonally to the constraint gradient to mitigate conflicts. Yet, its performance remains limited, as shown later. 
+
+Model editing in spectral space. Recent work increasingly focuses on spectral editing to reduce cross-task interference (Zhang et al., 2026; 2025; Zhu et al., 2025; Biswas et al., 2025), and studies on model merging show that editing in spectral space is more effective than direct parameter-space manipulation (Gargiulo et al., 2025; Marczak et al., 2025; Yao et al., 2026). One spectral editing method relevant to our work is POME (Liu et al., 2025c), which applies a Muon-style truncated SVD projection for model editing. However, it focuses on enhancing a fine-tuned model without a cross-task setting. Unlike existing model editing methods, our goal is not a one-shot fix but a more principled optimization approach. 
+
+Spectral optimization and Muon. The Muon optimizer (Jordan et al., 2024) has recently become a notable spectral optimizer designed to improve training stability and efficiency through gradient orthogonalization. Empirically, Muon has achieved substantial improvements in pre training efficiency and effectiveness across vision and language models (Jordan et al., 2024; Liu et al., 2025a; Ma et al., 2026). Recent work has examined the mechanisms behind Muon’s effectiveness (Jordan et al., 2024; Chen et al., 2025; Boreiko et al., 2025), with a primary emphasis on pretraining (Liu 3et al., 2025a; Ma et al., 2024; Riabinin et al., 2025; He et al., 2025; Kovalev, 2025). Although our method builds upon Muon, it differs from prior works by focusing on mitigating objective–constraint conflicts in the constrained model steering during the post-training stage. 
+
+## 3 Formulation and Motivation: A Constraint-to-Control Perspective 
+
+In this section, we first present a constrained optimization formulation, incorporating either hard (explicit) or soft (implicit) constraints, to steer a pre-trained model ( e.g. , LLMs) to satisfy requirements such as safety, privacy, and task-specific adaptation. We next provide a brief overview of how this formulation arises across representative use cases of our interest. Furthermore, we highlight the optimization challenges through a gradient alignment perspective, motivating the need for more controllable optimization interventions to effectively solve such constrained problems. 
+
+Problem formulation: Model training with “constraints”. Model steering typically entails optimizing structured objectives that preserve the original model properties while encouraging new capabilities. This leads to a constrained optimization problem in which the primary objective f is minimized under constraints defined by another objective g.In practice, this is often expressed as a regularized optimization problem that balances f and g during training. Thus, it can be formulated in either a hard -constrained form or a soft -regularized form: 
+
+Hard-constrained: minimize  
+
+> θ∈Θ
+
+f (θ) subject to Θ = arg min 
+
+> θ
+
+g(θ), (1) 
+
+Soft-regularized: minimize  
+
+> θ
+
+λf (θ) + g(θ) given regularization parameter λ > 0. (2) In (1), the hard-constrained formulation can also be viewed as a simple bi-level optimization problem (Dempe et al., 2021; Zhang et al., 2024c), where the lower-level variables ( θ) coincide with the upper-level variables, and the lower-level problem defines a solution set ( Θ) over which the upper-level objective is optimized. This formulation has been used to machine unlearning for LLMs (Reisizadeh et al., 2025), where the goal is to remove LLMs’ unwanted capabilities while preserving useful ones. In this context, f corresponds to the standard training loss for utility retention, while g encodes the unlearning objective (Liu et al., 2025b). In both the hard- and soft-constrained settings (1)–(2), we collectively refer to them as the constrained formulation . A natural extension is to consider multiple objectives beyond the primary and constraint objectives; however, our focus and use cases in this work are not on multi-objective optimization. Table 1 summarizes how the objectives f and g are specified across the applications considered in this work.           
+
+> Table 1: Specification of the constrained formulation across different applications.
+> Application Primary Objective fConstraint Objective g
+> Machine unlearning (§5.2) MSE (mean squared error) loss of representation alignment on a retain dataset (Li et al., 2024) RMU (representation misdirection unlearning) loss on a forget dataset (Li et al., 2024) Safety alignment (§5.3) CE (cross-entropy)-based SFT (supervised fine-tuning) loss on a utility dataset DPO (direct preference optimization) loss on a safety dataset (Rafailov et al., 2023) Text-to-speech adaptation (§5.4) CE loss on text generation (Zeng et al., 2024b) CE loss on speech generation (Zeng et al., 2024b) Hallucination mitigation (§5.5) CE-based prediction loss on non-hallucinated tokens Negative CE loss on hallucinated tokens
+
+Motivation for controlled optimization: A gradient alignment challenge. Effectively solving the constrained problems (1)–(2) is highly nontrivial, as the primary objective f (e.g. , utility loss) and the constraint objective g (e.g. ,unlearning loss) often induce conflicting optimization directions due to their inherently different goals (Lin et al., 2024; Siddiqui et al., 2026). A direct way to characterize this conflict is by examining the alignment between the gradients of f and g during optimization, referred to as gradient alignment . This can be quantified via the cosine similarity 
+
+τ := (∇θ f )⊤∇θ g    
+
+> ∥∇ θf∥2∥∇ θg∥2
+
+, where ∇θ denotes the gradient operator with respect to θ, and ∥ · ∥ 2 is the ℓ2 norm. If τ < 0, it indicates gradient mis alignment, where optimizing one objective comes at the expense of the other. 
+
+Fig. 2 illustrates gradient misalignment across optimization steps ( temporal ) and model layers ( spatial ), using RMU (representation misdirection for unlearning) (Li et al., 2024) as a motivating example under the unlearning specification in Table 1. Experiments are conducted on the Zephyr-7B-Beta model with the WMDP dataset. Note that the original RMU implementation operates on layers 5, 6, and 7. As we can see, negative values of τ persist at specific training steps and model layers, indicating a localized pattern. In particular, conflicts are concentrated in higher layers ( e.g. ,around layer 7) and occur across multiple training stages. This motivates more controllable optimization with localized updates to mitigate primary-constraint misalignment. 4Step 10   
+
+> Step 18 Step 30- 46 Step 60- 66
+> layer 7
+> Need for control
+> layer 6
+
+Figure 2: Visualization of cosine similarity τ across optimization steps ( temporal dimension) and model layers ( spatial dimension) in LLM unlearning. The top and right marginal plots summarize the counts of τ < −0.1 across steps and layers, respectively. Red stars ⋆ mark steps and layers need for control. 0 1 2 3 4 
+
+> Step
+> 0.5
+> 1.0
+> 2.0
+> 3.0
+> 4.0
+> 5.0
+> Utility loss ( f)
+> ×10 4
+> Initial model
+> Updated model
+> Full gradient
+> Projected gradient
+> Removed gradient
+
+Figure 3: Utility loss under dif-ferent descent directions starting from a model at step 35 of the unlearning process. Multiple up-date steps are performed along the full gradient, projected gradi-ent, and removed component, re-spectively. The unlearning setup is the same as in Fig. 2. 
+
+A parameter-space optimization baseline: Gradient projection. To mitigate gradient misalignment, a common approach derives a descent direction from ∇θ f that avoids conflict with ∇θ g via orthogonal projection, as in BLUR (Reisizadeh et al., 2025) for unlearning. That is, 
+
+∇θ f ⊥ := ( I − G) ∇θ f, G := ∇θ g (∇θ g)⊤
+
+∥∇ θ g∥22
+
+, (3) where I is the identity matrix, the term G represents the subspace spanned by ∇θ g,and thus its complement I − G represents the subspace orthogonal to ∇θ g. Based on (3), we have (∇θ g)⊤∇θ f ⊥ = 0 . This implies that ∇θ f ⊥ is orthogonal to ∇θ g,ensuring no negative gradient correlation. Although gradient projection (3) eliminates misalignment with the constraint objective g by discarding the conflicting component of ∇θ f (i.e. , G∇θ f ), it does so at the cost of losing descent information for the primary objective f . Under the unlearning setting specified in Table 1 and Fig. 2, Fig. 3 
+
+presents the model utility loss (encoded by f ) across training steps when using the removed component G∇θ f , the full gradient ∇θ f , and the projected gradient ∇θ f ⊥
+
+as descent directions, respectively. As we can see, the removed component G∇θ f
+
+also contributes to reducing the utility loss. This indicates that discarding gradient components associated with one objective may waste useful descent information for the other objective. 
+
+## 4 Our Method: Subspace Control 
+
+In this section, we introduce a subspace control perspective for constrained optimization in model steering. We illustrate this via a one-shot model merging framework, showing how spectral interference arises from non-orthogonal task subspaces, and connect it to the spectral optimization framework Muon (Jordan et al., 2024), where gradient orthogonalization (a.k.a. matrix sign function) provides a principled control primitive to eliminate such interference. Building on that, we propose SIFT (spectral interference-free training), a method that enables localized and controllable optimization interventions .
+
+Spectral interference from task interaction: A model merging perspective. We adopt the task vector method (Ilharco et al., 2022) to analyze the potential conflict between the primary and constraint objectives, yielding a simple one-shot model merging solution to (1)–(2). Specifically, consider two task vectors ∆f and ∆g , defined as the parameter differences between the base model and the corresponding models fine-tuned on the primary and constraint objectives f
+
+and g, respectively. Task vector arithmetic suggests that a merged model satisfying both objectives can be obtained by combining ∆f and ∆g (and applying the combined result ∆ to the base model): 
+
+∆ := ∆f + ∆g = ˆU
+
+Σf 00 Σg
+
+
+
+ˆV⊤, ˆU := [ Uf , Ug ], ˆV := [ Vf , Vg ] (4) 5where ∆f and ∆g admit compact SVDs, with Uf , Ug and Vf , Vg denoting the left and right singular vector matrices, respectively, and Σf , Σg the corresponding square diagonal matrices of singular values with sizes determined by ranks. However, direct merging in (4) introduces “singular task interference” , as noted in (Gargiulo et al., 2025; Marczak et al., 2025). That is, the combined bases ˆU and ˆV are generally non-orthogonal, i.e. , ˆU⊤ ˆU̸ = I and ˆV⊤ ˆV̸ = I,due to the non-orthogonality between Uf and Ug (and similarly Vf and Vg ). This leads to spectral interference 
+
+across singular components. To address it, a whitening transformation can be applied to ˆU and ˆV. This is equivalently formulated as an orthogonal Procrustes problem to seek orthogonal matrices U∗ and V∗ that are closest to ˆU and ˆV
+
+respectively (Gargiulo et al., 2025): minimize  
+
+> U
+
+U − ˆU F , s.t. U⊤U = I, yielding closed-form solution U∗ = PQ ⊤. (5) Here ∥ · ∥ F denotes the Frobenius norm, and ˆU admits the compact SVD, with P and Q denoting the left and right singular vector matrices, respectively. Replacing ˆU and ˆV with U∗ and V∗ in (4) yields a non-interference model merging. The key insight from the above model merging perspective is that spectral orthogonalization removes subspace interference, thereby reducing conflicts between the primary and constraint objectives and enabling their joint optimization in an interference-free subspace. 
+
+From model merging to Muon: Gradient orthogonalization as subspace control. Although model merging does not 
+
+provide an iterative solver for (1)-(2), a key observation from (5) is that the whitening transformation for interference mitigation aligns with the matrix sign function (msign ), which serves as the gradient orthogonalization step in the optimizer, Muon . Muon can be interpreted as a steepest-descent method under a spectral-norm constraint (Bernstein & Newhouse, 2024), yielding a principled spectral optimization framework that exploits the matrix-wise spectral structure 
+
+of descent directions rather than their entry-wise information. In Muon, given the iterate θt at iteration t, the update to 
+
+θt+1 is given by 
+
+θt+1 = θt − ηt msign( Mt), (6) where Mt denotes the current descent direction ( e.g. , gradient or momentum), and ηt > 0 is the step size. Compared to conventional optimizers such as SGD and Adam, the use of msign to perform gradient orthogonalization is a distinguishing feature of Muon, defined as follows (the iteration index t is omitted for simplicity): 
+
+msign( M) = Ψ sign( Σ) Φ⊤ = Ψ Φ ⊤, (7) where M admits the compact SVD M = ΨΣΦ ⊤, with Ψ and Φ being the left and right singular vector matrices, respectively, and Σ being the square diagonal matrix of singular values with size determined by its rank, and the function 
+
+sign( ·) operates entry-wise, returning 1 for diagonal singular values and 0 for other entries in Σ, i.e. , sign( Σ) = I.Although SVD is used above, in practice msign( M) is typically computed via computationally-efficient Newton–Schulz iterations (Jordan et al., 2024; Liu et al., 2025a). Comparing (7) with (5) yields several insights. First , the descent direction M (e.g. , momentum in our experiments) can be viewed as a generalized task vector capturing the difference between consecutive model updates. Second , the role of gradient orthogonalization ( i.e. , msign ) in (7) parallels the subspace control in (5), removing spectral interference when 
+
+M contains components from the primary and constraint objectives. 
+
+SIFT: Localized spectral control via Muon. Connecting model merging and Muon shows that Muon provides an algorithmic foundation for constrained optimization that mitigates spectral interference “for free.” Below, we formally introduce our proposed method, SIFT . The key idea behind SIFT is to construct an interference-free spectral subspace as in model merging, with interference being naturally mitigated via msign (7). The SIFT procedure is summarized in the following steps (a)-(d). (a) We first obtain the momentum matrices Mf,t and Mg,t associated with the objectives f and g along the Muon optimization trajectory at step t.(b) We then extract the top-K spectral components of Mf,t and Mg,t , denoted by Uf,t and Ug,t (and similarly Vf,t 
+
+and Vg,t ). Similar to (4), these components are combined to form the expanded spectral subspaces: 
+
+ˆUt = [ Uf,t , Ug,t ], ˆVt = [ Vf,t , Vg,t ]. (8) In our experiments, we find that K can be set much smaller than the matrix dimension for some applications due to the low-rank structure of the momentum matrix; see Fig. 5 for validation. Therefore, we treat K as a hyperparameter for subspace curation. (c) We next apply the msign function in (7) to ˆUt and ˆVt, computed via Newton–Schulz iterations, to obtain the interference-free subspaces ˆU∗ 
+
+> t
+
+and ˆV∗ 
+
+> t
+
+, respectively: 
+
+ˆU∗ 
+
+> t
+
+= msign( ˆUt), ˆV∗ 
+
+> t
+
+= msign( ˆVt). (9) 6This step provides the key controlled optimization intervention for mitigating interference between the primary and constraint objectives f and g in the spectral subspace. (d) We finally leverage ˆU∗ 
+
+> t
+
+and ˆV∗ 
+
+> t
+
+to construct a momentum-orthogonalized descent direction for updating the model parameters θ in (6), yielding the SIFT update :
+
+θt+1 = θt − ηt ˆU∗ 
+
+> t
+
+( ˆV∗ 
+
+> t
+
+)⊤. (10) The term ˆU∗ 
+
+> t
+
+( ˆV∗ 
+
+> t
+
+)⊤ can be interpreted as a gradient orthogonalization operator, formed from the interference-free, orthonormal subspaces of Mf,t and Mg,t , as established in (8)–(9). 6 8 10 12 14 
+
+Temporal sparsity (%) 
+
+> 0
+> 4
+> 8
+> 12
+> Spatial sparsity (%)
+> machine unlearning
+> text-to-speech adaptation
+> hallucination mitigation
+> safety alignment
+
+Figure 4: Sparse localization across ap-plications. Temporal sparsity is the frac-tion of all training steps, and spatial sparsity is the fraction of all model com-ponents where SIFT is activated. 
+
+If we compare the SIFT update (10) with the standard Muon (6), SIFT (i) su-perposes the subspaces of Mf,t and Mg,t as in (8), and (ii) applies msign to the resulting expanded subspaces rather than to the overall momentum matrix, in order to mitigate spectral interference. It is worth noting that, unlike gradient projection (3), which discards conflicting components, SIFT retains both task subspaces Uf,t and Ug,t in ˆU (and similarly in ˆV), while eliminating their interference via msign in (9). In terms of computation, the SIFT update in (10) introduces additional overhead primarily due to SVDs in (8). However, this overhead is well justified, as SIFT is coupled with a localization scheme, as measured by the gradient/momentum alignment score τ . This localization determines when and where SIFT should intervene within the standard Muon-based iterative optimization process, thereby enabling selective application to specific optimization steps and model compo-nents, as indicated by ⋆ in Fig. 2. We emphasize that localization informs a sparse 
+
+subspace control pattern when applying SIFT across diverse applications. Fig. 4 illustrates this sparsity over both temporal and spatial dimensions for different applications. We refer readers to Algorithm A1 in Appendix A for a detailed description of SIFT. 
+
+## 5 Experiments 
+
+In this section, we evaluate the effectiveness of our proposed method, SIFT, against stateful baselines across four LLM steering applications listed in Table 1: machine unlearning, safety alignment, text-to-speech adaptation, and hallucination mitigation. 
+
+5.1 Experiment setups Data-model-evaluation settings. As shown in Table 2 , we provide an overview of the experimental setups across the applications in Table 1, including the corresponding base models, datasets, and evaluation metrics. In our experiments, the base models and evaluation metrics are associated with the training datasets, following those specified in the corresponding benchmark releases. Unless otherwise noted, our applications focus on LLMs. For text-to-speech adaptation, we use GLM-4-Voice, an open-source speech language model that supports cross-modal input–output settings; for example, “Audio → Text” denotes audio input and text output. In the safety alignment case, we use LLaMA-2-7B (rather than its chat variant) as the base model, as its weaker initial safety alignment makes it well suited for evaluating the effectiveness of subsequent alignment methods. 
+
+Table 2: Overview of experimental setups for different applications.                    
+
+> Applications Training Datasets Base LLM Evaluation
+> Machine unlearning Forget: WMDP (Li et al., 2024) Retain: Wikitext (Merity et al., 2016) zephyr-7b-beta Unlearning ( ↓): ES-Bio/Cyber (Yuan et al., 2024), MCQ-Bio/Cyber (Li et al., 2024) Utility ( ↑): MMLU (Hendrycks et al., 2021), TruthfulQA (Lin et al., 2021), IFEval (Zhou et al., 2023), GSM8K (Cobbe et al., 2021) Safety alignment Safety: PKU-SafeRLHF (Ji et al., 2024) Utility: Alpaca (Taori et al., 2023) Llama-2-7b Safety ( ↑) (Wang et al., 2025): Strong Reject, JBB-Behaviors, Wild Jailbreak Utility ( ↑): MMLU, GSM8K, IFEval, MNLI (Wang et al., 2019), MRPC (Wang et al., 2019) Hallucination mitigation RAGTruth (Niu et al., 2024) Llama-2-7B-Chat Hallucination rate ( ↓) (Niu et al., 2024) Utility ( ↑): MMLU, GSM8K, TruthfulQA, QNLI Text-to-speech adaptation ESNLI (Camburu et al., 2018) COSE (Rajani et al., 2019) OpenBookQA (Mihaylov et al., 2018) GLM-4-Voice (Zeng et al., 2024a) Test accuracy ( ↑) on ESNLI, COSE, and OpenBookQA under four cross-modal input -output settings: “Audio →Text”, “Audio →Audio”, “Text →Audio”, “Text →Text”
+
+Baseline methods. In all applications, we compare SIFT with four baseline methods ①–③ for steering a base model to meet the desired requirements. Conventionally, model steering is typically solved as a regularized optimization problem 7(2) using a standard (control-free) optimizer such as ① AdamW (Loshchilov & Hutter, 2017). Since SIFT builds upon Muon, we also include the standard ② Muon (Jordan et al., 2024) as a baseline for solving the regularized problem (2). In addition, we include two baselines with explicit optimization interventions to handle conflicts between the primary and constraint objectives: ③ BLUR (Reisizadeh et al., 2025) and ④ POME (Liu et al., 2025c). 
+
+Implementation details. To implement SIFT, there exist two key hyperparameters (Algorithm A1): (a) the subspace dimension K used to construct the spectral subspaces in (8), and (b) the misalignment threshold ϵ < 0, which specifies when SIFT intervenes to mitigate interference between the primary and constraint objectives, as shown in Algorithm A1. For machine unlearning and safety alignment, we set K = 128 and K = 192 , respectively, both significantly smaller than the matrix dimension (typically 4096 for 7B LLMs). This choice yields improved performance, consistent with the low-rank structure of the momentum matrices. In contrast, for text-to-speech adaptation and hallucination mitigation, we do not observe clear benefits from reducing K, and thus retain all components by default. The threshold ϵ is chosen case by case due to its varying cosine similarity ranges across applications. Specifically, we set ϵ = −0.1 for machine unlearning and safety alignment; for text-to-speech adaptation, ϵ = −0.6 (ESNLI), −0.4 (COSE), and −0.5
+
+(OpenBookQA); and for hallucination mitigation, ϵ = −0.8. All experiments are conducted on 8 × NVIDIA A6000 GPUs with 48GB memory. 
+
+5.2 Experiment results on LLM unlearning 
+
+In this application, we perform LLM unlearning using representation misdirection for unlearning (RMU) (Li et al., 2024) on the base model zephyr-7b-beta to remove its sensitive content generation capabilities on the forget set ( e.g. , WMDP) while preserving general utility on the retain set ( e.g. , Wikitext). The specifications of the primary and constraint objectives, as well as the data–model–evaluation setups, are summarized in Table 1 and Table 2, respectively. 
+
+Table 3: Performance of LLM unlearning for removing hazardous content generation on WMDP. ES-Bio/Cyber denotes the entailment score (ES) (Yuan et al., 2024; Fan et al., 2025) measuring unlearning effectiveness via factual consistency with the pre-unlearned model on WMDP Bio and Cyber sets. MCQ-Bio/Cyber denotes multi-choice question (MCQ) accuracy on the same sets; Model utility is evaluated on standard benchmarks. Superscripts indicate standard deviations over 10 random trials.                                                                                                                           
+
+> Methods Unlearning Performance (%) Utility Performance (%) Runtime
+> (min) ES-Bio ↓ES-Cyber ↓MCQ-Bio ↓MCQ-Cyber ↓MMLU ↑TruthfulQA ↑IFEval ↑GSM8K ↑
+> Base Model 62.3 ±0.346.7 ±0.264.1 ±0.244.8 ±0.458.2 ±0.339.5 ±0.210.4 ±0.335.6 ±0.4N/A AdamW 14.6 ±0.326.3 ±0.231.7 ±0.429.4 ±0.357.1 ±0.340.8 ±0.49.2 ±0.233.9 ±0.38.8 Muon 14.2 ±0.230.5 ±0.331.3 ±0.228.6 ±0.256.4 ±0.137.9 ±0.28.7 ±0.434.1 ±0.311.8 POME 15.8 ±0.429.6 ±0.329.2 ±0.327.5 ±0.257.3 ±0.338.4 ±0.49.6 ±0.234.7 ±0.39.9 BLUR 9.3 ±0.224.8 ±0.228.6 ±0.327.3 ±0.357.1 ±0.339.2 ±0.19.1 ±0.233.5 ±0.39.4 SIFT 5.4 ±0.319.7 ±0.226.8 ±0.226.4 ±0.156.8 ±0.338.6 ±0.210.3 ±0.333.8 ±0.420.2
+
+In Table 3 , we present unlearning effectiveness and general utility, comparing SIFT with the original Zephyr-7B model and baseline methods. As we can see, SIFT achieves the strongest unlearning performance on both multiple-choice (MCQ) and open-ended (ES) evaluations while maintaining competitive utility . In particular, it attains 5.4% ES-Bio and 19 .7% ES-Cyber, significantly outperforming BLUR ( 9.3% and 24 .8% ), as well as all other baselines. The larger gains on open-ended ES metrics indicate that SIFT more effectively removes underlying unwanted knowledge, rather than merely altering answer selection. Importantly, these improvements do not compromise utility: SIFT remains comparable to BLUR on benchmarks such as GSM8K (33.8% vs. 33.5%) and IFEval (10.3% vs. 9.1%). Compared to POME, which relies on one-shot task-vector-based intervention, SIFT performs multi-step, localized interference mitigation via spectral subspace control, resulting in much stronger unlearning ( e.g. , 5.4% vs. 15 .8% on ES-Bio). Notably, SIFT improves performance at the cost of increased runtime, e.g. , roughly doubling that of the standard Muon optimizer. Improving its efficiency remains a direction for future work. 
+
+A sensitivity analysis on unlearning vs. subspace dimension K. We next analyze the role of the top-K spectral subspace in SIFT via (i) the intrinsic low-rank structure of momentum and (ii) the performance trade-off under varying 
+
+K. Using SVD, we measure the cumulative energy E(K) = PKi=1 σ2 
+
+> i
+
+/PNi=1 σ2 
+
+> i
+
+and define the effective rank as the smallest K such that E(K) ≥ α. Fig. 5(Left) shows the average effective rank of the momentum matrices associated with the updated MLP down-projection modules in the selected layers, averaged across all training steps under SIFT. As we can see, the effective rank is approximately K ≈ 120 at α = 99% energy, far below the full dimension ( > 4096 
+
+for a 7B model), confirming a low-rank structure. Furthermore, Fig. 5(Right) shows a clear trade-off with respect to K:small K (e.g. , 64 ) preserves utility but yields weak unlearning, while increasing K improves unlearning, peaking at 
+
+K = 128 . Larger K (e.g. , > 256 ) leads to degraded unlearning and utility due to over-expansion of the intervention subspace. 85 6 7
+
+> Layer
+> 60
+> 120
+> 180
+> Rank
+> Energy = 95%
+> Energy = 99% Ideal
+> zone
+
+Figure 5: Sensitivity analysis of SIFT with respect to the top-K subspace dimension. Left: effective rank of momentum matrices. Right: unlearning and utility performance under varying K.
+
+5.3 Experiment results on safety alignment 
+
+In this application, we align the base model Llama-2-7b with safety requirements via preference optimization, which introduces an inherent trade-off between improving safety and preserving general utility. E.g. , optimizing for safety often encourages refusal behaviors, potentially degrading performance on general instruction-following tasks. The specifications of the primary and constraint objectives, as well as the data–model–evaluation setups, are summarized in Table 1 and Table 2, respectively. In Table 4 , we report safety performance and general utility on LLaMA-2-7B, comparing SIFT with the original model and baseline methods. SIFT consistently outperforms all baselines on safety metrics while also improving utility. 
+
+Specifically, it achieves 42 .8% (SR), 31 .0% (JBB), and 56 .0% (WJ), surpassing BLUR ( 35 .8% , 29 .0% , 54 .4% ) and others. Importantly, SIFT also improves utility over BLUR across all benchmarks, including MMLU (39.2% vs. 37.4%), GSM8K (11.6% vs. 9.8%), IFEval (32.7% vs. 31.3%), MNLI (40.5% vs. 37.6%), and MRPC (68.4% vs. 65.9%). This advantage stems from their different mechanisms for handling objective conflict. BLUR removes gradient aligned with the safety objective, but also discards useful utility information. In contrast, SIFT performs localized spectral interference mitigation, preserving task-relevant components while removing only their interference. 
+
+Table 4: Safety alignment performance across optimization methods. Higher scores on Strong Reject, JBB, and Wild Jailbreak indicate stronger safety, while higher scores on downstream tasks (MMLU, GSM8K, IFEval, MNLI, MRPC) indicate better utility. Evaluation metrics are specified in Table 2 and results format follows Table 3. 
+
+Methods Safety Performance (%) Utility Performance (%) Runtime 
+
+(min) SR ↑ JBB ↑ WJ ↑ MMLU ↑ GSM8K ↑ IFEval ↑ MNLI ↑ MRPC ↑
+
+Base model 19.5 ±0.8 14.0 ±1.2 47.6 ±1.2 41.3 ±0.3 14.7 ±0.8 34.2 ±0.4 42.8 ±0.3 69.5 ±0.2 N/A AdamW 33.2 ±0.6 28.0 ±1.1 52.8 ±0.4 36.6 ±0.5 8.4 ±0.9 31.9 ±0.3 36.2 ±0.2 62.7 ±0.3 110.3 Muon 36.4 ±0.3 26.0 ±1.3 52.0 ±0.9 36.1 ±0.5 9.5 ±0.7 30.4 ±0.4 32.8 ±0.1 63.3 ±0.4 191.2 POME 36.7 ±0.6 26.0 ±1.1 51.6 ±1.2 38.7 ±0.3 9.2 ±0.5 31.6 ±0.5 32.5 ±0.2 62.1 ±0.5 115.4 BLUR 35.8 ±0.3 29.0 ±0.5 54.4 ±0.9 37.4 ±0.6 9.8 ±0.4 31.3 ±0.8 37.6 ±0.4 65.9 ±0.2 114.7 SIFT 42.8 ±0.6 31.0 ±0.4 56.0 ±1.0 39.2 ±0.6 11.6 ±0.5 32.7 ±0.5 40.5 ±0.4 68.4 ±0.6 215.6 
+
+For safety alignment, SIFT shows sparse, localized intervention across steps and components ( Fig. A1 ), distinct from LLM unlearning patterns (Fig. 2), with conflicts mainly in middle layers and early steps. Furthermore, consistent with the low-rank observation in Fig. 5, we find that choosing K = 192 , aligned with the intrinsic effective rank, yields improved performance in both safety and utility; see Fig. A2 .
+
+5.4 Experiment results on text-to-speech adaptation 
+
+In this application, we adapt the base model GLM-4-Voice to acquire dual text–speech generation capabilities on specific tasks, where the key challenge of model steering is to jointly improve generation across text and audio modalities without incurring cross-modal forgetting (Cuervo et al., 2025; Chen et al., 2024). We formulate this as a constrained optimization problem, as specified in Table 1. Specifically, we fine-tune the base model on interleaved speech–text data derived from the training sets of ESNLI, COSE, and OpenBookQA. The construction process of the interleaved speech–text data and an example can be found in Appendix D . We evaluate both text and audio generation on their respective test sets; see Table 2 for the data–model–evaluation setups. 9Table 5: Test accuracy ( ↑) of the speech LLM trained on interleaved speech–text data constructed from ESNLI, COSE, and OpenBookQA under four input–output settings (e.g., “Audio → Text” denotes audio input and text output). Evaluation metrics and result format follow Tables 2 and 3, respectively.                                                                                                                                                                                  
+
+> Methods Audio →Text (↑)Audio →Audio (↑)Text →Text (↑)Text →Audio (↑)Runtime
+> (min) ESNLI COSE OpenBook ESNLI COSE OpenBook ESNLI COSE OpenBook ESNLI COSE OpenBook Base 27.2 ±1.142.1 ±1.112.6 ±1.320.1 ±2.141.6 ±2.211.2 ±2.460.6 ±0.566.2 ±0.654.7 ±0.842.8 ±1.534.5 ±1.543.4 ±1.8N/A AdamW 70.3 ±1.046.7 ±1.348.6 ±1.268.6 ±1.748.1 ±2.227.5 ±2.278.9 ±0.574.1 ±0.668.2 ±0.874.1 ±1.852.9 ±1.954.2 ±1.544.6 Muon 73.6 ±1.248.5 ±1.153.4 ±1.271.5 ±2.449.1 ±2.127.3 ±2.579.9 ±0.572.8 ±0.664.4 ±0.974.3 ±1.652.4 ±1.553.8 ±1.947.9 POME 73.3 ±1.147.2 ±1.453.4 ±1.370.6 ±1.948.2 ±2.125.7 ±2.580.6 ±0.572.3 ±0.564.5 ±0.974.1 ±1.552.2 ±1.653.7 ±2.024.7 BLUR 69.6 ±1.243.2 ±1.247.1 ±1.368.6 ±2.444.1 ±2.520.4 ±2.380.1 ±0.572.2 ±0.663.1 ±0.877.4 ±1.953.6 ±1.751.5 ±1.646.1
+> SIFT 77.4 ±1.156.3 ±1.357.1 ±1.277.1 ±2.453.4 ±2.129.5 ±2.380.4 ±0.575.2 ±0.664.1 ±0.979.6 ±1.653.5 ±1.754.3 ±1.951.3
+
+In Table 5 , we report test accuracy across four input–output settings, comparing SIFT with the base model GLM-4-Voice and baseline methods. As shown, SIFT consistently achieves superior performance across nearly all datasets and settings . In particular, under audio-input settings , SIFT significantly outperforms the second-best method (Muon), with average gains of 5.1% on “Audio → Text” and 4.0% on “Audio → Audio” across datasets. These settings are more challenging due to the need for accurate semantic extraction from audio, where SIFT’s ability to mitigate cross-modal conflicts is especially beneficial. In contrast, control intervention-present methods such as POME perform similarly to Muon, while BLUR consistently underperforms across most settings, suggesting that its projection discards gradient components critical for training speech LLMs. 0
+
+1 Count of layers with τ < -0.6 
+
+0 54 108 162 216 270 
+
+Step 
+
+> QKV  Out  FC1  FC2
+> Component
+> 13.qkv
+> 26.qkv
+> 13.out
+> 26.out
+> 13.fc1
+> 26.fc1
+> 13.fc2
+> 26.fc2
+
+9
+
+> Count of steps with τ < -0.6
+
+−0.4 −0.2 0.0 0.2 0.4 
+
+Cosine Similarity 
+
+Figure 6: Localization patterns under the dataset ESNLI. Components are grouped by Transformer layer: each layer comprises self-attention module (Q, K, V, Out) and feed-forward module (FC1, FC2). The presenting format follows Fig. 2. 
+
+Another key observation is that, interference between the primary and constraint objectives is largely confined to the query, key, and value (QKV) matrices of self-attention layers . Similar to Fig. 2, Fig. 6 visualizes gradient misalignment on ESNLI. As shown, negative cosine similarity is concentrated in the “QKV” regions, particularly in one layer (layer 38). It is also worth noting that, unlike Fig. 5 and Fig. A2, SIFT for speech LLM adaptation (as well as the hallucination mitigation) does not benefit from reduced dimension K in subspace control. Instead, using the full dimension yields better performance. 
+
+5.5 Hallucination mitigation 
+
+In this application, we fine-tune the base model Llama-2-7B-Chat to mitigate its word-level hallucinations. As illustrated in Table A1 , the base model’s response may contain both hallucinated (highlighted in red) and non-hallucinated content. Our goal is to suppress hallucinated words via the unlearning objective while preserving non-hallucinated content through the standard training objective. The specifications of the primary and constraint objectives, as well as the data–model–evaluation setups, are summarized in Table 1 and Table 2, respectively. We use RAGTruth (Niu et al., 2024) for both training and evaluation (on its test sets). In Table 6 , we report hallucination reduction and model utility across different optimizers. As shown, SIFT achieves the best trade-off between hallucination reduction and utility retention . To note, unlike other methods, BLUR exhibits notable drops on utility, e.g. , GSM8K (15.4%) and TruthfulQA (27.1%), compared to SIFT (17.8% and 29.0%). This is expected, as BLUR discards gradient components important for preserving utility. In terms of hallucination reduction, SIFT achieves the lowest rate (32.7%), outperforming the next-best Muon (38.5%) by a clear margin, without 10 Table 6: Performance of hallucination mitigation on RAGTruth. Hallucination rate measures the proportion of responses containing hallucinated content (judged by GPT-5.2); lower is better. 
+
+Methods Hallucination Rate (↓)
+
+Utility Performance (↑) Runtime 
+
+(min) MMLU GSM8K TruthfulQA QNLI MNLI Base model 73.2 ±1.6 46.5 ±0.4 20.4 ±1.1 30.2 ±1.6 68.7 ±0.6 56.2 ±0.5 N/A AdamW 39.1 ±1.9 46.1 ±0.4 17.4 ±1.1 28.9 ±1.6 68.3 ±0.6 56.2 ±0.5 8.1 Muon 38.5 ±1.7 46.2 ±0.4 17.8 ±1.1 29.0 ±1.5 68.2 ±0.6 56.2 ±0.5 12.0 POME 41.1 ±1.5 46.0 ±0.4 17.8 ±1.1 29.2 ±1.6 68.2 ±0.6 56.1 ±0.5 10.6 BLUR 44.3 ±2.2 46.0 ±0.4 15.4 ±1.0 27.1 ±1.6 68.0 ±0.6 56.2 ±0.5 8.6 
+
+SIFT 32.7 ±1.6 46.2 ±0.4 17.8 ±1.1 29.0 ±1.6 68.2 ±0.6 56.2 ±0.5 26.4 
+
+compromising utility relative to other baselines. We also provide examples in Table A1 to show that the mitigated model using SIFT produces coherent and meaningful responses, without repetition or degeneration. Similar to text-to-speech adaptation, interference in hallucination mitigation is largely confined to the QKV matrices of self-attention layers. Similar to Fig. 6 , Fig. A4 in Appendix F shows that the primary-constraint conflict is concentrated in the QKV regions, particularly in Layer 27.Q, Layer 27.K, and Layer 28.K between steps 170 and 280. 
+
+## 6 Conclusion 
+
+We present SIFT, a subspace-control framework that resolves optimization conflicts in constrained model steering. We uncover a novel connection between one-shot model merging and the gradient-orthogonalized optimizer Muon, and design a localization scheme to intervene on systematic, localized conflicts between objectives and constraints. We evaluate SIFT on four model steering applications, including machine unlearning, safety alignment, text-to-speech adaptation, and hallucination mitigation, and show that it consistently outperforms both control-based and control-free baselines. Since SIFT uses SVD for subspace construction, improving efficiency is an important direction for future work. Another interesting direction is to investigate whether subspace control can be extended to the constrained pre-training paradigm, beyond the post-training setting considered in this work. 
+
+## References 
+
+DM Anisuzzaman, Jeffrey G Malins, Paul A Friedman, and Zachi I Attia. Fine-tuning large language models for specialized use cases. Mayo Clinic Proceedings: Digital Health , 3(1):100184, 2025. Jeremy Bernstein and Laker Newhouse. Old optimizer, new norm: An anthology. arXiv preprint arXiv:2409.20325 ,2024. Shristi Das Biswas, Arani Roy, and Kaushik Roy. Cure: Concept unlearning via orthogonal representation editing in diffusion models. In The Thirty-ninth Annual Conference on Neural Information Processing Systems , 2025. Valentyn Boreiko, Zhiqi Bu, and Sheng Zha. Towards understanding of orthogonalization in muon. In Tiny Titans: The next wave of On-Device Learning for Foundational Models (TTODLer-FM) , 2025. Oana-Maria Camburu, Tim Rocktäschel, Thomas Lukasiewicz, and Phil Blunsom. e-snli: Natural language inference with natural language explanations. Advances in Neural Information Processing Systems , 31, 2018. Lizhang Chen, Jonathan Li, and Qiang Liu. Muon optimizes under spectral norm constraints. arXiv preprint arXiv:2506.15054 , 2025. Yiming Chen, Xianghu Yue, Chen Zhang, Xiaoxue Gao, Robby T Tan, and Haizhou Li. Voicebench: Benchmarking llm-based voice assistants. arXiv preprint arXiv:2410.17196 , 2024. Karl Cobbe, Vineet Kosaraju, Mohammad Bavarian, Mark Chen, Heewoo Jun, Lukasz Kaiser, Matthias Plappert, Jerry Tworek, Jacob Hilton, Reiichiro Nakano, Christopher Hesse, and John Schulman. Training verifiers to solve math word problems. arXiv preprint arXiv:2110.14168 , 2021. Santiago Cuervo, Skyler Seto, Maureen de Seyssel, Richard He Bai, Zijin Gu, Tatiana Likhomanenko, Navdeep Jaitly, and Zakaria Aldeneh. Closing the gap between text and speech understanding in llms. arXiv preprint arXiv:2510.13632 , 2025. 11 Stephan Dempe, Nguyen Dinh, Joydeep Dutta, and Tanushree Pandit. Simple bilevel programming and extensions. 
+
+Mathematical Programming , 188(1):227–253, 2021. Gölge Eren and The Coqui TTS Team. Coqui tts, 2021. URL https://doi.org/10.5281/zenodo.6334862 .Computer software. Chongyu Fan, Changsheng Wang, Yancheng Huang, Soumyadeep Pal, and Sijia Liu. Llm unlearning under the microscope: A full-stack view on methods and metrics. arXiv preprint arXiv:2510.07626 , 2025. Antonio Andrea Gargiulo, Donato Crisostomi, Maria Sofia Bucarelli, Simone Scardapane, Fabrizio Silvestri, and Emanuele Rodola. Task singular vectors: Reducing task interference in model merging. In Proceedings of the Computer Vision and Pattern Recognition Conference , pp. 18695–18705, 2025. Zeyu Han, Chao Gao, Jinyang Liu, Jeff Zhang, and Sai Qian Zhang. Parameter-efficient fine-tuning for large models: A comprehensive survey. arXiv preprint arXiv:2403.14608 , 2024. Chuan He, Zhanwang Deng, and Zhaosong Lu. Low-rank orthogonalization for large-scale matrix optimization with applications to foundation model training. arXiv preprint arXiv:2509.11983 , 2025. Dan Hendrycks, Collin Burns, Steven Basart, Andy Zou, Mantas Mazeika, Dawn Song, and Jacob Steinhardt. Measuring massive multitask language understanding. Proceedings of the International Conference on Learning Representations (ICLR) , 2021. Tiansheng Huang, Sihao Hu, Fatih Ilhan, Selim Furkan Tekin, Zachary Yahn, Yichang Xu, and Ling Liu. Safety tax: Safety alignment makes your large reasoning models less reasonable, 2025. URL https://arxiv. org/abs/2503.00555 .Gabriel Ilharco, Marco Tulio Ribeiro, Mitchell Wortsman, Suchin Gururangan, Ludwig Schmidt, Hannaneh Hajishirzi, and Ali Farhadi. Editing models with task arithmetic. arXiv preprint arXiv:2212.04089 , 2022. Jiaming Ji, Donghai Hong, Borong Zhang, Boyuan Chen, Josef Dai, Boren Zheng, Tianyi Qiu, Boxun Li, and Yaodong Yang. Pku-saferlhf: Towards multi-level safety alignment for llms with human preference. arXiv preprint arXiv:2406.15513 , 2024. Jiaming Ji, Donghai Hong, Borong Zhang, Boyuan Chen, Josef Dai, Boren Zheng, Tianyi Alex Qiu, Jiayi Zhou, Kaile Wang, Boxun Li, et al. Pku-saferlhf: Towards multi-level safety alignment for llms with human preference. In 
+
+Proceedings of the 63rd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers) ,pp. 31983–32016, 2025. Jinghan Jia, Nathalie Baracaldo, and Sijia Liu. Beyond sft: Reinforcement learning for safer large reasoning models with better reasoning ability. arXiv preprint arXiv:2512.01848 , 2025. Keller Jordan, Yuchen Jin, Vlado Boza, Jiacheng You, Franz Cesista, Laker Newhouse, and Jeremy Bernstein. Muon: An optimizer for hidden layers in neural networks, 2024. URL https://kellerjordan.github.io/posts/ muon/ .Dmitry Kovalev. Understanding gradient orthogonalization for deep learning via non-euclidean trust-region optimization. 
+
+arXiv preprint arXiv:2503.12645 , 2025. Nathaniel Li, Alexander Pan, Anjali Gopal, Summer Yue, Daniel Berrios, Alice Gatti, Justin D Li, Ann-Kathrin Dombrowski, Shashwat Goel, Long Phan, et al. The wmdp benchmark: Measuring and reducing malicious use with unlearning. arXiv preprint arXiv:2403.03218 , 2024. Stephanie Lin, Jacob Hilton, and Owain Evans. Truthfulqa: Measuring how models mimic human falsehoods, 2021. Yong Lin, Hangyu Lin, Wei Xiong, Shizhe Diao, Jianmeng Liu, Jipeng Zhang, Rui Pan, Haoxiang Wang, Wenbin Hu, Hanning Zhang, et al. Mitigating the alignment tax of rlhf. In Proceedings of the 2024 Conference on Empirical Methods in Natural Language Processing , pp. 580–606, 2024. Jingyuan Liu, Jianlin Su, Xingcheng Yao, Zhejun Jiang, Guokun Lai, Yulun Du, Yidao Qin, Weixin Xu, Enzhe Lu, Junjie Yan, et al. Muon is scalable for llm training. arXiv preprint arXiv:2502.16982 , 2025a. Sijia Liu, Yuanshun Yao, Jinghan Jia, Stephen Casper, Nathalie Baracaldo, Peter Hase, Yuguang Yao, Chris Yuhao Liu, Xiaojun Xu, Hang Li, et al. Rethinking machine unlearning for large language models. Nature Machine Intelligence ,7(2):181–194, 2025b. 12 Yong Liu, Di Fu, Yang Luo, Zirui Zhu, Minhao Cheng, Cho-Jui Hsieh, and Yang You. Pome: Post optimization model edit via muon-style projection. arXiv preprint arXiv:2510.06627 , 2025c. Ilya Loshchilov and Frank Hutter. Decoupled weight decay regularization. arXiv preprint arXiv:1711.05101 , 2017. Chao Ma, Wenbo Gong, Meyer Scetbon, and Edward Meeds. Swan: Sgd with normalization and whitening enables stateless llm training. arXiv preprint arXiv:2412.13148 , 2024. Jianhao Ma, Yu Huang, Yuejie Chi, and Yuxin Chen. Preconditioning benefits of spectral orthogonalization in muon. 
+
+arXiv preprint arXiv:2601.13474 , 2026. Daniel Marczak, Simone Magistri, Sebastian Cygert, Bartłomiej Twardowski, Andrew D Bagdanov, and Joost Van De Weijer. No task left behind: Isotropic model merging with common and task-specific subspaces. arXiv preprint arXiv:2502.04959 , 2025. Kevin Meng, David Bau, Alex Andonian, and Yonatan Belinkov. Locating and editing factual associations in gpt. 
+
+Advances in Neural Information Processing Systems , 35:17359–17372, 2022. Stephen Merity, Caiming Xiong, James Bradbury, and Richard Socher. Pointer sentinel mixture models. arXiv preprint arXiv:1609.07843 , 2016. Todor Mihaylov, Peter Clark, Tushar Khot, and Ashish Sabharwal. Can a suit of armor conduct electricity? a new dataset for open book question answering. In EMNLP , 2018. Tu Anh Nguyen, Benjamin Muller, Bokai Yu, Marta R Costa-Jussa, Maha Elbayad, Sravya Popuri, Christophe Ropers, Paul-Ambroise Duquenne, Robin Algayres, Ruslan Mavlyutov, et al. Spirit-lm: Interleaved spoken and written language model. Transactions of the Association for Computational Linguistics , 13:30–52, 2025. Cheng Niu, Yuanhao Wu, Juno Zhu, Siliang Xu, KaShun Shum, Randy Zhong, Juntong Song, and Tong Zhang. Ragtruth: A hallucination corpus for developing trustworthy retrieval-augmented language models. In Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers) , pp. 10862–10878, 2024. Rafael Rafailov, Archit Sharma, Eric Mitchell, Stefano Ermon, Christopher D Manning, and Chelsea Finn. Direct preference optimization: Your language model is secretly a reward model. arXiv preprint arXiv:2305.18290 , 2023. Nazneen Fatema Rajani, Bryan McCann, Caiming Xiong, and Richard Socher. Explain yourself! leveraging language models for commonsense reasoning. In Proceedings of the 57th annual meeting of the association for computational linguistics , pp. 4932–4942, 2019. Hadi Reisizadeh, Jinghan Jia, Zhiqi Bu, Bhanukiran Vinzamuri, Anil Ramakrishna, Kai-Wei Chang, Volkan Cevher, Sijia Liu, and Mingyi Hong. Blur: A bi-level optimization approach for llm unlearning. arXiv preprint arXiv:2506.08164 ,2025. Artem Riabinin, Egor Shulgin, Kaja Gruntkowska, and Peter Richtárik. Gluon: Making muon & scion great again!(bridging theory and practice of lmo-based optimizers for llms). arXiv preprint arXiv:2505.13416 , 2025. Ashish Kumar Shakya, Gopinatha Pillai, and Sohom Chakrabarty. Reinforcement learning algorithms: A brief survey. 
+
+Expert Systems with Applications , 231:120495, 2023. Weijia Shi, Jaechan Lee, Yangsibo Huang, Sadhika Malladi, Jieyu Zhao, Ari Holtzman, Daogao Liu, Luke Zettlemoyer, Noah A Smith, and Chiyuan Zhang. Muse: Machine unlearning six-way evaluation for language models. arXiv preprint arXiv:2407.06460 , 2024. Shoaib Ahmed Siddiqui, Eleni Triantafillou, David Krueger, and Adrian Weller. Position: Capability control should be a separate goal from alignment. arXiv preprint arXiv:2602.05164 , 2026. Viacheslav Sinii, Alexey Gorbatovski, Artem Cherepanov, Boris Shaposhnikov, Nikita Balagansky, and Daniil Gavrilov. Steering llm reasoning through bias-only adaptation. In Proceedings of the 2025 Conference on Empirical Methods in Natural Language Processing , pp. 9213–9222, 2025. Rohan Taori, Ishaan Gulrajani, Tianyi Zhang, Yann Dubois, Xuechen Li, Carlos Guestrin, Percy Liang, and Tatsunori B. Hashimoto. Stanford alpaca: An instruction-following llama model. https://github.com/tatsu-lab/ stanford_alpaca , 2023. 13 Alex Wang, Amanpreet Singh, Julian Michael, Felix Hill, Omer Levy, and Samuel R. Bowman. GLUE: A multi-task benchmark and analysis platform for natural language understanding. 2019. In the Proceedings of ICLR. Zijun Wang, Haoqin Tu, Yuhan Wang, Juncheng Wu, Jieru Mei, Brian R. Bartoldson, Bhavya Kailkhura, and Cihang Xie. Star-1: Safer alignment of reasoning llms with 1k data. arXiv preprint arXiv:2504.01903 , 2025. Lingling Xu, Haoran Xie, S Joe Qin, Xiaohui Tao, and Fu Lee Wang. Parameter-efficient fine-tuning methods for pretrained language models: A critical review and assessment. IEEE Transactions on Pattern Analysis and Machine Intelligence , 2026. Menglin Yang, Jialin Chen, Jinkai Tao, Yifei Zhang, Jiahong Liu, Jiasheng Zhang, Qiyao Ma, Harshit Verma, Regina Zhang, Min Zhou, et al. Low-rank adaptation for foundation models: A comprehensive review. arXiv preprint arXiv:2501.00365 , 2024. Yuxuan Yao, Haonan Sheng, Qingsong Lv, Han Wu, Shuqi Liu, Zehua Liu, Zengyan Liu, Jiahui Gao, Haochen Tan, Xiaojin Fu, et al. Merging beyond: Streaming llm updates via activation-guided rotations. arXiv preprint arXiv:2602.03237 , 2026. Xiaojian Yuan, Tianyu Pang, Chao Du, Kejiang Chen, Weiming Zhang, and Min Lin. A closer look at machine unlearning for large language models. arXiv preprint arXiv:2410.08109 , 2024. Aohan Zeng, Zhengxiao Du, Mingdao Liu, Kedong Wang, Shengmin Jiang, Lei Zhao, Yuxiao Dong, and Jie Tang. Glm-4-voice: Towards intelligent and human-like end-to-end spoken chatbot. arXiv preprint arXiv:2412.02612 ,2024a. Aohan Zeng, Zhengxiao Du, Mingdao Liu, Lei Zhang, Shengmin Jiang, Yuxiao Dong, and Jie Tang. Scaling speech-text pre-training with synthetic interleaved data. arXiv preprint arXiv:2411.17607 , 2024b. Hengyuan Zhang, Yanru Wu, Dawei Li, Sak Yang, Rui Zhao, Yong Jiang, and Fei Tan. Balancing speciality and versatility: a coarse to fine framework for supervised fine-tuning large language model. In Findings of the Association for Computational Linguistics: ACL 2024 , pp. 7467–7509, 2024a. Juzheng Zhang, Jiacheng You, Ashwinee Panda, and Tom Goldstein. Lori: Reducing cross-task interference in multi-task low-rank adaptation. arXiv preprint arXiv:2504.07448 , 2025. Ruiqi Zhang, Licong Lin, Yu Bai, and Song Mei. Negative preference optimization: From catastrophic collapse to effective unlearning. arXiv preprint arXiv:2404.05868 , 2024b. Xuanqi Zhang, Haoyang Shang, and Xiaoxiao Li. Gss: Gated subspace steering for selective memorization mitigation in llms. arXiv preprint arXiv:2602.08901 , 2026. Yihua Zhang, Prashant Khanduri, Ioannis Tsaknakis, Yuguang Yao, Mingyi Hong, and Sijia Liu. An introduction to bilevel optimization: Foundations and applications in signal processing and machine learning. IEEE Signal Processing Magazine , 41(1):38–59, 2024c. Jeffrey Zhou, Tianjian Lu, Swaroop Mishra, Siddhartha Brahma, Sujoy Basu, Yi Luan, Denny Zhou, and Le Hou. Instruction-following evaluation for large language models, 2023. URL https://arxiv.org/abs/2311. 07911 .Hanqing Zhu, Zhenyu Zhang, Hanxian Huang, DiJia Su, Zechun Liu, Jiawei Zhao, Igor Fedorov, Hamed Pirsiavash, Zhizhou Sha, Jinwon Lee, et al. The path not taken: Rlvr provably learns off the principals. arXiv preprint arXiv:2511.08567 , 2025. 14 Appendix A SIFT Algorithm 
+
+Algorithm A1 presents the detailed procedure of our proposed method SIFT. At a high level, our approach treats model parameters in a structured manner and performs optimization under a constrained subspace to mitigate interference between objectives. The algorithm proceeds in three main stages. First, we evaluate the alignment between the gradients of f and g for each parameter block, which serves as a signal for detecting potential interference. Second, when significant misalignment is detected, we activate a subspace control mechanism following (8)–(10) that constructs a structured update direction by selectively filtering gradient components. Otherwise, standard Muon optimization (6) is applied without modification. Overall, this procedure enables localized and adaptive control over the optimization process, allowing the model to balance objective alignment while avoiding unnecessary loss of useful gradient information. 
+
+Algorithm A1 SIFT with primary objective f and constraint objective g
+
+1: Input: Subspace dimension K, misalignment threshold ϵ < 0, total steps T , stepsizes {ηt}T −1 
+
+> t=0
+
+, and initialization θ0
+
+2: for t = 0 , . . . , T − 1 do 
+
+3: for each parameter block l = 1 , . . . , L do 
+
+4: Compute alignment score τ (l) 
+
+> t
+
+= ∇f (θ(l)      
+
+> t)⊤∇g(θ(l)
+> t)
+> ∥∇ f(θ(l)
+> t)∥2∥∇ g(θ(l)
+> t)∥2
+
+, where θ(l) 
+
+> t
+
+denotes the lth block of θt
+
+5: if τ (l) 
+
+> t
+
+< ϵ then 
+
+6: Update θ(l) 
+
+> t+1
+
+using SIFT via (8)–(10) // with subspace control 7: else 
+
+8: Update θ(l) 
+
+> t+1
+
+using standard Muon via (6) 9: end if 
+
+10: end for 
+
+11: end for 
+
+12: Return: θTlayer 16 
+
+> layer 18-20
+> layer 22,23,25
+> step 200,300
+
+Figure A1: Localization patterns of SIFT for safety alignment, similar to Fig. 2. 
+
+## B Localization Patterns of SIFT for Safety Alignment 
+
+Fig. A1 presents the gradient alignment pattern under the safety alignment setting, following the same visualization protocol as Fig. 2. In contrast to the unlearning case, where RMU operates on a subset of layers, SIFT in safety alignment is applied across all layers. As we can see, SIFT exhibits sparse and localized intervention patterns across both optimization steps ( temporal ) and model components ( spatial ). Notably, the conflict regions are primarily concentrated in middle layers and occur at early training stages, which differs from the unlearning setting where conflicts tend to appear in higher layers. 15 C Sensitivity Analysis on Safety Alignment vs. Subspace Dimension K
+
+Similar to Fig. 5, we analyze the role of the top-K spectral subspace in Fig. A2 of SIFT under the safety alignment setting from both structural and performance perspectives. Specifically, we examine (i) the intrinsic low-rank structure of momentum and (ii) the trade-off between safety and utility under varying K. Fig. A2(Left) shows the effective rank of the momentum matrices computed in layers 15, 18, and 22, averaged across training steps. Consistent with the unlearning setting, the momentum exhibits a clear low-rank structure, where a relatively small K ≈ 200 captures the majority of spectral energy. Furthermore, Fig. A2(Right) illustrates the sensitivity of SIFT to different choices of K. We observe a similar trade-off pattern: smaller K (e.g., 64 ) tends to preserve utility but yields limited safety improvement, while moderate K (e.g., 192 ) achieves the best balance. In contrast, larger K (e.g., 512 , 1024 , or full-rank) leads to performance degradation in both safety and utility, suggesting that overly expanding the intervention subspace introduces unnecessary interference. Overall, these results further validate that an appropriately chosen low-dimensional spectral subspace is critical for achieving effective and stable safety alignment. 15 18 22 
+
+Layer 
+
+60 
+
+120 
+
+180 
+
+240    
+
+> Rank
+> Energy = 95%
+> Energy = 99% Ideal
+> zone
+> Figure A2: Sensitivity analysis on subspace dimension Kin SIFT for safety alignment. ( Left ) The effective rank of the momentum matrices computed across SIFT-localized layers (15, 18, and 22) under different energy thresholds. ( Right ) Performance of SIFT under varying K, where Safety denotes the average over all safety metrics, and Utility denotes the average over all utility metrics in Table 4.
+
+## D Interleaved Speech–Text Data Construction 
+
+Following (Zeng et al., 2024b; Nguyen et al., 2025), we construct interleaved speech–text data separately from the text training corpora of COSE, e-SNLI, and OpenBookQA. The construction procedure follows (Zeng et al., 2024b). Specifically, we first convert text responses into speech using the Coqui TTS API (Eren & Team, 2021), and then tokenize the resulting audio with the GLM-4-Voice speech tokenizer to obtain speech token sequences. We construct interleaved sequences by alternating 13 text tokens with 26 speech tokens, following the standard output format of GLM-4-Voice. Fig. A3 provides an example of such interleaved data constructed from COSE’s training set.                                             
+
+> [13 text tokens] Answer: D. outside. Explanation: billy is an animal, <|begin_of_audio|> [26 speech tokens] <|audio_15358|><|audio_9903|>...<|audio_4037|><|audio_7780|>
+> <|end_of_audio|> [13 text tokens] but he is allergic to trees. He hates them very much. Still, he wants to have apicnic and can’t <|begin_of_audio|> [26 speech tokens] <|audio_4914|><|audio_5137|>...<|audio_329|><|audio_2429|>
+> <|end_of_audio|> [left text tokens] stand outside. <|begin_of_audio|> [left speech tokens] <|audio_508|> <|audio_9443|>...<|audio_1089|><|audio_2360|> <|end_of_audio|>
+> Figure A3: Example of interleaved speech–text data constructed from COSE’s training set.
+
+## E Example Responses from the RAGTruth Dataset 
+
+We present an example of word-level LLM hallucination for an input query sampled from the RAGTruth summarization task in Table A1. The original model’s response may contain both hallucinated content (highlighted in red) and 16 non-hallucinated content. Our objective is to suppress hallucinated words through the unlearning objective while preserving the non-hallucinated content. Furthermore, the response from the mitigated model using SIFT remain coherent and meaningful, without exhibiting repetitive or degenerate outputs. 
+
+Table A1: Example responses from the base model and the SIFT-updated model for an input query sampled from the RAGTruth dataset. Red text indicates hallucinated content. 
+
+Input query 
+
+Summarize the following news within 161 words: . . . Five people were infected and three died in the past year in Kansas from listeria that might be linked to Blue Bell Creameries products, according to the CDC... 
+
+Original Model 
+
+... This is the third time Blue Bell has taken action due to listeria contamination, and the company is cooperating with investigations. No illnesses have been reported directly linked to the contaminated ice cream, but five people in Kansas have died from listeriosis in the past year after consuming Blue Bell products. 
+
+Mitigated model 
+
+...This recall follows past listeria outbreaks in Kansas and Texas, where five people were infected and three died, some after consuming milk-shakes made with Blue Bell ice cream. Blue Bell is cooperating with authorities, emphasizing safety, and other Blue Bell products are not affected. 
+
+## F Localization Patterns of SIFT for Hallucination Mitigation 
+
+Similar to Fig. 6 , Fig. A4 shows the gradient misalignment across optimization steps and model layers on RAGTruth. As observed, the negative cosine similarity is primarily concentrated in the QKV regions, particularly in Layer 27.Q, Layer 27.K, and Layer 28.K between steps 170 and 280. This pattern is consistent with the text-to-speech adaptation setting, where interference between the primary and constraint objectives during hallucination mitigation is largely localized to the QKV projections of the self-attention layers. 0
+
+1
+
+2
+
+3 Count of layers with τ < -0.8 
+
+0 60 120 180 240 
+
+Step 
+
+> G U D O Q K V
+> Component
+> 10.gate
+> 20.gate
+> 10.up
+> 20.up
+> 10.down
+> 20.down
+> 10.out
+> 20.out
+> 10.q
+> 20.q
+> 10.k
+> 20.k
+> 10.v
+> 20.v
+
+012345
+
+> Count of steps with τ < -0.8
+
+−0.5 0.0 0.5 
+
+Cosine Similarity 
+
+Figure A4: In each Transformer layer, “Q”, “K”, and “V” denote the query, key, and value projection matrices, and “O” denotes the output projection of the self -attention module. “G”, “U”, and “D” denote the gating, up -projection, and down - projection components of the feed-forward network. 
+
+17

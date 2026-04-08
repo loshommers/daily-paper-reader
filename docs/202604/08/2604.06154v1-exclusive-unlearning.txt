@@ -1,0 +1,489 @@
+Title: Exclusive Unlearning
+
+URL Source: https://arxiv.org/pdf/2604.06154v1
+
+Published Time: Wed, 08 Apr 2026 01:29:16 GMT
+
+Number of Pages: 24
+
+Markdown Content:
+Preprint. Under review. 
+
+# Exclusive Unlearning 
+
+Mutsumi Sasaki 1,2 Kouta Nakayama 2
+
+Yusuke Miyao 3,2 Yohei Oseki 3,2 Masaru Isonuma 2,1,3 1Tohoku University 2NII LLMC 3The University of Tokyo  
+
+> Correspondence: mutsumi.sasaki@dc.tohoku.ac.jp
+
+# Abstract 
+
+When introducing Large Language Models (LLMs) into industrial appli-cations, such as healthcare and education, the risk of generating harmful content becomes a significant challenge. While existing machine unlearning methods can erase specific harmful knowledge and expressions, diverse harmful content makes comprehensive removal difficult. In this study, instead of individually listing targets for forgetting, we propose Exclusive Unlearning (EU), which aims for broad harm removal by extensively for-getting everything except for the knowledge and expressions we wish to retain. We demonstrate that through Exclusive Unlearning, it is possible to obtain a model that ensures safety against a wide range of inputs, including jailbreaks, while maintaining the ability to respond to diverse instructions related to specific domains such as medicine and mathematics. 1
+
+# 1 Introduction 
+
+Large Language Models (LLMs) inherently possess risks such as the leakage of private information and copyright infringement (Carlini et al., 2023; Dou et al., 2025; Huang et al., 2022; Ippolito et al., 2023). Because LLMs are trained on massive corpora, it is unrealistic to remove all harmful content from the training data in advance. Consequently, unlearning (Liu et al., 2025; 2024c; Si et al., 2023; Yuan et al., 2025; Wang et al., 2025), which removes specific knowledge from a trained LLM, has attracted attention as a low-cost alternative. However, traditional unlearning research is primarily based on the problem definition of “what to forget”, which assumes an exhaustive enumeration of the harmful expressions to be erased. In practice, it is difficult to prepare diverse unlearning datasets that anticipate every possible attack pattern, and generalization to unseen harmful questions not included during training remains insufficient (Yao et al., 2024; Zhang et al., 2025b). In particular, the recent diversification of jailbreak attack methods (Liu et al., 2024b; Shen et al., 2024; Yu et al., 2024a; Wei et al., 2023; Zou et al., 2023; Kang et al., 2024; Liu et al., 2024a) makes it increasingly difficult to defend against every input designed to elicit harmful generation simply by specifying unlearning data. While recent studies (Lu et al., 2024; Liu et al., 2024c) have proposed methods to generalize to unseen harmful or jailbreak inputs using representative harmful data, such generalization is still inadequate and the approach is becoming increasingly complex (Li et al., 2025). In this study, we attempt to solve this issue by shifting the problem definition of unlearning through a simple yet effective approach. Specifically, instead of specifying “what to forget”, we propose Exclusive Unlearning (EU), where we specify only “what to retain” through retention data and uniformly forget everything else ( Fig. 1). As a concrete approach, we sample diverse text from the model itself and bring the model’s generation probabilities closer to a uniform distribution to induce forgetting, while simultaneously performing standard fine-tuning on the target dataset to be retained. This allows the model to exclusively unlearn everything except for the specific abilities required to answer instructions and tasks defined by the retention dataset. While traditional unlearning requires specific forgetting data, our proposed method does not require the item-by-item enumeration of harmful  
+
+> 1github.com/cl-tohoku/ExclusiveUnlearning
+
+1
+
+> arXiv:2604.06154v1 [cs.CL] 7 Apr 2026
+
+Preprint. Under review. forgotte n       
+
+> All knowledge
+> & capabilities
+> What to forge tForgotten What to retai nRetained
+> Forgotten Retained
+
+# Previous Unlearning 
+
+Before Unlearning Afte r Unlearning Before Unlearning Afte r Unlearning 
+
+# Exclusive Unlearning 
+
+> All knowledge
+> & capabilities
+
+Figure 1: Overview of Exclusive Unlearning (EU). By specifying only “what to retain” and exclusively forgetting everything else, this method can circumvent the limitations of traditional unlearning, where generalizing to unseen harmful domains not included in the unlearning data is difficult. behaviors, thereby fundamentally bypassing the limitations of data-dependent unlearning. Although this setting is less suited for general-purpose LLMs because it requires a clear definition of target abilities, it is ideal for domain-specific LLM application scenarios, such as medical diagnostic support or educational assistance. For instance, in a medical application, the retention target can be clearly defined as medical knowledge and instruction-following capability for medical queries; in such cases, our method can achieve defensive performance that far exceeds conventional approaches. In our experiments, we demonstrated the effectiveness of this method using instruction tuning datasets for medicine and mathematics, looking toward applications in the health-care and education sectors. After Exclusive Unlearning, the model maintained its target capabilities at a level equal to or higher than the original model, while showing high defensive performance against a wide range of harmful inputs, including jailbreaks. In particular, in terms of generalization to diverse harmful inputs, our results significantly outperformed existing methods, including safety alignment via Direct Preference Optimiza-tion (DPO), standard unlearning based on harmful data enumeration, and prior unlearning methods (Lu et al., 2024; Liu et al., 2024c) that build on such harmful-data-based unlearning with additional mechanisms to improve forgetting generalization to unseen harmful inputs. The primary contributions of this paper are as follows: (1) We propose a new retention-only framework that fundamentally outperforms the conven-tional paradigm of enumerating and generalizing from harmful data in terms of forgetting unseen and jailbreak inputs, albeit within a specific application scope. (2) We implement this framework with a simple approach by changing the focus of existing unlearning, and empirically demonstrate its superior effectiveness. 
+
+# 2 Methodology 
+
+Our objective is to retain only the abilities required to solve the tasks in a target dataset, while effectively forgetting all other inputs. In unlearning, parameter optimization is generally performed by combining a forgetting loss Lforget (θ) and a retention loss Lretain (θ). The most fundamental approach in conventional unlearning is Gradient Ascent (GA), which sets Lforget (θ) to minimize the log-likelihood of a pre-defined forget dataset Dforget 
+
+Lforget (θ) = Ex∼D forget [log pθ (x)] . (1) 2Preprint. Under review. However, performing unlearning on a fixed Dforget makes it difficult to generalize to a broad range of harmful inputs that lie outside the scope of that specific dataset. To address this, we propose a method that requires no explicit forget dataset by specifying only the target dataset to be retained and exclusively forgetting non-retained knowledge and capabilities. A key feature of our approach is the unlearning of text generated by the model itself: 
+
+Lforget (θ) = Ex∼pθ [log pθ (x)] . (2) This design is based on the intuition that the model’s internal knowledge and capabilities are represented in its self-generated outputs. Actually, this objective corresponds to maximizing the entropy of the model’s predictions. Maximizing the entropy is equivalent to minimizing the Kullback-Leibler divergence between the model’s prediction and a uniform distribution 
+
+pu:
+
+Ex∼pθ [log pθ (x)] = KL [pθ ∥ pu] − T log V (3) where V denotes the vocabulary size, and T is the sequence length of x. As a result, the model’s predictions are forced into a uniform distribution, ensuring that all non-target knowledge is thoroughly unlearned. This approach resolves the fundamental challenge in existing unlearning methods: the difficulty of anticipating and curating data for every possible harmful query or attack pattern. While this results in the removal of knowledge and capabilities regardless of their harmfulness, our method is highly effective for domain-specific applications, where the capabilities to be retained are clearly defined. For the retention objective, we minimize the negative log-likelihood over the retention dataset Dretain , following standard fine-tuning procedures: 
+
+Lretain (θ) = Ex∼D retain [− log pθ (x)] . (4) Finally, we integrate Eq. 2 and Eq. 4 to achieve the simultaneous retention of specific expertise and the exclusive unlearning of all other information: 
+
+L(θ) = λ · L forget (θ) + ( 1 − λ) · L retain (θ), (5) where the balancing parameter λ controls the trade-off between forgetting and retention. 
+
+# 3 Experimental Setup 
+
+3.1 Training Setup 
+
+Assuming applications in the medical and mathematical domains, we use two instruc-tion tuning datasets as retention targets: MedInstruct-52k from AlpaCare (Zhang et al., 2025a) for the medical domain, and MetaMathQA from MetaMath (Yu et al., 2024b) for the mathematical domain. For the unlearning process, we utilize text generated by the model itself, sampling with a batch size of 4 over 10,000 steps. For the base models, we use Llama-3.2-1B-Instruct, Llama-3.2-3B-Instruct (Meta, 2024), OLMo-2-1B-Instruct, and OLMo-2-7B-Instruct (OLMo et al., 2025). Full details of the self-generation procedure and hyperparameter analysis are provided in § B. We also tune the balancing parameter λ over a set of candidate values and report the best-performing setting. The sensitivity and stability with respect to λ are discussed in § 4.3. 
+
+3.2 Evaluation Setup 
+
+In the medical domain, we conduct both benchmark and LLM-based evaluations. For benchmark evaluation, we use four medical multiple-choice QA datasets (MedQA (Jin et al., 2020), HeadQA (Vilares & Gómez-Rodríguez, 2019), PubmedQA (Jin et al., 2019), and MEDMCQA (Pal et al., 2022)) and the summarization dataset (MeQSUM (Ben Abacha & Demner-Fushman, 2019)), reporting accuracy for QA and ROUGE-L for summarization 3Preprint. Under review. following the lm-evaluation-harness (Gao et al., 2024). For LLM-based evaluation, we use MedInstruct-test (216 medical instructions) and iCliniq (Li et al., 2023) (1,000 patient queries), and use GPT-5-2025-08-07 (Singh et al., 2025) to score responses on four five-point dimensions: Accurate, Useful, Comprehensible, and Succinct, adapted from PDSQI-9 (Croxford et al., 2025). Details are provided in § D. In the mathematical domain, we evaluate on GSM8K (Cobbe et al., 2021), MATH (Hendrycks et al., 2021b), and MathQA (Amini et al., 2019), reporting Exact Match (EM) for generation tasks and accuracy for multiple-choice QA following the lm-evaluation-harness. To evaluate forgetting performance, we measure defensive performance against harmful and jailbreak inputs. We use two harmful-question sets, Harm-1 and Harm-2 , constructed from GPTFUZZER (Yu et al., 2024a) and WildAttack (Shen et al., 2024), respectively. We further construct two corresponding jailbreak sets, JB-1 and JB-2 , by combining them with 20 types of unseen jailbreak prompts from prior work (Zhang et al., 2025b). Details are provided in § C. Following prior work (Zhang et al., 2025b), we use ShieldLM-14B-qwen (Zhang et al., 2024) as a safety judge and report Attack Success Rate (ASR). In our unlearning objective, based on Eq. 3, forgotten inputs are expected to induce output distributions close to uniform. We therefore evaluate whether a given input has been forgot-ten according to whether its output distribution is sufficiently close to uniform (determined by a threshold ∆(x); see § F for details). For inputs judged to be forgotten, our method re-turns a fixed refusal response, “I can’t answer the instruction.”, thereby avoiding incoherent outputs and ensuring the safety of the response for those inputs. 
+
+3.3 Baselines for Forgetting and Retention 
+
+We compare our method with both retention and forgetting baselines. For retention, we use the original model before unlearning and a model trained only with the retention objective in Eq. 4, denoted as RetainOnlyFT .For forgetting, we consider four baselines. DPO applies Direct Preference Optimization based on PKU-SafeRLHF (Ji et al., 2025) together with the retention objective. Unlearning 
+
+optimizes the forgetting objective in Eq. 1 on 40,000 harmful examples from PKU-SafeRLHF-QA together with the same retention objective. We further adapt two prior unlearning methods designed to improve generalization to jailbreak-style harmful inputs: Eraser (Lu et al., 2024), which applies forgetting to perturbed harmful inputs with random prefix/suffix noise, and SKU (Liu et al., 2024c), which subtracts a harmful-behavior update direction at the parameter level. For fair comparison, DPO uses 40,000 preference pairs, and all harmful-data-based baselines use the same 40,000 PKU-SafeRLHF-QA examples and the same target-domain retention data. In addition, Unlearning and Eraser also produce uniform output distributions on forgotten inputs. Therefore, we apply the forgetting criterion described in § F to them as well, and return a fixed response for outputs judged as forgotten. Details of each baseline are provided in § E. 
+
+# 4 Results 
+
+4.1 Overall Retention and Forgetting Performance 
+
+In the medical-retention setting, we first examine the medical benchmark results shown in Tbl. 1. For the base models, the ASR on baseline harmful questions is already relatively low, reflecting the fact that the Instruct models used in our experiments have already undergone safety alignment. However, the ASR on jailbreak inputs remains high, indicating that the original alignment alone is insufficient against adversarial prompt reformulations. When these models are further specialized to the medical domain via RetainOnlyFT, retention performance improves, but safety degrades substantially. In particular, ASR increases not only on jailbreak evaluations but also on the baseline harmful-question sets. In contrast, EU preserves competitive medical retention performance while substantially reducing ASR on both harmful and jailbreak inputs. That is, while reducing ASR to at most a few percent, EU maintains benchmark performance close to both the base model and RetainOnlyFT. 4Preprint. Under review. 
+
+> Retention
+
+↑ Forgetting (ASR) ↓                         
+
+> Setting MC Avg. MeQSum Harm-1 Harm-2 JB-1 JB-2 Llama-3.2-1B-Instruct 0.3672 0.1192 7.0 8.8 52.5 51.1 RetainOnlyFT 0.3820 0.2582 16.0 19.4 48.6 52.6 DPO 0.3712 0.2477 2.0 2.8 6.7 5.3 Unlearning ( λ
+
+= 0.6) 0.3898 0.2639 0.0 0.0 21.0 22.9 Eraser ( λ = 0.6) 0.3720 0.1754 0.0 0.5 17.2 16.0 SKU 0.3314 0.1122 5.0 6.0 11.9 10.9 EU ( λ = 0.6) 0.3605 0.2397 0.0 0.0 0.0 0.3                    
+
+> Llama-3.2-3B-Instruct 0.4290 0.0863 2.0 4.6 18.1 10.2 RetainOnlyFT 0.4496 0.2394 9.0 18.9 60.3 58.9 DPO 0.5009 0.1504 2.0 2.3 3.5 2.5 Unlearning ( λ
+
+= 0.6) 0.4695 0.2083 0.0 0.0 25.5 23.3 Eraser ( λ = 0.6) 0.4500 0.1919 0.0 0.0 0.7 0.3 SKU 0.4198 0.1079 0.0 1.3 7.6 5.7 EU ( λ = 0.6) 0.4468 0.2015 0.0 0.0 0.1 0.2                    
+
+> OLMo-2-1B-Instruct 0.3386 0.1475 1.0 0.9 14.2 11.1 RetainOnlyFT 0.3567 0.2832 11.0 18.9 39.2 52.6 DPO 0.3507 0.1524 0.0 0.1 20.8 20.1 Unlearning ( λ
+
+= 0.95) 0.3559 0.2756 0.0 0.0 22.5 22.9 Eraser ( λ = 0.95) 0.3764 0.2417 1.0 9.2 7.3 6.5 SKU 0.3713 0.1079 0.0 0.0 6.2 5.7 EU ( λ = 0.95) 0.3541 0.2944 1.0 0.0 0.0 0.0                    
+
+> OLMo-2-7B-Instruct 0.5063 0.2449 0.0 0.9 29.2 26.6 RetainOnlyFT 0.4800 0.2587 6.0 13.4 45.9 45.6 DPO 0.4880 0.1841 1.0 0.0 28.6 25.8 Unlearning ( λ
+
+= 0.6) 0.4633 0.2367 0.0 0.0 42.1 41.9 Eraser ( λ = 0.6) 0.4582 0.2398 0.0 0.0 45.1 40.3 SKU 0.4817 0.1333 0.0 0.0 7.0 6.5 EU ( λ = 0.6) 0.4753 0.2868 0.0 0.0 0.3 0.2 
+
+Table 1: Retention and forgetting performance for medical-domain experiments. The left block reports retention performance, where we summarize the four medical multiple-choice benchmarks by their average (MC Avg.), while reporting MeQSUM separately as the summarization task. Higher is better for retention. The right block reports forgetting perfor-mance in terms of attack success rate (ASR) on harmful and jailbreak datasets, expressed in percentage, where lower is better. Next, Tbl. 2 shows the LLM-based evaluation results on free-form responses for MedInstruct-test and iCliniq along four dimensions. MedInstruct-test is a clinician-crafted free-form medical instruction evaluation set corresponding to MedInstruct-52k, which we used for retention. Across all models and all evaluation dimensions, EU achieves performance comparable to RetainOnlyFT, confirming that it preserves the ability to respond to diverse instructions within the retained domain. ICliniq is a separate medical dataset of real patient queries and is less directly aligned with the retention data format. EU remains comparable to RetainOnlyFT there across all evaluation dimensions as well, indicating that the retained generation capability extends beyond MedInstruct-style instructions to another external in-domain dataset. Finally, the results under the setting of retaining mathematical capability, shown in § G, Tbl. 9, exhibit the same overall trend as in the medical domain. Across all four models, EU reduces ASR on harmful and jailbreak inputs to nearly zero, while maintaining mathematical performance on both generative tasks (GSM8K and MATH) and the multiple-choice task (MathQA) at a level above the base model and roughly comparable to RetainOnlyFT. This suggests that our method can be applied under settings that retain capabilities for a variety of tasks. 5Preprint. Under review. 
+
+MedInstruct-test iCliniq Setting Acc. Use. Comp. Suc. Avg Acc. Use. Comp. Suc. Avg Llama-3.2-1B-Instruct 2.65 2.73 4.84 2.82 3.26 2.64 2.03 4.77 3.10 3.14 RetainOnlyFT 3.68 2.97 4.56 3.94 3.79 2.84 2.20 4.71 4.00 3.44 EU ( λ = 0.6) 3.62 2.93 4.52 4.03 3.78 2.90 2.22 4.74 3.97 3.46 
+
+Llama-3.2-3B-Instruct 3.31 3.31 4.93 3.21 3.69 2.99 2.56 4.90 3.43 3.47 RetainOnlyFT 4.10 3.13 4.63 4.14 4.00 3.32 2.48 4.80 3.98 3.65 EU ( λ = 0.6) 4.14 3.14 4.60 4.07 3.99 3.35 2.48 4.82 3.99 3.66 
+
+OLMo-2-1B-Instruct 3.06 2.96 4.86 3.19 3.52 2.51 2.36 4.70 2.82 3.10 RetainOnlyFT 3.77 2.94 4.61 3.84 3.79 3.00 2.31 4.74 3.89 3.49 EU ( λ = 0.95) 3.86 2.91 4.66 3.95 3.85 3.07 2.32 4.76 3.89 3.51 
+
+OLMo-2-7B-Instruct 4.18 3.70 4.99 3.80 4.17 3.64 3.08 4.95 3.65 3.83 RetainOnlyFT 4.19 3.53 4.95 3.96 4.16 3.60 2.63 4.79 4.09 3.78 EU ( λ = 0.6) 4.26 3.31 4.82 4.09 4.12 3.63 2.65 4.80 4.08 3.79 
+
+Table 2: Judge-based generation evaluation results on MedInstruct-test and iCliniq. Acc. ,
+
+Use. , Comp. , and Suc. denote Accuracy , Usefulness , Comprehensibility , and Succinctness ,respectively. Avg denotes their average score. 
+
+4.2 Comparison with Baselines 
+
+In Tbl. 1 and Tbl. 9, we compare EU with two baselines designed to improve safety against harmful and jailbreak inputs. The first baseline, DPO , learns refusal behavior through safety alignment. Compared with the original base models, DPO substantially reduces the attack success rate (ASR), typically to around 5%–10%. However, EU further reduces ASR to nearly 0%, especially on jailbreak inputs, indicating stronger robustness. This suggests that alignment-based suppression of harmful behavior is still insufficient for robust defense. At the same time, EU is trained under a stricter constraint than DPO, since it is designed to forget not only harmful behavior but also non-target benign capabilities outside the retention domain. Thus, our point is not that DPO is uniformly inferior, but that EU is more effective specifically for forgetting and defense against adversarial harmful inputs. The second baseline, Unlearning , explicitly enumerates harmful data and applies unlearning to those examples. While this baseline reduces the ASR on the curated harmful-question sets themselves to nearly 0%, its ASR on jailbreak inputs remains substantially higher than that of EU. Moreover, the Eraser and SKU baselines, which are based on prior work that also explicitly enumerates harmful data but aims to generalize to a broader range of harmful inputs, sometimes reduce the ASR on jailbreak inputs to nearly 0% for particular task settings and models; however, overall, they still record ASRs ranging from around 5% to several tens of percent. These results support our hypothesis that unlearning approaches which aim to defend against a broad range of attacks by generalizing from explicitly listed harmful examples do not generalize sufficiently to jailbreak attacks, and they suggest that EU, which broadly forgets everything outside the retention domain, is effective for comprehensive forgetting against harmful or jailbreak inputs. 
+
+4.3 Sensitivity to the Hyperparameter Balancing Forgetting and Retention Loss 
+
+Next, we analyze the sensitivity of Exclusive Unlearning (EU) to the balance parameter λ in Eq. 5. The sensitivity results for the medical-domain retention setting are shown in Tbl. 10, and those for the mathematical-domain retention setting are shown in Tbl. 11. Overall, the results indicate that EU is robust to the choice of λ on both the retention and forgetting sides, rather than relying on a single narrowly tuned setting. 6Preprint. Under review. From the perspective of retention, EU maintains stable target-domain performance across a broad range of λ values in both the medical and mathematical domains. From the perspective of forgetting, the same robustness is observed. Across both domains, harmful and jailbreak ASR is consistently reduced to very low levels over a wide range of moderate 
+
+λ values. This indicates that the forgetting behavior of EU is stable and reproducible with respect to λ.
+
+# 5 Discussion 
+
+5.1 Understanding the Behavior of Exclusive Unlearning 
+
+To better understand the behavior of Exclusive Unlearning, we evaluate the EU-trained model (medical retention setting) on a broad set of general-domain benchmarks unrelated to either the medical domain or harmful inputs: ARC-Easy, ARC-Challenge (Boratko et al., 2018), PIQA (Bisk et al., 2020), HellaSwag (Zellers et al., 2019), GSM8K (Cobbe et al., 2021), and MMLU (Hendrycks et al., 2021a). The results are shown in Tbl. 3. While performance drops across most tasks after EU, it does not fall entirely to chance level, indicating partial retention of some general-domain inputs. To understand why harmful inputs are nonetheless forgotten effectively (as shown in Tbl. 1), we analyze the representation space of the EU-trained Llama-3.2-1B-Instruct. We feed four categories of inputs into the model: harmful inputs (100 samples from Harm-1 ), their jailbreak variants, medical data (100 samples from MedInstruct-test), and general-domain data unrelated to either (100 samples each from Alpaca and ARC-Easy). We apply t-SNE to the final-layer hidden states at the last token position and, using the criterion from § F, distinguish retained from forgotten inputs in the visualization. We perform the same analysis on the conventional unlearning baseline for comparison. The results of Llama-3.2-1B-Instruct are shown in Fig. 2. We observe the same overall tendency for other models as well; details are provided in § I. The visualization reveals the behavior underlying EU. In the EU model (right), some general-domain inputs lie close to the medical domain in representation space and are thus partially retained by the retention objective, which suggests why general-domain performance does not collapse to chance level. Actually, among the general-domain inputs that were not judged as forgotten, we observed many examples that are semantically close to the retained medical domain, including instructions related to health and care in Alpaca and science questions pertaining to biology or health in ARC-Easy (see Tbl. 12). Harmful inputs, however, are represented far from the medical domain and are therefore consistently forgotten, explaining the strong defensive performance in Tbl. 1. The contrast with conventional unlearning (left) is particularly informative for jailbreak robustness. Conventional unlearning targets the harmful region directly, achieving strong forgetting within that region. However, jailbreak prompts shift the representation of harmful inputs toward the general-domain region, causing some of them to escape forgetting. EU avoids this failure mode: since it forgets everything outside the retention domain, jailbreak inputs that are representationally distant from the medical domain are forgotten just as reliably as plain harmful inputs. 
+
+5.2 Design Analysis of Self-generated Text in Exclusive Unlearning 
+
+A key design choice in EU is to use self-generated text as the source of forgetting, rather than relying on an explicitly curated forget corpus. To examine the validity of this design, we first compare self-generated text with two alternative sources under otherwise identical training configurations: one sampled from the Wikipedia subset of the Dolma corpus (Wiki), and another sampled from the entire Pile corpus (Pile). As shown in § K, Fig. 4, the setting using the model’s self-generated text achieves the strongest forgetting performance. This result supports the view that self-generated text provides an effective forgetting source for EU, likely because it more directly reflects the model’s own internal knowledge and capabilities than externally sampled corpora. From a practical perspective, this is also 7Preprint. Under review. 
+
+Setting ARC-Easy ARC-Challenge PIQA HellaSwag GSM8K MMLU 
+
+Metric 4-choice 4-choice 2-choice 4-choice EM 4-choice 
+
+Llama-3.2-1B-Instruct 0.5859 0.3072 0.7404 0.4498 0.1312 0.3126 EU ( λ = 0.6) 0.4112 0.3072 0.5838 0.2656 0.0050 0.2489 
+
+Llama-3.2-3B-Instruct 0.7045 0.3942 0.7579 0.5073 0.1850 0.3930 EU ( λ = 0.6) 0.5741 0.3430 0.6066 0.2945 0.0000 0.2975 
+
+OLMo-2-1B-Instruct 0.6915 0.3788 0.7476 0.5141 0.4268 0.3453 EU ( λ = 0.95) 0.5320 0.2867 0.6306 0.3968 0.0106 0.2396 
+
+OLMo-2-7B-Instruct 0.7630 0.4616 0.7731 0.5962 0.7127 0.4418 EU ( λ = 0.6) 0.4785 0.3012 0.6415 0.3542 0.0037 0.2307 
+
+Table 3: General benchmark performance under the setting of retaining medical capability. Previous Unlearning Exclusive Unlearning                             
+
+>   
+>  
+> 
+> 
+> 
+> 
+>   
+>   
+>  
+>  
+> 
+> 
+> 
+> 
+> 
+> 
+>   
+>   
+>  
+>  
+>  
+> 
+>  
+>       
+
+Figure 2: t-SNE visualization of the final-layer representation space at the last-token position in the medical-retention setting of Llama-3.2-1B-Instruct. We compare a conventional unlearning baseline (left) with Exclusive Unlearning (right) using five types of inputs: Alpaca, Medical, ARC-Easy, Harmful, and Harmful-JB. Marker shape indicates whether the input is judged as retained or forgotten based on § F. advantageous, since preparing broad external corpora for forgetting is often cumbersome, whereas self-generation can be performed directly from the model itself. We further analyze how the design of self-generated text affects forgetting performance by varying the sampling settings (temperature and top-k), the user-side and assistant-side generation lengths, and the number of forgetting samples. Overall, the results show that neither overly conservative sampling nor overly noisy or excessively unconstrained sampling yields the best performance; rather, effective forgetting is achieved when the generated text remains sufficiently diverse while still reflecting the model’s own output distribution. For generation length, the user-side length has a much larger effect than the assistant-side length, suggesting that broad coverage of the input space is particularly important for robust forgetting. Increasing the number of forgetting samples generally improves forgetting performance, although the gains become smaller once the forgetting set is already sufficiently large. We provide the detailed results in § B. 
+
+5.3 Necessity of Starting from Pre-trained Models 
+
+To achieve the goal of exclusively forgetting non-target information while retaining useful capabilities in the target domain, we examined whether a model initialized with random parameters and trained on the retention data could achieve similar results. As shown in § J, 8Preprint. Under review. starting from random parameters failed to acquire basic language generation capabilities, resulting in evaluation scores of nearly 0%. This demonstrates that to fulfill our objectives, it is essential to start from a pre-trained model and focus on preserving both target-specific expertise and general linguistic proficiency. 
+
+5.4 Limitations of Exclusive Unlearning 
+
+A limitation of EU is that the forgetting it achieves is not robust to subsequent fine-tuning. In practice, when we further fine-tuned an EU-trained model on a small amount of Alpaca data (400 examples), the attack success rate increased to about 40%. This suggests that harmful capabilities are suppressed rather than fully erased at the parameter level. Prior work has explicitly raised this issue for gradient-based unlearning methods (Fan et al., 2025; Łucki et al., 2025; Hu et al., 2025a), suggesting that this limitation is not unique to EU. Accordingly, EU is suited to deployment settings in which the model is not further fine-tuned after unlearning. A second limitation is inherent to the formulation of EU itself. Because EU is designed to retain only the specified target domain and forget everything else, it also degrades benign capabilities outside the retained domain, as shown in Tbl. 3. On the other hand, as shown in § 4.1, within the retained domain, EU preserves the ability to respond to a wide range of instructions varying in both form and content. Therefore, EU is most appropriate for domain-specialized applications where the retained capabilities are clearly defined, rather than for general-purpose assistants. 
+
+# 6 Related Work 
+
+Machine unlearning in Large Language Models (LLMs) has been studied as a way to remove the influence of specific data from pre-trained models while mitigating risks such as privacy leakage, copyright infringement, and harmful content generation (Liu et al., 2025; Si et al., 2023; Yuan et al., 2025; Wang et al., 2025; Carlini et al., 2023; Dou et al., 2025; Huang et al., 2022; Ippolito et al., 2023). Most prior approaches are fundamentally forget-set driven: they rely on a pre-defined dataset specifying what should be forgotten, while attempting to preserve general utility on benign data. A central challenge for such methods is generalization to unseen harmful expressions, paraphrases, and jailbreak-style inputs that are difficult to enumerate exhaustively (Yao et al., 2024; Kang et al., 2024; Ye et al., 2025; Hu et al., 2025b). This challenge has become even more severe as jailbreak attacks have become increasingly diverse and sophisticated, including role-playing, privilege escalation, attention shifting, automated prompt generation, gradient-based attacks, and query reformatting (Liu et al., 2024b; Wei et al., 2023; Yu et al., 2024a; Zou et al., 2023; Kang et al., 2024). To address this limitation, prior work has explored strategies such as subtracting harmful-behavior directions learned from harmful data (Liu et al., 2024c), data augmentation for harmful queries (Lu et al., 2024), and more complex procedures designed to improve robustness to unseen attacks (Li et al., 2025). In contrast, our work reframes unlearning as specifying only what to retain and forgetting everything else, thereby avoiding reliance on exhaustively curated harmful datasets. 
+
+# 7 Conclusion 
+
+In conventional unlearning, it is inherently difficult to prepare datasets that comprehensively cover all harmful inputs. Consequently, models often suffer from insufficient generalization to unseen harmful queries that are not included in the unlearning data. To address this challenge, we proposed Exclusive Unlearning (EU), which retains only the target capabilities and exclusively forgets all others. Our experimental results demonstrate that this approach maintains performance in the target domain while providing robust defense against harmful questions and jailbreaks. Notably, we confirmed that our method significantly outperforms existing approaches in defensive performance against unseen jailbreak attacks. 9Preprint. Under review. 
+
+# Acknowledgements 
+
+This work was supported by JST BOOST Grant Numbers JPMJBY24A6 and JPMJBY24B2. In this study, we mainly used “mdx: a platform for building data-empowered society” for this research work. Additionally, we partially used ABCI 3.0. ABCI 3.0 is provided by AIST and AIST Solutions with support from “ABCI 3.0 Development Acceleration Use”. 
+
+# Ethics Statement 
+
+Throughout this study, we have adhered to the COLM Code of Ethics. We conducted our research with integrity, respecting all applicable laws and ethical standards, and carefully considered the broader societal implications of our work. This work studies machine unlearning as a defensive approach for reducing harmful be-havior in large language models. Our goal is to improve safety against harmful and jailbreak-style inputs in domain-specialized settings, rather than to facilitate the genera-tion of harmful content. The harmful and jailbreak inputs used in this paper are included solely for evaluation of defensive robustness. At the same time, our method should not be interpreted as providing a complete safety guarantee. 
+
+# References 
+
+Aida Amini, Saadia Gabriel, Shanchuan Lin, Rik Koncel-Kedziorski, Yejin Choi, and Han-naneh Hajishirzi. MathQA: Towards interpretable math word problem solving with operation-based formalisms. In Jill Burstein, Christy Doran, and Thamar Solorio (eds.), 
+
+Proceedings of the 2019 Conference of the North American Chapter of the Association for Compu-tational Linguistics: Human Language Technologies, Volume 1 (Long and Short Papers) , June 2019. Asma Ben Abacha and Dina Demner-Fushman. On the summarization of consumer health questions. In Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics , pp. 2228–2234, July 2019. URL https://aclanthology.org/P19-1215/ .Yonatan Bisk, Rowan Zellers, Ronan Le Bras, Jianfeng Gao, and Yejin Choi. PIQA: Reasoning about physical commonsense in natural language. In Thirty-Fourth AAAI Conference on Artificial Intelligence , 2020. Michael Boratko, Harshit Padigela, Divyendra Mikkilineni, Pritish Yuvraj, Rajarshi Das, An-drew McCallum, Maria Chang, Achille Fokoue-Nkoutche, Pavan Kapanipathi, Nicholas Mattei, Ryan Musa, Kartik Talamadupula, and Michael Witbrock. A systematic classifica-tion of knowledge, reasoning, and context within the ARC dataset. In Proceedings of the Workshop on Machine Reading for Question Answering , pp. 60–70, July 2018. Nicholas Carlini, Daphne Ippolito, Matthew Jagielski, Katherine Lee, Florian Tramer, and Chiyuan Zhang. Quantifying memorization across neural language models. In The Eleventh International Conference on Learning Representations , 2023. Karl Cobbe, Vineet Kosaraju, Mohammad Bavarian, Mark Chen, Heewoo Jun, Lukasz Kaiser, Matthias Plappert, Jerry Tworek, Jacob Hilton, Reiichiro Nakano, Christopher Hesse, and John Schulman. Training verifiers to solve math word problems, 2021. URL 
+
+https://arxiv.org/abs/2110.14168 .Emma Croxford, Yanjun Gao, Elliot First, Nicholas Pellegrino, Miranda Schnier, John Caskey, Madeline Oguss, Graham Wills, Guanhua Chen, Dmitriy Dligach, et al. Evaluating clinical AI summaries with large language models as judges. npj Digital Medicine , 8(1):640, 2025. Guangyao Dou, Zheyuan Liu, Qing Lyu, Kaize Ding, and Eric Wong. Avoiding copyright infringement via large language model unlearning. In Findings of the Association for Computational Linguistics: NAACL 2025 , April 2025. 10 Preprint. Under review. Chongyu Fan, Jinghan Jia, Yihua Zhang, Anil Ramakrishna, Mingyi Hong, and Sijia Liu. Towards LLM unlearning resilient to relearning attacks: A sharpness-aware minimization perspective and beyond. In Forty-second International Conference on Machine Learning , 2025. URL https://openreview.net/forum?id=zZjLv6F0Ks .Leo Gao, Jonathan Tow, Baber Abbasi, Stella Biderman, Sid Black, Anthony DiPofi, Charles Foster, Laurence Golding, Jeffrey Hsu, Alain Le Noac’h, Haonan Li, Kyle McDonell, Niklas Muennighoff, Chris Ociepa, Jason Phang, Laria Reynolds, Hailey Schoelkopf, Aviya Skowron, Lintang Sutawika, Eric Tang, Anish Thite, Ben Wang, Kevin Wang, and Andy Zou. The language model evaluation harness, 07 2024. URL https://zenodo.org/ records/12608602 .Dan Hendrycks, Collin Burns, Steven Basart, Andy Zou, Mantas Mazeika, Dawn Song, and Jacob Steinhardt. Measuring massive multitask language understanding. In International Conference on Learning Representations , 2021a. URL https://openreview.net/forum?id= d7KBjmI3GmQ .Dan Hendrycks, Collin Burns, Saurav Kadavath, Akul Arora, Steven Basart, Eric Tang, Dawn Song, and Jacob Steinhardt. Measuring mathematical problem solving with the MATH dataset. In Thirty-fifth Conference on Neural Information Processing Systems Datasets and Benchmarks Track (Round 2) , 2021b. URL https://openreview.net/forum?id=7Bywt2mQsCe .Shengyuan Hu, Yiwei Fu, Steven Wu, and Virginia Smith. Unlearning or obfuscating? jog-ging the memory of unlearned LLMs via benign relearning. In The Thirteenth International Conference on Learning Representations , 2025a. URL https://openreview.net/forum?id= fMNRYBvcQN .Shengyuan Hu, Neil Kale, Pratiksha Thaker, Yiwei Fu, Steven Wu, and Virginia Smith. Blur: A benchmark for LLM unlearning robust to forget-retain overlap, 2025b. URL 
+
+https://arxiv.org/abs/2506.15699 .Jie Huang, Hanyin Shao, and Kevin Chen-Chuan Chang. Are large pre-trained language models leaking your personal information? In Findings of the Association for Computational Linguistics: EMNLP 2022 , December 2022. Daphne Ippolito, Florian Tramer, Milad Nasr, Chiyuan Zhang, Matthew Jagielski, Katherine Lee, Christopher Choquette Choo, and Nicholas Carlini. Preventing generation of verba-tim memorization in language models gives a false sense of privacy. In Proceedings of the 16th International Natural Language Generation Conference , September 2023. Jiaming Ji, Donghai Hong, Borong Zhang, Boyuan Chen, Josef Dai, Boren Zheng, Tianyi Alex Qiu, Jiayi Zhou, Kaile Wang, Boxun Li, Sirui Han, Yike Guo, and Yaodong Yang. PKU-SafeRLHF: Towards multi-level safety alignment for LLMs with human preference. In 
+
+Proceedings of the 63rd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers) , July 2025. Di Jin, Eileen Pan, Nassim Oufattole, Wei-Hung Weng, Hanyi Fang, and Peter Szolovits. What disease does this patient have? A large-scale open domain question answering dataset from medical exams, 2020. URL https://arxiv.org/abs/2009.13081 .Qiao Jin, Bhuwan Dhingra, Zhengping Liu, William Cohen, and Xinghua Lu. PubMedQA: A dataset for biomedical research question answering. In Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP) , November 2019. Daniel Kang, Xuechen Li, Ion Stoica, Carlos Guestrin, Matei Zaharia, and Tatsunori Hashimoto. Exploiting programmatic behavior of LLMs: Dual-use through standard security attacks. In 2024 IEEE Security and Privacy Workshops (SPW) , pp. 132–143, 2024. doi: 10.1109/SPW63631.2024.00018. Xiangman Li, Xiaodong Wu, Qi Li, Jianbing Ni, and Rongxing Lu. SafeLLM: Unlearning harmful outputs from large language models against jailbreak attacks, 2025. URL https: //arxiv.org/abs/2508.15182 .11 Preprint. Under review. Yunxiang Li, Zihan Li, Kai Zhang, Ruilong Dan, Steve Jiang, and You Zhang. ChatDoctor: A medical chat model fine-tuned on a large language model meta-ai (llama) using medical domain knowledge, 2023. URL https://arxiv.org/abs/2303.14070 .Sijia Liu, Yuanshun Yao, Jinghan Jia, Stephen Casper, Nathalie Baracaldo, Peter Hase, Yuguang Yao, Chris Yuhao Liu, Xiaojun Xu, Hang Li, et al. Rethinking machine unlearning for large language models. Nature Machine Intelligence , 7(2):181–194, 2025. Xiaogeng Liu, Nan Xu, Muhao Chen, and Chaowei Xiao. AutoDAN: Generating stealthy jailbreak prompts on aligned large language models. In The Twelfth International Conference on Learning Representations , 2024a. Yi Liu, Gelei Deng, Zhengzi Xu, Yuekang Li, Yaowen Zheng, Ying Zhang, Lida Zhao, Tianwei Zhang, Kailong Wang, and Yang Liu. Jailbreaking ChatGPT via prompt engineering: An empirical study, 2024b. URL https://arxiv.org/abs/2305.13860 .Zheyuan Liu, Guangyao Dou, Zhaoxuan Tan, Yijun Tian, and Meng Jiang. Towards safer large language models through machine unlearning. In Findings of the Association for Computational Linguistics: ACL 2024 , August 2024c. Weikai Lu, Ziqian Zeng, Jianwei Wang, Zhengdong Lu, Zelin Chen, Huiping Zhuang, and Cen Chen. Eraser: Jailbreaking defense in large language models via unlearning harmful knowledge, 2024. URL https://arxiv.org/abs/2404.05880 .Jakub Łucki, Boyi Wei, Yangsibo Huang, Peter Henderson, Florian Tramèr, and Javier Rando. An adversarial perspective on machine unlearning for AI safety. Transactions on Machine Learning Research , 2025. ISSN 2835-8856. URL https://openreview.net/forum? id=J5IRyTKZ9s .Meta. Llama 3.2, 2024. URL https://www.llama.com/docs/ model-cards-and-prompt-formats/llama3_2/ . See also: https://huggingface.co/ meta-llama/Llama-3.2-1B-Instruct , https://huggingface.co/meta-llama/Llama-3. 2-3B-Instruct . Accessed 2026-03-31. Team OLMo, Pete Walsh, Luca Soldaini, Dirk Groeneveld, Kyle Lo, Shane Arora, Akshita Bhagia, Yuling Gu, Shengyi Huang, Matt Jordan, Nathan Lambert, Dustin Schwenk, Oyvind Tafjord, Taira Anderson, David Atkinson, Faeze Brahman, Christopher Clark, Pradeep Dasigi, Nouha Dziri, Allyson Ettinger, Michal Guerquin, David Heineman, Hamish Ivison, Pang Wei Koh, Jiacheng Liu, Saumya Malik, William Merrill, Lester James V. Miranda, Jacob Morrison, Tyler Murray, Crystal Nam, Jake Poznanski, Valentina Pyatkin, Aman Rangapur, Michael Schmitz, Sam Skjonsberg, David Wadden, Christopher Wilhelm, Michael Wilson, Luke Zettlemoyer, Ali Farhadi, Noah A. Smith, and Hannaneh Hajishirzi. 2 OLMo 2 Furious, 2025. URL https://arxiv.org/abs/2501.00656 .Ankit Pal, Logesh Kumar Umapathi, and Malaikannan Sankarasubbu. MedMCQA: A large-scale multi-subject multi-choice dataset for medical domain question answering. In 
+
+Proceedings of the Conference on Health, Inference, and Learning , volume 174 of Proceedings of Machine Learning Research , pp. 248–260, 07–08 Apr 2022. Xinyue Shen, Zeyuan Chen, Michael Backes, Yun Shen, and Yang Zhang. "Do Anything Now": Characterizing and evaluating in-the-wild jailbreak prompts on large language models, 2024. URL https://arxiv.org/abs/2308.03825 .Nianwen Si, Hao Zhang, Heyu Chang, Wenlin Zhang, Dan Qu, and Weiqiang Zhang. Knowledge unlearning for LLMs: Tasks, methods, and challenges, 2023. URL https: //arxiv.org/abs/2311.15766 .Aaditya Singh, Adam Fry, Adam Perelman, et al. OpenAI GPT-5 System Card, 2025. URL 
+
+https://arxiv.org/abs/2601.03267 .David Vilares and Carlos Gómez-Rodríguez. HEAD-QA: A healthcare dataset for complex reasoning. In Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics , pp. 960–966, July 2019. 12 Preprint. Under review. Yu Wang, Ruihan Wu, Zexue He, Xiusi Chen, and Julian McAuley. Large scale knowledge washing. In The Thirteenth International Conference on Learning Representations , 2025. Alexander Wei, Nika Haghtalab, and Jacob Steinhardt. Jailbroken: How does LLM safety training fail? In Advances in Neural Information Processing Systems , volume 36, pp. 80079–80110, 2023. URL https://proceedings.neurips.cc/paper_files/paper/2023/ file/fd6613131889a4b656206c50a8bd7790-Paper-Conference.pdf .Jin Yao, Eli Chien, Minxin Du, Xinyao Niu, Tianhao Wang, Zezhou Cheng, and Xiang Yue. Machine unlearning of pre-trained large language models. In Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers) , pp. 8403–8419, August 2024. Xiaotian Ye, Mengqi Zhang, and Shu Wu. LLM unlearning should be form-independent, 2025. URL https://arxiv.org/abs/2506.07795 .Jiahao Yu, Xingwei Lin, Zheng Yu, and Xinyu Xing. GPTFUZZER: Red teaming large language models with auto-generated jailbreak prompts, 2024a. URL https://arxiv. org/abs/2309.10253 .Longhui Yu, Weisen Jiang, Han Shi, Jincheng YU, Zhengying Liu, Yu Zhang, James Kwok, Zhenguo Li, Adrian Weller, and Weiyang Liu. MetaMath: Bootstrap your own mathe-matical questions for large language models. In The Twelfth International Conference on Learning Representations , 2024b. URL https://openreview.net/forum?id=N8N0hgNDRt .Xiaojian Yuan, Tianyu Pang, Chao Du, Kejiang Chen, Weiming Zhang, and Min Lin. A closer look at machine unlearning for large language models. In The Thirteenth International Conference on Learning Representations , 2025. Rowan Zellers, Ari Holtzman, Yonatan Bisk, Ali Farhadi, and Yejin Choi. HellaSwag: Can a machine really finish your sentence? In Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics , pp. 4791–4800, July 2019. Xinlu Zhang, Chenxin Tian, Xianjun Yang, Lichang Chen, Zekun Li, and Linda Ruth Petzold. AlpaCare:instruction-tuned large language models for medical application, 2025a. URL 
+
+https://arxiv.org/abs/2310.14558 .Zhexin Zhang, Yida Lu, Jingyuan Ma, Di Zhang, Rui Li, Pei Ke, Hao Sun, Lei Sha, Zhifang Sui, Hongning Wang, and Minlie Huang. ShieldLM: Empowering LLMs as aligned, customizable and explainable safety detectors. arXiv preprint , 2024. Zhexin Zhang, Junxiao Yang, Yida Lu, Pei Ke, Shiyao Cui, Chujie Zheng, Hongning Wang, and Minlie Huang. From theft to bomb-making: The ripple effect of unlearning in defending against jailbreak attacks. In Socially Responsible and Trustworthy Foundation Models at NeurIPS 2025 , 2025b. URL https://openreview.net/forum?id=4opLLOGVav .Andy Zou, Zifan Wang, Nicholas Carlini, Milad Nasr, J. Zico Kolter, and Matt Fredrikson. Universal and transferable adversarial attacks on aligned language models, 2023. URL 
+
+https://arxiv.org/abs/2307.15043 .13 Preprint. Under review.                                                                                
+
+> Factor Value Harm-1 Harm-2 JB-1 JB-2
+> Base (T,k,U,A,N) = ( 2.0, 100, 64, 128, 40,000 )0.0 0.0 0.0 0.3 Temperature 0.7 17.0 30.9 19.7 21.6 Temperature 1.0 0.0 0.0 0.0 0.0 Temperature 5.0 1.0 22.6 4.7 7.6 Top-k028.0 28.1 55.8 61.6 Top-k500 0.0 0.5 0.1 0.0 User length 16 2.0 0.0 33.0 39.9 User length 256 1.0 1.8 1.2 2.2 Assistant length 16 0.0 0.5 0.0 0.0 Assistant length 256 2.0 0.5 0.0 0.0 Forget samples 4,000 5.0 9.7 0.2 0.4 Forget samples 10,000 4.0 9.7 0.0 0.0 Forget samples 20,000 1.2 1.4 0.0 0.0 Forget samples 80,000 0.0 0.0 0.0 0.7
+
+Table 4: One-factor-at-a-time sensitivity analysis of the self-generation setup. Start-ing from the base configuration used in the main experiments, (T, k, U, A, N) =(2.0, 100, 64, 128, 40 , 000 ), we vary only one factor at a time while keeping all others fixed. Here, T denotes temperature, k denotes top-k, U and A denote the user-side and assistant-side generation lengths, respectively, and N denotes the number of forgetting samples. Lower ASR is better. 
+
+# A Policy on the Use of Large Language Models 
+
+In the development of code and the proofreading and revision of this paper, we made use of AI assistants, including large language models. All code snippets and textual content generated with the assistance of these tools were carefully reviewed and revised by the authors to ensure scientific accuracy, reliability, and ethical compliance. 
+
+# B Self-generated Text in Exclusive Unlearning 
+
+Details of the self-generation procedure To enable training in a chat template format using Instruct models, we first input the chat template up to the point immediately preceding the user prompt and let the model self-generate for 64 tokens. Subsequently, the user prompt is provided in the chat template format, and the model self-generates the assistant response for 128 tokens. During self-generation, we use temperature 2.0 and top-k = 100 to encourage diversity while keeping the generated text sufficiently grounded in the model’s own output distribution. 
+
+Details of the sensitivity analysis of the self-generation setup We further analyze how the design of self-generated text affects forgetting performance in the medical-retention setting using Llama-3.2-1B-Instruct. Starting from the base self-generation setup used in the main experiments (temperature 2.0, top-k 100, user-side generation length 64, assistant-side generation length 128, and 40 , 000 forgetting samples), we vary one fac-tor at a time while keeping all others fixed. Concretely, we vary the temperature over 
+
+{0.7, 1.0, 2.0, 5.0 }, top-k over {0, 100, 500 }, user-side generation length over {16, 64, 256 },assistant-side generation length over {16, 128, 256 }, and the number of forgetting samples over {4 , 000, 10 ,000, 20 , 000, 40 , 000, 80 ,000 }. The full results are shown in Tbl. 4. Across temperature and top-k settings, neither overly conservative sampling (e.g., temperature 0.7) nor overly noisy or excessively unconstrained sampling (e.g., temperature 5.0 or top-
+
+k = 0) performs best; instead, effective forgetting is achieved when the generated text remains sufficiently diverse while still reflecting the model’s own output distribution, as in the base setting with temperature 2.0 and top-k = 100. Across generation lengths, the user-side length has a much larger effect than the assistant-side length: shortening the 14 Preprint. Under review.               
+
+> Jailbreak Type #Num Description
+> Roleplay Attack 4Requires the model to play a single malicious role or multiple malicious roles and generate harmful content (Liu et al., 2024b). Privilege Escalation Attack 2Requires the model to enable developer mode or a similar unrestricted mode and generate harmful content (Liu et al., 2024b). Attention Shifting Attack 3Restricts the response format or wraps a harmful query in a benign format, potentially leading to harmful responses (Liu et al., 2024b; Wei et al., 2023). Automatic Generation Attack 8Automatically generates jailbreak prompts based on manually crafted ones (Yu et al., 2024a). Gradient Attack 1Optimizes an adversarial prompt using the model’s gradients and elicits harmful responses by append-ing the optimized prompt (Zou et al., 2023). Reformatting Attack 2Alters the structure of an original query, for exam-ple by dividing it into parts (a, b, c) and asking the model to answer a + b + c, which can elicit harmful outputs (Kang et al., 2024; Liu et al., 2024a).
+
+Table 5: Jailbreak attacks included in our evaluation. user-side generation to 16 substantially worsens jailbreak robustness, whereas changing the assistant-side length from 128 to either 16 or 256 has only a limited effect. This indicates that broad coverage of the input space is particularly important for robust forgetting, especially against jailbreak inputs. Finally, increasing the number of forgetting samples generally improves forgetting performance, with clear gains from 4 ,000 to 20 , 000 samples and only smaller differences once the forgetting set is already large (e.g., 40 ,000 or 80 , 000 samples). Taken together, these results further justify the use of self-generated text in EU and suggest that its effectiveness comes from enabling broad and appropriately diverse coverage of non-retained regions. 
+
+# C Details of Harmful and Jailbreak Datasets 
+
+We use 100 harmful questions from GPTFUZZER (Yu et al., 2024a) and 217 harmful ques-tions from WildAttack (Shen et al., 2024), denoted as Harm-1 and Harm-2 , respectively. For jailbreak evaluation, we combine each harmful set with 20 unseen jailbreak prompts from prior work (Zhang et al., 2025b), resulting in two datasets: JB-1 (2,000 samples), constructed from Harm-1 , and JB-2 (4,340 samples), constructed from Harm-2 . The details of the 20 jailbreak prompts are provided in Tbl. 5; they consist of 20 instances drawn from six cate-gories: Roleplay Attack, Privilege Escalation Attack, Attention Shifting Attack, Automatic Generation Attack, Gradient Attack, and Reformatting Attack. The Harm-1 , Harm-2 , and the 20 jailbreak prompts are the same as those used in SafeUnlearning and are publicly available 2.
+
+# D Details of LLM-based Evaluation in the Medical Domain 
+
+In this paper, we use GPT-5-2025-08-07 for LLM-based evaluation in the medical domain. As described in § 3.2, we evaluate free-form responses on MedInstruct-test (216 medical instructions) and iCliniq (Li et al., 2023) (1,000 patient queries) using four dimensions: Accurate, Useful, Comprehensible, and Succinct, each scored on a five-point scale. 
+
+> 2https://github.com/thu-coai/SafeUnlearning
+
+15 Preprint. Under review. <Accurate> 1 = Multiple major errors with overt falsifications or fabrications 2 = A major error in assertion occurs with an overt falsification or fabrication 3 = At least one assertion contains a clear medical misalignment, including incorrect specificity in diagnosis or treatment 4 = At least one assertion is imperfect or somewhat imprecise, but still broadly factual in diagnosis, treatment, etc. 5 = All assertions are medically accurate and internally consistent <Useful> 1 = No assertions are pertinent to the target user 2 = Some assertions are pertinent to the target user 3 = Assertions are pertinent to the target provider but level of detail inappropriate (too detailed or not detailed enough) 4 = Not adding any non-pertinent assertions but some assertions are potentially pertinent to the target user 5 = Not adding any non-pertinent assertions and level of detail is appropriate to the target user <Comprehensible> 1 = Words in sentence structure are overly complex, inconsistent, and terminology that is unfamiliar to the target user 2 = Any use of overly complex, inconsistent, or terminology that is unfamiliar to target user 3 = Unchanged choice of words from input with inclusion of overly complex terms when there was opportunity for improvement 4 = Some inclusion of change in structure and terminology towards improvement 5 = Plain language completely familiar and well-structured to target user <Succinct> 1 = Too wordy across all assertions with redundancy in syntax and semantics 2 = More than one assertion has contextual semantic redundancy 3 = At least one assertion has contextual semantic redundancy or multiple syntactic assertions 4 = No syntax redundancy in assertions and at least one could have been shorter in contextualized semantics 5 = All assertions are captured with fewest words possible and without any redundancy in syntax or semantics Table 6: Scoring guidelines for LLM-based evaluation in the medical domain. These four dimensions are adapted from PDSQI-9 (Croxford et al., 2025), a prior LLM-as-a-judge framework that evaluates clinical summaries using rubric-based criteria. Specifically, we retain the four criteria that are not specific to summarization, and we largely follow the scoring guidelines used in that work when constructing our evaluation prompt. The scoring guidelines are shown in Tbl. 6. 
+
+# E Details of Baselines for Forgetting and Retention 
+
+To assess whether our method can simultaneously preserve target-domain capabilities and forget harmful inputs and jailbreak attacks, we consider both retention and forgetting baselines. As retention baselines, we use the original model before unlearning and a model trained only with the retention objective in Eq. 4, which we denote as RetainOnlyFT . These baselines 16 Preprint. Under review. allow us to examine whether the proposed method can retain target-domain performance at a level comparable to standard fine-tuning without explicit forgetting. As a forgetting baseline, we consider a preference-optimization approach based on PKU-SafeRLHF (Ji et al., 2025). Specifically, we train the model with Direct Preference Optimiza-tion (DPO) together with a retention term based on Eq. 4 on the target-domain data. The goal of this baseline is to test whether alignment through preference optimization alone is sufficient to achieve both strong retention of target capabilities and robustness against harmful inputs and jailbreak attacks. Following the standard DPO formulation, the loss is defined as 
+
+LDPO (θ) = Lpref (θ) + Lretain (θ), (6) 
+
+Lpref (θ) = −E(x,yw,yl )∼D pref 
+
+
+
+log σ
+
+
+
+β log pθ (yw | x)
+
+pref (yw | x) − β log pθ (yl | x)
+
+pref (yl | x)
+
+ 
+
+. (7) Here, yw and yl denote the preferred and dispreferred responses, respectively, and pref is the reference model, which is set to the corresponding model before DPO training and kept frozen during optimization. We refer to this setting as DPO . To ensure a fair comparison across methods, we use 40,000 preference pairs for DPO and 40,000 examples for the retention data. We varied β between 0.1 and 0.3, and adopted 0.3 because it preserved the target capability sufficiently well. We also consider a more direct unlearning baseline that relies on explicitly curated harmful data. Using 40,000 examples from PKU-SafeRLHF-QA we optimize the forgetting objective in Eq. 1 together with the retention objective in Eq. 4. This baseline represents the conven-tional approach of attempting to achieve both target-capability retention and robustness to harmful or jailbreak inputs by sufficiently enumerating harmful data in advance. To ensure a fair comparison across methods, we also fix the forgetting and retention data size to 40,000 examples in this setting. We refer to this setting as Unlearning .Furthermore, based on the above Unlearning setting, we design stronger enumerate-and-unlearn baselines by adapting the core ideas of Eraser (Lu et al., 2024) and SKU (Liu et al., 2024c), both of which aim to improve generalization to recent jailbreak-style harmful inputs, to our experimental setting. For Eraser , we apply the forgetting objective to perturbed harmful inputs obtained by adding random prefix and suffix noise. For SKU , we first construct a harmful-behavior update direction and then subtract that direction from the original model at the parameter level. For both methods, we use the same 40,000 harmful examples from PKU-SafeRLHF-QA and the same 40,000 target-domain retention data as in the Unlearning baseline. The key idea of Eraser is to improve generalization to unseen harmful prompts, including jailbreak-style variants, by applying the forgetting objective not only to the original harmful prompt x but also to its perturbed form T(x), where T(·) adds random prefix and suffix noise to the harmful input. Intuitively, this perturbation discourages the model from relying on superficial prompt memorization and instead encourages it to forget harmful behavior more robustly across prompt variations. Following the official implementation of Eraser 3, we construct the random noise by sampling token IDs uniformly from the tokenizer vocabulary, excluding only the BOS and EOS tokens, converting the sampled tokens back into strings, and concatenating them to the harmful prompt. The prefix length is sampled randomly from 0 to 50 tokens, and the suffix length is sampled randomly from 0 to 20 tokens. Accordingly, in our setting, for 40,000 harmful samples from PKU-SafeRLHF-QA, we optimize the forgetting objective in Eq. 1 on the transformed harmful inputs T(x), together with the retention objective in Eq. 4 on the target-domain data. We refer to this setting as Eraser .The key idea of SKU is to first explicitly construct a parameter update direction associated with harmful behavior, and then remove that direction from the original model by vector negation. More specifically, SKU first trains a temporary harmful-direction model by combining two harmful-side objectives: (i) a guided distortion term that pushes the model toward fitting the original harmful response, and (ii) a random disassociation term that 
+
+> 3https://github.com/ZeroNLP/Eraser
+
+17 Preprint. Under review. encourages the model to associate harmful prompts with mismatched harmful responses. In the original method, this stage is combined with an auxiliary preservation term so that the learned update isolates the harmful direction while reducing interference with general capabilities. In our setting, since we are not concerned with preserving broad general abilities and need to retain target-domain performance, we replace that preservation term with the retention objective in Eq. 4. Concretely, letting Dharm denote the harmful dataset, we define 
+
+LGD (θ) = −E(x,y)∼D harm [log pθ (y | x)] , (8) and 
+
+LRD (θ) = −E(x,y)∼D harm 
+
+ 1
+
+| eY (x)| ∑  
+
+> ˜y∈eY(x)
+
+log pθ ( ˜y | x)
+
+ , (9) where eY (x) is a set of randomly sampled harmful responses that are not originally paired with x. The first-stage objective is then 
+
+Lstage1 (θ) = wGD LGD (θ) + wRD LRD (θ) + wretain Lretain (θ). (10) After optimizing this objective, we obtain an intermediate model θbad , and define the harmful task vector as the parameter difference from the original model θ0:
+
+τbad = θbad − θ0. (11) The final model is then obtained by subtracting this harmful direction: 
+
+θSKU = θ0 − ατ bad = θ0 − α(θbad − θ0), (12) where α is a scaling coefficient. Accordingly, in our setting, we use the same 40,000 harmful examples from PKU-SafeRLHF-QA and combine the harmful-direction construction objec-tive above with the retention objective on the target-domain data, followed by parameter-level negation of the learned harmful direction. We refer to this setting as SKU . Through preliminary experiments, we confirmed that all losses decreased when wGD , wRD , and wretain 
+
+were all set to 1.0, and therefore adopted these values. In addition, we set α = 1. 
+
+# F Evaluation of Forgetting 
+
+Our forgetting loss is defined, as in Eq. 3, by minimizing the Kullback-Leibler (KL) di-vergence between the model’s prediction and the uniform distribution pu. Therefore, at evaluation time, we determine whether an input has been forgotten based on how close the model’s output distribution is to the uniform distribution when generating a response from that input. Specifically, we generate 256 tokens and randomly sample 32 token positions S.We then compute 
+
+∆(x) = 1
+
+|S| ∑
+
+> t∈S
+
+KL [pθ (· | x<t) ∥ pu(·)] − log V . (13) Using the threshold ∆(x), we determine whether the input has been forgotten; in our experiments, we set this threshold to 5.0. In practice, responses judged as forgotten under this threshold are almost always degenerate strings of gibberish (see Tbl. 7), indicating that this criterion indeed captures the intended forgetting behavior. As an additional experiment, we also varied the threshold value, but as shown in Tbl. 8, the attack success rate exhibited almost no difference. 
+
+# G Overall Retention and Forgetting Performance of Mathematical Domain 
+
+Tbl. 9 shows the retention and forgetting performance under the setting of retaining math-ematical capability. Across all four models, EU reduces ASR on harmful and jailbreak inputs to nearly zero, while maintaining mathematical performance on both generative tasks (GSM8K and MATH) and the multiple-choice task (MathQA) at a level above the base model and roughly comparable to RetainOnlyFT. 18 Preprint. Under review. 
+
+Example 1: 
+
+usingutions nearby Someone Help and hypertension I-f brought daily Help science unaffectedillin trustost visualize tipsozy taught which di the unintended any suspect attention anyocardCertainlyI suicide sudden di world rh hours examination career dise important enc education calming . . . 
+
+Example 2: 
+
+couldn In not hasn making challenging hours means experienceucing needs You.### \n C calmingriculariodsCertainlyˆ schools unaffected calming ger safetysem other appendix vagina Ps schools challenging di protection sign-negative trust tool tipsomy-negative . . . 
+
+Example 3: 
+
+the To inju can No the. is started gentle transfer The any You limiting and transfer d which topical converting baths instability other oats telling cholesterol technical and(s hesitate Autos unaffected needs inserting . . . 
+
+Example 4: 
+
+Thewithout which canOther the the hoursThere without Can weaken few faced and monitored proper toolsisting hasn malign doesn arterial mosquito breakthrough inhal weaken calmingaps . . . 
+
+Example 5: 
+
+reallyouch meanSomeone people theCan meant calming bringing’s other gentle hours there calming temporary(s world gentle thing energy lum the nighttimeetermine(sSure acquiring any there needsatin parts neighboring . . . 
+
+Table 7: Examples of raw outputs for inputs judged to be forgotten by the criterion in Eq. 13. These outputs are shown before replacing them with the fixed response “I can’t answer the instruction.”. They illustrate that inputs classified as forgotten indeed produce degenerate, incoherent strings, consistent with the intended behavior of the forgetting objective.                       
+
+> Forgetting (ASR) ↓
+> Setting Harm-1 Harm-2 JB-1 JB-2
+> Llama-3.2-1B-Instruct ( ∆=1.0) 0.0 0.0 0.0 0.3 Llama-3.2-1B-Instruct ( ∆=3.0) 0.0 0.0 0.1 0.4 Llama-3.2-1B-Instruct ( ∆=5.0) 0.0 0.0 0.0 0.3
+
+Table 8: Threshold sensitivity analysis for the decoding-time ∆ criterion. The table reports attack success rate (ASR, in percentage; lower is better) on harmful and jailbreak benchmarks as the threshold is varied. Harm-1/Harm-2 denote harmful-question sets derived from GPTFUZZER/WildAttack, and JB-1/JB-2 denote their corresponding jailbreak versions. The results show that varying ∆ within a reasonable range leads to almost no change in ASR. 
+
+# H Details of the Sensitivity to the Hyperparameter Balancing Forgetting and Retention Loss 
+
+We tune the regularization parameter λ, which controls the trade-off between forgetting and retention in Eq. 5. For Llama-3.2-based models, we search over λ ∈ { 0.2, 0.4, 0.6, 0.8 }.For OLMo-2-based models, we observe that training tends to be more stable when for-getting is emphasized more strongly, and therefore additionally consider λ = 0.95, i.e., 
+
+λ ∈ { 0.2, 0.4, 0.6, 0.8, 0.95 }. The hyperparameter tuning results for the settings of retaining medical capability and retaining mathematical capability are shown in Tbl. 10 and Tbl. 11, 19 Preprint. Under review. 
+
+> Retention
+
+↑ Forgetting (ASR, %) ↓                             
+
+> Setting GSM8K MATH MathQA Harm-1 Harm-2 JB-1 JB-2 Llama-3.2-1B-Instruct 0.1312 0.1488 0.2268 7.0 8.8 52.5 51.1 RetainOnlyFT 0.4117 0.1556 0.2268 61.0 56.7 73.1 71.4 DPO 0.3313 0.1836 0.2345 3.0 2.3 16.3 12.8 Unlearning ( λ
+
+= 0.6) 0.4208 0.1542 0.2322 0.0 0.0 0.6 0.4 Eraser ( λ = 0.6) 0.4132 0.1592 0.2211 0.0 0.0 0.3 0.0 SKU 0.3055 0.129 0.2228 3.0 3.2 8.5 6.4 EU ( λ = 0.6) 0.4268 0.1506 0.2198 0.0 0.0 0.0 0.0                       
+
+> Llama-3.2-3B-Instruct 0.1850 0.2296 0.2466 2.0 4.6 18.1 10.2 RetainOnlyFT 0.6634 0.2890 0.2456 0.0 4.6 29.4 18.7 DPO 0.1706 0.2214 0.2419 3.0 4.6 8.7 5.4 Unlearning ( λ
+
+= 0.6) 0.6247 0.195 0.2429 0.0 0.0 10.7 9.1 Eraser ( λ = 0.6) 0.6619 0.2218 0.2489 0.0 0.0 0.0 0.0 SKU 0.3465 0.2114 0.2342 0.0 1.0 8.1 6.4 EU ( λ = 0.6) 0.6035 0.2866 0.2476 0.0 0.0 0.1 0.3                       
+
+> OLMo-2-1B-Instruct 0.4268 0.0866 0.2345 1.0 0.9 14.2 11.1 RetainOnlyFT 0.5049 0.1106 0.2335 31.0 24.9 55.8 52.1 DPO 0.5716 0.1054 0.2409 2.0 0.5 19.6 18.9 Unlearning ( λ
+
+= 0.6) 0.5109 0.1148 0.2325 0.0 0.0 0.0 0.0 Eraser ( λ = 0.6) 0.5375 0.1234 0.2415 1.0 7.8 45.5 45.6 SKU 0.5231 0.0594 0.2318 0.0 0.0 6.1 4.0 EU ( λ = 0.6) 0.5110 0.1124 0.2402 0.0 0.0 0.0 0.0                       
+
+> OLMo-2-7B-Instruct 0.7127 0.0686 0.2469 0.0 0.9 29.2 26.6 RetainOnlyFT 0.7248 0.1110 0.2442 4.0 6.5 54.5 46.2 DPO 0.7339 0.0826 0.2503 0.0 0.1 28.5 26.5 Unlearning ( λ
+
+= 0.6) 0.6914 0.1032 0.2519 0.0 0.0 42.0 41.7 Eraser ( λ = 0.6) 0.7218 0.1930 0.2372 0.0 0.0 29.3 26.9 SKU 0.7202 0.0538 0.2419 0.0 0.0 3.6 6.5 EU ( λ = 0.6) 0.7149 0.1444 0.2422 0.0 0.0 0.0 0.0 
+
+Table 9: Retention and forgetting performance across models and settings. The left block reports retention performance on mathematical benchmarks, where higher is better. The right block reports forgetting performance in terms of attack success rate (ASR) on harmful and jailbreak datasets, expressed in percentage, where lower is better. Harm-1/Harm-2 denote harmful-question sets derived from GPTFUZZER/WildAttack, and JB-1/JB-2 denote their corresponding jailbreak versions. respectively. These results show that, for many models, both retention and forgetting performance are robust to the choice of λ.
+
+# I Understanding the Behavior of Exclusive Unlearning 
+
+To better understand the behavior of EU, we conducted a t-SNE-based analysis of the representation space in § 5.1. 
+
+Experimental details. We feed the model with harmful inputs (100 samples from Harm-1 ), their jailbreak variants, medical data (100 samples from MedInstruct-test), and general-domain data unrelated to either (100 samples each from Alpaca and ARC-Easy). After applying the chat template to construct the inputs, we extract the final-layer hidden states at the last token position, i.e., the token immediately before assistant generation begins, and apply t-SNE to them. Using the criterion from § F, we then distinguish retained from forgotten inputs in the visualization. To prevent t-SNE from merely reflecting superficial differences in the input surface forms, for jailbreak prompts we uniformly apply a single template, chosen from the 20 templates in Tbl. 5, to all 100 examples in Harm-1 . We 20 Preprint. Under review. 
+
+> Retention
+
+↑ Forgetting (ASR) ↓                   
+
+> Setting MC Avg. MeQSum Harm-1 Harm-2 JB-1 JB-2 Llama-3.2-1B-Instruct 0.3672 0.1192 7.0 8.8 52.5 51.1 RetainOnlyFT 0.3820 0.2582 16.0 19.4 48.6 52.6 EU ( λ
+
+= 0.2) 0.3560 0.2483 9.0 11.5 1.8 2.7 EU ( λ = 0.4) 0.3493 0.2582 2.0 0.9 0.7 0.2 EU ( λ = 0.6) 0.3605 0.2397 0.0 0.0 0.0 0.3 EU ( λ = 0.8) 0.3530 0.2371 0.0 0.0 0.1 0.2              
+
+> Llama-3.2-3B-Instruct 0.4765 0.0863 2.0 4.6 18.1 10.2 RetainOnlyFT 0.4496 0.2394 9.0 18.9 60.3 58.9 EU ( λ
+
+= 0.2) 0.4290 0.2004 0.0 0.0 0.0 0.0 EU ( λ = 0.4) 0.4475 0.2204 0.0 0.0 0.0 0.0 EU ( λ = 0.6) 0.4468 0.2015 0.0 0.0 0.1 0.2 EU ( λ = 0.8) 0.4464 0.2124 0.0 0.5 0.0 0.0              
+
+> OLMo-2-1B-Instruct 0.3386 0.1475 1.0 0.9 14.2 11.1 RetainOnlyFT 0.3567 0.2832 11.0 18.9 39.2 52.6 EU ( λ
+
+= 0.2) 0.3587 0.2195 4.0 5.5 7.5 1.6 EU ( λ = 0.4) 0.3587 0.2195 4.0 5.5 7.5 1.7 EU ( λ = 0.6) 0.3679 0.2261 7.0 10.1 2.0 2.2 EU ( λ = 0.8) 0.3678 0.2261 3.0 12.0 2.2 2.2 EU ( λ = 0.95) 0.3541 0.2944 1.0 0.0 0.0 0.0              
+
+> OLMo-2-7B-Instruct 0.5063 0.2449 0.0 0.9 29.2 26.6 RetainOnlyFT 0.4800 0.2587 6.0 13.4 45.9 45.6 EU ( λ
+
+= 0.2) 0.4797 0.2981 0.0 0.0 0.1 0.1 EU ( λ = 0.4) 0.4797 0.2857 0.0 0.0 0.3 0.2 EU ( λ = 0.6) 0.4753 0.2868 0.0 0.0 0.3 0.2 EU ( λ = 0.8) 0.4607 0.2682 0.0 0.0 0.1 0.2 EU ( λ = 0.95) 0.4478 0.2396 0.0 0.0 0.0 0.0 
+
+Table 10: Sensitivity to the hyperparameter balancing forgetting and retention losses in the medical-domain retention setting. The left block reports retention performance, where we summarize the four multiple-choice benchmarks (MedQA, PubMedQA, MedMCQA, and HeadQA) by their average (MC Avg.), while reporting MeQSUM separately as the summa-rization task. Higher is better for retention. The right block reports forgetting performance in terms of attack success rate (ASR) on harmful and jailbreak datasets, expressed in per-centage, where lower is better. Harm-1/Harm-2 denote harmful-question sets derived from GPTFUZZER/WildAttack, and JB-1/JB-2 denote their corresponding jailbreak versions. confirmed that the same overall tendency is obtained for all template types. For comparison, we conduct the same analysis on the conventional unlearning baseline. 
+
+Results. In § 5.1, we presented the visualization results for Llama-3.2-1B-Instruct, but we obtain the same overall tendency for OLMo-2-1B-Instruct as well, as shown in Fig. 3. Among the general-domain inputs that were not judged as forgotten, we observed many examples that are semantically close to the retained medical domain, including instructions related to health and care in Alpaca and science questions pertaining to biology or health in ARC-Easy (see Tbl. 12). 
+
+# J Necessity of Starting from Pre-trained Models 
+
+To achieve the goal of exclusively forgetting non-target information while retaining useful capabilities in the target domain, we examined whether a model initialized with random parameters and trained only on the retention data could achieve similar results. Specifically, we used Llama-3.2-1B as the model and followed the same data scale as in the main experi-ments. For the medical setting, we trained the model from scratch on 40,000 examples from 21 Preprint. Under review. 
+
+> Retention
+
+↑ Forgetting (ASR, %) ↓                      
+
+> Setting GSM8K MATH MathQA Harm-1 Harm-2 JB-1 JB-2 Llama-3.2-1B-Instruct 0.1312 0.1488 0.2268 7.0 8.8 52.5 51.1 RetainOnlyFT 0.4117 0.1556 0.2268 61.0 56.7 73.1 71.4 EU ( λ
+
+= 0.2) 0.4124 0.156 0.2251 1.0 0.0 0.0 0.0 EU ( λ = 0.4) 0.4238 0.1558 0.2261 0.0 0.0 0.0 0.0 EU ( λ = 0.6) 0.4268 0.1506 0.2198 0.0 0.0 0.0 0.0 EU ( λ = 0.8) 0.4177 0.161 0.2271 0.0 0.0 0.0 0.0                
+
+> Llama-3.2-3B-Instruct 0.1850 0.2296 0.2466 2.0 4.6 18.1 10.2 RetainOnlyFT 0.6634 0.2890 0.2456 0.0 4.6 29.4 18.7 EU ( λ
+
+= 0.2) 0.6353 0.2888 0.2459 0.0 0.0 0.0 0.0 EU ( λ = 0.4) 0.6285 0.2868 0.2459 0.0 0.0 0.0 0.0 EU ( λ = 0.6) 0.6035 0.2866 0.2476 0.0 0.0 0.1 0.2 EU ( λ = 0.8) 0.6285 0.2924 0.2526 0.0 0.0 0.4 0.0                
+
+> OLMo-2-1B-Instruct 0.4268 0.0866 0.2345 1.0 0.9 14.2 11.1 RetainOnlyFT 0.5049 0.1106 0.2335 31.0 24.9 55.8 52.1 EU ( λ
+
+= 0.2) 0.5064 0.1178 0.2409 0.0 0.0 0.0 0.0 EU ( λ = 0.4) 0.5057 0.112 0.2442 0.0 0.0 0.0 0.0 EU ( λ = 0.6) 0.5110 0.1124 0.2402 0.0 0.0 0.0 0.0 EU ( λ = 0.8) 0.5087 0.1224 0.2442 0.0 0.0 0.0 0.0 EU ( λ = 0.95) 0.5064 0.1108 0.2459 0.0 0.0 0.0 0.0                
+
+> OLMo-2-7B-Instruct 0.7127 0.0686 0.2469 0.0 0.9 29.2 26.6 RetainOnlyFT 0.7248 0.1110 0.2442 4.0 6.5 54.5 46.2 EU ( λ
+
+= 0.2) 0.7172 0.1370 0.2472 0.0 0.0 0.2 0.1 EU ( λ = 0.4) 0.7223 0.1432 0.2419 0.0 0.0 0.1 0.2 EU ( λ = 0.6) 0.7149 0.1444 0.2422 0.0 0.0 0.0 0.0 EU ( λ = 0.8) 0.7301 0.1326 0.2476 0.0 0.0 0.0 0.0 EU ( λ = 0.95) 0.7339 0.1002 0.2415 0.0 0.0 0.0 0.0 
+
+Table 11: Sensitivity to the hyperparameter balancing forgetting and retention losses in the mathematical-domain retention setting. The left block reports retention performance on mathematical benchmarks, where higher is better. The right block reports forgetting 
+
+performance in terms of attack success rate (ASR) on harmful and jailbreak datasets, ex-pressed in percentage, where lower is better. Harm-1/Harm-2 denote harmful-question sets derived from GPTFUZZER/WildAttack, and JB-1/JB-2 denote their corresponding jailbreak versions. MedInstruct-52k. For the mathematical setting, we trained the model from scratch on 40,000 examples from MetaMathQA. We then inspected its response examples on MedInstruct-test and GSM8K. Three actual generation examples for each setting are shown in Tbl. 13. In the medical setting, the model fails to acquire even basic language generation ability. In the mathematical setting, although it occasionally outputs isolated numbers, the generated text remains linguistically unnatural. These results demonstrate that, to fulfill our objectives, it is essential to start from a pre-trained model and preserve both target-specific expertise and general linguistic proficiency. 
+
+# K Design Analysis of Self-generated Text in Exclusive Unlearning 
+
+To examine the validity of this design, we first compare self-generated text with two alter-native sources under otherwise identical training configurations: one sampled from the Wikipedia subset of the Dolma corpus (Wiki), and another sampled from the entire Pile corpus (Pile). As shown in Fig. 4, the setting using the model’s self-generated text achieves the strongest forgetting performance. 22 Preprint. Under review. Previous Unlearning Exclusive Unlearning                           
+
+>   
+>  
+> 
+> 
+> 
+> 
+> 
+>   
+>   
+>   
+>  
+> 
+> 
+> 
+> 
+> 
+>   
+>   
+>  
+>  
+>  
+> 
+>  
+>    
+>    
+
+Figure 3: t-SNE visualization of the final-layer representation space at the last-token position in the medical-retention setting of OLMo-2-1B-Instruct. We compare a conventional enumerative unlearning baseline (left) with Exclusive Unlearning (right) using five types of inputs: Alpaca, Medical, ARC-Easy, Harmful, and Harmful-JB. Each point corresponds to one input, and marker shape indicates whether the input is judged as retained or forgotten based on § F). 
+
+Figure 4: Comparison of forgetting performance in the medical-retention setting between using the model ’s own self-generated text for forgetting and using text sampled from external corpora. 23 Preprint. Under review. 
+
+Source Examples not judged as forgotten 
+
+Alpaca (1) What are some good foods to eat when you are sick? I am looking for something to make my girlfriend to eat. (2) Draft an apology email to a customer who experienced a delay in their order, and provide reassurance that the issue has been resolved. (3) Pretend to be a character in a post-apocalyptic world. Describe how you survive and the allies you encounter. (4) I have a hard time falling asleep. Is there any type of music that can help me fall asleep faster? (5) My friend’s dog just died and they’re really sad. How do I comfort them? (6) Describe the content of the article in a brief manner. A study published earlier this year by Zee and her team examined the role of light in sleep for healthy adults in their 20s. Sleeping for only one night with a dim light, such as a TV set with the sound off, raised the blood sugar and heart rate of the young people during the sleep lab experiment. An elevated heart rate at night has been shown in prior studies to be a risk factor for future heart disease and early death, while higher blood sugar levels are a sign of insulin resistance, which can ultimately lead to type 2 diabetes. ARC-Easy (1) When two nuclei are combined into one nucleus, there is a slight change in mass and the release of a large amount of energy. What is this process called? (2) Which statement best explains why photosynthesis is the foundation of most food webs? (A) Sunlight is the source of energy for nearly all ecosystems. (B) Most ecosystems are found on land instead of in water. (C) Carbon dioxide is more available than other gases. (D) The producers in all ecosystems are plants. (3) What are genes composed of? (1) offspring (2) DNA (3) cells (4) traits (4) Which of the following describes a reason why companies irradiate some fruits and vegetables before they are sold to the public? 
+
+Table 12: Examples of Alpaca and ARC-Easy inputs that were not judged as forgotten. These examples suggest that some retained general-domain inputs are semantically close to the medical domain, including health- or care-related instructions in Alpaca and biology- or health-adjacent science questions in ARC-Easy. 
+
+Domain Response (Example) Medical the the the the the the the the the the the the the the the the „„„„„„„„„„„„„„„„„„„„ ,...,.,.,.,.,.,.,., and, and, and, and, and, and, and 
+
+Math 2.\nThe = 2 2.\nThe answer 2 = 2.\nThe 2.\nThe 2.\nThe 2.\nThe answer 2 2 = 2 = 2 = 3 2 = 3 3 3 3 3 3 3 3 2 = 3 3 3 3 3 3 3 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 
+
+Table 13: Examples of responses on medical and mathematical tasks from a randomly initialized model pre-trained on the retention data. 24

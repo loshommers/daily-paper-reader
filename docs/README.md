@@ -6,52 +6,46 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-04-07
-- 运行时间：2026-04-07 20:18:21 UTC
+- 最新运行日期：2026-04-08
+- 运行时间：2026-04-08 19:51:36 UTC
 - 运行状态：成功
-- 本次总论文数：10
-- 精读区：7
-- 速读区：3
+- 本次总论文数：8
+- 精读区：6
+- 速读区：2
 
 ### 今日简报（AI）
-今日深度攻克大模型“精准遗忘”难题，重点复盘推理模型与具身智能的去学习前沿进展。
-满分论文揭示了如何在复杂逻辑推理与多模态动作中实现高效信息擦除，确保模型安全与隐私。
-建议关注生物启发式记忆管理与数据归因，掌握让 AI 智能“断舍离”的核心技术。
-- 详情：[/202604/07/README](/202604/07/README)
+今日聚焦 8 篇前沿成果，深度拆解 LLM 推荐系统与扩散模型中精准、高效的“机器卸载”核心技术。
+满分论文 CURE 与 PECKER 证明了通过电路感知与关键知识定位，可实现无损且彻底的模型隐私数据擦除。
+建议优先研读机器卸载（Unlearning）相关方案，这是当前解决大模型合规性与隐私安全的关键路径。
+- 详情：[/202604/08/README](/202604/08/README)
 
 ### 精读区论文标签
-1. [Selective Forgetting for Large Reasoning Models](/202604/07/2604.03571v1-selective-forgetting-for-large-reasoning-models)  
+1. [CURE:Circuit-Aware Unlearning for LLM-based Recommendation](/202604/08/2604.04982v1-curecircuit-aware-unlearning-for-llm-based-recommendation)  
    标签：评分：10.0/10、query:mu-ce
-   evidence：大推理模型的选择性遗忘
-2. [VLA-Forget: Vision-Language-Action Unlearning for Embodied Foundation Models](/202604/07/2604.03956v1-vla-forget-vision-language-action-unlearning-for-embodied-foundation-models)  
+   evidence：为基于大语言模型的推荐系统提出电路感知遗忘算法
+2. [PECKER: A Precisely Efficient Critical Knowledge Erasure Recipe For Machine Unlearning in Diffusion Models](/202604/08/2604.05634v1-pecker-a-precisely-efficient-critical-knowledge-erasure-recipe-for-machine-unlearning-in-diffusion-models)  
    标签：评分：10.0/10、query:mu-ce
-   evidence：具身基础模型的遗忘挑战
-3. [Jellyfish: Zero-Shot Federated Unlearning Scheme with Knowledge Disentanglement](/202604/07/2604.04030v1-jellyfish-zero-shot-federated-unlearning-scheme-with-knowledge-disentanglement)  
+   evidence：使用显著性掩码在扩散模型中实现高效机器遗忘
+3. [Efficient machine unlearning with minimax optimality](/202604/08/2604.05669v1-efficient-machine-unlearning-with-minimax-optimality)  
    标签：评分：10.0/10、query:mu-ce
-   evidence：具有知识解耦的零样本联邦遗忘
-4. [Towards Unveiling Vulnerabilities of Large Reasoning Models in Machine Unlearning](/202604/07/2604.04255v1-towards-unveiling-vulnerabilities-of-large-reasoning-models-in-machine-unlearning)  
+   evidence：具有极小极大最优性的高效机器遗忘统计框架
+4. [Mechanistic Circuit-Based Knowledge Editing in Large Language Models](/202604/08/2604.05876v1-mechanistic-circuit-based-knowledge-editing-in-large-language-models)  
    标签：评分：10.0/10、query:mu-ce
-   evidence：大推理模型在机器遗忘中的漏洞
-5. [Erasure or Erosion? Evaluating Compositional Degradation in Unlearned Text-To-Image Diffusion Models](/202604/07/2604.04575v1-erasure-or-erosion-evaluating-compositional-degradation-in-unlearned-text-to-image-diffusion-models)  
+   evidence：大语言模型中基于机制电路的知识编辑
+5. [Exclusive Unlearning](/202604/08/2604.06154v1-exclusive-unlearning)  
    标签：评分：10.0/10、query:mu-ce
-   evidence：评估文本生成图像扩散模型中的概念擦除方法
-6. [Forgetting to Witness: Efficient Federated Unlearning and Its Visible Evaluation](/202604/07/2604.04800v1-forgetting-to-witness-efficient-federated-unlearning-and-its-visible-evaluation)  
-   标签：评分：10.0/10、query:mu-ce
-   evidence：联邦遗忘学习方法及评估框架
-7. [SafeCtrl: Region-Aware Safety Control for Text-to-Image Diffusion via Detect-Then-Suppress](/202604/07/2604.03941v1-safectrl-region-aware-safety-control-for-text-to-image-diffusion-via-detect-then-suppress)  
+   evidence：排他性遗忘用于大语言模型中的广泛有害信息移除
+6. [The Model Agreed, But Didn't Learn: Diagnosing Surface Compliance in Large Language Models](/202604/08/2604.05995v1-the-model-agreed-but-didnt-learn-diagnosing-surface-compliance-in-large-language-models)  
    标签：评分：9.0/10、query:mu-ce
-   evidence：用于安全控制的模型概念擦除
+   evidence：诊断大语言模型中知识编辑和记忆修改的有效性
 
 ### 速读区论文标签
-1. [SuperLocalMemory V3.3: The Living Brain -- Biologically-Inspired Forgetting, Cognitive Quantization, and Multi-Channel Retrieval for Zero-LLM Agent Memory Systems](/202604/07/2604.04514v1-superlocalmemory-v33-the-living-brain----biologically-inspired-forgetting-cognitive-quantization-and-multi-channel-retrieval-for-zero-llm-agent-memory-systems)  
+1. [Subspace Control: Turning Constrained Model Steering into Controllable Spectral Optimization](/202604/08/2604.04231v1-subspace-control-turning-constrained-model-steering-into-controllable-spectral-optimization)  
    标签：评分：7.0/10、query:mu-ce
-   evidence：仿生遗忘机制与记忆生命周期动态
-2. [Gradient Boosting within a Single Attention Layer](/202604/07/2604.03190v1-gradient-boosting-within-a-single-attention-layer)  
+   evidence：针对隐私和安全要求的受限模型引导
+2. [Controllable Image Generation with Composed Parallel Token Prediction](/202604/08/2604.05730v1-controllable-image-generation-with-composed-parallel-token-prediction)  
    标签：评分：6.0/10、query:mu-ce
-   evidence：擦除与存储模式子空间正交的所有查询信息
-3. [A Bayesian Information-Theoretic Approach to Data Attribution](/202604/07/2604.03858v1-a-bayesian-information-theoretic-approach-to-data-attribution)  
-   标签：评分：6.0/10、query:mu-ce
-   evidence：通过移除时的信息损失对子集进行评分
+   evidence：通过概念权重实现对特定条件的否定
 
 
 <div class="dpr-home-promo-card">

@@ -1,0 +1,327 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-04-08T19:49:54.242974+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 6,
+    "deep_cap": 6,
+    "deep_selected": 6,
+    "quick_candidates": 2,
+    "quick_skim_target": 11,
+    "quick_selected": 2
+  },
+  "deep_dive": [
+    {
+      "id": "2604.04982v1",
+      "title": "CURE:Circuit-Aware Unlearning for LLM-based Recommendation",
+      "abstract": "Recent advances in large language models (LLMs) have opened new opportunities for recommender systems by enabling rich semantic understanding and reasoning about user interests and item attributes. However, as privacy regulations tighten, incorporating user data into LLM-based recommendation (LLMRec) introduces significant privacy risks, making unlearning algorithms increasingly crucial for practical deployment. Despite growing interest in LLMRec unlearning, most existing approaches formulate unlearning as a weighted combination of forgetting and retaining objectives while updating model parameters in a uniform manner. Such formulations inevitably induce gradient conflicts between the two objectives, leading to unstable optimization and resulting in either ineffective unlearning or severe degradation of model utility. Moreover, the unlearning procedure remains largely black-box, undermining its transparency and trustworthiness. To tackle these challenges, we propose CURE, a circuit-aware unlearning framework that disentangles model components into functionally distinct subsets and selectively updates them. Here, a circuit refers to a computational subgraph that is causally responsible for task-specific behaviors. Specifically, we extract the core circuits underlying item recommendation and analyze how individual modules within these circuits contribute to the forget and retain objectives. Based on this analysis, these modules are categorized into forget-specific, retain-specific, and task-shared groups, each subject to function-specific update rules to mitigate gradient conflicts during unlearning. Experiments on real-world datasets show that our approach achieves more effective unlearning than existing baselines.",
+      "authors": [
+        "Ziheng Chen",
+        "Jiali Cheng",
+        "Zezhong Fan",
+        "Hadi Amiri",
+        "Yunzhi Yao",
+        "Xiangguo Sun",
+        "Yang Zhang"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR",
+        "cs.AI",
+        "cs.CL",
+        "cs.LG"
+      ],
+      "published": "2026-04-04T23:13:55+00:00",
+      "link": "https://arxiv.org/pdf/2604.04982v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "Proposes circuit-aware unlearning algorithms for LLM-based recommendation systems",
+      "llm_evidence_cn": "为基于大语言模型的推荐系统提出电路感知遗忘算法",
+      "llm_evidence": "为基于大语言模型的推荐系统提出电路感知遗忘算法",
+      "canonical_evidence": "为基于大语言模型的推荐系统提出电路感知遗忘算法",
+      "llm_tldr_en": "Introduces CURE, a circuit-aware unlearning method to handle privacy risks in LLM-based recommenders.",
+      "llm_tldr_cn": "引入CURE，一种电路感知遗忘方法，用于处理大模型推荐系统中的隐私风险。",
+      "llm_tldr": "引入CURE，一种电路感知遗忘方法，用于处理大模型推荐系统中的隐私风险。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Machine unlearning techniques and algorithms in deep learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.05634v1",
+      "title": "PECKER: A Precisely Efficient Critical Knowledge Erasure Recipe For Machine Unlearning in Diffusion Models",
+      "abstract": "Machine unlearning (MU) has become a critical technique for GenAI models' safe and compliant operation. While existing MU methods are effective, most impose prohibitive training time and computational overhead. Our analysis suggests the root cause lies in poorly directed gradient updates, which reduce training efficiency and destabilize convergence. To mitigate these issues, we propose PECKER, an efficient MU approach that matches or outperforms prevailing methods. Within a distillation framework, PECKER introduces a saliency mask to prioritize updates to parameters that contribute most to forgetting the targeted data, thereby reducing unnecessary gradient computation and shortening overall training time without sacrificing unlearning efficacy. Our method generates samples that unlearn related class or concept more quickly, while closely aligning with the true image distribution on CIFAR-10 and STL-10 datasets, achieving shorter training times for both class forgetting and concept forgetting.",
+      "authors": [
+        "Zhiyong Ma",
+        "Zhitao Deng",
+        "Huan Tang",
+        "Jialin Chen",
+        "Zhijun Zheng",
+        "Zhengping Li",
+        "Qingyuan Chuai"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-04-07T09:36:12+00:00",
+      "link": "https://arxiv.org/pdf/2604.05634v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "efficient machine unlearning in diffusion models using saliency masks",
+      "llm_evidence_cn": "使用显著性掩码在扩散模型中实现高效机器遗忘",
+      "llm_evidence": "使用显著性掩码在扩散模型中实现高效机器遗忘",
+      "canonical_evidence": "使用显著性掩码在扩散模型中实现高效机器遗忘",
+      "llm_tldr_en": "Introduces PECKER, an efficient unlearning method for diffusion models using saliency-based parameter updates.",
+      "llm_tldr_cn": "介绍了 PECKER，一种利用基于显著性的参数更新实现扩散模型高效遗忘的方法。",
+      "llm_tldr": "介绍了 PECKER，一种利用基于显著性的参数更新实现扩散模型高效遗忘的方法。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "State of the art methods for machine unlearning and concept erasure",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.05669v1",
+      "title": "Efficient machine unlearning with minimax optimality",
+      "abstract": "There is a growing demand for efficient data removal to comply with regulations like the GDPR and to mitigate the influence of biased or corrupted data. This has motivated the field of machine unlearning, which aims to eliminate the influence of specific data subsets without the cost of full retraining. In this work, we propose a statistical framework for machine unlearning with generic loss functions and establish theoretical guarantees. For squared loss, especially, we develop Unlearning Least Squares (ULS) and establish its minimax optimality for estimating the model parameter of remaining data when only the pre-trained estimator, forget samples, and a small subsample of the remaining data are available. Our results reveal that the estimation error decomposes into an oracle term and an unlearning cost determined by the forget proportion and the forget model bias. We further establish asymptotically valid inference procedures without requiring full retraining. Numerical experiments and real-data applications demonstrate that the proposed method achieves performance close to retraining while requiring substantially less data access.",
+      "authors": [
+        "Jingyi Xie",
+        "Linjun Zhang",
+        "Sai Li"
+      ],
+      "primary_category": "stat.ML",
+      "categories": [
+        "stat.ML",
+        "cs.LG"
+      ],
+      "published": "2026-04-07T10:09:58+00:00",
+      "link": "https://arxiv.org/pdf/2604.05669v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "statistical framework for efficient machine unlearning with minimax optimality",
+      "llm_evidence_cn": "具有极小极大最优性的高效机器遗忘统计框架",
+      "llm_evidence": "具有极小极大最优性的高效机器遗忘统计框架",
+      "canonical_evidence": "具有极小极大最优性的高效机器遗忘统计框架",
+      "llm_tldr_en": "Develops a statistical framework and minimax optimal algorithm for efficient data removal from trained models.",
+      "llm_tldr_cn": "开发了一个统计框架和极小极大最优算法，用于从训练好的模型中高效删除数据。",
+      "llm_tldr": "开发了一个统计框架和极小极大最优算法，用于从训练好的模型中高效删除数据。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Machine unlearning techniques and algorithms in deep learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.05876v1",
+      "title": "Mechanistic Circuit-Based Knowledge Editing in Large Language Models",
+      "abstract": "Deploying Large Language Models (LLMs) in real-world dynamic environments raises the challenge of updating their pre-trained knowledge. While existing knowledge editing methods can reliably patch isolated facts, they frequently suffer from a \"Reasoning Gap\", where the model recalls the edited fact but fails to utilize it in multi-step reasoning chains. To bridge this gap, we introduce MCircKE (\\underline{M}echanistic \\underline{Circ}uit-based \\underline{K}nowledge \\underline{E}diting), a novel framework that enables a precise \"map-and-adapt\" editing procedure. MCircKE first identifies the causal circuits responsible for a specific reasoning task, capturing both the storage of the fact and the routing of its logical consequences. It then surgically update parameters exclusively within this mapped circuit. Extensive experiments on the MQuAKE-3K benchmark demonstrate the effectiveness of the proposed method for multi-hop reasoning in knowledge editing.",
+      "authors": [
+        "Tianyi Zhao",
+        "Yinhan He",
+        "Wendy Zheng",
+        "Chen Chen"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-04-07T13:33:54+00:00",
+      "link": "https://arxiv.org/pdf/2604.05876v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "mechanistic circuit-based knowledge editing in LLMs",
+      "llm_evidence_cn": "大语言模型中基于机制电路的知识编辑",
+      "llm_evidence": "大语言模型中基于机制电路的知识编辑",
+      "canonical_evidence": "大语言模型中基于机制电路的知识编辑",
+      "llm_tldr_en": "Proposes a framework for precise knowledge editing by identifying and adapting causal circuits in LLMs.",
+      "llm_tldr_cn": "提出一种通过识别和调整大模型中的因果电路来进行精确知识编辑的框架。",
+      "llm_tldr": "提出一种通过识别和调整大模型中的因果电路来进行精确知识编辑的框架。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Model editing for knowledge update and correction",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.06154v1",
+      "title": "Exclusive Unlearning",
+      "abstract": "When introducing Large Language Models (LLMs) into industrial applications, such as healthcare and education, the risk of generating harmful content becomes a significant challenge. While existing machine unlearning methods can erase specific harmful knowledge and expressions, diverse harmful content makes comprehensive removal difficult. In this study, instead of individually listing targets for forgetting, we propose Exclusive Unlearning (EU), which aims for broad harm removal by extensively forgetting everything except for the knowledge and expressions we wish to retain. We demonstrate that through Exclusive Unlearning, it is possible to obtain a model that ensures safety against a wide range of inputs, including jailbreaks, while maintaining the ability to respond to diverse instructions related to specific domains such as medicine and mathematics.",
+      "authors": [
+        "Mutsumi Sasaki",
+        "Kouta Nakayama",
+        "Yusuke Miyao",
+        "Yohei Oseki",
+        "Masaru Isonuma"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-04-07T17:54:11+00:00",
+      "link": "https://arxiv.org/pdf/2604.06154v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "Exclusive Unlearning for broad harm removal in LLMs",
+      "llm_evidence_cn": "排他性遗忘用于大语言模型中的广泛有害信息移除",
+      "llm_evidence": "排他性遗忘用于大语言模型中的广泛有害信息移除",
+      "canonical_evidence": "排他性遗忘用于大语言模型中的广泛有害信息移除",
+      "llm_tldr_en": "Introduces Exclusive Unlearning to remove diverse harmful content by forgetting everything except desired knowledge.",
+      "llm_tldr_cn": "引入排他性遗忘，通过遗忘除目标知识外的所有内容来广泛移除大模型中的有害信息。",
+      "llm_tldr": "引入排他性遗忘，通过遗忘除目标知识外的所有内容来广泛移除大模型中的有害信息。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Machine unlearning techniques and algorithms in deep learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.05995v1",
+      "title": "The Model Agreed, But Didn't Learn: Diagnosing Surface Compliance in Large Language Models",
+      "abstract": "Large Language Models (LLMs) internalize vast world knowledge as parametric memory, yet inevitably inherit the staleness and errors of their source corpora. Consequently, ensuring the reliability and malleability of these internal representations is imperative for trustworthy real-world deployment. Knowledge editing offers a pivotal paradigm for surgically modifying memory without retraining. However, while recent editors demonstrate high success rates on standard benchmarks, it remains questionable whether current evaluation frameworks that rely on assessing output under specific prompting conditions can reliably authenticate genuine memory modification. In this work, we introduce a simple diagnostic framework that subjects models to discriminative self-assessment under in-context learning (ICL) settings that better reflect real-world application environments, specifically designed to scrutinize the subtle behavioral nuances induced by memory modifications. This probing reveals a pervasive phenomenon of Surface Compliance, where editors achieve high benchmark scores by merely mimicking target outputs without structurally overwriting internal beliefs. Moreover, we find that recursive modifications accumulate representational residues, triggering cognitive instability and permanently diminishing the reversibility of the model's memory state. These insights underscore the risks of current editing paradigms and highlight the pivotal role of robust memory modification in building trustworthy, long-term sustainable LLM systems. Code is available at https://github.com/XiaojieGu/SA-MCQ.",
+      "authors": [
+        "Xiaojie Gu",
+        "Ziying Huang",
+        "Weicong Hong",
+        "Jian Xie",
+        "Renze Lou",
+        "Kai Zhang"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-04-07T15:20:41+00:00",
+      "link": "https://arxiv.org/pdf/2604.05995v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Diagnoses the effectiveness of knowledge editing and memory modification in LLMs",
+      "llm_evidence_cn": "诊断大语言模型中知识编辑和记忆修改的有效性",
+      "llm_evidence": "诊断大语言模型中知识编辑和记忆修改的有效性",
+      "canonical_evidence": "诊断大语言模型中知识编辑和记忆修改的有效性",
+      "llm_tldr_en": "Evaluates whether knowledge editing truly modifies internal memory or just achieves surface compliance.",
+      "llm_tldr_cn": "评估知识编辑是真正修改了内部记忆，还是仅仅实现了表面上的输出合规。",
+      "llm_tldr": "评估知识编辑是真正修改了内部记忆，还是仅仅实现了表面上的输出合规。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Model editing for knowledge update and correction",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2604.04231v1",
+      "title": "Subspace Control: Turning Constrained Model Steering into Controllable Spectral Optimization",
+      "abstract": "Foundation models, such as large language models (LLMs), are powerful but often require customization before deployment to satisfy practical constraints such as safety, privacy, and task-specific requirements, leading to \"constrained\" optimization problems for model steering and adaptation. However, solving such problems remains largely underexplored and is particularly challenging due to interference between the primary objective and constraint objectives during optimization. In this paper, we propose a subspace control framework for constrained model training. Specifically, (i) we first analyze, from a model merging perspective, how spectral cross-task interference arises and show that it can be resolved via a one-shot solution that orthogonalizes the merged subspace; (ii) we establish a connection between this solution and gradient orthogonalization in the spectral optimizer Muon; and (iii) building on these insights, we introduce SIFT (spectral interference-free training), which leverages a localization scheme to selectively intervene during optimization, enabling controllable updates that mitigate objective-constraint conflicts. We evaluate SIFT across four representative applications: (a) machine unlearning, (b) safety alignment, (c) text-to-speech adaptation, and (d) hallucination mitigation. Compared to both control-based and control-free baselines, SIFT consistently achieves substantial and robust performance improvements across all tasks. Code is available at https://github.com/OPTML-Group/SIFT.",
+      "authors": [
+        "Yancheng Huang",
+        "Changsheng Wang",
+        "Chongyu Fan",
+        "Yicheng Lang",
+        "Bingqi Shang",
+        "Yang Zhang",
+        "Mingyi Hong",
+        "Qing Qu",
+        "Alvaro Velasquez",
+        "Sijia Liu"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-04-05T19:27:24+00:00",
+      "link": "https://arxiv.org/pdf/2604.04231v1",
+      "tags": [
+        "keyword:MU CE"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "constrained model steering for privacy and safety requirements",
+      "llm_evidence_cn": "针对隐私和安全要求的受限模型引导",
+      "llm_evidence": "针对隐私和安全要求的受限模型引导",
+      "canonical_evidence": "针对隐私和安全要求的受限模型引导",
+      "llm_tldr_en": "Introduces a subspace control framework for steering foundation models to satisfy privacy and safety constraints.",
+      "llm_tldr_cn": "引入子空间控制框架，引导基础模型满足隐私和安全约束。",
+      "llm_tldr": "引入子空间控制框架，引导基础模型满足隐私和安全约束。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Model editing for knowledge update and correction",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2604.05730v1",
+      "title": "Controllable Image Generation with Composed Parallel Token Prediction",
+      "abstract": "Conditional discrete generative models struggle to faithfully compose multiple input conditions. To address this, we derive a theoretically-grounded formulation for composing discrete probabilistic generative processes, with masked generation (absorbing diffusion) as a special case. Our formulation enables precise specification of novel combinations and numbers of input conditions that lie outside the training data, with concept weighting enabling emphasis or negation of individual conditions. In synergy with the richly compositional learned vocabulary of VQ-VAE and VQ-GAN, our method attains a $63.4\\%$ relative reduction in error rate compared to the previous state-of-the-art, averaged across 3 datasets (positional CLEVR, relational CLEVR and FFHQ), simultaneously obtaining an average absolute FID improvement of $-9.58$. Meanwhile, our method offers a $2.3\\times$ to $12\\times$ real-time speed-up over comparable methods, and is readily applied to an open pre-trained discrete text-to-image model for fine-grained control of text-to-image generation.",
+      "authors": [
+        "Jamie Stirling",
+        "Noura Al-Moubayed",
+        "Chris G. Willcocks",
+        "Hubert P. H. Shum"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-04-07T11:33:52+00:00",
+      "link": "https://arxiv.org/pdf/2604.05730v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "concept weighting for negation of individual conditions",
+      "llm_evidence_cn": "通过概念权重实现对特定条件的否定",
+      "llm_evidence": "通过概念权重实现对特定条件的否定",
+      "canonical_evidence": "通过概念权重实现对特定条件的否定",
+      "llm_tldr_en": "Enables controllable generation with concept weighting to emphasize or negate specific input conditions.",
+      "llm_tldr_cn": "通过概念权重实现可控生成，支持对特定输入条件的强调或否定。",
+      "llm_tldr": "通过概念权重实现可控生成，支持对特定输入条件的强调或否定。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Concept erasure and removal from pre-trained models",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
