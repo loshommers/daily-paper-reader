@@ -6,46 +6,37 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-04-08
-- 运行时间：2026-04-08 19:51:36 UTC
+- 最新运行日期：2026-04-09
+- 运行时间：2026-04-09 20:28:04 UTC
 - 运行状态：成功
-- 本次总论文数：8
-- 精读区：6
-- 速读区：2
+- 本次总论文数：5
+- 精读区：1
+- 速读区：4
 
 ### 今日简报（AI）
-今日聚焦 8 篇前沿成果，深度拆解 LLM 推荐系统与扩散模型中精准、高效的“机器卸载”核心技术。
-满分论文 CURE 与 PECKER 证明了通过电路感知与关键知识定位，可实现无损且彻底的模型隐私数据擦除。
-建议优先研读机器卸载（Unlearning）相关方案，这是当前解决大模型合规性与隐私安全的关键路径。
-- 详情：[/202604/08/README](/202604/08/README)
+今日深度解析 5 篇 AI 前沿论文，聚焦语言模型在隐私保护与联邦对齐中的性能权衡。
+核心研究揭示了隐私机制对语言生成质量的具体影响，并提出通过设备端数据清洗提升联邦学习的鲁棒性。
+建议关注如何在强化数据安全的同时，利用稀疏内存微调等技术优化模型部署效率。
+- 详情：[/202604/09/README](/202604/09/README)
 
 ### 精读区论文标签
-1. [CURE:Circuit-Aware Unlearning for LLM-based Recommendation](/202604/08/2604.04982v1-curecircuit-aware-unlearning-for-llm-based-recommendation)  
-   标签：评分：10.0/10、query:mu-ce
-   evidence：为基于大语言模型的推荐系统提出电路感知遗忘算法
-2. [PECKER: A Precisely Efficient Critical Knowledge Erasure Recipe For Machine Unlearning in Diffusion Models](/202604/08/2604.05634v1-pecker-a-precisely-efficient-critical-knowledge-erasure-recipe-for-machine-unlearning-in-diffusion-models)  
-   标签：评分：10.0/10、query:mu-ce
-   evidence：使用显著性掩码在扩散模型中实现高效机器遗忘
-3. [Efficient machine unlearning with minimax optimality](/202604/08/2604.05669v1-efficient-machine-unlearning-with-minimax-optimality)  
-   标签：评分：10.0/10、query:mu-ce
-   evidence：具有极小极大最优性的高效机器遗忘统计框架
-4. [Mechanistic Circuit-Based Knowledge Editing in Large Language Models](/202604/08/2604.05876v1-mechanistic-circuit-based-knowledge-editing-in-large-language-models)  
-   标签：评分：10.0/10、query:mu-ce
-   evidence：大语言模型中基于机制电路的知识编辑
-5. [Exclusive Unlearning](/202604/08/2604.06154v1-exclusive-unlearning)  
-   标签：评分：10.0/10、query:mu-ce
-   evidence：排他性遗忘用于大语言模型中的广泛有害信息移除
-6. [The Model Agreed, But Didn't Learn: Diagnosing Surface Compliance in Large Language Models](/202604/08/2604.05995v1-the-model-agreed-but-didnt-learn-diagnosing-surface-compliance-in-large-language-models)  
-   标签：评分：9.0/10、query:mu-ce
-   evidence：诊断大语言模型中知识编辑和记忆修改的有效性
+1. [On the Price of Privacy for Language Identification and Generation](/202604/09/2604.07238v1-on-the-price-of-privacy-for-language-identification-and-generation)  
+   标签：评分：8.0/10、query:mu-ce
+   evidence：差分隐私语言识别与生成的算法研究
 
 ### 速读区论文标签
-1. [Subspace Control: Turning Constrained Model Steering into Controllable Spectral Optimization](/202604/08/2604.04231v1-subspace-control-turning-constrained-model-steering-into-controllable-spectral-optimization)  
+1. [Improving Sparse Memory Finetuning](/202604/09/2604.05248v1-improving-sparse-memory-finetuning)  
    标签：评分：7.0/10、query:mu-ce
-   evidence：针对隐私和安全要求的受限模型引导
-2. [Controllable Image Generation with Composed Parallel Token Prediction](/202604/08/2604.05730v1-controllable-image-generation-with-composed-parallel-token-prediction)  
+   evidence：对新知识的持续适应和模型更新
+2. [FedDetox: Robust Federated SLM Alignment via On-Device Data Sanitization](/202604/09/2604.06833v1-feddetox-robust-federated-slm-alignment-via-on-device-data-sanitization)  
+   标签：评分：7.0/10、query:mu-ce
+   evidence：通过数据清洗和对齐解决从模型中移除有毒或不安全信息的问题
+3. [Differentially Private Manifold Denoising](/202604/09/2604.00942v1-differentially-private-manifold-denoising)  
    标签：评分：6.0/10、query:mu-ce
-   evidence：通过概念权重实现对特定条件的否定
+   evidence：处理敏感参考数据集的差分隐私框架
+4. [Analytic Drift Resister for Non-Exemplar Continual Graph Learning](/202604/09/2604.02633v1-analytic-drift-resister-for-non-exemplar-continual-graph-learning)  
+   标签：评分：6.0/10、query:mu-ce
+   evidence：通过避免原始图样本消除持续学习中的隐私风险
 
 
 <div class="dpr-home-promo-card">

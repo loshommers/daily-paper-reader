@@ -1,0 +1,79 @@
+{
+  "label": "2026-04-09",
+  "date": "2026-04-09",
+  "generated_at": "2026-04-09T20:28:14",
+  "count": 5,
+  "papers": [
+    {
+      "paper_id": "202604/09/2604.07238v1-on-the-price-of-privacy-for-language-identification-and-generation",
+      "section": "deep",
+      "title_en": "On the Price of Privacy for Language Identification and Generation",
+      "authors": "Xiaoyu Li, Andi Han, Jiaojiao Jiang, Junbin Gao",
+      "date": "2026-04-08",
+      "pdf": "https://arxiv.org/pdf/2604.07238v1",
+      "score": "8.0",
+      "evidence": "差分隐私语言识别与生成的算法研究",
+      "tldr": "本研究深入探讨了在大语言模型训练中应用差分隐私（DP）的理论成本，涵盖语言识别与生成两大任务。通过在不可知统计框架下建立算法并推导匹配的下界，研究发现：近似 DP 几乎不增加错误率，而纯 DP 的错误率指数仅受 min{1, ε} 因子影响。这一成果精确量化了隐私保护对语言学习性能的影响，证明了隐私代价在特定条件下是极其温和的。",
+      "tags": "query:mu-ce",
+      "abstract_en": "As large language models (LLMs) are increasingly trained on sensitive user data, understanding the fundamental cost of privacy in language learning becomes essential. We initiate the study of differentially private (DP) language identification and generation in the agnostic statistical setting, establishing algorithms and matching lower bounds that precisely quantify the cost of privacy. For both tasks, approximate $(\\varepsilon, δ)$-DP with constant $\\varepsilon > 0$ recovers the non-private error rates: $\\exp(-r(n))$ for identification (for any $r(n) = o(n)$) and $\\exp(-Ω(n))$ for generation. Under pure $\\varepsilon$-DP, the exponents degrade by a multiplicative factor of $\\min\\{1, \\varepsilon\\}$, which we show is tight up to constants. Notably, for generation under pure DP with mild assumptions, the upper bound $\\exp(-\\min\\{1,\\varepsilon\\} \\cdot Ω(n))$ matches the lower bound up to some constants, establishing an optimal rate. Our results show that the cost of privacy in language learning is surprisingly mild: absent entirely under approximate DP, and exactly a $\\min\\{1,\\varepsilon\\}$ factor in the exponent under pure DP.",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202604/09/2604.05248v1-improving-sparse-memory-finetuning",
+      "section": "quick",
+      "title_en": "Improving Sparse Memory Finetuning",
+      "authors": "Satyam Goyal, Anirudh Kanchi, Garv Shah, Prakhar Gupta",
+      "date": "2026-04-06",
+      "pdf": "https://arxiv.org/pdf/2604.05248v1",
+      "score": "7.0",
+      "evidence": "对新知识的持续适应和模型更新",
+      "tldr": "针对大语言模型在持续学习中面临的灾难性遗忘问题，本文提出了一种改进的稀疏记忆微调（SMF）方法。研究者开发了一个开源流水线，将 Qwen-2.5-0.5B 模型改造为包含稀疏记忆模块的架构，并引入了基于 KL 散度的槽位选择机制，优先更新信息量大的“惊奇”标记。实验证明，该方法能在消费级硬件上有效获取新知识，同时最大限度地减少对原有能力的干扰。",
+      "tags": "query:mu-ce",
+      "abstract_en": "Large Language Models (LLMs) are typically static after training, yet real-world applications require continual adaptation to new knowledge without degrading existing capabilities. Standard approaches to updating models, like full finetuning or parameter-efficient methods (e.g., LoRA), face a fundamental trade-off: catastrophic forgetting. They modify shared dense representations, causing interference across tasks. Sparse Memory Finetuning (SMF) offers a promising alternative by localizing updates to a small subset of parameters in explicit memory layers. In this work, we present an open-source pipeline to retrofit existing pretrained models (Qwen-2.5-0.5B) with sparse memory modules, enabling effective continual learning on consumer hardware. We extend prior work by introducing a theoretically grounded slot-selection mechanism based on Kullback-Leibler (KL) divergence, which prioritizes memory updates for informationally \"surprising\" tokens relative to a background distribution. Our experiments demonstrate that our retrofitted models can acquire new factual knowledge with minimal forgetting of held-out capabilities, validating the sparse update hypothesis in a practical setting.",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202604/09/2604.06833v1-feddetox-robust-federated-slm-alignment-via-on-device-data-sanitization",
+      "section": "quick",
+      "title_en": "FedDetox: Robust Federated SLM Alignment via On-Device Data Sanitization",
+      "authors": "Shunan Zhu, Jiawei Chen, Yonghao Yu, Hideya Ochiai",
+      "date": "2026-04-08",
+      "pdf": "https://arxiv.org/pdf/2604.06833v1",
+      "score": "7.0",
+      "evidence": "通过数据清洗和对齐解决从模型中移除有毒或不安全信息的问题",
+      "tldr": "本研究针对联邦学习中私有数据可能包含有毒信息导致模型安全对齐失效的问题，提出了FedDetox框架。该框架专为资源受限的边缘设备上的小语言模型（SLM）设计，通过知识蒸馏将大型安全模型的对齐能力迁移至轻量级分类器。在联邦对齐过程中，边缘客户端能识别并利用拒绝模板替换不安全样本，将潜在毒素转化为正向安全信号，在保证通用效能的同时显著提升了模型的鲁棒性。",
+      "tags": "query:mu-ce",
+      "abstract_en": "As high quality public data becomes scarce, Federated Learning (FL) provides a vital pathway to leverage valuable private user data while preserving privacy. However, real-world client data often contains toxic or unsafe information. This leads to a critical issue we define as unintended data poisoning, which can severely damage the safety alignment of global models during federated alignment. To address this, we propose FedDetox, a robust framework tailored for Small Language Models (SLMs) on resource-constrained edge devices. We first employ knowledge distillation to transfer sophisticated safety alignment capabilities from large scale safety aligned teacher models into light weight student classifiers suitable for resource constrained edge devices. Specifically, during federated learning for human preference alignment, the edge client identifies unsafe samples at the source and replaces them with refusal templates, effectively transforming potential poisons into positive safety signals. Experiments demonstrate that our approach preserves model safety at a level comparable to centralized baselines without compromising general utility.",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202604/09/2604.00942v1-differentially-private-manifold-denoising",
+      "section": "quick",
+      "title_en": "Differentially Private Manifold Denoising",
+      "authors": "Jiaqi Wu, Yiqing Sun, Zhigang Yao",
+      "date": "2026-04-01",
+      "pdf": "https://arxiv.org/pdf/2604.00942v1",
+      "score": "6.0",
+      "evidence": "处理敏感参考数据集的差分隐私框架",
+      "tldr": "本文提出了一种差分隐私流形去噪框架，旨在利用敏感参考数据修正非私有的噪声查询点。该方法通过迭代地在校准灵敏度下私密估计局部均值和切线几何，并将查询点沿估计子空间投影。该框架在提供严谨的 (ε,δ)-差分隐私保证的同时，保留了足够的几何信号用于聚类和可视化等下游任务，并建立了具有高概率效用保证的收敛速率。",
+      "tags": "query:mu-ce",
+      "abstract_en": "We introduce a differentially private manifold denoising framework that allows users to exploit sensitive reference datasets to correct noisy, non-private query points without compromising privacy. The method follows an iterative procedure that (i) privately estimates local means and tangent geometry using the reference data under calibrated sensitivity, (ii) projects query points along the privately estimated subspace toward the local mean via corrective steps at each iteration, and (iii) performs rigorous privacy accounting across iterations and queries using $(\\varepsilon,δ)$-differential privacy (DP). Conceptually, this framework brings differential privacy to manifold methods, retaining sufficient geometric signal for downstream tasks such as embedding, clustering, and visualization, while providing formal DP guarantees for the reference data. Practically, the procedure is modular and scalable, separating DP-protected local geometry (means and tangents) from budgeted query-point updates, with a simple scheduler allocating privacy budget across iterations and queries. Under standard assumptions on manifold regularity, sampling density, and measurement noise, we establish high-probability utility guarantees showing that corrected queries converge toward the manifold at a non-asymptotic rate governed by sample size, noise level, bandwidth, and the privacy budget. Simulations and case studies demonstrate accurate signal recovery under moderate privacy budgets, illustrating clear utility-privacy trade-offs and providing a deployable DP component for manifold-based workflows in regulated environments without reengineering privacy systems.",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202604/09/2604.02633v1-analytic-drift-resister-for-non-exemplar-continual-graph-learning",
+      "section": "quick",
+      "title_en": "Analytic Drift Resister for Non-Exemplar Continual Graph Learning",
+      "authors": "Lei Song, Shihan Guan, Youyong Kong",
+      "date": "2026-04-03",
+      "pdf": "https://arxiv.org/pdf/2604.02633v1",
+      "score": "6.0",
+      "evidence": "通过避免原始图样本消除持续学习中的隐私风险",
+      "tldr": "针对非样本持续图学习（NECGL）中特征偏移和模型塑性不足的问题，本文提出了一种理论支撑的框架 ADR。该框架通过迭代反向传播打破预训练模型冻结的限制以增强塑性，并引入层级解析合并（HAM）与分类器重构（ACR）技术，利用岭回归实现层间线性变换的无损合并，从而在理论上实现零遗忘的类增量学习，在多个基准测试中表现优异。",
+      "tags": "query:mu-ce",
+      "abstract_en": "Non-Exemplar Continual Graph Learning (NECGL) seeks to eliminate the privacy risks intrinsic to rehearsal-based paradigms by retaining solely class-level prototype representations rather than raw graph examples for mitigating catastrophic forgetting. However, this design choice inevitably precipitates feature drift. As a nascent alternative, Analytic Continual Learning (ACL) capitalizes on the intrinsic generalization properties of frozen pre-trained models to bolster continual learning performance. Nonetheless, a key drawback resides in the pronounced attenuation of model plasticity. To surmount these challenges, we propose Analytic Drift Resister (ADR), a novel and theoretically grounded NECGL framework. ADR exploits iterative backpropagation to break free from the frozen pre-trained constraint, adapting to evolving task graph distributions and fortifying model plasticity. Since parameter updates trigger feature drift, we further propose Hierarchical Analytic Merging (HAM), performing layer-wise merging of linear transformations in Graph Neural Networks (GNNs) via ridge regression, thereby ensuring absolute resistance to feature drift. On this basis, Analytic Classifier Reconstruction (ACR) enables theoretically zero-forgetting class-incremental learning. Empirical evaluation on four node classification benchmarks demonstrates that ADR maintains strong competitiveness against existing state-of-the-art methods.",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,912 @@
+Title: Analytic Drift Resister for Non-Exemplar Continual Graph Learning
+
+URL Source: https://arxiv.org/pdf/2604.02633v1
+
+Published Time: Mon, 06 Apr 2026 00:22:50 GMT
+
+Number of Pages: 10
+
+Markdown Content:
+> JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 1
+
+# Analytic Drift Resister for Non-Exemplar Continual Graph Learning 
+
+Lei Song , Shihan Guan , Youyong Kong 
+
+Abstract —Non-Exemplar Continual Graph Learning (NECGL) seeks to eliminate the privacy risks intrinsic to rehearsal-based paradigms by retaining solely class-level prototype representations rather than raw graph examples for mitigating catastrophic forgetting. However, this design choice inevitably precipitates feature drift. As a nascent alternative, Analytic Continual Learning (ACL) capitalizes on the intrinsic generalization properties of frozen pre-trained models to bolster continual learning performance. Nonetheless, a key drawback resides in the pronounced attenuation of model plasticity. To surmount these challenges, we propose Analytic Drift Resister (ADR), a novel and theoretically grounded NECGL framework. ADR exploits iterative backpropagation to break free from the frozen pre-trained constraint, adapting to evolving task graph distributions and fortifying model plasticity. Since parameter updates trigger feature drift, we further propose Hierarchical Analytic Merging (HAM), performing layer-wise merging of linear transformations in Graph Neural Networks (GNNs) via ridge regression, thereby ensuring absolute resistance to feature drift. On this basis, Analytic Classifier Reconstruction (ACR) enables theoretically zero-forgetting class-incremental learning. Empirical evaluation on four node classification benchmarks demonstrates that ADR maintains strong competitiveness against existing state-of-the-art methods. 
+
+Index Terms —Non-exemplar continual graph learning, ana-lytic continual learning, feature drift, graph neural networks, node classification. 
+
+I. I NTRODUCTION 
+
+# GRAPH Neural Networks (GNNs) have manifested ex-ceptional efficacy across a broad spectrum of graph data analysis applications, including citation network analysis [1], [2], recommender systems [3], [4], and neurological disorder diagnosis [5], [6], among others. Most existing studies revolve around static task scenarios, where GNNs are trained on pre-collected, task-specific data and remain immutable thereafter. However, the dynamic real world incessantly yields new data, while human demands progressively evolve through sustained environmental interactions. This calls for continual parameter adaptation in GNNs to maintain long-term applicability. A na¨ ıve solution is to incrementally fine-tune the model on incoming task data, yet this typically incurs substantial perfor-mance degradation on prior tasks owing to pronounced task distribution shifts, a phenomenon referred to as catastrophic 
+
+s Note: This work has been submitted to the IEEE for possible publication. Copyright may be transferred without notice, after which this version may no longer be accessible. 
+
+Lei Song, Shihan Guan, and Youyong Kong are with the School of Computer Science and Engineering, Southeast University, Nanjnig 211189, China (e-mail: 230238577@seu.edu.cn; 220225771@seu.edu.cn; kongyouy-ong@seu.edu.cn). 
+
+forgetting . Accordingly, Continual Graph Learning (CGL) seeks to endow GNNs with sustained adaptability to new tasks while safeguarding prior knowledge. Rehearsal-based paradigms [7]–[9] constitute a potent strat-egy against catastrophic forgetting, capitalizing on a compact memory bank of historical examples (e.g., old-class nodes or subgraphs) to retain sensitivity to previously acquired knowledge during adaptation to new tasks. Nonetheless, a critical drawback lies in violating data privacy, barring use in sensitive contexts. To avert this risk, Non-Exemplar Con-tinual Graph Learning (NECGL) [10]–[12] orchestrates class prototypes as proxies for historical task distributions to steer the model. This paradigm derives class-wise means and co-variances (i.e., gaussian prototypes) via the trained encoder at each task’s completion, archiving them in the memory bank for later replay. However, continual updates to the model parameters cause cached prototypes to progressively diverge from their true positions, resulting in the notorious feature drift. Although post-hoc drift compensation can mitigate this issue to some extent, the approximation remains vulnerable to task distribution shifts, especially in graph tasks where variations in node features and topology amplify the error. Analytic Continual Learning (ACL) [13]–[15] has recently arisen as a promising alternative. Such approaches capitalize on the inherent generalization of frozen pre-trained models to extract task-relevant features and determine linear classifier parameters via recursive linear regression. Exclusive retention of the autocorrelation and cross-correlation feature matrices, denoted as R and Q, renders private information irretrievable, thereby eliminating associated privacy risks. Fixing the en-coder parameters effectively forestalls feature drift, yet con-currently compromises model plasticity, impeding adaptation to incremental tasks. Recent studies [16], [17] have identified this issue but remain confined to the frozen-parameter or post-hoc compensation paradigms. Fig. 1 illustrates the three CGL paradigms in a schematic form. In this paper, we present Analytic Drift Resister (ADR), a theoretically grounded NECGL framework that improves model plasticity while eliminating feature drift, and inherits the privacy-preserving properties of ACL. ADR relaxes the frozen-parameter constraint in ACL and updates GNNs via backpropagation (BP) on each incremental task graph, en-abling close alignment with the evolving task distribution. However, parameter updates may induce feature drift, exac-erbating catastrophic forgetting. Inspired by model merging techniques [18]–[20], we further propose Hierarchical Ana-lytic Merging (HAM), which performs layer-wise parameter merging of GNNs via solving ridge regression [21]. From   
+
+> arXiv:2604.02633v1 [cs.LG] 3 Apr 2026 JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 2
+> Fig. 1. A schematic overview of different Continual Graph Learning paradigms.
+
+a theoretical standpoint, incremental HAM is equivalent to the joint training objective, conferring absolute resistance to feature drift. On this basis, Analytic Classifier Reconstruc-tion (ACR) infers linear classifier weights from the merged encoder’s outputs via the closed-form solution of ridge re-gression. Formally equivalent to the joint training objective, ACR enables zero-forgetting class-incremental learning. Ac-cordingly, ADR embodies a dual theoretical advantage over existing approaches. The main contributions are summarized as follows:  
+
+> •
+
+We present ADR, a theoretically grounded NECGL framework endowed with fortified model plasticity, ab-solute resistance to feature drift, and intrinsic privacy preservation.  
+
+> •
+
+We dismantle the frozen pre-trained parameter constraint, freeing GNNs for adaptation to evolving incremental task graph distributions, markedly bolstering model plasticity.  
+
+> •
+
+To overcome feature drift arising from model updates, we propose HAM, which consolidates GNNs’ parameters layer-wise, theoretically conferring absolute resistance. Drawing upon the merged encoder, ACR theoretically formalizes zero-forgetting class-incremental learning via the closed-form solution of ridge regression.  
+
+> •
+
+Extensive empirical evidence on four node classification benchmark datasets demonstrates that ADR substantially enhances model plasticity, achieving competitive per-formance compared to existing state-of-the-art (SOTA) methods. II. R ELATED WORKS 
+
+A. Continual Graph Learning 
+
+In this section, we examine existing CGL literature pertinent to our work, encompassing rehearsal-based, Non-Exemplar, and Analytic Continual Learning methods. 
+
+Rehearsal-based methods safeguard model acuity to pre-viously acquired knowledge while adapting to novel tasks by continuously revisiting historical exemplars cached in a compact memory bank. This line of research has largely been devoted to the improvement of exemplar sampling protocols and the principled formulation of compact exemplar storage schemes. For instance, [7] framed individual nodes as storage units and devised three experience selection strategies to retain the most representative examples from the entire task graph. Given the risk of losing discriminative information from dis-carded neighborhood topology, [8] sampled central subgraphs and sparsified them before memory caching, substantially reducing storage overhead. [22], [23] condensed the task graph into an informative synthetic replay graph, followed by unbiased learning on its class-balanced counterpart. Although these methods demonstrate remarkable efficacy, retaining raw examples often poses significant data privacy risks. While graph condensation [24], [25] can alleviate this issue to some extent, training synthetic replay graphs incurs considerable computational cost. 
+
+Non-Exemplar methods instantiate gaussian prototypes as task proxies, obviating the privacy vulnerabilities inherent in native exemplar retention. More concretely, when training on a new task, old-class embeddings are stochastically drawn from cached gaussian prototypes and orchestrated via pro-totype replay (PR) [10], [26], [27] to alleviate catastrophic forgetting, while knowledge distillation further consolidates prior memory. However, a critical issue stems from the incon-gruence of old-class prototypes with the incrementally updated embedding space, giving rise to feature drift. While obsolete old-class prototypes can be corrected via post-hoc or online drift compensation [11], [12], [28], [29], the lack of reusable historical exemplars restricts drift estimation to the current task. Significant cross-task distributional shifts can amplify drift estimation errors, compromising prior task memory. 
+
+Analytic Continual Learning methods recast class-incremental learning as a linear regression problem, yielding a closed-form solution via Least Squares (LS) [30], [31]. In par-ticular, most existing studies [13]–[15], [32] capitalize on the generalization of a pre-trained encoder to extract incremental-task features, followed by recursive computation of class-incremental classifier weights via LS. However, this paradigm suffers from impaired model plasticity under significant dis-tributional discrepancies between pre-training and incremental tasks. [16], [33] proposed compensation branches to address the underfitting dilemma, yet this strategy remains constrained by frozen pre-trained weights. Although [17] released the frozen parameter constraint to boost model plasticity, feature drift persists as a critical impediment to the approach. JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 3  
+
+> Fig. 2. The overall pipeline of the proposed ADR. (a) Upon the arrival of a new task Tt, the model adapts freely to the corresponding graph distribution via iterative BP without any imposed regularization. (b) HAM performs analytic merging of the layer-wise linear transformations of all historical task encoders, unifying their latent representation spaces. (c) ACR exploits the merged encoder to derive linear classifier weights, enabling robust class-incremental learning.
+
+B. Model Merging 
+
+Model merging techniques [34] aim to consolidate the weights of independently fine-tuned models with shared ar-chitectures, retaining their performance across multiple tasks. Existing studies primarily focus on devising principled merg-ing strategies to avert post-merging performance degradation. [35], [36] proposed directly averaging the weights of multi-ple individual models. [18] exploited the Fisher information matrix to orchestrate parameter merging in accordance with their relative importance. [19], [20] conducted a systematic analysis of inter-model parameter interference and proposed a more rational merging paradigm based on task vector [37]. In this paper, we present a novel model merging strategy to consolidate prior task-specific models, achieving absolute resistance to feature drift. III. M ETHODOLOGY 
+
+Fig. 2 illustrates the overall pipeline of our ADR. The framework comprises three fundamental stages: Incremental Task Adaptation, Hierarchical Analytic Merging, and Analytic Classifier Reconstruction. We next systematically present each component in detail. 
+
+A. Incremental Task Adaptation 
+
+Before delving into the technical details of ADR, we pro-vide a rigorous problem formulation. In the class-incremental learning scenario, GNNs are mandated to undergo iterative updates over a chronologically ordered task stream T =
+
+{T 0, T1, ..., TN −1}(|T | = N ), with each task Tt<N =
+
+{G t, Yt} defined as a semi-supervised node classification prob-lem. The task graph Gt comprises the node set Vt and edge set Et, denoted as Gt = {V t, Et}. Moreover, Vt and Et can be instantiated as a node feature matrix Xt ∈ R|V t|× d and a binary adjacency matrix At ∈ R|V t|×|V t|, whose entries encode the presence (1) or absence (0) of edges. The label set is given by Yt = {y0 
+
+> t
+
+, y 1 
+
+> t
+
+, ..., y ct−1 
+
+> t
+
+}(|Y t| = ct), with label spaces being mutually exclusive across tasks, i.e., Yi ∩Y j = ∅
+
+for all i̸ = j. In this paper, we adhere to the strict Non-Exemplar assumption under which, at time step t, data from preceding tasks T0: t−1 are entirely inaccessible. After training, the GNNs are tasked with classifying all classes observed in the cumulative task stream T0: t.While existing ACL methods capitalize on the generaliza-tion prowess of pre-trained encoders to attenuate catastrophic forgetting and achieve tangible performance gains, the rigid exclusion of parameter updates fundamentally erodes model plasticity, curtailing thorough assimilation of new knowledge. In graph-based tasks, pronounced heterogeneity in node at-tributes and topological structures can critically impede the transferability of pre-trained knowledge. We propose to abol-ish this undue constraint, enabling GNNs to engage in free exploration on new task graphs. Consider a model comprising a graph encoder Fθt (·) and a linear classifier gϕt (·), whose weights are parameterized by θt and ϕt. Given the current task graph data Xt and At, the model derives node embeddings via iterative message passing as follows: 
+
+Ht,k = GNN t,k (Ht,k −1, At), k < K, (1) where Ht, −1 = Xt, and GNN t,k denotes the k-th layer of the model. In task Tt, we minimize the task-specific cross-entropy loss for incremental task adaptation. The objective function is expressed as follows: 
+
+Lce = E(xt,y t)∼T t [− log pΘt (yt|xt)] , (2) where Θt = {θt, ϕ t} constitutes the full set of model parame-ters, with pΘt (yt|xt) representing the probability distribution over yt.Notably, rather than imposing logit- or feature-level distilla-tion [10], [38], we prioritize maximizing model plasticity for complete adaptation to novel tasks. JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 4
+
+B. Hierarchical Analytic Merging 
+
+A key driver of feature drift in NECGL is the discord be-tween evolving encoder parameters and static cached features. Incremental Task Adaptation likewise engenders this effect, leading to significant performance decline. Inspired by recent advances in model merging, we propose HAM to entirely circumvent this issue. At time step t, given a collection of encoder parameters 
+
+{θi}ti=0 learned from preceding tasks T0: t, we seek to con-solidate task-specific knowledge from all tasks into a unified, architecture-consistent encoder FθMt (·), parameterized by θMt .The merged encoder is devised to faithfully reproduce the task-specific behaviors exhibited by each individual encoder, thus fully eliminating feature drift. To this end, we establish the following optimization problem: 
+
+θMt 
+
+> ∗
+
+= argmin 
+
+> θMt
+> t
+
+X
+
+> i=0
+
+E(xi,y i)∼T i
+
+ℓd(hi,K −1, h Mt,K −1) , (3) where hi,K −1 ∈ Hi,K −1 and hMt,K −1 ∈ HMt,K −1 denote the node embeddings from the K-layer encoder Fθi (·) trained on task Ti and the merged encoder FθMt (·) with an identical architecture, respectively, and ℓd is a distance-based loss function. The optimal merged weights θMt 
+
+> ∗
+
+can be derived via iterative BP to fulfill the prescribed target. Considering that the parameters of GNNs are primarily governed by the linear transformations in each layer, we further reformulate Eq. (3) as follows: 
+
+θMt 
+
+> ∗
+
+= argmin 
+
+> θMt
+> t
+
+X
+
+> i=0
+> K−1
+
+X
+
+> k=0
+
+E(xi,y i)∼T i
+
+ℓd(hi,k , h Mt,k ) . (4) Given the target node vo, we have: 
+
+hoi,k = σ
+
+ X 
+
+> j∈N (o)
+
+ωoj W ⊤ 
+
+> θi,k
+
+hji,k −1
+
+ , (5) where N (o) denotes the neighborhood of vo including it-self, ωoj is the weighting coefficient for message passing, 
+
+Wθi,k ∈ Rdin k ×dout k represents the linear transformation matrix of the k-th layer in Fθi (·), and σ(·) defines a nonlinear activation function. Analogously, hMt,k is also characterized. However, a key obstacle in solving Eq. (4) is the inaccessibility of historical data in the Non-Exemplar scenario. Inspired by the blockwise recursive Moore-Penrose inverse (BRMP) [31], we formulate a recursive closed-form solution that enables analytic computation of {W ∗
+
+> θMt,k
+
+}K−1 
+
+> k=0
+
+via a single forward pass. Let ˆhoi,k = P  
+
+> j∈N (o)
+
+ωoj hji,k −1. For clarity, we overload the notation as hoi,k = Wθi,k 
+
+ˆhoi,k . On this basis, we formulate the ridge regression objective for solving W ∗
+
+> θMt,k
+
+as follows: 
+
+argmin 
+
+> WθMt,k
+
+
+
+H0,k 
+
+H1,k 
+
+...
+
+Ht,k 
+
+ −
+
+
+
+ˆH0,k 
+
+ˆH1,k 
+
+...
+
+ˆHt,k 
+
+ WθMt,k 
+
+> 2
+> F
+
++ γ WθMt,k 
+
+> 2
+> F
+
+,
+
+(6) where ∥·∥ 2 
+
+> F
+
+represents the Frobenius norm, and γ governs the regularization term for preventing ill-conditioning. Owing to convexity, the optimal solution is obtained when the gradient with respect to WθMt,k is zero. 
+
+W ∗
+
+> θMt,k
+
+=
+
+> t
+
+X
+
+> i=0
+
+ˆH⊤ 
+
+> i,k
+
+ˆHi,k + γI
+
+!−1 tX
+
+> i=0
+
+ˆH⊤
+
+> i,k
+
+Hi,k , (7) where I ∈ Rdin k ×din k denotes the identity matrix. This equation reveals that retaining only the accumulated autocorrelation feature matrix Rθt,k = Pti=0 ˆH⊤ 
+
+> i,k
+
+ˆHi,k and cross-correlation feature matrix Qθt,k = Pti=0 ˆH⊤
+
+> i,k
+
+Hi,k suffices to consolidate linear transformation parameters across the entire task his-tory, thus unifying the latent space to eradicate feature drift. Analogously, this holds for each layer, with the encoder-side memory bank denoted by {(Rθt,k , Q θt,k )}K−1 
+
+> k=0
+
+. For a K-layer encoder, the memory bank sustains a constant storage foot-print of O
+
+PK−1 
+
+> k=0
+
+din k 
+
+> 2
+
++ din k dout k
+
+
+
+. We present a rigorous mathematical derivation of Eq. (7) below. 
+
+proof . Let Ht,k =
+
+
+
+H0,k 
+
+H1,k 
+
+...
+
+Ht,k 
+
+ and ˆHt,k =
+
+
+
+ˆH0,k 
+
+ˆH1,k 
+
+...
+
+ˆHt,k 
+
+. We rewrite Eq. (6) in trace form as follows: 
+
+argmin 
+
+> WθMt,k
+
+tr 
+
+
+
+Ht,k − ˆHt,k WθMt,k 
+
+⊤ 
+
+Ht,k − ˆHt,k WθMt,k 
+
+
+
++ γtr 
+
+
+
+W ⊤
+
+> θMt,k
+
+WθMt,k 
+
+
+
+. (8) Further, it can be expanded as follows: 
+
+argmin 
+
+> WθMt,k
+
+tr 
+
+
+
+H⊤
+
+> t,k
+
+Ht,k −H⊤ 
+
+> t,k
+
+ˆHt,k WθMt,k −W ⊤
+
+> θMt,k
+
+ˆH⊤
+
+> t,k
+
+Ht,k 
+
++W ⊤
+
+> θMt,k
+
+ˆH⊤ 
+
+> t,k
+
+ˆHt,k WθMt,k + γW ⊤
+
+> θMt,k
+
+WθMt,k 
+
+
+
+. (9) Convexity guarantees that the optimal solution is achieved at a stationary point with respect to WθMt,k . Accordingly, the gradient of the above equation is derived as: 
+
+∂∂W θMt,k 
+
+tr 
+
+
+
+H⊤
+
+> t,k
+
+Ht,k − H⊤ 
+
+> t,k
+
+ˆHt,k WθMt,k − W ⊤
+
+> θMt,k
+
+ˆH⊤
+
+> t,k
+
+Ht,k 
+
++W ⊤
+
+> θMt,k
+
+ˆH⊤ 
+
+> t,k
+
+ˆHt,k WθMt,k + γW ⊤
+
+> θMt,k
+
+WθMt,k 
+
+
+
+= −
+
+∂tr 
+
+
+
+H⊤ 
+
+> t,k
+
+ˆHt,k WθMt,k 
+
+
+
+∂W θMt,k 
+
+−
+
+∂tr 
+
+
+
+W ⊤
+
+> θMt,k
+
+ˆH⊤
+
+> t,k
+
+Ht,k 
+
+
+
+∂W θMt,k 
+
++
+
+∂tr 
+
+
+
+W ⊤
+
+> θMt,k
+
+ˆH⊤ 
+
+> t,k
+
+ˆHt,k WθMt,k 
+
+
+
+∂W θMt,k 
+
++ γ∂tr 
+
+
+
+W ⊤
+
+> θMt,k
+
+WθMt,k 
+
+
+
+∂W θMt,k 
+
+= − ˆH⊤
+
+> t,k
+
+Ht,k − ˆH⊤
+
+> t,k
+
+Ht,k + ˆH⊤ 
+
+> t,k
+
+ˆHt,k WθMt,k 
+
++ ˆH⊤ 
+
+> t,k
+
+ˆHt,k WθMt,k + 2 γW θMt,k 
+
+= −2 ˆH⊤
+
+> t,k
+
+Ht,k + 2 ˆH⊤ 
+
+> t,k
+
+ˆHt,k WθMt,k + 2 γW θMt,k . (10) JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 5
+
+Let Eq. (10) equal zero, from which we obtain: 
+
+WθMt,k =
+
+ ˆH⊤ 
+
+> t,k
+
+ˆHt,k + γI
+
+−1 ˆH⊤
+
+> t,k
+
+Ht,k 
+
+=
+
+> t
+
+X
+
+> i=0
+
+ˆH⊤ 
+
+> i,k
+
+ˆHi,k + γI
+
+!−1 tX
+
+> i=0
+
+ˆH⊤
+
+> i,k
+
+Hi,k . (11) By this point, the closed-form solution of Eq. (6) has been rigorously derived. Notably, Eq. (6) can be regarded as a joint learning ob-jective, endowing ADR with absolute resistance to feature drift. HAM inherits NECGL properties and executes without historical examples, ensuring data privacy. 
+
+C. Analytic Classifier Reconstruction 
+
+In the Incremental Task Adaptation phase, GNNs are fine-tuned exclusively on data from task Tt, rendering the linear classifier gϕt (·) highly biased and incompatible with the merged encoder FθMt (·). To this end, we propose ACR to enable the re-learning of the classifier. A central issue arises from the persistent restriction on historical data access, such that freezing the merged model and fine-tuning the linear classifier perpetuates recency bias [39], [40], resulting in severe catastrophic forgetting. We are moti-vated by the joint ridge regression formulation and establish the following optimization problem: 
+
+argmin 
+
+> WϕMt
+
+
+
+Y0
+
+Y1
+
+...
+
+Yt
+
+ −
+
+
+
+HM
+
+> 0
+
+HM
+
+> 1
+
+...
+
+HMt
+
+ WϕMt
+
+> 2
+> F
+
++γ WϕMt
+
+> 2
+> F
+
+, (12) where Yt is the one-hot label matrix for task Tt, HMt repre-sents the node embedding matrix from the merged encoder 
+
+FθMt (·), and WϕMt specifies the parameters of the linear classifier gϕMt (·) to be learned. Let the gradient of Eq. (12) with respect to WϕMt be zero. Which leads to: 
+
+W ∗
+
+> ϕMt
+
+=
+
+> t
+
+X
+
+> i=0
+
+HMi
+
+> ⊤
+
+HMi + γI
+
+!−1 tX
+
+> i=0
+
+HMi
+
+> ⊤
+
+Yi. (13) As with the encoder-side memory bank, keeping only Rϕt =
+
+Pti=0 HMi
+
+> ⊤
+
+HMi and Qϕt = Pti=0 HMi
+
+> ⊤
+
+Yi enables incre-mental classifier updates without iterative BP, incurring a total memory cost of O
+
+
+
+dout K−12 + dout K−1
+
+Pti=0 ci
+
+
+
+. Moreover, following Cover’s theorem [41], we execute an α-fold feature expansion on {HMi }ti=0 to improve the linear separability. 
+
+HB 
+
+> i
+
+= B(HMi ) = σ(HMi Wψ ), (14) where B(·) denotes the feature buffer layer, comprising a randomly parameterized feature expansion matrix Wψ ∈
+
+Rdout K−1×(α×dout K−1) and a nonlinear activation function σ(·).Substituting {HMi }ti=0 in Eq. (12) with {HB 
+
+> i
+
+}ti=0 , Eq. (13) can be reformulated as follows: 
+
+W ∗
+
+> ϕMt
+
+=
+
+> t
+
+X
+
+> i=0
+
+HB
+
+> i
+> ⊤
+
+HB 
+
+> i
+
++ γI
+
+!−1 tX
+
+> i=0
+
+HB
+
+> i
+> ⊤
+
+Yi. (15) 
+
+Algorithm 1 Training Pipeline of Our ADR 
+
+Input: Task stream T = {T 0, T1, . . . , TN −1}, graph en-coder Fθt (·), linear classifier gϕt (·), feature buffer layer 
+
+B(·), encoder-side memory bank MF , classifier-side mem-ory bank Mg , learning rate ηt, maximum epoch E.
+
+Initialize: MF , Mg ← {} , {} 
+
+for task t = 0 to N − 1 do 
+
+▷ Incremental Task Adaptation 
+
+for epoch e = 1 to E do 
+
+Compute Lce according to Eq. (2). 
+
+Θt ← Θt − ηt∇Θt Lce .
+
+end for 
+
+▷ Hierarchical Analytic Merging 
+
+Merge layer-wise linear transformations in Fθt (·) accord-ing to Eqs. (6) and (7), obtaining the merged encoder 
+
+FθMt (·).
+
+MF ← { (Rθt,k , Q θt,k )}K−1 
+
+> k=0
+
+.
+
+▷ Analytic Classifier Reconstruction 
+
+Feature expansion according to Eq. (14). Recompute classifier parameters according to Eqs. (12) and (15), obtaining the reconstructed linear classifier 
+
+gϕMt (·).
+
+Mg ← { Rϕt , Q ϕt }.
+
+end for return FθMN −1 (·), gϕMN −1 (·)
+
+The memory footprint of the classifier-side memory bank expands to O
+
+
+
+α2dout K−12 + αd out K−1
+
+Pti=0 ci
+
+
+
+. Eqs. (13) and (15) follow the derivation of Eq. (7). Analogous to HAM, ACR provides privacy guarantees and is formally equivalent to joint learning, theoretically estab-lishing a zero-forgetting paradigm. We present the training pseudocode for the proposed ADR in Algorithm 1. IV. E XPERIMENTS 
+
+A. Experimental Setup 
+
+Datasets. We conduct a comprehensive evaluation of the proposed ADR on four established node classification bench-marks: CS-CL [42], CoraFull-CL [43], Arxiv-CL [44], and Reddit-CL [2]. These datasets, spanning diverse scales, are systematically arranged into a chronologically ordered task stream T = {T 0, T1, . . . , TN −1} following [13], [45], with T0
+
+as the base task, containing nearly half of the data, and T1: N −1
+
+as incremental tasks, each comprising two disjoint classes to emulate the continuous arrival of new tasks. Class-level data are split into training, validation, and test sets in a 6:2:2 ratio. Table I summarizes the key statistical characteristics of the four datasets. 
+
+Implementation Details. ADR employs a 2-layer GCN [1] backbone with 128 hidden dimensions and a 0.5 dropout rate. In the Incremental Task Adaptation phase, the model is optimized using Adam, with the base task learning rate set to 
+
+η0 = 1 × 10 −3 and incremental tasks to ηt> 0 = 1 × 10 −4, and trained for up to 200 epochs to ensure stable convergence. In solving ridge regression, the regularization weight γ and JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 6                                            
+
+> TABLE I KEY STATISTICAL CHARACTERISTICS OF FOUR NODE CLASSIFICATION BENCHMARKS .DATASETS CS-CL CORA FULL -CL ARXIV -CL REDDIT -CL #NODES 18333 19793 169343 232965 #EDGES 163788 126842 1166243 114615892 #FEATURES 6805 8710 128 602 #ALL CLASSES 15 70 40 40 #BASE CLASSES 530 20 20 #INCREMENTAL CLASSES 10 40 20 20 #SPLIT 5+5×230 +20 ×220 +10 ×220 +10 ×2#TASKS 621 11 11
+
+feature expansion factor α are determined via grid search over 
+
+{10 i | i ∈ Z, −3 ≤ i ≤ 0} and {2i | i ∈ Z, 0 ≤ i ≤ 6},respectively. All experiments run on a single NVIDIA 4090D GPU, with the code implemented based on Continual Graph Learning Benchmark (CGLB) [45]. We perform mini-batch training across all datasets with a batch size of 2000. The mean and standard deviation over 5 repeated runs are reported. 
+
+Global Testing Protocol. In class-incremental learning, task-specific graphs are typically assumed to be topologically isolated from one another. Accordingly, each of the previous task graphs is independently fed into the trained GNNs for performance assessment, a protocol termed local testing. A recent study [46] has revealed that, in semi-supervised node classification, the co-presence of training and test nodes within the same subgraph allows the task ID to be accurately inferred via na¨ ıve task prototype matching. This risks collapsing class-incremental learning into task-incremental learning, inflating reported performance. In this paper, we resort to a more rigor-ous global testing protocol rather than local testing to evaluate the genuine continual learning capability of the proposed method. To be specific, the test graph preserves inter-task edges, with all task-specific graphs consolidated into a single graph for evaluation, thus preventing the task-ID shortcut. Note that changes are applied only to the validation and test phases, while leaving the training pipeline unaffected. 
+
+Baselines. We compare ADR with four categories of SOTA methods: regularization-based methods (i.e., LWF [38], EWC [47], MAS [48], and TWP [49]), rehearsal-based meth-ods (i.e., CaT [22], and ER-GNN [7]), Non-Exemplar methods (i.e., POLO [11], and EFC [12]), and ACL methods (i.e., DPCR [17], ACIL [13], and DS-AL [16]). To ensure fairness, the feature expansion factor α in ACIL and DS-AL is like-wise searched within the parameter ranges described above. Moreover, Bare (direct fine-tuning) and Joint (joint training) are implemented to delineate the lower and upper performance bounds. 
+
+Evaluation Metrics. Following [16], [17], we quantify the continual learning performance of all methods via average incremental accuracy Aavg and final accuracy Af , which are defined as follows: 
+
+Aavg = 1
+
+N 
+
+> N−1
+
+X
+
+> t=0
+
+At, Af =
+
+PN −1 
+
+> t=0
+
+MN −1,t 
+
+N , (16) where At =  
+
+> Pti=0 Mt,i
+> t+1
+
+, with M denoting a lower-triangular  
+
+> Fig. 3. Model plasticity comparison of our ADR versus existing ACL methods on the four benchmarks.
+
+performance matrix, and Mt,i reflecting the test accuracy on task Ti after training on task Tt. Moreover, we quantify model plasticity via learning accuracy Al [50], defined as follows: 
+
+Al = 1
+
+N 
+
+> N−1
+
+X
+
+> t=0
+
+Mt,t . (17) 
+
+B. Comparison with State-of-the-Art 
+
+Overall Performance Analysis. Table II reports a com-parison between the proposed ADR and SOTA methods from four categories. Regularization-based methods exhibit inferior performance, as the imposed regularization, while retaining historical knowledge, inevitably constrains the flexibility of the model in adapting to new tasks. Rehearsal-based methods peri-odically revisit historical examples to reactivate past memory, outperforming regularization-based methods while raising data privacy concerns. CaT alleviates this issue via dataset conden-sation, yet its efficacy is inherently dependent on the fidelity of the synthetic replay graphs. Non-Exemplar methods cache gaussian prototypes in lieu of raw exemplars, circumventing infringements on privacy, yet feature drift induces notable representational errors. ACL methods achieve superior perfor-mance, as recursive LS solutions are theoretically equivalent to joint training. However, such methods typically freeze the pre-trained encoder to guarantee the validity of the linear regres-sion solution, severely compromising model plasticity. DPCR addresses this issue by unfreezing the model on new tasks, yet the ensuing feature drift further degrades performance. Although post-hoc drift compensation mitigates this effect, estimating the shift of prior prototypes from new task graphs is inherently biased, particularly when task distributions differ significantly. Thus, DPCR underperforms ACIL and DS-AL. The proposed ADR capitalizes on HAM to achieve absolute resistance to feature drift while improving model plasticity, de-livering competitive performance across all four benchmarks. Moreover, we observe that ADR records marginally lower Af
+
+than ACIL and DS-AL on Arxiv-CL. This discrepancy arises predominantly from severe class imbalance in certain tasks, JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 7
+
+TABLE II PERFORMANCE COMPARISON ON THE FOUR BENCHMARKS . T HE BEST RESULTS ARE HIGHLIGHTED IN BOLD , AND THE SECOND -BEST RESULTS ARE UNDERLINED .METHODS CS-CL CORA FULL -CL ARXIV -CL REDDIT -CL 
+
+Aavg (%) Af (%) Aavg (%) Af (%) Aavg (%) Af (%) Aavg (%) Af (%) JOINT - 88.92 ±0.25 - 61.62 ±0.26 - 42.11 ±0.20 - 79.82 ±0.69 BARE 53.24 ±1.83 34.54 ±6.39 17.55 ±0.15 3.75 ±0.90 18.16 ±0.10 8.99 ±0.02 40.47 ±0.91 12.64 ±1.97 LWF 62.59 ±1.40 38.40 ±2.30 18.53 ±0.75 6.91 ±1.17 17.64 ±0.18 8.97 ±0.05 37.73 ±0.76 12.76 ±2.45 EWC 72.76 ±3.04 49.67 ±5.28 20.23 ±0.40 5.44 ±1.92 17.01 ±0.15 8.91 ±0.03 40.93 ±0.74 8.82 ±0.04 MAS 75.22 ±2.02 66.91 ±2.09 19.21 ±0.29 9.09 ±1.83 17.68 ±0.49 8.81 ±0.51 53.02 ±3.55 33.11 ±4.24 TWP 55.89 ±0.53 41.95 ±3.18 19.78 ±1.12 8.67 ±2.23 17.03 ±0.20 8.95 ±0.16 39.79 ±0.92 9.97 ±0.41 CAT 63.85 ±1.52 51.16 ±3.09 27.38 ±1.29 11.02 ±1.73 15.42 ±0.25 8.90 ±0.03 51.95 ±1.80 22.85 ±1.47 ER-GNN 84.05 ±0.42 80.87 ±0.52 20.55 ±0.26 4.91 ±0.97 29.47 ±0.33 16.76 ±0.24 81.66 ±0.44 69.70 ±1.43 POLO 68.60 ±1.47 41.62 ±3.35 26.63 ±1.53 11.10 ±1.80 14.76 ±0.10 4.56 ±0.02 55.03 ±2.45 24.77 ±1.02 EFC 72.28 ±1.23 61.25 ±2.97 23.01 ±0.40 7.64 ±0.58 24.10 ±0.31 12.81 ±0.42 78.45 ±0.71 69.91 ±0.75 DPCR 63.78 ±1.26 43.89 ±3.13 32.86 ±0.88 7.12 ±1.08 31.30 ±0.84 23.67 ±1.07 66.09 ±2.86 38.27 ±2.50 ACIL 88.58 ±0.25 85.57 ±0.59 61.49 ±0.19 51.92 ±0.58 39.37 ±0.20 35.08 ±0.23 81.37 ±0.39 73.93 ±0.53 DS-AL 88.88 ±0.42 85.54 ±0.96 61.78 ±0.59 52.69 ±0.65 41.41 ±0.24 36.78 ±0.30 81.77 ±0.25 74.40 ±0.33 ADR 90.71 ±0.22 87.21 ±0.42 67.52 ±0.83 60.03 ±1.22 39.66 ±0.43 34.74 ±0.21 82.52 ±0.21 75.45 ±0.40 
+
+TABLE III ABLATION STUDIES OF HAM ON THE FOUR BENCHMARKS . T HE BEST RESULTS ARE HIGHLIGHTED IN BOLD .VARIANTS CS-CL CORA FULL -CL ARXIV -CL REDDIT -CL                                                           
+
+> Aavg (%) Af(%) Aavg (%) Af(%) Aavg (%) Af(%) Aavg (%) Af(%)
+> W/OHAM 52.28 ±1.27 36.63 ±2.92 17.36 ±0.19 7.65 ±0.99 20.07 ±0.06 9.01 ±0.02 43.83 ±0.67 17.43 ±1.75
+> W/ S IMPLE AVERAGING 65.08 ±1.31 48.79 ±1.91 31.83 ±0.48 24.75 ±0.95 23.23 ±0.20 15.17 ±0.37 69.29 ±2.12 48.23 ±1.89
+> W/ F ISHER MERGING 69.07 ±2.58 58.01 ±5.32 27.68 ±0.66 18.64 ±1.39 26.06 ±1.33 10.15 ±0.23 68.53 ±2.78 48.42 ±3.25
+> W/ MAGMAX M ERGING 67.23 ±0.78 57.34 ±3.98 31.08 ±1.16 21.91 ±1.82 21.66 ±0.24 9.64 ±0.20 70.15 ±1.03 50.81 ±3.52 ADR 90.71 ±0.22 87.21 ±0.42 67.52 ±0.83 60.03 ±1.22 39.66 ±0.43 34.74 ±0.21 82.52 ±0.21 75.45 ±0.40
+
+which lies beyond the focus of this paper. A detailed analysis is provided in Section IV-E. 
+
+Model Plasticity Analysis. We evaluate the model plas-ticity of our ADR and existing ACL methods, as shown in Fig. 3. Bare, the upper bound of plasticity, is also considered. ACIL and DS-AL demonstrate significantly lower plasticity than Bare, particularly on CoraFull-CL and Arxiv-CL, owing to encoder freezing. The proposed ADR relaxes the frozen parameter constraint, allowing GNNs to adapt flexibly to new task graphs via iterative BP, markedly improving model plasticity. 
+
+C. Ablation Studies 
+
+To validate the effectiveness of HAM, a pivotal component of ADR, we conduct ablation studies presented in Table III, with the findings summarized as follows: (i) Removing HAM leads to severe feature drift in the classifier-side memory bank 
+
+{Rϕt−1, Q ϕt−1}, resulting in the linear classifier weights being derived from an invalid ridge regression objective. (ii) Replac-ing HAM with three SOTA model merging methods—Simple Averaging [35], [36], Fisher Merging [18], and MAGMAX Merging [20]—induces a substantial performance deterioration relative to ADR, owing to the theoretical equivalence of HAM to the joint learning paradigm, which confers absolute resistance to feature drift. To intuitively illustrate the absolute resistance of ADR to feature drift, we visualize the distributions of node embeddings for the base task graph G0, generated by encoders FθM 
+
+> 0
+
+(·)
+
+and FθMN −1 (·), on the CS-CL and CoraFull-CL benchmarks. In Fig. 4, light-hued circles and dark-hued triangles indicate the outputs of the two encoders, respectively. It can be ob-served that the Non-Exemplar method EFC and the unfrozen ACL method DPCR exhibit severe feature shift after learning multiple tasks, whereas ADR remains fully immune. 
+
+D. Parameter Analysis 
+
+A grid search over the feature expansion factor α ∈ { 2i |
+
+i ∈ Z, 0 ≤ i ≤ 6} and regularization weight γ ∈ { 10 i |
+
+i ∈ Z, −3 ≤ i ≤ 0} is conducted on the validation sets of the four datasets to assess performance sensitivity. Owing to larger node count and denser graph topology in Reddit-CL, we forgo 
+
+α = 64 to avert out-of-memory (OOM) errors. Fig. 5 presents the evolution of ADR performance under varying α and γ
+
+settings. We observe consistent patterns across CoraFull-CL, Arxiv-CL, and Reddit-CL, with ADR performance improving as α increases. The influence of γ is modest on the latter two datasets, whereas CoraFull-CL demands stronger regu-larization to preclude ill-conditioned LS solutions. On CS-CL, the trend is inverted: ADR attains superior performance with smaller α. At α = 1 , the feature buffer layer B(·) can JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 8
+
+(a) EFC (b) DPCR (c) ADR          
+
+> Fig. 4. Feature drift visualization of EFC, DPCR, and ADR on the base task graph G0across CS-CL and CoraFull-CL benchmarks.
+> Fig. 5. Visualization of the grid search over hyperparameters αand γ, with Aavg reported.
+
+be considered removed. This is because the 128-dimensional feature space already ensures linear discriminability of classes in CS-CL, and further expansion risks introducing superfluous noise. The effect of γ is likewise marginal at smaller α.
+
+E. Profiling Severe Class Imbalance in Arxiv-CL 
+
+As observed in Section IV-B, the proposed ADR delivers notable performance improvements on CS-CL, CoraFull-CL, and Reddit-CL, while performing marginally below ACIL and DS-AL on Arxiv-CL overall. To probe the potential causes, we visualize the learning dynamics of all methods across the four benchmarks, as illustrated in Fig. 6. With respect to the Arxiv-CL benchmark, ADR outperforms ACIL and DS-AL on tasks T0:2 but undergoes a sharp trend inversion on tasks T3,
+
+T5, and T8. To elucidate this phenomenon, we further present the performance matrices of the three methods on Arxiv-CL (left three panels in Fig. 7) and quantify the intra-task class imbalance for each incremental task Tt> 0 (rightmost panel in Fig. 7). The intra-task class skewness magnitude ρt, serving as a measure of class imbalance, is formally defined as follows: 
+
+ρt = max yt∈Y t |V yt 
+
+> t
+
+|
+
+min yt∈Y t |V yt 
+
+> t
+
+| , (18) where Vyt 
+
+> t
+
+= {vo ∈ V t | label( vo) = yt}. Larger ρt signifies greater severity of class imbalance. We observe that tasks T3,
+
+T5, and T8 manifest extreme class imbalance, which engenders pronounced bias in the trained GNNs and compromises ACL performance. This finding supports the pattern presented in Fig. 6. Moreover, the performance matrices in Fig. 7 reveal that following training on tasks T3, T5, and T8, all three methods exhibit a marked decline in test performance on tasks T0:2 , as evidenced by abrupt changes in color. Compared with ACIL JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 9
+
+Fig. 6. Learning dynamics over the task streams on CS-CL, CoraFull-CL, Arxiv-CL, and Reddit-CL, with At reported for all tasks. 
+
+Fig. 7. Left three panels: Performance matrices for ACIL, DS-AL, and ADR on the test set of Arxiv-CL. Rightmost panel: Quantification of intra-task class imbalance in the training set of Arxiv-CL. 
+
+and DS-AL, ADR suffers more severe degradation, as the former freeze the encoder and expose only the classifier to class imbalance, whereas ADR updates the entire model, with both the encoder and the classifier being affected. A previous study [51] has shown that a biased individual model can induce bias in the merged model, even when the remaining individual models are unbiased. As a result, extreme class imbalance poses a challenge to the effectiveness of the proposed HAM. However, since class imbalance is not the primary focus of this paper, we defer its exploration to future work. V. C ONCLUSION AND FUTURE WORK 
+
+In this paper, we proposed ADR, a theoretically grounded NECGL framework aimed at resolving compromised model plasticity and feature drift. We liberated the encoder from frozen parameters, enabling it to flexibly adapt to emerging task graph distributions. To circumvent feature drift induced by BP, we proposed HAM, which consolidates the parameters of GNNs at each layer by optimizing a joint ridge regression ob-jective, conferring absolute resistance to feature drift. On this basis, we implemented ACR atop the merged encoder, which achieved theoretically zero-forgetting class-incremental learn-ing by solving an analogous joint ridge regression problem. ADR demonstrated competitive performance compared with existing SOTA methods across four node classification bench-marks while strictly adhering to data privacy requirements. In the future, we will extend the proposed ADR framework to broader application scenarios—such as streaming recommen-dation, continual disease classification, and continual anomaly detection—while addressing class imbalance to improve its applicability under extreme conditions. REFERENCES [1] T. Kipf, “Semi-supervised classification with graph convolutional net-works,” arXiv preprint arXiv:1609.02907 , 2016. [2] W. Hamilton, Z. Ying, and J. Leskovec, “Inductive representation learning on large graphs,” Advances in neural information processing systems , vol. 30, 2017. [3] X. He, K. Deng, X. Wang, Y. Li, Y. Zhang, and M. Wang, “Lightgcn: Simplifying and powering graph convolution network for recommenda-tion,” in Proceedings of the 43rd International ACM SIGIR conference on research and development in Information Retrieval , 2020, pp. 639– 648. [4] M. Yang, J. Zhou, M. Xi, X. Pan, Y. Yuan, Y. Li, Y. Wu, J. Zhang, and J. Yin, “Decoupled behavior-based contrastive recommendation,” in 
+
+Proceedings of the 33rd ACM International Conference on Information and Knowledge Management , 2024, pp. 2858–2868. [5] Y. Yang, C. Ye, and T. Ma, “A deep connectome learning network using graph convolution for connectome-disease association study,” Neural Networks , vol. 164, pp. 91–104, 2023. [6] Y. Li, X. Zhang, S. Guan, G. Ma, and Y. Kong, “Topology-guided graph masked autoencoder learning for population-based neurodevelopmental disorder diagnosis,” IEEE Transactions on Neural Systems and Rehabil-itation Engineering , 2025. [7] F. Zhou and C. Cao, “Overcoming catastrophic forgetting in graph neural networks with experience replay,” in Proceedings of the AAAI conference on artificial intelligence , vol. 35, no. 5, 2021, pp. 4714–4722. [8] X. Zhang, D. Song, and D. Tao, “Sparsified subgraph memory for continual graph representation learning,” in 2022 IEEE International Conference on Data Mining (ICDM) . IEEE, 2022, pp. 1335–1340. [9] E. Arani, F. Sarfraz, and B. Zonooz, “Learning fast, learning slow: A general continual learning method based on complementary learning system,” arXiv preprint arXiv:2201.12604 , 2022. [10] Y. Ren, L. Ke, D. Li, H. Xue, Z. Li, and S. Zhou, “Incremental graph classification by class prototype construction and augmentation,” in 
+
+Proceedings of the 32nd ACM International Conference on Information and Knowledge Management , 2023, pp. 2136–2145. JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 10 
+
+[11] S. Wang, W. Shi, Y. He, Y. Yu, and Y. Gong, “Non-exemplar class-incremental learning via adaptive old class reconstruction,” in Proceed-ings of the 31st ACM International Conference on Multimedia , 2023, pp. 4524–4534. [12] S. Magistri, T. Trinci, A. Soutif-Cormerais, J. van de Weijer, and A. D. Bagdanov, “Elastic feature consolidation for cold start exemplar-free incremental learning,” arXiv preprint arXiv:2402.03917 , 2024. [13] H. Zhuang, Z. Weng, H. Wei, R. Xie, K.-A. Toh, and Z. Lin, “Acil: Analytic class-incremental learning with absolute memorization and privacy protection,” Advances in Neural Information Processing Systems ,vol. 35, pp. 11 602–11 614, 2022. [14] H. Zhuang, Z. Weng, R. He, Z. Lin, and Z. Zeng, “Gkeal: Gaussian kernel embedded analytic learning for few-shot class incremental task,” in Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , 2023, pp. 7746–7755. [15] H. Zhuang, Y. Chen, D. Fang, R. He, K. Tong, H. Wei, Z. Zeng, and C. Chen, “Gacl: Exemplar-free generalized analytic continual learn-ing,” Advances in Neural Information Processing Systems , vol. 37, pp. 83 024–83 047, 2024. [16] H. Zhuang, R. He, K. Tong, Z. Zeng, C. Chen, and Z. Lin, “Ds-al: A dual-stream analytic learning for exemplar-free class-incremental learn-ing,” in Proceedings of the AAAI Conference on Artificial Intelligence ,vol. 38, no. 15, 2024, pp. 17 237–17 244. [17] R. He, D. Fang, Y. Xu, Y. Cui, M. Li, C. Chen, Z. Zeng, and H. Zhuang, “Semantic shift estimation via dual-projection and classifier recon-struction for exemplar-free class-incremental learning,” arXiv preprint arXiv:2503.05423 , 2025. [18] M. S. Matena and C. A. Raffel, “Merging models with fisher-weighted averaging,” Advances in Neural Information Processing Systems , vol. 35, pp. 17 703–17 716, 2022. [19] P. Yadav, D. Tam, L. Choshen, C. A. Raffel, and M. Bansal, “Ties-merging: Resolving interference when merging models,” Advances in Neural Information Processing Systems , vol. 36, pp. 7093–7115, 2023. [20] D. Marczak, B. Twardowski, T. Trzci´ nski, and S. Cygert, “Magmax: Leveraging model merging for seamless continual learning,” in European Conference on Computer Vision . Springer, 2024, pp. 379–395. [21] A. E. Hoerl and R. W. Kennard, “Ridge regression: Biased estimation for nonorthogonal problems,” Technometrics , vol. 12, no. 1, pp. 55–67, 1970. [22] Y. Liu, R. Qiu, and Z. Huang, “Cat: Balanced continual graph learning with graph condensation,” in 2023 IEEE International Conference on Data Mining (ICDM) . IEEE, 2023, pp. 1157–1162. [23] C. Niu, G. Pang, and L. Chen, “Graph continual learning with debiased lossless memory replay,” arXiv preprint arXiv:2404.10984 , 2024. [24] W. Jin, L. Zhao, S. Zhang, Y. Liu, J. Tang, and N. Shah, “Graph con-densation for graph neural networks,” arXiv preprint arXiv:2110.07580 ,2021. [25] M. Liu, S. Li, X. Chen, and L. Song, “Graph condensation via receptive field distribution matching,” arXiv preprint arXiv:2206.13697 , 2022. [26] F. Zhu, X.-Y. Zhang, C. Wang, F. Yin, and C.-L. Liu, “Prototype aug-mentation and self-supervision for incremental learning,” in Proceedings of the IEEE/CVF conference on computer vision and pattern recognition ,2021, pp. 5871–5880. [27] Q. Li, Y. Peng, and J. Zhou, “Fcs: Feature calibration and separation for non-exemplar class incremental learning,” in Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , 2024, pp. 28 495–28 504. [28] A. Gomez-Villa, D. Goswami, K. Wang, A. D. Bagdanov, B. Twar-dowski, and J. van de Weijer, “Exemplar-free continual representation learning via learnable drift compensation,” in European Conference on Computer Vision . Springer, 2024, pp. 473–490. [29] D. Cheng, Y. Zhao, N. Wang, G. Li, D. Zhang, and X. Gao, “Efficient statistical sampling adaptation for exemplar-free class incremental learn-ing,” IEEE Transactions on Circuits and Systems for Video Technology ,vol. 34, no. 11, pp. 11 451–11 463, 2024. [30] P. Guo and M. R. Lyu, “A pseudoinverse learning algorithm for feedforward neural networks with stacked generalization applications to software reliability growth data,” Neurocomputing , vol. 56, pp. 101–121, 2004. [31] H. Zhuang, Z. Lin, and K.-A. Toh, “Blockwise recursive moore–penrose inverse for network learning,” IEEE Transactions on Systems, Man, and Cybernetics: Systems , vol. 52, no. 5, pp. 3237–3250, 2021. [32] R. He, D. Fang, Y. Chen, K. Tong, C. Chen, Y. Wang, L.-p. Chau, and H. Zhuang, “Real: Representation enhanced analytic learning for exemplar-free class-incremental learning,” Knowledge-Based Systems , p. 114901, 2025. [33] X. Yue, X. Zhang, Y. Chen, C. Zhang, M. Lao, H. Zhuang, X. Qian, and H. Li, “Mmal: Multi-modal analytic learning for exemplar-free audio-visual class incremental tasks,” in Proceedings of the 32nd ACM International Conference on Multimedia , 2024, pp. 2428–2437. [34] X. Jin, X. Ren, D. Preotiuc-Pietro, and P. Cheng, “Dataless knowl-edge fusion by merging weights of language models,” arXiv preprint arXiv:2212.09849 , 2022. [35] L. Choshen, E. Venezian, N. Slonim, and Y. Katz, “Fusing finetuned models for better pretraining,” arXiv preprint arXiv:2204.03044 , 2022. [36] M. Wortsman, G. Ilharco, S. Y. Gadre, R. Roelofs, R. Gontijo-Lopes, A. S. Morcos, H. Namkoong, A. Farhadi, Y. Carmon, S. Kornblith 
+
+et al. , “Model soups: averaging weights of multiple fine-tuned models improves accuracy without increasing inference time,” in International conference on machine learning . PMLR, 2022, pp. 23 965–23 998. [37] G. Ilharco, M. T. Ribeiro, M. Wortsman, S. Gururangan, L. Schmidt, H. Hajishirzi, and A. Farhadi, “Editing models with task arithmetic,” 
+
+arXiv preprint arXiv:2212.04089 , 2022. [38] Z. Li and D. Hoiem, “Learning without forgetting,” IEEE transactions on pattern analysis and machine intelligence , vol. 40, no. 12, pp. 2935– 2947, 2017. [39] B. Zhao, X. Xiao, G. Gan, B. Zhang, and S.-T. Xia, “Maintaining dis-crimination and fairness in class incremental learning,” in Proceedings of the IEEE/CVF conference on computer vision and pattern recognition ,2020, pp. 13 208–13 217. [40] L. Song, J. Li, Q. Si, S. Guan, and Y. Kong, “Exploring rationale learning for continual graph learning,” in Proceedings of the AAAI Conference on Artificial Intelligence , vol. 39, no. 19, 2025, pp. 20 540–20 548. [41] T. M. Cover, “Geometrical and statistical properties of systems of linear inequalities with applications in pattern recognition,” IEEE transactions on electronic computers , no. 3, pp. 326–334, 2006. [42] O. Shchur, M. Mumme, A. Bojchevski, and S. G¨ unnemann, “Pitfalls of graph neural network evaluation,” arXiv preprint arXiv:1811.05868 ,2018. [43] A. K. McCallum, K. Nigam, J. Rennie, and K. Seymore, “Automating the construction of internet portals with machine learning,” Information Retrieval , vol. 3, no. 2, pp. 127–163, 2000. [44] W. Hu, M. Fey, M. Zitnik, Y. Dong, H. Ren, B. Liu, M. Catasta, and J. Leskovec, “Open graph benchmark: Datasets for machine learning on graphs,” Advances in neural information processing systems , vol. 33, pp. 22 118–22 133, 2020. [45] X. Zhang, D. Song, and D. Tao, “Cglb: Benchmark tasks for continual graph learning,” Advances in Neural Information Processing Systems ,vol. 35, pp. 13 006–13 021, 2022. [46] Z. Cheng, Z. Li, Y. Li, Y. Song, K. Zhao, D. Cheng, J. Li, H. Cheng, and J. X. Yu, “Can llms alleviate catastrophic forgetting in graph continual learning? a systematic study,” arXiv preprint arXiv:2505.18697 , 2025. [47] J. Kirkpatrick, R. Pascanu, N. Rabinowitz, J. Veness, G. Desjardins, A. A. Rusu, K. Milan, J. Quan, T. Ramalho, A. Grabska-Barwinska 
+
+et al. , “Overcoming catastrophic forgetting in neural networks,” Pro-ceedings of the national academy of sciences , vol. 114, no. 13, pp. 3521–3526, 2017. [48] R. Aljundi, F. Babiloni, M. Elhoseiny, M. Rohrbach, and T. Tuytelaars, “Memory aware synapses: Learning what (not) to forget,” in Proceedings of the European conference on computer vision (ECCV) , 2018, pp. 139– 154. [49] H. Liu, Y. Yang, and X. Wang, “Overcoming catastrophic forgetting in graph neural networks,” in Proceedings of the AAAI conference on artificial intelligence , vol. 35, no. 10, 2021, pp. 8653–8661. [50] M. Riemer, I. Cases, R. Ajemian, M. Liu, I. Rish, Y. Tu, and G. Tesauro, “Learning to learn without forgetting by maximizing transfer and minimizing interference,” arXiv preprint arXiv:1810.11910 , 2018. [51] H. A. A. K. Hammoud, U. Michieli, F. Pizzati, P. Torr, A. Bibi, B. Ghanem, and M. Ozay, “Model merging and safety alignment: One bad model spoils the bunch,” arXiv preprint arXiv:2406.14563 , 2024.
