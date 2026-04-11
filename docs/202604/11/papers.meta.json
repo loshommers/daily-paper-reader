@@ -1,0 +1,23 @@
+{
+  "label": "2026-04-11",
+  "date": "2026-04-11",
+  "generated_at": "2026-04-11T19:19:06",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202604/11/2604.07108v1-information-as-structural-alignment-a-dynamical-theory-of-continual-learning",
+      "section": "quick",
+      "title_en": "Information as Structural Alignment: A Dynamical Theory of Continual Learning",
+      "authors": "Radu Negulescu",
+      "date": "2026-04-08",
+      "pdf": "https://arxiv.org/pdf/2604.07108v1",
+      "score": "6.0",
+      "evidence": "灾难性遗忘与知识保留动力学",
+      "tldr": "本研究针对持续学习中的灾难性遗忘问题，提出了信息积累框架（IBF）。该框架摒弃了将知识存储为全局参数叠加的传统做法，转而将信息定义为结构对齐的动态过程。通过运动定律驱动系统趋向高相干性，并利用修改动力学根据局部差异调整相干性景观，IBF使记忆和自我修正能力从动力学中自发涌现。实验表明，IBF在无需存储原始数据的情况下，在CIFAR-100和国际象棋等任务中实现了优于重放机制的记忆保持效果和正向向后迁移。",
+      "tags": "query:mu-ce",
+      "abstract_en": "Catastrophic forgetting is not an engineering failure. It is a mathematical consequence of storing knowledge as global parameter superposition. Existing methods, such as regularization, replay, and frozen subnetworks, add external mechanisms to a shared-parameter substrate. None derives retention from the learning dynamics themselves.   This paper introduces the Informational Buildup Framework (IBF), an alternative substrate for continual learning, based on the premise that information is the achievement of structural alignment rather than stored content. In IBF, two equations govern the dynamics: a Law of Motion that drives configuration toward higher coherence, and Modification Dynamics that persistently deform the coherence landscape in response to localized discrepancies. Memory, agency, and self-correction arise from these dynamics rather than being added as separate modules.   We first demonstrate the full lifecycle in a transparent two-dimensional toy model, then validate across three domains: a controlled non-stationary world, chess evaluated independently by Stockfish, and Split-CIFAR-100 with a frozen ViT encoder. Across all three, IBF achieves replay-superior retention without storing raw data. We observe near-zero forgetting on CIFAR-100 (BT = -0.004), positive backward transfer in chess (+38.5 cp), and 43% less forgetting than replay in the controlled domain. In chess, the framework achieves a mean behavioral advantage of +88.9 +/- 2.8 cp under independent evaluation, exceeding MLP and replay baselines.",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

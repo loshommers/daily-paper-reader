@@ -1,6 +1,9 @@
 * <a class="dpr-sidebar-root-link" href="#/">首页</a>
 * <a class="dpr-sidebar-root-link dpr-sidebar-noactive-link" href="javascript:void(0)" data-dpr-hash="#/tutorial/README">使用教程</a>
 * Daily Papers
+  * 2026-04-11 <!--dpr-date:20260411-->
+    * 速读区
+      * <a class="dpr-sidebar-item-link dpr-sidebar-item-structured" href="#/202604/11/2604.07108v1-information-as-structural-alignment-a-dynamical-theory-of-continual-learning" data-sidebar-item="{&quot;title&quot;: &quot;Information as Structural Alignment: A Dynamical Theory of Continual Learning&quot;, &quot;link&quot;: &quot;https://arxiv.org/abs/2604.07108v1-information-as-structural-alignment-a-dynamical-theory-of-continual-learning&quot;, &quot;score&quot;: &quot;6.0&quot;, &quot;tags&quot;: [{&quot;kind&quot;: &quot;query&quot;, &quot;label&quot;: &quot;mu-ce&quot;}], &quot;evidence&quot;: &quot;灾难性遗忘与知识保留动力学&quot;}">Information as Structural Alignment: A Dynamical Theory of Continual Learning</a>
   * 2026-04-10 <!--dpr-date:20260410-->
     * 精读区
       * <a class="dpr-sidebar-item-link dpr-sidebar-item-structured" href="#/202604/10/2604.08111v1-bias-redistribution-in-visual-machine-unlearning-does-forgetting-one-group-harm-another" data-sidebar-item="{&quot;title&quot;: &quot;Bias Redistribution in Visual Machine Unlearning: Does Forgetting One Group Harm Another?&quot;, &quot;link&quot;: &quot;https://arxiv.org/abs/2604.08111v1-bias-redistribution-in-visual-machine-unlearning-does-forgetting-one-group-harm-another&quot;, &quot;score&quot;: &quot;10.0&quot;, &quot;tags&quot;: [{&quot;kind&quot;: &quot;query&quot;, &quot;label&quot;: &quot;mu-ce&quot;}], &quot;evidence&quot;: &quot;研究视觉机器遗忘方法中的偏见重新分布&quot;}">Bias Redistribution in Visual Machine Unlearning: Does Forgetting One Group Harm Another?</a>
