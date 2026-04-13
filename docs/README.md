@@ -6,19 +6,29 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-04-12
-- 运行时间：2026-04-12 19:20:57 UTC
+- 最新运行日期：2026-04-13
+- 运行时间：2026-04-13 20:24:21 UTC
 - 运行状态：成功
-- 本次总论文数：0
-- 精读区：0
+- 本次总论文数：3
+- 精读区：3
 - 速读区：0
 
 ### 今日简报（AI）
-> 今日无新推荐，系统未产出可展示论文。
-- 详情：[/202604/12/README](/202604/12/README)
+今日聚焦模型可控性前沿，深度解析了高效机器卸载与 Flow Transformer 的中间层引导技术。
+重点关注通过最大化重学习延迟实现的高效卸载方案，以及 SHIFT 框架对生成模型中间态的精准操控。
+建议开发者关注这些技术在提升模型隐私安全性与生成内容精细化控制方面的实际应用。
+- 详情：[/202604/13/README](/202604/13/README)
 
 ### 精读区论文标签
-- 本次无精读推荐。
+1. [Efficient Unlearning through Maximizing Relearning Convergence Delay](/202604/13/2604.09391v1-efficient-unlearning-through-maximizing-relearning-convergence-delay)  
+   标签：评分：10.0/10、query:mu-ce
+   evidence：高效的遗忘框架，用于消除遗忘集的影响
+2. [SHIFT: Steering Hidden Intermediates in Flow Transformers](/202604/13/2604.09213v1-shift-steering-hidden-intermediates-in-flow-transformers)  
+   标签：评分：9.0/10、query:mu-ce
+   evidence：通过激活引导在DiT扩散模型中进行概念移除
+3. [EGLOCE: Training-Free Energy-Guided Latent Optimization for Concept Erasure](/202604/13/2604.09405v1-egloce-training-free-energy-guided-latent-optimization-for-concept-erasure)  
+   标签：评分：9.0/10、query:mu-ce
+   evidence：扩散模型中无需训练的概念擦除方法
 
 ### 速读区论文标签
 - 本次无速读推荐。

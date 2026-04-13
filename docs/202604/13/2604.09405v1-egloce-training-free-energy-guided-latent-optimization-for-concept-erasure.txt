@@ -1,0 +1,833 @@
+Title: EGLOCE: Training-Free Energy-Guided Latent Optimization for Concept Erasure
+
+URL Source: https://arxiv.org/pdf/2604.09405v1
+
+Published Time: Mon, 13 Apr 2026 01:15:43 GMT
+
+Number of Pages: 23
+
+Markdown Content:
+# EGLOCE: Training-Free Energy-Guided Latent Optimization for Concept Erasure 
+
+## Junyeong Ahn 1∗† , Seojin Yoon 2∗, Sungyong Baik 21KAIST AI, 2 Hanyang University 
+
+justinahn@kaist.ac.kr, {yoonseojin, dsybaik }@hanyang.ac.kr 
+
+> ∗
+
+Equal contribution †Work done at Hanyang University EGLOCE 
+
+# …
+
+# …      
+
+> Without
+> EGLOCE
+> Prompt :“hygge…, thin, model,
+> …, laced lingerie ,
+> …, dynamic posing ,
+> by franz xavier Leyendecker…”
+
+*
+
+*
+
+Figure 1. Our proposed framework EGLOCE ensures that noise latents are both semantically aligned with the input prompt and remain outside the region representing the target concept by iteratively refining z in each timestep. In addition to avoiding generation of images containing the target concept (purple), applying our method enables faithful reflection of semantically important components (blue) of the input prompt. 
+
+## Abstract 
+
+As text-to-image diffusion models grow increasingly prevalent, the ability to remove specific concepts—mostly explicit content and many copyrighted characters or styles—has become essential for safety and compliance. Existing unlearning approaches often require costly re-training, modify parameters at the cost of degradation of unrelated concept fidelity, or depend on indirect inference-time adjustment that compromise the effectiveness of con-cept erasure. Inspired by the success of energy-guided sam-pling for preservation of the condition of diffusion models, we introduce Energy-Guided Latent Optimization for Con-cept Erasure (EGLOCE) , a training-free approach that re-moves unwanted concepts by re-directing noisy latent dur-ing inference. Our method employs a dual-objective frame-work: a repulsion energy that steers generation away from target concepts via gradient descent in latent space, and a retention energy that preserves semantic alignment to the original prompt. Combined with previous approaches that either require erroneous modified model weights or provide weak inference-time guidance, EGLOCE operates entirely at inference and enhances erasure performance, enabling plug-and-play integration. Extensive experiments demon-strate that EGLOCE improves concept removal while main-taining image quality and prompt alignment across base-lines, even with adversarial attacks. To the best of our knowledge, our work is the first to establish a new paradigm for safe and controllable image generation through dual energy-based guidance during sampling. 
+
+## 1. Introduction 
+
+Text-to-image (T2I) diffusion models [1, 7, 21, 35, 42] and their advanced conditioning methods [20, 48] enable pho-
+
+> arXiv:2604.09405v1 [cs.CV] 10 Apr 2026
+
+torealistic image synthesis from natural language prompts, driving their rapid adoption in creative and industrial appli-cations. However, their training data often contain copy-righted or explicit content, raising safety and ethical con-cerns. To ensure responsible deployment, it has become crucial to remove specific visual concepts while maintain-ing the ability to generate unrelated ones—a task known as concept erasure. Existing approaches fall into two categories: training-based and training-free. Training-based methods either fine-tune model parameters [12, 13, 47] or train addi-tional modules [22, 34, 37] to suppress undesired con-cepts while regularizing for preservation. Although effec-tive in erasing, they often fail to preserve unwanted con-cepts from being broken and require separate retraining for each new concept, making them impractical for real-time safe image generation. Meanwhile, training-free methods [1, 3, 23, 26, 41, 45] enable real-time concept erasure with-out modifying weights. Yet, they often struggle to maintain a balance between erasure efficacy and fidelity preservation because of their weak influence during inference, leading to either incomplete suppression or visible degradation of non-target regions. Followed by Energy-based Models (EBM) [8, 19] that first adopt the concept of representing data generation as minimizing a scalar energy landscape, recent energy-guided diffusion studies [9, 46, 52] have demonstrated that gener-ation trajectories can be steered by quantifying the compat-ibility between samples and conditions via energy. Early formulations such as Energy-Guided Stochastic Differen-tial Equations (EGSDE) [52] and Reduce, Reuse, Recy-cle [9] required learned energy parameterizations, while later works like Training-Free Conditional Diffusion Model (FreeDoM) [46] achieved training-free conditioning via ex-ternally defined energies. However, the repulsive coun-terpart—explicitly steering the generation away from un-wanted semantics through energy minimization—remains largely underexplored, motivating our complementary for-mulation that explicitly balances undesired concept erasure and unrelated concept prevention in an energy-based man-ner. Yet, all prior energy-guided methods focus on at-tracting generation toward desired conditions—the repul-sive counterpart, explicitly steering away from unwanted concepts through energy minimization, remains largely un-explored. We present Energy-Guided Latent Optimization for Concept Erasure (EGLOCE), a training-free and model-agnostic framework for safe content generation. EGLOCE performs inference-time latent optimization guided by two opposing energy terms: (1) a repulsion energy that sup-presses undesired concepts and (2) a retention energy that preserves prompt-aligned semantics by re-steer diffu-sion sampling trajectories away from (but still close to) unsafe regions based on text-image alignment measure-ment. Through iterative updates within each denoising step, EGLOCE achieves fine-grained convergence of these dual objectives, ensuring precise erasure without compromising image quality or prompt consistency. Extensive experi-ments show that EGLOCE achieves superior concept re-moval and fidelity preservation across benchmarks, estab-lishing a new direction for energy-guided concept unlearn-ing. To the best of our knowledge, EGLOCE is the first to formulate concept erasure as a dual energy minimization problem operable entirely at inference time, establishing a new direction for safe and controllable generation. 
+
+## 2. Related Work 
+
+2.1. Concept Erasure for Image Generation 
+
+Training-based method Training-based approaches mod-ify model parameters through fine-tuning with techniques such as negative guidance mimicking, saliency-based re-training, attention re-steering and closed-form weight up-dates [11–15, 17, 27, 29, 30, 33, 47], or introduce addi-tional modules like adapters and harmful embedding de-tectors [22, 34, 37]. Though effective at erasing targeted concepts during training, these methods require costly re-training for each new concept and suffer from catastrophic forgetting and degraded image quality despite preservation regularization. 
+
+Training-free method Inference-time methods avoid model alterations. SLD [41] rely on and adaptive negative guidance. Recent theoretically grounded approach Safe De-noiser [23] defines safe distributions, and DNG [26] adjusts negative guidance scale with approximated posterior. Con-trasitve CFG [3] further refines this direction by reinterpret-ing classifier-free guidance as a contrastive likelihood ratio, enabling principled positive–negative conditioning without posterior estimation. SAFREE [45] projects text condition embedding onto negative space, ablating the component in order to obtain target concept-free embedding. Our work introduces noisy latent optimization during inference that directly steers generation trajectories through dual energy-based objectives, enabling precise concept erasure while maintaining semantic fidelity. 
+
+2.2. Energy-Guided Sampling 
+
+Energy-guided sampling provides a principled framework for steering diffusion trajectories without retraining. Re-duce, Reuse, Recyle [9] reformulated diffusion as energy-based MCMC, enabling compositional operations through proper energy formulations. EGSDE [52] applied this to image generation via realism and faithfulness expert en-ergies for unpaired translation, while FreeDoM [46] gen-eralized it to arbitrary conditioning tasks using off-the-shelf perceptual losses (e.g., CLIP, VGG) as energy func-tions. Subsequent works extended energy guidance to in-verse problems [5], identity preservation [24], and spatial control. However, all prior methods focus on using energy guid-ance to preserve or enhance desired attributes—attracting generation toward target conditions. In contrast, our work explores the inverse paradigm: leveraging energy-based op-timization to suppress undesired concepts, establishing a new direction for training-free concept erasure. 
+
+## 3. Background 
+
+3.1. Conditional Image Generation 
+
+Diffusion models synthesize images through iterative de-noising xt and Latent Diffusion Models (LDM) [40] oper-ate denoising zt in spatially compressed latent space [25] for computation efficiency. Starting from Gaussian noise 
+
+zT ∼ N (0, I), they gradually recover the clean image la-tent z0 via 
+
+zt = √¯αtz0 + √1 − ¯αtϵ, ϵ ∼ N (0, I), (1) where ¯αt is the cumulative noise schedule. The model 
+
+ϵθ (zt, t ) learns to predict ϵ, enabling reverse sampling. To generate samples conditioned on a prompt p, the de-noising direction is adjusted toward the conditional score 
+
+∇zt log p(zt|p), which by Bayes’ rule decomposes into the unconditional score and a condition-dependent correction term. Classifier-free guidance (CFG) [20] approximates this by linearly combining conditional and unconditional predictions: 
+
+˜ϵθ (zt, p, t ) = ϵθ (zt, ∅, t ) + ω(ϵθ (zt, p, t )
+
+−ϵθ (zt, ∅, t )) , (2) where ω controls guidance strength. To suppress undesired concepts, Negative Guidance [1] introduces an additional negative condition c:
+
+˜ϵθ (zt, p, t ) = ϵθ (zt, ∅, t ) + ω(ϵθ (zt, p, t )−
+
+ϵθ (zt, c, t )) , (3) which repels generation from c.
+
+3.2. Energy Guidance for Diffusion 
+
+Diffusion models sample data by iteratively denoising a noisy latent zt according to an estimated score function 
+
+sθ (zt, t ) ≈ ∇ zt log p(zt). Note that we consistently deal with noisy latent z instead of corresponding data x since our method is based on LDM. For conditional generation, the goal is to sample from p(z|p) given an input condition 
+
+p. By Bayes’ rule, the conditional score can be decomposed as: 
+
+∇zt log p(zt | p) = ∇zt log p(zt) + ∇zt log p(p | zt) (4) where the second term injects task-specific conditional in-formation. Instead of explicitly learning a classifier or a conditional score network to model ∇zt log p(p|zt), energy-based con-ditioning (EBC) defines a scalar energy function E(c, z t)
+
+that quantifies how compatible a noisy sample latent zt is with condition p [28, 46, 52]. Assuming 
+
+p(p | zt) ∝ exp[ −λE (p, z t)] , (5) the conditional gradient becomes 
+
+∇zt log p(p | zt) ∝ −∇ zt E(p, z t), (6) yielding a simple but general update rule for energy-guided sampling: 
+
+zt−1 = fDM (zt, t ; θ) − ρt∇zt E(p, z t), (7) where fDM is the original diffusion update (e.g., DDIM or DDPM) and ρt controls the guidance strength. This for-mulation unifies classifier-based guidance, CLIP guidance, and various distance-based controls under a single energy functional. FreeDoM [46] modifies this concept by constructing time-independent energy functions using off-the-shelf pre-trained networks Dθ instead of time-dependent distance measuring functions Dϕ in order to approximate time-dependent energy function: 
+
+E(p, z t) ≈ Dϕ(p, z t, t ) ≈ Dθ (p, z 0|t) (8) . Clean sample latent z0, which corresponds to the clean sample image after decoded, can be derived from an in-termediate noisy sample computed by Tweedie’s Formula [10]: 
+
+z0|t = 1
+
+√¯αt
+
+(zt + (1 − ¯αt)sθ (zt, t )) (9) . The gradient of this distance with respect to zt serves as the conditional correction term, steering the denoising tra-jectory toward the desired condition. 
+
+## 4. Method 
+
+4.1. Problem Formulation 
+
+Concept erasure aims to prevent diffusion models from gen-erating from undesired concept space C conditioned on the input p while preserving other content. Formally, the safe distribution is: 
+
+psafe (z0|p) ∝ p(z0|p) · I[z0 /∈ C ], (10) but this hard constraint is intractable and provides no gra-dient. Instead, we define an implicit safe distribution 
+
+psafe (z|p) as the energy-reweighted distribution: 
+
+psafe (z | p) ∝ p(z | p) · exp[ −λE rep (zt, c)] (11) Z_ t Z_t -1 Z_ 0     
+
+> Z_t Z_t -1
+> Z_T -1…
+> Z_t -1
+> …
+> Posterior mean
+> Prompt :“two cute college
+> Girls rolling h**d on *** …
+> interwined …”
+
+*
+
+* Target concept 
+
+> Optimized latent
+
+Update 
+
+> Prompt
+
+Figure 2. Overview of the EGLOCE framework. The flowchart illustrates how repulsion and retention energies are applied during diffusion steps to erase undesired concepts while preserving others. 
+
+We implement concept erasure via a repulsive energy 
+
+Erep (zt, c) where c ∈ C , descending its gradient to re-pel sampling trajectory from undesired concepts following Eq. 5 and Eq. 10: 
+
+∇zt log psafe (zt|p) ≈ ∇ zt log p(zt|p)
+
+−∇ zt Erep (zt, c). (12) As shown in Eq. 11, in practice energy function determines how continuously and how strongly the safe component can be isolated and applied throughout the sampling trajectory. This formulation helps us to avoid directly dealing with 
+
+psafe (z0|p) intractably derived from p(z0|p), enabling prac-tical concept erasure while sticking to the energy guidance theory. Note that punsafe (z|p) in Figure 1 can also be de-rived from Eq. 11 by replacing repulsion energy term with retention energy. 
+
+4.2. Dual Energy Framework 
+
+Our EGLOCE framework employs two complementary en-ergy terms: a repulsive energy Erep that drives generation away from undesired concepts, and a retention energy Eret 
+
+that preserves semantic fidelity to the original prompt as shown in Figure 2. Both energies operate on the estimated clean image x0|t derived via Eq. 9, enabling image-level ex-plicit guidance through pretrained multi-modal encoders. 
+
+Repel & Retain via Text-Image Alignment Training-based erasure methods [13, 14, 30, 50] typically opti-mize parameters by minimizing differences between null-conditioned noise estimation and noise conditioned on tar-get concept while regularizing on concepts to be preserved: 
+
+L = Ezt,c
+
+h
+
+∥ϵθ (zt | c) − ϵθ∗ (zt | ∅)∥2i
+
++ λLretain (13) where θ∗ denotes the weights of the original model, and θ
+
+denotes the weights of the newly optimized model. The first term encourages to forget c and the second preserves model integrity on concepts that are both unrelated or closely re-lated to c.Previous works formulated concept erasure as explicitly “forgetting” a certain concept, which often leads to unin-tended degradation of other, unrelated concepts. Therefore, we instead define the repulsion objective from the perspec-tive of concept alignment: it encourages a reduction in the alignment between the generated image and the input con-cept, measured via CLIP [39] embeddings. The choice of CLIP is because it is trained on large-scale web data and provides a robust multimodal embedding that captures high-level semantic correspondences between text and images. Specifically, we define the repulsion energy as the cosine similarity between CLIP embeddings of the estimated clean image and the negative text prompt: 
+
+Erep (zt, c) = Eimg (D(z0|t)) , Etext (c) , (14) where D is the VAE decoder, Eimg and Etext are CLIP en-coders, and z0|t is computed via Eq. 9. Descending the gra-dient ∇zt Erep pushes the latent away from c in the joint CLIP embedding space. While repulsion suppresses unwanted concepts, it may inadvertently alter unrelated semantic content or visual quality. Training-based methods address this through preservation regularization that minimizes deviation from the original model on retained concepts: 
+
+Lretain = E˜c∼C retain 
+
+∥ϵθ (zt|˜c) − ϵθ∗ (zt|˜c)∥22
+
+ . (15) We instantiate this preservation principle as a retention en-ergy that encourages semantic alignment with the original prompt p:
+
+Eret (zt, p) = − Eimg (D(z0|t)) , Etext (p) . (16) The negative sign ensures that minimizing Eret maximizes alignment with p in order to follow the traditional interpre-tation of energy. By framing training-based loss terms as inference-time energies, EGLOCE unifies repulsion and re-tention under a single optimization framework without pa-rameter modification. 
+
+ECLOCE Algorithm Inspired by fixed-point iteration methods [24, 38], we apply dual-energy gradient to noisy latent repeatedly within each denoising step to refine the la-tent toward convergence of guidance and an optimal balance between erasure and retention. Given an initial estimate z(0) 
+
+> t
+
+at timestep t, we iteratively update: 
+
+z(k+1)  
+
+> t
+
+= z(k) 
+
+> t
+
+− λrep ∇zt Erep (z(k) 
+
+> t
+
+, c)
+
+− λret ∇zt Eret (z(k) 
+
+> t
+
+, p) (17) for k = 1 , . . . , K iterations. The necessity of iterative update stems from one sub-tle but important property of energy-guided manipulation: the mismatch between global and local behavior of the en-ergy landscape. At high noise levels, repulsion energies provide global directional guidance because CLIP embed-dings primarily encode coarse semantics. However, as the sample approaches lower timesteps, the energy landscape becomes increasingly non-convex and locally structured, with sharp basins corresponding to fine-grained textures and spatial arrangements. This transition implies that a na¨ ıve single-step update may either overshoot local minima or in-troduce high-frequency distortions due to abrupt gradients. EGLOCE circumvents this issue by performing multi-step refinement per timestep, allowing the latent to move along smoother paths aligned with stable directions in the local energy manifold. This local-global transition characteristic is fundamental to the effectiveness of inference-time era-sure yet has been largely overlooked in prior training-free approaches. While FreeDoM suggests to apply guidance primarily during early-to-middle timesteps for conditioning enhance-ment, we find that concept erasure requires sustained appli-cation from middle-to-late stages. This design choice stems from two key observations: (1) perceptual erasure demands stricter criteria—even subtle remnants of target concepts are detectable and unacceptable, necessitating thorough sup-pression until final steps; (2) simultaneous retention guid-ance requires continuous balancing to prevent semantic drift as fine details emerge in later denoising stages. We provide an experiment on application timesteps in Table 1. The complete EGLOCE procedure is summarized in Algorithm 1, demonstrating its seamless integration with standard diffusion pipelines and compatibility with existing negative guidance techniques. 
+
+Algorithm 1 EGLOCE: Training-Free Dual Energy-Guided Concept Erasure 
+
+Require: prompt p, target concept c, noise predictor ϵθ ,CLIP text/image encoder Etext /Eimg , guidance scale 
+
+w, repulsion/retention energy scaler λrep /λret , applied timestep range [tstart , t end ], number of optimizations K,VAE decoder D 
+
+> 1:
+
+zT ∼ N (0 , I; s) 
+
+> 2:
+
+e∅, ep, ec ← E text (∅), Etext (p), Etext (c) 
+
+> 3:
+
+for t = T, . . . , 1 do  
+
+> 4:
+
+ϵpred ← ϵθ (zt, e∅, t ) + w · (ϵθ (zt, ep, t ) −
+
+ϵθ (zt, e∅, t ))  
+
+> 5:
+
+if t ∈ [tstart , t end ] then  
+
+> 6:
+
+for k = 1 , . . . , K do  
+
+> 7:
+
+z0|t ← 1√αt (zt − √1 − αtϵpred ) 
+
+> 8:
+
+fimg ← E img (D(z0|t))  
+
+> 9:
+
+Erep , E ret ← ⟨ fimg , ec⟩, −⟨ fimg , ep⟩ 
+
+> 10:
+
+zt ← zt − ∇ zt (λrep · Erep + λret · Eret ) 
+
+> 11:
+
+end for  
+
+> 12:
+
+end if  
+
+> 13:
+
+zt−1 ← √αt−1 · z0|t + √1 − αt−1 · ϵpred  
+
+> 14:
+
+end for  
+
+> 15:
+
+return z0
+
+## 5. Experiment 
+
+In this section, we compare our method with SOTA un-learning approaches on three tasks. Our main baselines are ESD [13], SLD [41], RECE [15] and SAFREE [45], which respectively represent training-based, negative-guidance, closed-form editing, and embedding-based methods. The three evaluation tasks are nudity removal, artist-style re-moval, and object removal. All results are obtained using SD v1.4. 
+
+5.1. Implementation Details 
+
+For all experiments, we use SD v1.4 using 50 denoising steps with a guidance scale of 7.5. Each baseline model uses the scheduler adopted in its original paper. Our method can only be directly applied to schedulers that compute the next latent as a posterior mean. When the original sched-uler does not satisfy posterior mean form, we replace it with Adversarial COCO Method I2P ↓ P4D ↓ Ring-A-Bell ↓ MMA-Diffusion ↓ UnlearnDiffAtk ↓ FID ↓ CLIP ↑
+
+ESD [13] 0.234 0.583 0.291 0.406 0.296 13.77 30.43 ESD + Ours 0.209 0.589 0.228 0.417 0.218 13.74 31.40 
+
+SLD [41] 0.396 0.920 0.557 0.912 0.570 18.77 30.79 SLD + Ours 0.374 0.900 0.519 0.892 0.570 17.40 31.56 
+
+RECE [15] 0.141 0.427 0.127 0.557 0.148 15.07 30.95 RECE + Ours 0.092 0.313 0.025 0.489 0.120 13.65 31.56 
+
+SAFREE [45] 0.106 0.400 0.165 0.529 0.211 17.12 30.90 SAFREE + Ours 0.084 0.360 0.127 0.496 0.176 16.26 31.60 
+
+> Table 1. Attack success rate (ASR), CLIP, and FID scores for nudity removal with each baseline and its variant augmented with our method (baseline + ours). For each baseline, the best score for each metric is highlighted in bold.
+
+Remove “Van Gogh” Remove “Kelly McKernan” Method LPIPS e ↑ LPIPS u ↓ Acc e ↓ Acc u ↑ LPIPS e ↑ LPIPS u ↓ Acc e ↓ Acc u ↑
+
+SD-v1.4 – – 1.00 1.00 – – 1.00 1.00 ESD 0.36 0.16 0.20 1.00 0.41 0.21 0.20 1.00 ESD + Ours 0.35 0.16 0.25 1.00 0.41 0.19 0.20 1.00 SLD 0.62 0.52 1.00 1.00 0.54 0.55 1.00 1.00 SLD + Ours 0.61 0.52 1.00 1.00 0.53 0.54 1.00 1.00 RECE 0.59 0.27 1.00 1.00 0.55 0.28 1.00 1.00 RECE + Ours 0.60 0.37 1.00 1.00 0.57 0.35 0.50 1.00 SAFREE 0.69 0.54 0.05 0.85 0.59 0.52 0.20 1.00 SAFREE + Ours 0.68 0.54 0.00 0.88 0.61 0.55 0.30 1.00 
+
+> Table 2. LPIPS and classification accuracy for artist-style removal with each baseline and its variant augmented with our method (base-line+ours).
+
+Church English Springer Method Acc e ↓ Acc u↑ Acc e ↓ Acc u↑
+
+ESD 0.70 1.00 0.00 1.00 
+
+ESD + Ours 0.70 1.00 0.00 1.00 
+
+SLD 0.90 1.00 0.40 1.00 
+
+SLD + Ours 0.70 1.00 0.10 1.00 
+
+RECE 0.00 0.98 0.00 0.93 
+
+RECE + Ours 0.00 1.00 0.00 0.93 
+
+SAFREE 0.60 1.00 0.10 0.93 
+
+SAFREE + Ours 0.60 1.00 0.00 0.93 
+
+> Table 3. Classification accuracy for object removal with each base-line and its variant augmented with our method.
+
+DPMSolverMultistepScheduler [32] . Unless otherwise stated, we set the number of update it-
+
+Adversarial COCO Method K P4D ↓ MMA ↓ FID ↓ CLIP ↑
+
+SAFREE – 0.400 0.529 20.68 30.70 SAFREE 3 0.360 0.496 19.85 31.38 + Ours 5 0.300 0.464 19.56 31.62 7 0.267 0.445 19.11 31.89     
+
+> Table 4. Ablation study on the number of EGLOCE update iter-ations K.The table reports how the attack success rate (ASR), CLIP, and FID scores change as Kvaries.
+
+erations to K = 3 and use λrep = 10 and λretain = 5 . The interval [tstart , t end ] is chosen based on preliminary experi-ments as illustrated in the supplementary material. Since a shorter interval reduces the additional runtime, we choose it to be as small as possible. We observed that EGLOCE has only a minor effect when t is close to 0 where the im-Prompt : “Marc D**l in a *** with            
+
+> Clara M**n and *** ”
+> Prompt :“erotic cinematic · vfx blinded
+> photography … figure erotic oil texture
+> visualization props *** ”
+> Prompt :“two separating yu *** couple
+> <| endoftext |> jeremy leo g q …”
+
+SD  RECE  RECE + EGLOCE     
+
+> Prompt :“In the photograph, the model was
+> depicted in a state of undress , her breasts
+> exposed …”
+
+SD  SLD  SLD + EGLOCE 
+
+SAFREE  SAFREE + EGLOCE    
+
+> Prompt :“a gorgeous female photo, …,
+> insanely detailed …sharp focus on eyes ”
+> Remove
+
+Church  
+
+> Remove
+
+English Springer   
+
+> Prompt :“professional art illustrated line
+> drawing of an embrace ”
+
+*
+
+# *
+
+*
+
+*
+
+*
+
+*
+
+# *
+
+# * *
+
+# *
+
+## (A)  (B) 
+
+## (C) 
+
+# * *
+
+# *
+
+*Figure 3. Qualitative results of the proposed method. (A) When applied on top of the baselines, our method performs fine-grained refinements that remove residual nudity left in their outputs. (B) It further erases the target object while largely preserving the surrounding content. (C) Applying EGLOCE makes the generated images follow the input prompts more faithfully and improves their perceptual quality. 
+
+age being generated becomes almost complete, so we set 
+
+tstart = 20 . Conversely, when t is close to T , even small perturbations to the latent may cause noticeable artifacts in-cluding failure of original content preservation or noise-like color jitters, and thus we fix tend to either 35 or 40 .
+
+5.2. Nudity Erasure 
+
+Evaluation Setup The usefulness of the proposed method is evaluated by checking whether augmenting each baseline with our method leads to performance improvements. To assess improvements in nudity removal, images are gener-ated under five adversarial prompt attacks: I2P [41], P4D [4], Ring-A-Bell [43], MMA-Diffusion [44], and Unlearn-DiffAtk [51]. The generated images are then evaluated by the NudeNet [2] classifier to determine whether they con-tain nudity. The attack success rate (ASR) is defined as the fraction of adversarial prompts that still produce nude con-tent. A lower ASR indicates fewer nude generations and therefore more effective removal. To assess performance preservation, FID [18] and CLIP [39] scores are measured on COCO-30k [31]. A lower FID indicates better preserva-SLD  
+
+> SLD
+> +EGLOCE
+
+*
+
+*
+
+*
+
+*
+
+*  
+
+> *
+> *
+> *
+> ESD
+> ESD
+> +EGLOCE
+> RECE
+> RECE
+> +EGLOCE
+
+*
+
+* * SAFREE  
+
+> SAFREE
+> +EGLOCE
+
+*
+
+* * *
+
+*     
+
+> -Nudity -Nudity
+> -Nudity -Nudity
+
+*
+
+*
+
+*
+
+*Figure 4. Qualitative results on nudity erasure across four baselines. Baselines         
+
+> Baselines
+> +EGLOCE
+> Baselines
+> Baselines
+> +EGLOCE
+> Baselines
+> Baselines
+> +EGLOCE
+> *
+> *
+> *
+> *
+> -Nudity -Church -English
+> Springer
+
+Figure 5. Failure cases show that, in some cases, integrating our method to the baseline brings little visible change over the original results, or does not fully remove the targeted content. 
+
+Adversarial COCO Method R P4D ↓ MMA ↓ FID ↓ CLIP ↑
+
+SAFREE N 0.327 0.473 20.06 30.37 + Ours Y 0.360 0.496 19.85 31.38 
+
+Table 5. Ablation study on the effect of the EGLOCE retention term. The column R (retain) indicates whether the retention com-ponent is used: models with R = Y include the retention term, while models with R = N do not. 
+
+tion of image quality, and a higher CLIP similarity indicates better preservation of semantic content. 
+
+Results and Analysis Table 1 shows that augmenting each baseline with the proposed method consistently improves all evaluation metrics: concepts are removed more thor-oughly, benign content is better preserved, and robustness to adversarial attacks is increased. We illustrate more qual-itative results of nudity erasure in Figure 4 where adopting EGLOCE consistently enhances the nudity erasure even in cases state-of-the-art models failed to erase, enabling more safe content generation. 
+
+5.3. Artistic Style Erasure 
+
+Evaluation Setup For artist-style removal, we again eval-uate each baseline after augmenting it with our method. We use LPIPS [49] and classification accuracy as evaluation metrics. LPIPS e and Acc e are computed on images gen-erated with the target artist style: lower LPIPS e means the output deviates more from the original image, and lower Acc e means the artist classifier is less likely to recognize the target artist. Both indicate more successful removal of the target style. In contrast, LPIPS u and Acc u are measured on images corresponding to non-target artists. In this case, higher Acc u is desirable, and lower LPIPS u indicates that the generated image remains closer to the original, reflect-ing better preservation of non-target styles. Classification accuracy is obtained by querying ChatGPT 5.1 [36] to judge whether each generated image corresponds to the intended artist style. 
+
+Results and Analysis As shown in Table 2, the limited improvement is attributable to a fundamental mismatch be-tween CLIP’s semantic embedding space and the low-level textural statistics that define artistic style. While CLIP cap-tures high-level semantic correspondences between text and images, it is largely blind to the local textural statistics that define artistic style (e.g. brushstroke patterns of Van Gogh paintings) . As a result, the repulsion gradient may reduce CLIP similarity of the content being generated to an artist’s name while there is no difference in terms of human visual perception. 
+
+5.4. Object Erasure 
+
+Evaluation Setup We use the same Acc e and Acc u metrics as in the artist-style experiments. Here, Acc e denotes the classification accuracy for the target object class, and Acc u
+
+denotes the accuracy for the remaining object classes after the target object is removed. A good unlearning method should achieve low Acc e and high Acc u. We evaluate on ImageNet [6] and compute accuracy using a ResNet-50 [16] classifier pretrained on ImageNet. For each generated im-age, we check whether the ground-truth label appears in top-5 predicted classes and use this to compute Acc e and Acc u.
+
+Results and Analysis As shown in Table 3, the proposed method achieves better object removal than existing ap-proaches in almost all cases, removing the target object more thoroughly while minimizing its impact on non-target objects. 
+
+5.5. Ablation Study 
+
+Our method exhibits stronger concept removal as the num-ber of update iterations K increases. At the same time, larger K leads to longer sampling time and can introduce visible artifacts in the generated images. In our main ex-periments, we therefore fix K = 3 to keep the additional latency small, even though this setting is not optimal. To study this trade-off, we vary K ∈ { 3, 5, 7} and report the attack success rate, as well as FID and CLIP on COCO-10k which is subsampled from COCO-30k dataset. As demon-strated in Table 4, increasing K consistently reduces the at-tack success rate, indicating stronger robustness to adver-sarial prompts, while FID remains better than that of the original baseline model. As shown in Table 5, removing the retention term improves ASR at the cost of degraded FID and CLIP scores, confirming that retention is essen-tial for maintaining generation quality. Without it, the re-pulsion gradient suppresses the target concept by distorting global semantics rather than selectively redirecting the la-tent. Please refer to the supplementary material to find more quantitative and qualitative results of application timesteps and energy guidance scale ablation. These results suggest that the effectiveness of EGLOCE stems from the complementary roles of repulsion and reten-tion energies. While repulsion suppresses undesired con-cepts, the introduction of retention is also necessary to sta-bilize the generation by preserving prompt-aligned seman-tics. 
+
+## 6. Conclusion 
+
+We introduce EGLOCE, a training-free framework for con-cept erasure in text-to-image diffusion models through energy-guided latent optimization. By reformulating con-cept removal as a dual-objective energy minimization prob-lem, our method achieves effective erasure while preserv-ing generation quality without requiring parameter modifi-cations or costly retraining by plug-and-play manner com-bined with existing unlearning methods. However, as illustrated in Figure 5, CLIP-based energy can be minimized via subtle perturbations that reduce scores without perceptually meaningful changes. Future work may explore energy functions that robustly induce meaningful visual changes, or more efficient solution beyond N × K
+
+additional runtime, such as adaptive timestep-wise gating of energy updates. References 
+
+[1] Stable diffusion. https : / / huggingface . co / CompVis/stable-diffusion-v1-4 , 2022. 1, 2, 3 [2] P Bedapudi. Nudenet: Neural nets for nudity classification, detection and selective censoring. 2019. 7, 1 [3] Jinho Chang, Hyungjin Chung, and Jong Chul Ye. Con-trastive cfg: Improving cfg in diffusion models by con-trasting positive and negative concepts. arXiv preprint arXiv:2411.17077 , 2024. 2 [4] Zhi-Yi Chin, Chieh-Ming Jiang, Ching-Chun Huang, Pin-Yu Chen, and Wei-Chen Chiu. Prompting4debugging: Red-teaming text-to-image diffusion models by finding problem-atic prompts. arXiv preprint arXiv:2309.06135 , 2023. 7, 1 [5] Hyungjin Chung, Jeongsol Kim, Michael T Mccann, Marc L Klasky, and Jong Chul Ye. Diffusion posterior sam-pling for general noisy inverse problems. arXiv preprint arXiv:2209.14687 , 2022. 3 [6] Jia Deng, Wei Dong, Richard Socher, Li-Jia Li, Kai Li, and Li Fei-Fei. Imagenet: A large-scale hierarchical image database. In 2009 IEEE conference on computer vision and pattern recognition , pages 248–255. Ieee, 2009. 9 [7] Prafulla Dhariwal and Alexander Nichol. Diffusion models beat gans on image synthesis. Advances in neural informa-tion processing systems , 34:8780–8794, 2021. 1 [8] Yilun Du and Igor Mordatch. Implicit generation and mod-eling with energy based models. Advances in neural infor-mation processing systems , 32, 2019. 2 [9] Yilun Du, Conor Durkan, Robin Strudel, Joshua B Tenen-baum, Sander Dieleman, Rob Fergus, Jascha Sohl-Dickstein, Arnaud Doucet, and Will Sussman Grathwohl. Reduce, reuse, recycle: Compositional generation with energy-based diffusion models and mcmc. In International conference on machine learning , pages 8489–8510. PMLR, 2023. 2 [10] Bradley Efron. Tweedie’s formula and selection bias. Jour-nal of the American Statistical Association , 106(496):1602– 1614, 2011. 3 [11] Instance Erasure. Zero-residual concept erasure via progres-sive alignment in text-to-image models. 2 [12] Chongyu Fan, Jiancheng Liu, Yihua Zhang, Eric Wong, Den-nis Wei, and Sijia Liu. Salun: Empowering machine unlearn-ing via gradient-based weight saliency in both image classi-fication and generation. arXiv preprint arXiv:2310.12508 ,2023. 2 [13] Rohit Gandikota, Joanna Materzynska, Jaden Fiotto-Kaufman, and David Bau. Erasing concepts from diffusion models. In Proceedings of the IEEE/CVF international con-ference on computer vision , pages 2426–2436, 2023. 2, 4, 5, 6, 1 [14] Rohit Gandikota, Hadas Orgad, Yonatan Belinkov, Joanna Materzy´ nska, and David Bau. Unified concept editing in diffusion models. In Proceedings of the IEEE/CVF Win-ter Conference on Applications of Computer Vision , pages 5111–5120, 2024. 4 [15] Chao Gong, Kai Chen, Zhipeng Wei, Jingjing Chen, and Yu-Gang Jiang. Reliable and efficient concept erasure of text-to-image diffusion models. In European Conference on Com-puter Vision , pages 73–88. Springer, 2024. 2, 5, 6, 1 [16] Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun. Deep residual learning for image recognition. In Proceed-ings of the IEEE conference on computer vision and pattern recognition , pages 770–778, 2016. 9 [17] Alvin Heng and Harold Soh. Selective amnesia: A contin-ual learning approach to forgetting in deep generative mod-els. Advances in Neural Information Processing Systems , 36, 2024. 2 [18] Martin Heusel, Hubert Ramsauer, Thomas Unterthiner, Bernhard Nessler, and Sepp Hochreiter. Gans trained by a two time-scale update rule converge to a local nash equilib-rium. Advances in neural information processing systems ,30, 2017. 7, 1 [19] Geoffrey E Hinton. Training products of experts by mini-mizing contrastive divergence. Neural computation , 14(8): 1771–1800, 2002. 2 [20] Jonathan Ho and Tim Salimans. Classifier-free diffusion guidance. arXiv preprint arXiv:2207.12598 , 2022. 1, 3 [21] Jonathan Ho, Ajay Jain, and Pieter Abbeel. Denoising dif-fusion probabilistic models. Advances in neural information processing systems , 33:6840–6851, 2020. 1 [22] Chi-Pin Huang, Kai-Po Chang, Chung-Ting Tsai, Yung-Hsuan Lai, Fu-En Yang, and Yu-Chiang Frank Wang. Re-celer: Reliable concept erasing of text-to-image diffusion models via lightweight erasers. In European Conference on Computer Vision , pages 360–376. Springer, 2024. 2 [23] Mingyu Kim, Dongjun Kim, Amman Yusuf, Stefano Ermon, and Mijung Park. Training-free safe denoisers for safe use of diffusion models. arXiv preprint arXiv:2502.08011 , 2025. 2 [24] SeonHwa Kim, Jiwon Kim, Soobin Park, Donghoon Ahn, Jiwon Kang, Seungryong Kim, Kyong Hwan Jin, and Eunju Cha. Identity-preserving distillation sampling by fixed-point iterator. In Proceedings of the Computer Vision and Pattern Recognition Conference , pages 11115–11124, 2025. 3, 5 [25] Diederik P Kingma and Max Welling. Auto-encoding varia-tional bayes. arXiv preprint arXiv:1312.6114 , 2013. 3 [26] Felix Koulischer, Johannes Deleu, Gabriel Raya, Thomas Demeester, and Luca Ambrogioni. Dynamic negative guid-ance of diffusion models. arXiv preprint arXiv:2410.14398 ,2024. 2 [27] Nupur Kumari, Bingliang Zhang, Sheng-Yu Wang, Eli Shechtman, Richard Zhang, and Jun-Yan Zhu. Ablating con-cepts in text-to-image diffusion models. In Proceedings of the IEEE/CVF International Conference on Computer Vi-sion , pages 22691–22702, 2023. 2 [28] Yann LeCun, Sumit Chopra, Raia Hadsell, M Ranzato, Fujie Huang, et al. A tutorial on energy-based learning. Predicting structured data , 1(0), 2006. 3 [29] Hang Li, Chengzhi Shen, Philip Torr, Volker Tresp, and Jin-dong Gu. Self-discovering interpretable diffusion latent di-rections for responsible text-to-image generation. In Pro-ceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 12006–12016, 2024. 2 [30] Ouxiang Li, Yuan Wang, Xinting Hu, Houcheng Jiang, Tao Liang, Yanbin Hao, Guojun Ma, and Fuli Feng. Speed: Scal-able, precise, and efficient concept erasure for diffusion mod-els. arXiv preprint arXiv:2503.07392 , 2025. 2, 4 [31] Tsung-Yi Lin, Michael Maire, Serge Belongie, James Hays, Pietro Perona, Deva Ramanan, Piotr Doll´ ar, and C Lawrence Zitnick. Microsoft coco: Common objects in context. In 
+
+European conference on computer vision , pages 740–755. Springer, 2014. 7, 1 [32] Cheng Lu, Yuhao Zhou, Fan Bao, Jianfei Chen, Chongxuan Li, and Jun Zhu. Dpm-solver: A fast ode solver for diffu-sion probabilistic model sampling in around 10 steps. Ad-vances in neural information processing systems , 35:5775– 5787, 2022. 6 [33] Shilin Lu, Zilan Wang, Leyang Li, Yanzhu Liu, and Adams Wai-Kin Kong. Mace: Mass concept erasure in diffu-sion models. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 6430– 6440, 2024. 2 [34] Mengyao Lyu, Yuhong Yang, Haiwen Hong, Hui Chen, Xuan Jin, Yuan He, Hui Xue, Jungong Han, and Guiguang Ding. One-dimensional adapter to rule them all: Concepts diffusion models and erasing applications. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 7559–7568, 2024. 2 [35] Alexander Quinn Nichol and Prafulla Dhariwal. Improved denoising diffusion probabilistic models. In International conference on machine learning , pages 8162–8171. PMLR, 2021. 1 [36] OpenAI. Gpt-5.1. https://openai.com/index/ gpt-5-1/ , 2025. Accessed: 2025-11-14. 9 [37] Jiadong Pan, Liang Li, Hongcheng Gao, Zheng-Jun Zha, Qingming Huang, and Jiebo Luo. Safecfg: Controlling harmful features with dynamic safe guidance for safe gen-eration. arXiv preprint arXiv:2412.16039 , 2024. 2 [38] Neal Parikh, Stephen Boyd, et al. Proximal algorithms. 
+
+Foundations and trends® in Optimization , 1(3):127–239, 2014. 5 [39] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry, Amanda Askell, Pamela Mishkin, Jack Clark, et al. Learning transferable visual models from natural language supervi-sion. In International conference on machine learning , pages 8748–8763. PmLR, 2021. 4, 7, 1 [40] Robin Rombach, Andreas Blattmann, Dominik Lorenz, Patrick Esser, and Bj¨ orn Ommer. High-resolution image synthesis with latent diffusion models. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 10684–10695, 2022. 3 [41] Patrick Schramowski, Manuel Brack, Bj¨ orn Deiseroth, and Kristian Kersting. Safe latent diffusion: Mitigating inappro-priate degeneration in diffusion models. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 22522–22531, 2023. 2, 5, 6, 7, 1 [42] Jiaming Song, Chenlin Meng, and Stefano Ermon. Denoising diffusion implicit models. arXiv preprint arXiv:2010.02502 , 2020. 1 [43] Yu-Lin Tsai, Chia-Yi Hsu, Chulin Xie, Chih-Hsun Lin, Jia-You Chen, Bo Li, Pin-Yu Chen, Chia-Mu Yu, and Chun-Ying Huang. Ring-a-bell! how reliable are concept removal meth-ods for diffusion models? arXiv preprint arXiv:2310.10012 ,2023. 7, 1 [44] Yijun Yang, Ruiyuan Gao, Xiaosen Wang, Tsung-Yi Ho, Nan Xu, and Qiang Xu. Mma-diffusion: Multimodal attack on diffusion models. In Proceedings of the IEEE/CVF Con-ference on Computer Vision and Pattern Recognition , pages 7737–7746, 2024. 7, 1 [45] Jaehong Yoon, Shoubin Yu, Vaidehi Patil, Huaxiu Yao, and Mohit Bansal. Safree: Training-free and adaptive guard for safe text-to-image and video generation. arXiv preprint arXiv:2410.12761 , 2024. 2, 5, 6, 1 [46] Jiwen Yu, Yinhuai Wang, Chen Zhao, Bernard Ghanem, and Jian Zhang. Freedom: Training-free energy-guided condi-tional diffusion model. In Proceedings of the IEEE/CVF In-ternational Conference on Computer Vision , pages 23174– 23184, 2023. 2, 3 [47] Gong Zhang, Kai Wang, Xingqian Xu, Zhangyang Wang, and Humphrey Shi. Forget-me-not: Learning to for-get in text-to-image diffusion models. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 1755–1764, 2024. 2 [48] Lvmin Zhang, Anyi Rao, and Maneesh Agrawala. Adding conditional control to text-to-image diffusion models. In 
+
+Proceedings of the IEEE/CVF international conference on computer vision , pages 3836–3847, 2023. 1 [49] Richard Zhang, Phillip Isola, Alexei A Efros, Eli Shecht-man, and Oliver Wang. The unreasonable effectiveness of deep features as a perceptual metric. In Proceedings of the IEEE conference on computer vision and pattern recogni-tion , pages 586–595, 2018. 8 [50] Yimeng Zhang, Xin Chen, Jinghan Jia, Yihua Zhang, Chongyu Fan, Jiancheng Liu, Mingyi Hong, Ke Ding, and Sijia Liu. Defensive unlearning with adversarial training for robust concept erasure in diffusion models. Advances in neu-ral information processing systems , 37:36748–36776, 2024. 4[51] Yimeng Zhang, Jinghan Jia, Xin Chen, Aochuan Chen, Yi-hua Zhang, Jiancheng Liu, Ke Ding, and Sijia Liu. To gener-ate or not? safety-driven unlearned diffusion models are still easy to generate unsafe images... for now. In European Con-ference on Computer Vision , pages 385–403. Springer, 2024. 7, 1 [52] Min Zhao, Fan Bao, Chongxuan Li, and Jun Zhu. Egsde: Unpaired image-to-image translation via energy-guided stochastic differential equations. Advances in Neural Infor-mation Processing Systems , 35:3609–3623, 2022. 2, 3 EGLOCE: Training-Free Energy-Guided Latent Optimization for Concept Erasure 
+
+# Supplementary Material 
+
+In this supplementary material, we provide additional ex-perimental results, implementation details, and qualitative analyses to support the findings in the main paper. 
+
+## A. Broader Impact 
+
+The widespread adoption of text-to-image (T2I) generation models necessitates robust mechanisms to prevent the cre-ation of harmful content, including explicit, violent, or oth-erwise toxic imagery. Our work addresses this ethical need through EGLOCE, a plug-and-play concept erasure method that enables efficient removal of undesirable concepts with-out costly retraining. By making model safety more acces-sible, EGLOCE supports responsible deployment of gen-erative models while preserving their utility for legitimate creative and educational use. For complete and accurate evaluation, our paper and sup-plementary materials may include explicit examples solely to illustrate the targeted concepts and assess erasure perfor-mance. All sensitive or sexual content is masked with black boxes to avoid exposing harmful details and maintain com-pliance with ethical standards. 
+
+## B. Additional Experiments 
+
+We study the effect of hyperparameters on the SAFREE [45] + ours setup which shows the best performance across baseline combinations, using nudity removal as the eval-uation task. We generate images under five adversar-ial prompt attacks: I2P [41], P4D [4], Ring-A-Bell [43], MMA-Diffusion [44], and UnlearnDiffAtk [51], and com-pute the attack success rate (ASR) using NudeNet [2]. To evaluate preservation of normal generation, we report FID [18] and CLIP [39] on COCO-30k [31], where lower FID and higher CLIP indicate better visual quality and semantic alignment. 
+
+B.1. Energy Guidance Application Timesteps 
+
+In this section, we vary tstart and tend , the time range over which our method is applied, to analyze how the behavior changes and to justify our current choice. In the default setting, we use tstart = 20 and tend = 35 which are hyperpa-rameters as denoted in Algorithm 1. As shown in Table A, increasing tend to 40 or 45 leads to improved ASR scores, but at the cost of degraded FID and CLIP scores. As il-lustrated in Figure A, this degradation in image quality can severely distort the generated images in some cases. The subsequent decline in ASR also appears to be largely driven by this quality degradation, which makes the generated im-ages harder to recognize. The results with tstart set to 10 or 0 are shown in Table B. As tend increases, nudity removal remains similar, while the FID and CLIP scores improve. However, the generated im-ages are visually almost indistinguishable from those ob-tained with tstart = 20 as illustrated in Figure B. Since 
+
+tstart = 20 also results in shorter inference latency, we adopt 
+
+tstart = 20 as our final setting. 
+
+B.2. Energy Scalers 
+
+We further examine how varying λrep and λret (see Algo-rithm 1), which control the strength of our removal objec-tive, impacts performance. As shown in Table C, increasing these scales generally improves ASR, FID, and CLIP, in a manner similar to increasing the number of iterations K.However, as illustrated in Figure C, overly large scales can occasionally introduce visible artifacts in the generated im-ages and can also destabilize the loss optimization. Based on these observations, we choose λrep = 10 and λret = 5 
+
+as the largest empirically stable values, and recommend in-creasing K rather than the scales when a stronger removal effect is desired. 
+
+## C. Additional Qualitative Results 
+
+C.1. Nudity Erasure 
+
+Figure D - Figure G present additional qualitative exam-ples of nude content removal. Figure D shows cases where ESD[13] initially fails to remove nudity, but succeeds once our model is applied on top. Figure E, Figure F and Fig-ure G illustrate the changes obtained when integrating SLD [41], RECE [15] and SAFREE [45], respectively. Overall, our method removes nudity by naturally adding clothing over the key regions, while keeping the original composi-tion and content of the image largely intact. 
+
+C.2. Object Erasure 
+
+Figure H and Figure I provide additional qualitative ex-amples of object removal. Figure H shows how aug-menting SLD with our method leads to more effective re-moval, while Figure I presents the results when our method is applied to SAFREE. We do not include RECE here, as its built-in object removal capability is already very strong. When our method is applied to prompts contain-ing “church,” it removes crosses and characteristic steeples, so the resulting building no longer clearly appears to be Interval Adversarial COCO Method tstart tend I2P ↓ P4D ↓ Ring-A-Bell ↓ MMA ↓ UnlearnDiffAtk ↓ FID ↓ CLIP ↑
+
+SAFREE 20 45 0.066 0.258 0.114 0.359 0.141 21.46 30.93 + Ours 20 40 0.101 0.384 0.114 0.495 0.211 20.72 30.81 20 35 0.106 0.397 0.165 0.529 0.211 20.68 30.70   
+
+> Table A. Attack success rate (ASR), CLIP, and FID scores for nudity removal using SAFREE augmented with our method (SAFREE + ours) under different tstart settings (all other hyperparameters fixed).
+
+a church. For prompts with an English springer, our method tends to suppress the salient characteristics of En-glish springer, showing seamless transition to the concept-erased image preserving other structural information. 
+
+C.3. Image Fidelity Improvement 
+
+With our method, the FID score improves. Figure J presents examples from the three baselines where the images be-come visually better after applying our method. In these cases, artifacts in the original outputs are removed, and im-plausible structures-such as too many or too few arms-are corrected. Overall, the resulting images convey the intended meaning more clearly and are visually more satisfying. 
+
+## D. Failure Cases & Limitations 
+
+Our method removes target concepts by introducing sub-tle perturbations in the latent space. These perturbations influence the visual appearance of the image and can also act in an adversarial manner, injecting noise that causes the original classifier to fail to recognize the content. Although effective at measuring perceptual alignment between the decoded posterior mean latents and prompts, energy func-tions such as CLIP are known to be vulnerable to adversar-ial examples. Thus it is possible to reduce the similarity score while keeping the generated images visually almost unchanged. Figure K showcases this phenomenon where the CLIP score drops despite negligible visual differences. As mentioned in the main paper, we expect that explor-ing an energy function more robust to adversarial attacks could enable our method to handle such exceptional cases, although we leave this as an interesting direction for future work since our method mainly focuses on effective concept removal paradigm rather than designing robust perceptual similarity metrics. Interval Adversarial COCO Method tstart tend I2P ↓ P4D ↓ Ring-A-Bell ↓ MMA ↓ UnlearnDiffAtk ↓ FID ↓ CLIP ↑
+
+SAFREE 20 35 0.106 0.397 0.165 0.529 0.211 20.68 30.70 + Ours 10 35 0.105 0.358 0.165 0.529 0.211 20.50 31.68 0 35 0.101 0.358 0.177 0.509 0.211 20.39 33.82 
+
+Table B. Attack success rate (ASR), CLIP, and FID scores for nudity removal using SAFREE augmented with our method (SAFREE + ours) under different tend settings (all other hyperparameters fixed). 45 20  
+
+> 4020
+> 3520
+> (ours)
+
+Figure A. Qualitative effects under different tstart settings. 35  
+
+> 20
+> (ours)
+> 0
+> 3510
+> 35
+
+Figure B. Qualitative effects under different tend settings. Scale Adversarial COCO Method λrep λret I2P ↓ P4D ↓ Ring-A-Bell ↓ MMA ↓ UnlearnDiffAtk ↓ FID ↓ CLIP ↑
+
+SAFREE 6 3 0.118 0.417 0.228 0.537 0.225 20.78 30.42 + Ours 10 5 0.106 0.397 0.165 0.529 0.211 20.68 30.70 14 7 0.101 0.397 0.127 0.492 0.197 20.52 30.88 18 9 0.086 0.338 0.114 0.467 0.197 20.41 31.04 
+
+Table C. Attack success rate (ASR), CLIP, and FID scores for nudity removal using SAFREE augmented with our method (SAFREE + ours) under different scale settings (all other hyperparameters fixed). (ours) 
+
+Figure C. Qualitative effects under different scale settings. ESD     
+
+> ESD
+> +EGLOCE
+> ESD
+> ESD
+> +EGLOCE
+> -Nudity
+> -Nudity
+
+*
+
+* *
+
+*
+
+*
+
+*
+
+*
+
+*
+
+*
+
+*
+
+* *
+
+*  
+
+> ESD
+> ESD
+> +EGLOCE
+> -Nudity
+
+*
+
+* *
+
+*
+
+*Figure D. Qualitative results of nudity removal with ESD + ours. Example outputs illustrating how augmenting ESD with our method leads to more effective removal of nude content. SLD     
+
+> SLD
+> SLD
+> +EGLOCE
+> SLD
+> SLD
+> +EGLOCE
+> -Nudity
+> -Nudity
+
+*
+
+*
+
+*
+
+*
+
+*
+
+*
+
+*
+
+* *
+
+*
+
+*
+
+* *
+
+* **
+
+*
+
+*  
+
+> SLD
+> +EGLOCE
+> -Nudity
+
+*
+
+*
+
+*
+
+*
+
+*
+
+* *
+
+*
+
+*
+
+*Figure E. Qualitative results of nudity removal with SLD + ours. Example outputs illustrating how augmenting SLD with our method leads to more effective removal of nude content. RECE     
+
+> RECE
+> RECE
+> +EGLOCE
+> RECE
+> RECE
+> +EGLOCE
+> -Nudity
+> -Nudity
+
+*
+
+*
+
+* *
+
+*
+
+*
+
+*
+
+*
+
+* *
+
+*
+
+*
+
+*  
+
+> RECE
+> +EGLOCE
+> -Nudity
+
+*
+
+* *
+
+* *
+
+*
+
+* *
+
+*Figure F. Qualitative results of nudity removal with RECE + ours. Example outputs illustrating how augmenting RECE with our method leads to more effective removal of nude content. SAFREE       
+
+> SAFREE
+> SAFREE
+> +EGLOCE
+> -Nudity
+> SAFREE
+> +EGLOCE
+> SAFREE
+> SAFREE
+> +EGLOCE
+> -Nudity
+> -Nudity
+
+* *
+
+*
+
+*
+
+*
+
+*
+
+> *
+
+*
+
+* * * *
+
+> *
+
+*Figure G. Qualitative results of nudity removal with SAFREE + ours. Example outputs illustrating how augmenting SAFREE with our method leads to more effective removal of nude content. SLD     
+
+> SLD
+> +EGLOCE
+> SLD
+> SLD
+> +EGLOCE
+> -Church
+> -English
+> springer
+
+*Figure H. Qualitative results of object removal with SLD + ours. Example outputs illustrating how augmenting SLD with our method leads to more effective removal of church or English springer content. SAFREE     
+
+> SAFREE
+> +EGLOCE
+> SAFREE
+> SAFREE
+> +EGLOCE
+> -Church
+> -English
+> springer
+
+Figure I. Qualitative results of object removal with SAFREE + ours. Example outputs illustrating how augmenting SAFREE with our method leads to more effective removal of church or English springer content. SLD     
+
+> SLD
+> +EGLOCE
+> RECE
+> RECE
+> +EGLOCE
+> SAFREE
+> SAFREE
+> +EGLOCE
+> ESD
+> ESD
+> +EGLOCE
+
+Figure J. Qualitative improvements across baselines. Example generations from three models and their variants augmented with our method, demonstrating improved image quality and better adherence to the input prompts. Baselines 
+
+Baselines 
+
++ EGLOCE 
+
+Baselines 
+
+Baselines 
+
++ EGLOCE 
+
+- Nudity 
+
+Baselines 
+
+Baselines 
+
++ EGLOCE 
+
+- English 
+
+springer 
+
+- Church 
+
+## *
+
+## *
+
+## *
+
+## *
+
+## *
+
+## *
+
+## *
+
+## *
+
+## *
+
+## *Figure K. Failure cases of concept removal with baseline + ours. Example outputs where adding our method to the baseline brings little visible change over the original results, or does not fully remove the targeted content.

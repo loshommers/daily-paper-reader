@@ -1,0 +1,51 @@
+{
+  "label": "2026-04-13",
+  "date": "2026-04-13",
+  "generated_at": "2026-04-13T20:24:30",
+  "count": 3,
+  "papers": [
+    {
+      "paper_id": "202604/13/2604.09391v1-efficient-unlearning-through-maximizing-relearning-convergence-delay",
+      "section": "deep",
+      "title_en": "Efficient Unlearning through Maximizing Relearning Convergence Delay",
+      "authors": "Khoa Tran, Simon S. Woo",
+      "date": "2026-04-10",
+      "pdf": "https://arxiv.org/pdf/2604.09391v1",
+      "score": "10.0",
+      "evidence": "高效的遗忘框架，用于消除遗忘集的影响",
+      "tldr": "针对现有机器卸载方法仅关注预测结果而忽略权重空间特性的局限，本文提出“重学习收敛延迟”指标，用于评估模型对遗忘数据的真实遗忘程度及恢复风险。基于此，提出“影响消除卸载”框架，通过性能降级、权重衰减和噪声注入，在保持保留集准确率的同时，有效移除遗忘集影响。实验证明该方法在分类和生成任务中均接近理想卸载效果，具有较强的抗恢复能力。",
+      "tags": "query:mu-ce",
+      "abstract_en": "Machine unlearning poses challenges in removing mislabeled, contaminated, or problematic data from a pretrained model. Current unlearning approaches and evaluation metrics are solely focused on model predictions, which limits insight into the model's true underlying data characteristics. To address this issue, we introduce a new metric called relearning convergence delay, which captures both changes in weight space and prediction space, providing a more comprehensive assessment of the model's understanding of the forgotten dataset. This metric can be used to assess the risk of forgotten data being recovered from the unlearned model. Based on this, we propose the Influence Eliminating Unlearning framework, which removes the influence of the forgetting set by degrading its performance and incorporates weight decay and injecting noise into the model's weights, while maintaining accuracy on the retaining set. Extensive experiments show that our method outperforms existing metrics and our proposed relearning convergence delay metric, approaching ideal unlearning performance. We provide theoretical guarantees, including exponential convergence and upper bounds, as well as empirical evidence of strong retention and resistance to relearning in both classification and generative unlearning tasks.",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202604/13/2604.09213v1-shift-steering-hidden-intermediates-in-flow-transformers",
+      "section": "deep",
+      "title_en": "SHIFT: Steering Hidden Intermediates in Flow Transformers",
+      "authors": "Nina Konovalova, Andrey Kuznetsov, Aibek Alanov",
+      "date": "2026-04-10",
+      "pdf": "https://arxiv.org/pdf/2604.09213v1",
+      "score": "9.0",
+      "evidence": "通过激活引导在DiT扩散模型中进行概念移除",
+      "tldr": "本文提出针对DiT架构扩散模型的轻量级框架SHIFT，通过在推理阶段动态干预中间层激活值来实现概念擦除与风格引导。该方法受大语言模型激活转向启发，通过学习转向向量并将其应用于特定层和时间步，无需重新训练即可有效抑制特定视觉概念、转换图像风格或修改目标物体，在保持生成质量的同时提供了灵活的控制能力。",
+      "tags": "query:mu-ce",
+      "abstract_en": "Diffusion models have become leading approaches for high-fidelity image generation. Recent DiT-based diffusion models, in particular, achieve strong prompt adherence while producing high-quality samples. We propose SHIFT, a simple but effective and lightweight framework for concept removal in DiT diffusion models via targeted manipulation of intermediate activations at inference time, inspired by activation steering in large language models. SHIFT learns steering vectors that are dynamically applied to selected layers and timesteps to suppress unwanted visual concepts while preserving the prompt's remaining content and overall image quality. Beyond suppression, the same mechanism can shift generations into a desired \\emph{style domain} or bias samples toward adding or changing target objects. We demonstrate that SHIFT provides effective and flexible control over DiT generation across diverse prompts and targets without time-consuming retraining.",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202604/13/2604.09405v1-egloce-training-free-energy-guided-latent-optimization-for-concept-erasure",
+      "section": "deep",
+      "title_en": "EGLOCE: Training-Free Energy-Guided Latent Optimization for Concept Erasure",
+      "authors": "Junyeong Ahn, Seojin Yoon, Sungyong Baik",
+      "date": "2026-04-10",
+      "pdf": "https://arxiv.org/pdf/2604.09405v1",
+      "score": "9.0",
+      "evidence": "扩散模型中无需训练的概念擦除方法",
+      "tldr": "针对文本生成图像模型中特定概念（如版权或违规内容）擦除的需求，本文提出了一种无需训练的推理阶段优化方法 EGLOCE。该方法通过双重能量引导框架，在采样过程中利用排斥能量远离目标概念，同时利用保留能量维持原始提示词的语义一致性。EGLOCE 实现了即插即用的概念擦除，在保持图像质量的同时显著提升了擦除效果和抗攻击能力，为安全可控的图像生成提供了新范式。",
+      "tags": "query:mu-ce",
+      "abstract_en": "As text-to-image diffusion models grow increasingly prevalent, the ability to remove specific concepts-mostly explicit content and many copyrighted characters or styles-has become essential for safety and compliance. Existing unlearning approaches often require costly re-training, modify parameters at the cost of degradation of unrelated concept fidelity, or depend on indirect inference-time adjustment that compromise the effectiveness of concept erasure. Inspired by the success of energy-guided sampling for preservation of the condition of diffusion models, we introduce Energy-Guided Latent Optimization for Concept Erasure (EGLOCE), a training-free approach that removes unwanted concepts by re-directing noisy latent during inference. Our method employs a dual-objective framework: a repulsion energy that steers generation away from target concepts via gradient descent in latent space, and a retention energy that preserves semantic alignment to the original prompt. Combined with previous approaches that either require erroneous modified model weights or provide weak inference-time guidance, EGLOCE operates entirely at inference and enhances erasure performance, enabling plug-and-play integration. Extensive experiments demonstrate that EGLOCE improves concept removal while maintaining image quality and prompt alignment across baselines, even with adversarial attacks. To the best of our knowledge, our work is the first to establish a new paradigm for safe and controllable image generation through dual energy-based guidance during sampling.",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

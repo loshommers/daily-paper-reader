@@ -1,0 +1,122 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-04-13T20:23:41.347165+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 3,
+    "deep_cap": 6,
+    "deep_selected": 3,
+    "quick_candidates": 0,
+    "quick_skim_target": 11,
+    "quick_selected": 0
+  },
+  "deep_dive": [
+    {
+      "id": "2604.09391v1",
+      "title": "Efficient Unlearning through Maximizing Relearning Convergence Delay",
+      "abstract": "Machine unlearning poses challenges in removing mislabeled, contaminated, or problematic data from a pretrained model. Current unlearning approaches and evaluation metrics are solely focused on model predictions, which limits insight into the model's true underlying data characteristics. To address this issue, we introduce a new metric called relearning convergence delay, which captures both changes in weight space and prediction space, providing a more comprehensive assessment of the model's understanding of the forgotten dataset. This metric can be used to assess the risk of forgotten data being recovered from the unlearned model. Based on this, we propose the Influence Eliminating Unlearning framework, which removes the influence of the forgetting set by degrading its performance and incorporates weight decay and injecting noise into the model's weights, while maintaining accuracy on the retaining set. Extensive experiments show that our method outperforms existing metrics and our proposed relearning convergence delay metric, approaching ideal unlearning performance. We provide theoretical guarantees, including exponential convergence and upper bounds, as well as empirical evidence of strong retention and resistance to relearning in both classification and generative unlearning tasks.",
+      "authors": [
+        "Khoa Tran",
+        "Simon S. Woo"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.CV"
+      ],
+      "published": "2026-04-10T15:06:50+00:00",
+      "link": "https://arxiv.org/pdf/2604.09391v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "Efficient unlearning framework to remove influence of forgetting set",
+      "llm_evidence_cn": "高效的遗忘框架，用于消除遗忘集的影响",
+      "llm_evidence": "高效的遗忘框架，用于消除遗忘集的影响",
+      "canonical_evidence": "高效的遗忘框架，用于消除遗忘集的影响",
+      "llm_tldr_en": "Introduces relearning convergence delay as a metric and framework for efficient and verifiable machine unlearning.",
+      "llm_tldr_cn": "引入重学习收敛延迟作为度量标准，并提出了一种高效且可验证的机器遗忘框架。",
+      "llm_tldr": "引入重学习收敛延迟作为度量标准，并提出了一种高效且可验证的机器遗忘框架。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Efficient data removal from trained machine learning models",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.09213v1",
+      "title": "SHIFT: Steering Hidden Intermediates in Flow Transformers",
+      "abstract": "Diffusion models have become leading approaches for high-fidelity image generation. Recent DiT-based diffusion models, in particular, achieve strong prompt adherence while producing high-quality samples. We propose SHIFT, a simple but effective and lightweight framework for concept removal in DiT diffusion models via targeted manipulation of intermediate activations at inference time, inspired by activation steering in large language models. SHIFT learns steering vectors that are dynamically applied to selected layers and timesteps to suppress unwanted visual concepts while preserving the prompt's remaining content and overall image quality. Beyond suppression, the same mechanism can shift generations into a desired \\emph{style domain} or bias samples toward adding or changing target objects. We demonstrate that SHIFT provides effective and flexible control over DiT generation across diverse prompts and targets without time-consuming retraining.",
+      "authors": [
+        "Nina Konovalova",
+        "Andrey Kuznetsov",
+        "Aibek Alanov"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-04-10T11:07:33+00:00",
+      "link": "https://arxiv.org/pdf/2604.09213v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "concept removal in DiT diffusion models via activation steering",
+      "llm_evidence_cn": "通过激活引导在DiT扩散模型中进行概念移除",
+      "llm_evidence": "通过激活引导在DiT扩散模型中进行概念移除",
+      "canonical_evidence": "通过激活引导在DiT扩散模型中进行概念移除",
+      "llm_tldr_en": "Proposes SHIFT, a lightweight framework for removing concepts from diffusion models using inference-time steering.",
+      "llm_tldr_cn": "提出SHIFT框架，通过推理时激活引导轻量化地移除扩散模型中的特定概念。",
+      "llm_tldr": "提出SHIFT框架，通过推理时激活引导轻量化地移除扩散模型中的特定概念。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Concept erasure and removal from pre-trained models",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.09405v1",
+      "title": "EGLOCE: Training-Free Energy-Guided Latent Optimization for Concept Erasure",
+      "abstract": "As text-to-image diffusion models grow increasingly prevalent, the ability to remove specific concepts-mostly explicit content and many copyrighted characters or styles-has become essential for safety and compliance. Existing unlearning approaches often require costly re-training, modify parameters at the cost of degradation of unrelated concept fidelity, or depend on indirect inference-time adjustment that compromise the effectiveness of concept erasure. Inspired by the success of energy-guided sampling for preservation of the condition of diffusion models, we introduce Energy-Guided Latent Optimization for Concept Erasure (EGLOCE), a training-free approach that removes unwanted concepts by re-directing noisy latent during inference. Our method employs a dual-objective framework: a repulsion energy that steers generation away from target concepts via gradient descent in latent space, and a retention energy that preserves semantic alignment to the original prompt. Combined with previous approaches that either require erroneous modified model weights or provide weak inference-time guidance, EGLOCE operates entirely at inference and enhances erasure performance, enabling plug-and-play integration. Extensive experiments demonstrate that EGLOCE improves concept removal while maintaining image quality and prompt alignment across baselines, even with adversarial attacks. To the best of our knowledge, our work is the first to establish a new paradigm for safe and controllable image generation through dual energy-based guidance during sampling.",
+      "authors": [
+        "Junyeong Ahn",
+        "Seojin Yoon",
+        "Sungyong Baik"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-04-10T15:19:02+00:00",
+      "link": "https://arxiv.org/pdf/2604.09405v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "training-free approach for concept erasure in diffusion models",
+      "llm_evidence_cn": "扩散模型中无需训练的概念擦除方法",
+      "llm_evidence": "扩散模型中无需训练的概念擦除方法",
+      "canonical_evidence": "扩散模型中无需训练的概念擦除方法",
+      "llm_tldr_en": "Presents EGLOCE, a training-free method to erase concepts in diffusion models by optimizing noisy latents.",
+      "llm_tldr_cn": "提出EGLOCE，一种无需训练的方法，通过优化噪声潜变量来擦除扩散模型中的概念。",
+      "llm_tldr": "提出EGLOCE，一种无需训练的方法，通过优化噪声潜变量来擦除扩散模型中的概念。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Concept erasure and removal from pre-trained models",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": []
+}
