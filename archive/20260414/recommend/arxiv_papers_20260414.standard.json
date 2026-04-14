@@ -1,0 +1,426 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-04-14T19:55:39.333135+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 6,
+    "deep_cap": 6,
+    "deep_selected": 6,
+    "quick_candidates": 5,
+    "quick_skim_target": 11,
+    "quick_selected": 5
+  },
+  "deep_dive": [
+    {
+      "id": "2604.10032v1",
+      "title": "Closed-Form Concept Erasure via Double Projections",
+      "abstract": "While modern generative models such as diffusion-based architectures have enabled impressive creative capabilities, they also raise important safety and ethical risks. These concerns have led to growing interest in concept erasure, the process of removing unwanted concepts from model representations. Existing approaches often achieve strong erasure performance but rely on iterative optimization and may inadvertently distort unrelated concepts. In this work, we present a simple yet principled alternative: a linear transformation framework that achieves concept erasure analytically, without any training. Our method adapts a pretrained model through two sequential, closed-form steps: first, computing a proxy projection of the target concept, and second, applying a constrained transformation within the left null space of known concept directions. This design yields a deterministic and geometrically interpretable procedure for safe, efficient, and theory-grounded concept removal. Across a wide range of experiments, including object and style erasure on multiple Stable Diffusion variants and the flow-matching model (FLUX), our approach matches or surpasses the performance of state-of-the-art methods while preserving non-target concepts more faithfully. Requiring only a few seconds to apply, it offers a lightweight and drop-in tool for controlled model editing, advancing the goal of safer and more responsible generative models.",
+      "authors": [
+        "Chi Zhang",
+        "Jingpu Cheng",
+        "Zhixian Wang",
+        "Ping Liu"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-04-11T05:06:15+00:00",
+      "link": "https://arxiv.org/pdf/2604.10032v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "Closed-form concept erasure via linear transformation without training",
+      "llm_evidence_cn": "通过线性变换实现无需训练的闭式概念擦除",
+      "llm_evidence": "通过线性变换实现无需训练的闭式概念擦除",
+      "canonical_evidence": "通过线性变换实现无需训练的闭式概念擦除",
+      "llm_tldr_en": "Introduces a training-free, analytical linear transformation method for efficient concept erasure.",
+      "llm_tldr_cn": "引入一种无需训练的解析线性变换方法，用于高效擦除模型中的特定概念。",
+      "llm_tldr": "引入一种无需训练的解析线性变换方法，用于高效擦除模型中的特定概念。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Concept erasure and removal from pre-trained models",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.10636v1",
+      "title": "Mitigating Privacy Risk via Forget Set-Free Unlearning",
+      "abstract": "Training machine learning models requires the storage of large datasets, which often contain sensitive or private data. Storing data is associated with a number of potential risks which increase over time, such as database breaches and malicious adversaries. Machine unlearning is the study of methods to efficiently remove the influence of training data subsets from previously-trained models. Existing unlearning methods typically require direct access to the \"forget set\" -- the data to be forgotten-and organisations must retain this data for unlearning rather than deleting it immediately upon request, increasing risks associated with the forget set. We introduce partially-blind unlearning -- utilizing auxiliary information to unlearn without explicit access to the forget set. We also propose a practical framework Reload, a partially-blind method based on gradient optimization and structured weight sparsification to operationalize partially-blind unlearning. We show that Reload efficiently unlearns, approximating models retrained from scratch, and outperforms several forget set-dependent approaches. On language models, Reload unlearns entities using <0.025% of the retain set and <7% of model weights in <8 minutes on Llama2-7B. In the corrective case, Reload achieves unlearning even when only 10% of corrupted data is identified.",
+      "authors": [
+        "Aviraj Newatia",
+        "Michael Cooper",
+        "Viet Nguyen",
+        "Rahul G. Krishnan"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-04-12T13:24:40+00:00",
+      "link": "https://arxiv.org/pdf/2604.10636v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "forget set-free unlearning without explicit access to data to be forgotten",
+      "llm_evidence_cn": "无需显式访问待遗忘数据的无遗忘集机器遗忘",
+      "llm_evidence": "无需显式访问待遗忘数据的无遗忘集机器遗忘",
+      "canonical_evidence": "无需显式访问待遗忘数据的无遗忘集机器遗忘",
+      "llm_tldr_en": "Introduces partially-blind unlearning to remove data influence without requiring access to the forget set.",
+      "llm_tldr_cn": "提出部分盲遗忘方法，在无需直接访问待遗忘数据集的情况下高效移除数据影响。",
+      "llm_tldr": "提出部分盲遗忘方法，在无需直接访问待遗忘数据集的情况下高效移除数据影响。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Machine unlearning techniques and algorithms in deep learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.11214v1",
+      "title": "HiEdit: Lifelong Model Editing with Hierarchical Reinforcement Learning",
+      "abstract": "Lifelong model editing (LME) aims to sequentially rectify outdated or inaccurate knowledge in deployed LLMs while minimizing side effects on unrelated inputs. However, existing approaches typically apply parameter perturbations to a static and dense set of LLM layers for all editing instances. This practice is counter-intuitive, as we hypothesize that different pieces of knowledge are stored in distinct layers of the model. Neglecting this layer-wise specificity can impede adaptability in integrating new knowledge and result in catastrophic forgetting for both general and previously edited knowledge. To address this, we propose HiEdit, a hierarchical reinforcement learning framework that adaptively identifies the most knowledge-relevant layers for each editing instance. By enabling dynamic, instance-aware layer selection and incorporating an intrinsic reward for sparsity, HiEdit achieves precise, localized updates. Experiments on various LLMs show that HiEdit boosts the performance of the competitive RLEdit by an average of 8.48% with perturbing only half of the layers per edit. Our code is available at: https://github.com/yangfanww/hiedit.",
+      "authors": [
+        "Yangfan Wang",
+        "Tianyang Sun",
+        "Chen Tang",
+        "Jie Liu",
+        "Wei Cai",
+        "Jingchi Jiang"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-04-13T09:08:57+00:00",
+      "link": "https://arxiv.org/pdf/2604.11214v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "lifelong model editing to rectify outdated knowledge",
+      "llm_evidence_cn": "纠正过时知识的终身模型编辑",
+      "llm_evidence": "纠正过时知识的终身模型编辑",
+      "canonical_evidence": "纠正过时知识的终身模型编辑",
+      "llm_tldr_en": "A hierarchical reinforcement learning framework for adaptive layer-wise model editing to update LLM knowledge.",
+      "llm_tldr_cn": "一种分层强化学习框架，用于自适应逐层模型编辑以更新大语言模型知识。",
+      "llm_tldr": "一种分层强化学习框架，用于自适应逐层模型编辑以更新大语言模型知识。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Model editing for knowledge update and correction",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.08284v1",
+      "title": "Distributed Multi-Layer Editing for Rule-Level Knowledge in Large Language Models",
+      "abstract": "Large language models store not only isolated facts but also rules that support reasoning across symbolic expressions, natural language explanations, and concrete instances. Yet most model editing methods are built for fact-level knowledge, assuming that a target edit can be achieved through a localized intervention. This assumption does not hold for rule-level knowledge, where a single rule must remain consistent across multiple interdependent forms. We investigate this problem through a mechanistic study of rule-level knowledge editing. To support this study, we extend the RuleEdit benchmark from 80 to 200 manually verified rules spanning mathematics and physics. Fine-grained causal tracing reveals a form-specific organization of rule knowledge in transformer layers: formulas and descriptions are concentrated in earlier layers, while instances are more associated with middle layers. These results suggest that rule knowledge is not uniformly localized, and therefore cannot be reliably edited by a single-layer or contiguous-block intervention. Based on this insight, we propose Distributed Multi-Layer Editing (DMLE), which applies a shared early-layer update to formulas and descriptions and a separate middle-layer update to instances. While remaining competitive on standard editing metrics, DMLE achieves substantially stronger rule-level editing performance. On average, it improves instance portability and rule understanding by 13.91 and 50.19 percentage points, respectively, over the strongest baseline across GPT-J-6B, Qwen2.5-7B, Qwen2-7B, and LLaMA-3-8B. The code is available at https://github.com/Pepper66/DMLE.",
+      "authors": [
+        "Yating Wang",
+        "Wenting Zhao",
+        "Yaqi Zhao",
+        "Yongshun Gong",
+        "Yilong Yin",
+        "Haoliang Sun"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI"
+      ],
+      "published": "2026-04-09T14:22:19+00:00",
+      "link": "https://arxiv.org/pdf/2604.08284v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "model editing for rule-level knowledge in LLMs",
+      "llm_evidence_cn": "大语言模型中规则级知识的模型编辑",
+      "llm_evidence": "大语言模型中规则级知识的模型编辑",
+      "canonical_evidence": "大语言模型中规则级知识的模型编辑",
+      "llm_tldr_en": "Investigates mechanistic editing of rule-level knowledge in LLMs to ensure consistency across interdependent forms.",
+      "llm_tldr_cn": "研究大语言模型中规则级知识的机制编辑，以确保相互依赖形式之间的一致性。",
+      "llm_tldr": "研究大语言模型中规则级知识的机制编辑，以确保相互依赖形式之间的一致性。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Model editing for knowledge update and correction",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.11511v1",
+      "title": "The Price of Ignorance: Information-Free Quotation for Data Retention in Machine Unlearning",
+      "abstract": "When users exercise data deletion rights under the General Data Protection Regulation (GDPR) and similar regulations, mobile network operators face a tradeoff: excessive machine unlearning degrades model accuracy and incurs retraining costs, yet existing pricing mechanisms for data retention require the server to know every user's private privacy and accuracy preferences, which is infeasible under the very regulations that motivate unlearning. We ask: what is the welfare cost of operating without this private information? We design an information-free ascending quotation mechanism where the server broadcasts progressively higher prices and users self-select their data supply, requiring no knowledge of users' parameters. Under complete information, the protocol admits a unique subgame-perfect Nash equilibrium characterized by single-period selling. We formalize the Price of Ignorance -- the welfare gap between optimal personalized pricing (which knows everything) and our information-free quotation (which knows nothing) -- and prove a three-regime efficiency ordering. Numerical evaluation across seven mechanisms and 5000 Monte Carlo runs shows that this price is near zero: the information-free mechanism achieves >=99% of the welfare of its information-intensive benchmarks, while providing noise-robust guarantees and comparable fairness.",
+      "authors": [
+        "Bin Han",
+        "Di Feng",
+        "Zexin Fang",
+        "Jie Wang",
+        "Hans D. Schotten"
+      ],
+      "primary_category": "cs.GT",
+      "categories": [
+        "cs.GT",
+        "cs.LG"
+      ],
+      "published": "2026-04-13T14:14:35+00:00",
+      "link": "https://arxiv.org/pdf/2604.11511v1",
+      "tags": [
+        "keyword:MU CE"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "data deletion rights under GDPR and machine unlearning tradeoffs",
+      "llm_evidence_cn": "GDPR下的数据删除权与机器遗忘权衡",
+      "llm_evidence": "GDPR下的数据删除权与机器遗忘权衡",
+      "canonical_evidence": "GDPR下的数据删除权与机器遗忘权衡",
+      "llm_tldr_en": "Proposes an information-free mechanism for data retention pricing to balance GDPR compliance and unlearning costs.",
+      "llm_tldr_cn": "提出一种无信息定价机制，在满足GDPR删除权的同时平衡机器遗忘的成本与模型精度。",
+      "llm_tldr": "提出一种无信息定价机制，在满足GDPR删除权的同时平衡机器遗忘的成本与模型精度。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Privacy-preserving machine learning and the right to be forgotten",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.11250v1",
+      "title": "Variational Latent Entropy Estimation Disentanglement: Controlled Attribute Leakage for Face Recognition",
+      "abstract": "Face recognition embeddings encode identity, but they also encode other factors such as gender and ethnicity. Depending on how these factors are used by a downstream system, separating them from the information needed for verification is important for both privacy and fairness. We propose Variational Latent Entropy Estimation Disentanglement (VLEED), a post-hoc method that transforms pretrained embeddings with a variational autoencoder and encourages a distilled representation where the categorical variable of interest is separated from identity-relevant information. VLEED uses a mutual information-based objective realised through the estimation of the entropy of the categorical attribute in the latent space, and provides stable training with fine-grained control over information removal. We evaluate our method on IJB-C, RFW, and VGGFace2 for gender and ethnicity disentanglement, and compare it to various state-of-the-art methods. We report verification utility, predictability of the disentangled variable under linear and nonlinear classifiers, and group disparity metrics based on false match rates. Our results show that VLEED offers a wide range of privacy-utility tradeoffs over existing methods and can also reduce recognition bias across demographic groups.",
+      "authors": [
+        "Ünsal Öztürk",
+        "Vedrana Krivokuća Hahn",
+        "Sushil Bhattacharjee",
+        "Sébastien Marcel"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-04-13T10:01:48+00:00",
+      "link": "https://arxiv.org/pdf/2604.11250v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "removing sensitive attributes from face recognition embeddings",
+      "llm_evidence_cn": "从人脸识别嵌入中移除敏感属性",
+      "llm_evidence": "从人脸识别嵌入中移除敏感属性",
+      "canonical_evidence": "从人脸识别嵌入中移除敏感属性",
+      "llm_tldr_en": "Proposes a method to disentangle and remove sensitive attributes like gender from pretrained face embeddings.",
+      "llm_tldr_cn": "提出一种从预训练人脸嵌入中解耦并移除性别等敏感属性的方法，以保护隐私。",
+      "llm_tldr": "提出一种从预训练人脸嵌入中解耦并移除性别等敏感属性的方法，以保护隐私。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Algorithms for removing sensitive information from neural networks",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2604.08336v1",
+      "title": "Leveraging Complementary Embeddings for Replay Selection in Continual Learning with Small Buffers",
+      "abstract": "Catastrophic forgetting remains a key challenge in Continual Learning (CL). In replay-based CL with severe memory constraints, performance critically depends on the sample selection strategy for the replay buffer. Most existing approaches construct memory buffers using embeddings learned under supervised objectives. However, class-agnostic, self-supervised representations often encode rich, class-relevant semantics that are overlooked. We propose a new method, Multiple Embedding Replay Selection, MERS, which replaces the buffer selection module with a graph-based approach that integrates both supervised and self-supervised embeddings. Empirical results show consistent improvements over SOTA selection strategies across a range of continual learning algorithms, with particularly strong gains in low-memory regimes. On CIFAR-100 and TinyImageNet, MERS outperforms single-embedding baselines without adding model parameters or increasing replay volume, making it a practical, drop-in enhancement for replay-based continual learning.",
+      "authors": [
+        "Danit Yanowsky",
+        "Daphna Weinshall"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-04-09T15:09:02+00:00",
+      "link": "https://arxiv.org/pdf/2604.08336v1",
+      "tags": [
+        "keyword:MU CE"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "addressing catastrophic forgetting in continual learning",
+      "llm_evidence_cn": "解决持续学习中的灾难性遗忘",
+      "llm_evidence": "解决持续学习中的灾难性遗忘",
+      "canonical_evidence": "解决持续学习中的灾难性遗忘",
+      "llm_tldr_en": "Proposes a replay selection method using complementary embeddings to mitigate forgetting in continual learning.",
+      "llm_tldr_cn": "提出一种利用互补嵌入的重放选择方法，以减轻持续学习中的遗忘问题。",
+      "llm_tldr": "提出一种利用互补嵌入的重放选择方法，以减轻持续学习中的遗忘问题。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Selective forgetting in neural networks",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2604.11508v1",
+      "title": "Not All Forgetting Is Equal: Architecture-Dependent Retention Dynamics in Fine-Tuned Image Classifiers",
+      "abstract": "Fine-tuning pretrained image classifiers is standard practice, yet which individual samples are forgotten during this process, and whether forgetting patterns are stable or architecture dependent, remains unclear. Understanding these dynamics has direct implications for curriculum design, data pruning, and ensemble construction. We track per-sample correctness at every epoch during fine-tuning of ResNet-18 and DeiT-Small on a retinal OCT dataset (7 classes, 56:1 imbalance) and CUB-200-2011 (200 bird species), fitting Ebbinghaus-style exponential decay curves to each sample's retention trace. Five findings emerge. First, the two architectures forget fundamentally different samples: Jaccard overlap of the top 10 percent most-forgotten is 0.34 on OCTDL and 0.15 on CUB-200. Second, ViT forgetting is more structured (mean $R^2 = 0.74$) than CNN forgetting ($R^2 = 0.52$). Third, per-sample forgetting is stochastic across random seeds (Spearman $ρ\\approx 0.01$), challenging the assumption that sample difficulty is an intrinsic property. Fourth, class-level forgetting is consistent and semantically interpretable: visually similar species are forgotten most, distinctive ones least. Fifth, a sample's loss after head warmup predicts its long-term decay constant ($ρ= 0.30$ to $0.50$, $p < 10^{-45}$). These findings suggest that architectural diversity in ensembles provides complementary retention coverage, and that curriculum or pruning methods based on per-sample difficulty may not generalize across runs. A spaced repetition sampler built on these decay constants does not outperform random sampling, indicating that static scheduling cannot exploit unstable per-sample signals.",
+      "authors": [
+        "Miit Daga",
+        "Swarna Priya Ramu"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-04-13T14:11:47+00:00",
+      "link": "https://arxiv.org/pdf/2604.11508v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "tracking per-sample forgetting patterns during fine-tuning",
+      "llm_evidence_cn": "追踪微调过程中的样本遗忘模式",
+      "llm_evidence": "追踪微调过程中的样本遗忘模式",
+      "canonical_evidence": "追踪微调过程中的样本遗忘模式",
+      "llm_tldr_en": "Analyzes how different architectures forget specific samples during fine-tuning, relevant to retention dynamics.",
+      "llm_tldr_cn": "分析了不同架构在微调过程中对特定样本的遗忘动态，探讨了遗忘模式的稳定性。",
+      "llm_tldr": "分析了不同架构在微调过程中对特定样本的遗忘动态，探讨了遗忘模式的稳定性。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Selective forgetting in neural networks",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2604.10145v1",
+      "title": "Mask-Free Privacy Extraction and Rewriting: A Domain-Aware Approach via Prototype Learning",
+      "abstract": "Client-side privacy rewriting is crucial for deploying LLMs in privacy-sensitive domains. However, existing approaches struggle to balance privacy and utility. Full-text methods often distort context, while span-level approaches rely on impractical manual masks or brittle static dictionaries. Attempts to automate localization via prompt-based LLMs prove unreliable, as they suffer from unstable instruction following that leads to privacy leakage and excessive context scrubbing. To address these limitations, we propose DAMPER (Domain-Aware Mask-free Privacy Extraction and Rewriting). DAMPER operationalizes latent privacy semantics into compact Domain Privacy Prototypes via contrastive learning, enabling precise, autonomous span localization. Furthermore, we introduce a Prototype-Guided Preference Alignment, which leverages learned prototypes as semantic anchors to construct preference pairs, optimizing a domain-compliant rewriting policy without human annotations. At inference time, DAMPER integrates a sampling-based Exponential Mechanism to provide rigorous span-level Differential Privacy (DP) guarantees. Extensive experiments demonstrate that DAMPER significantly outperforms existing baselines, achieving a superior privacy-utility trade-off.",
+      "authors": [
+        "Xiaodong Li",
+        "Yuhua Wang",
+        "Qingchen Yu",
+        "Zixuan Qin",
+        "Yifan Sun",
+        "Qinnan Zhang",
+        "Hainan Zhang",
+        "Zhiming Zheng"
+      ],
+      "primary_category": "cs.CR",
+      "categories": [
+        "cs.CR"
+      ],
+      "published": "2026-04-11T10:21:00+00:00",
+      "link": "https://arxiv.org/pdf/2604.10145v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "autonomous span localization and rewriting for privacy semantics",
+      "llm_evidence_cn": "针对隐私语义的自主跨度定位与重写",
+      "llm_evidence": "针对隐私语义的自主跨度定位与重写",
+      "canonical_evidence": "针对隐私语义的自主跨度定位与重写",
+      "llm_tldr_en": "Proposes DAMPER for precise, mask-free privacy extraction and rewriting in LLMs using prototype learning.",
+      "llm_tldr_cn": "提出DAMPER框架，通过原型学习实现大语言模型中精确且无需掩码的隐私提取与重写。",
+      "llm_tldr": "提出DAMPER框架，通过原型学习实现大语言模型中精确且无需掩码的隐私提取与重写。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Algorithms for removing sensitive information from neural networks",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2604.11704v1",
+      "title": "Fairness is Not Flat: Geometric Phase Transitions Against Shortcut Learning",
+      "abstract": "Deep Neural Networks are highly susceptible to shortcut learning, frequently memorizing low-dimensional spurious correlations instead of underlying causal mechanisms. This phenomenon not only degrades out-of-distribution robustness but also induces severe demographic biases in sensitive applications. In this paper, we propose a geometric \\textit{a priori} methodology to mitigate shortcut learning. By deploying a zero-hidden-layer ($N=1$) Topological Auditor, we mathematically isolate features that monopolize the gradient without human intervention. We empirically demonstrate a Capacity Phase Transition: once linear shortcuts are pruned, networks are forced to utilize higher geometric capacity ($N \\geq 16$) to curve the decision boundary and learn ethical representations. Our approach outperforms L1 Regularization -- which collapses into demographic bias -- and operates at a fraction of the computational cost of post-hoc methods like Just Train Twice (JTT), successfully reducing counterfactual gender vulnerability from 21.18\\% to 7.66\\%.",
+      "authors": [
+        "Nicolas Rodriguez-Alvarez",
+        "Fernando Rodriguez-Merino"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-04-13T16:40:26+00:00",
+      "link": "https://arxiv.org/pdf/2604.11704v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "isolating and pruning features that cause shortcut learning",
+      "llm_evidence_cn": "隔离并剪枝导致捷径学习的特征",
+      "llm_evidence": "隔离并剪枝导致捷径学习的特征",
+      "canonical_evidence": "隔离并剪枝导致捷径学习的特征",
+      "llm_tldr_en": "Proposes a geometric methodology to isolate and prune linear shortcuts to mitigate demographic biases in DNNs.",
+      "llm_tldr_cn": "提出一种几何方法来隔离和剪枝线性捷径，以减轻深度神经网络中的人口统计偏见。",
+      "llm_tldr": "提出一种几何方法来隔离和剪枝线性捷径，以减轻深度神经网络中的人口统计偏见。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Concept erasure and removal from pre-trained models",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2604.11306v1",
+      "title": "Learning to Forget -- Hierarchical Episodic Memory for Lifelong Robot Deployment",
+      "abstract": "Robots must verbalize their past experiences when users ask \"Where did you put my keys?\" or \"Why did the task fail?\" Yet maintaining life-long episodic memory (EM) from continuous multimodal perception quickly exceeds storage limits and makes real-time query impractical, calling for selective forgetting that adapts to users' notions of relevance. We present H$^2$-EMV, a framework enabling humanoids to learn what to remember through user interaction. Our approach incrementally constructs hierarchical EM, selectively forgets using language-model-based relevance estimation conditioned on learned natural-language rules, and updates these rules given user feedback about forgotten details. Evaluations on simulated household tasks and 20.5-hour-long real-world recordings from ARMAR-7 demonstrate that H$^2$-EMV maintains question-answering accuracy while reducing memory size by 45% and query-time compute by 35%. Critically, performance improves over time - accuracy increases 70% in second-round queries by adapting to user-specific priorities - demonstrating that learned forgetting enables scalable, personalized EM for long-term human-robot collaboration.",
+      "authors": [
+        "Leonard Bärmann",
+        "Joana Plewnia",
+        "Alex Waibel",
+        "Tamim Asfour"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI"
+      ],
+      "published": "2026-04-13T11:06:56+00:00",
+      "link": "https://arxiv.org/pdf/2604.11306v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "selective forgetting in episodic memory for robots",
+      "llm_evidence_cn": "机器人情境记忆中的选择性遗忘",
+      "llm_evidence": "机器人情境记忆中的选择性遗忘",
+      "canonical_evidence": "机器人情境记忆中的选择性遗忘",
+      "llm_tldr_en": "Introduces a framework for robots to selectively forget episodic memories based on user-defined relevance.",
+      "llm_tldr_cn": "介绍了一个机器人框架，使其能根据用户定义的关联性有选择地遗忘情境记忆。",
+      "llm_tldr": "介绍了一个机器人框架，使其能根据用户定义的关联性有选择地遗忘情境记忆。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Selective forgetting in neural networks",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}

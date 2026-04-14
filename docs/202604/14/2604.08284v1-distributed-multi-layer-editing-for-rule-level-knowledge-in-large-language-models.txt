@@ -1,0 +1,426 @@
+Title: Distributed Multi-Layer Editing for Rule-Level Knowledge in Large Language Models
+
+URL Source: https://arxiv.org/pdf/2604.08284v1
+
+Published Time: Fri, 10 Apr 2026 01:11:00 GMT
+
+Number of Pages: 17
+
+Markdown Content:
+Preprint. Under review. 
+
+# Distributed Multi-Layer Editing for Rule-Level Knowledge in Large Language Models 
+
+Yating Wang 1, Wenting Zhao 2, Yaqi Zhao 1, Yongshun Gong 1, Yilong Yin 1,Haoliang Sun 11School of Software, Shandong University, Jinan, China 
+
+> 2
+
+Salesforce AI Research 
+
+# Abstract 
+
+Large language models store not only isolated facts but also rules that support reasoning across symbolic expressions, natural language explana-tions, and concrete instances. Yet most model editing methods are built for fact-level knowledge, assuming that a target edit can be achieved through a localized intervention. This assumption does not hold for rule-level knowledge, where a single rule must remain consistent across multiple interdependent forms. We investigate this problem through a mechanistic study of rule-level knowledge editing. To support this study, we extend the RuleEdit benchmark from 80 to 200 manually verified rules spanning math-ematics and physics. Fine-grained causal tracing reveals a form-specific organization of rule knowledge in transformer layers: formulas and descrip-tions are concentrated in earlier layers, while instances are more associated with middle layers. These results suggest that rule knowledge is not uni-formly localized, and therefore cannot be reliably edited by a single-layer or contiguous-block intervention. Based on this insight, we propose Dis-tributed Multi-Layer Editing (DMLE), which applies a shared early-layer update to formulas and descriptions and a separate middle-layer update to instances. While remaining competitive on standard editing metrics, DMLE achieves substantially stronger rule-level editing performance. On average, it improves instance portability and rule understanding by 13.91 and 50.19 percentage points, respectively, over the strongest baseline across GPT-J-6B, Qwen2.5-7B, Qwen2-7B, and LLaMA-3-8B. The code is available at https://github.com/Pepper66/DMLE. 
+
+# 1 Introduction 
+
+Model editing aims to update large language models (LLMs) with fresh, corrected, or domain-specific knowledge without the high cost of full retraining (Mitchell et al., 2021; Meng et al., 2022a;b; Fang et al., 2024; Li et al., 2025; Deng et al., 2025). Most existing methods, however, focus on fact-level knowledge, where the editing target is typically a single factual association. In this setting, influential locate-then-edit methods such as ROME and MEMIT assume that a target edit can be achieved through a localized intervention on the model’s parameters (Meng et al., 2022a;b). While effective for many factual edits, it remains unclear whether this assumption holds for more structured knowledge. Beyond isolated facts, LLMs also encode rules that support mathematical and scientific reasoning. Unlike a single fact tuple, a rule must remain consistent across multiple inter-dependent forms, including formulas, descriptions, and instances. Rule-level editing is therefore more challenging than standard fact editing: existing approaches often fail to propagate edits coherently across these forms (Zhang et al., 2026), suggesting that rule knowledge might not be as localized as facts. Instead, different forms may rely on distinct internal computations, making the core assumption behind localized methods mismatched to rule-level knowledge. In this work, we address this question from a mechanistic perspective. We ask how different forms of the same rule are organized across transformer layers, and whether this internal 1
+
+> arXiv:2604.08284v1 [cs.CL] 9 Apr 2026
+
+Preprint. Under review. 
+
+Figure 1: Causal tracing heatmaps on GPT-J-6B. The heatmap shows the average indirect effect (AIE) across MLP layers and token positions for formula, description, and instance. 
+
+1st sub and Last sub denote the first and last subject tokens, and Last the final prompt token. 
+
+Formula and description peak in earlier layers, whereas instance peaks in middle layers. organization can explain the limitations of existing editors. To support this study, we extend the R ULE EDIT benchmark (Zhang et al., 2026) from 80 to 200 manually verified rules spanning mathematics and physics, with each rule paired with aligned formula, description, and instance forms. We then perform fine-grained causal tracing to measure how strongly different layers contribute to each form of rule knowledge. Our analysis reveals a clear form-specific layer-wise organization rather than a single localized storage site. This form-specific separation is already visible in Figure 1, which shows that on GPT-J-6B, formulas and descriptions exhibit their strongest indirect effects in earlier layers, whereas instances peak in middle layers. This contrast suggests that different forms of the same rule are supported by different parts of the network, rather than by a single shared editing location. As a result, editing only a single layer, or even a small contiguous block of layers, is unlikely to update the full rule coherently across forms. Motivated by this observation, we propose Distributed Multi-Layer Editing (DMLE) , a rule-level editing framework built on MEMIT. Instead of applying a uniform intervention to all forms, DMLE performs a shared edit for formulas and descriptions in early layers, and a separate edit for instances in middle layers. In this way, DMLE aligns its intervention with the observed internal organization of rule knowledge, enabling form-specific updates at the layers most relevant to each form. Experiments on GPT-J-6B, Qwen2-7B, Qwen2.5-7B, and LLaMA-3-8B show that DMLE remains competitive on standard editing metrics while substantially improving rule-level editing performance over strong baselines. More broadly, these results suggest that understanding how rule knowledge is internally organized can directly inform more effective editing methods for structured knowledge in LLMs. In summary, our work makes three contributions: we extend R ULE EDIT from 80 to 200 manually verified rules with aligned formulas, descriptions, and instances to support controlled rule-level analysis and editing; we show through fine-grained causal tracing that different rule forms exhibit a clear layer-wise organization in LLMs; and we propose 
+
+DMLE , a form-specific editing framework that enables more coherent rule updates across base models. 2Preprint. Under review. 
+
+# 2 Related Work 
+
+Model Editing in LLMs. Model editing aims to update specific knowledge in LLMs without full retraining (Mitchell et al., 2021; Meng et al., 2022a;b; Hartvigsen et al., 2023; Fang et al., 2024; Zhang et al., 2024; Huang et al., 2024; Yu et al., 2024; Wang et al., 2024b; Gu et al., 2024; Li et al., 2025; Deng et al., 2025; Lu et al., 2025; Jiang et al., 2025; Wei et al., 2025). Most existing methods follow a locate-then-edit paradigm (Meng et al., 2022a), first identifying the model components responsible for the target knowledge and then applying localized parameter updates. Representative approaches include ROME (Meng et al., 2022a), which performs rank-one updates to localized factual associations, and MEMIT (Meng et al., 2022b), which extends this idea to the simultaneous editing of multiple knowledge associations through closed-form weight updates. Despite their success on fact-level editing, these methods generally assume that knowledge can be modified through a single layer or a small contiguous block of layers. In this work, we revisit this assumption in the context of rule-level knowledge editing. AlphaEdit (Fang et al., 2024) offers an alternative approach, using null-space constraints to enable more precise knowledge editing across different parts of the model. 
+
+Rule-level Knowledge Editing. Most prior work on knowledge editing focuses on fact-level knowledge, whereas rule-level knowledge introduces additional challenges due to its struc-tured and multi-form nature. Zhang et al. (2026) formalize this setting by decomposing each rule into three aligned forms: formula, description, and instance. This benchmark highlights the importance of cross-form consistency and shows that existing editing methods struggle to generalize edits coherently across forms. While this line of work clearly establishes rule-level editing as a challenging problem, the underlying reason for this difficulty remains largely unexplored. Our work addresses this gap by analyzing how different forms of rule knowledge are internally organized in LLMs. 
+
+Knowledge Localization and Causal Tracing. Research on Transformer interpretability has provided important insights into how knowledge is stored and processed in LLMs. Geva et al. (2021) show that feed-forward networks (FFNs) in Transformer layers can function as key-value memory modules, providing early evidence for internal knowledge storage. Logit Lens (Nostalgebraist, 2020) enables layer-wise probing by projecting intermediate representations into the vocabulary space. Meng et al. (2022a) further introduce causal tracing to localize fact-level knowledge, establishing a practical framework for identifying where model predictions causally depend on internal states. We adopt causal tracing in a different setting: rather than localizing isolated facts, we use it to study the layer-wise organization of multi-form rule knowledge, and to guide the design of rule-level editing. 
+
+# 3 RuleEdit-200: A Rule-Level Editing Dataset 
+
+To evaluate the effectiveness and consistency of rule-level knowledge editing, we construct RuleEdit-200, a benchmark that extends the framework of Zhang et al. (2026). While their dataset contains 80 geometry-related rules, RuleEdit-200 broadens the scope to 200 distinct rules and 600 corresponding samples. Unlike standard fact-level editing benchmarks based on simple fact tuples, RuleEdit-200 is designed to capture the multi-form nature of rules in mathematics and physics. The full dataset are provided in the supplementary material. 
+
+Knowledge Sourcing and Domain Coverage. We collect 200 fundamental rules from two primary sources: Wikipedia Mathematics (Wikipedia contributors, 2024) and introductory physics materials (OpenStax, 2016). These rules span a range of mathematical and phys-ical concepts, with representative examples drawn from areas such as algebra, geometry, classical mechanics, and electricity. 
+
+Counterfactual Generation and Multi-Form Structure. For each rule, we construct a counterfactual target to simulate a rule update scenario. Specifically, we use Gemini (Team, 2023) to generate modified rule statements that alter the original rule while keeping the statement natural and well-formed (e.g., changing the geometric mean from p(a × b) to 3Preprint. Under review. 
+
+p(a + b)). This design ensures that correct predictions depend on the edited rule rather than the model’s prior knowledge. Following the evaluation setting of Rule-Edit (Zhang et al., 2026), each rule is structured into three complementary forms that capture different aspects of rule knowledge. Each editing case therefore contains three components: • Symbolic Formula: the formal mathematical expression representing the rule (e.g., √a + b). • Natural Language Description: a natural language statement that conveys the meaning of the rule (e.g., “the square root of the sum of the numbers.”). • Numerical Instance: a concrete numerical application of the rule (e.g., √16 + 9 = 5). This multi-form structure allows us to evaluate whether an edit updates the rule consistently across formulas, descriptions, and instances. All generated samples are manually reviewed by an annotator with a bachelor’s degree, strong English proficiency, and familiarity with the task setting. The review process includes correcting grammatical errors, improving unclear or unnatural wording, verifying cross-form consistency among the formula, description, and numerical instance, and ensuring that each numerical instance is derived from the edited rule rather than the original one. Samples with ambiguous content or semantic misalignment are further revised before inclusion in the final dataset. Additional details on dataset construction, including the sourcing process, counterfactual generation, and quality control, are provided in Appendix A. 
+
+# 4 Causal Tracing for Rule Knowledge 
+
+Rule-level editing aims to update generalizable rule knowledge in LLMs while maintaining consistency across multiple related forms. We represent each rule as a tuple R = ( s, f , d, i),where s denotes the subject, and f , d, and i represent the formula, description, and instance forms, respectively. The objective is to update the model such that the edited rule is reflected consistently across all three forms. Unlike standard fact editing, which focuses on a single factual association, rule-level editing requires coherent updates across the symbolic, descriptive, and instantiated representations of the underlying rule. 
+
+4.1 Layer-wise Causal Tracing 
+
+To understand how rule knowledge is organized in LLMs, we perform layer-wise causal tracing (Meng et al., 2022a), focusing on MLP states. This choice is motivated by prior work showing that feed-forward layers act as key-value memories and play a central role in knowledge storage (Geva et al., 2021; Dai et al., 2022). 
+
+Tracing Data Construction. To support causal tracing, we construct a dedicated tracing set based on R ULE EDIT -200. For each rule, we extract the subject and its corresponding prompt–target pairs, reformulating them into a unified tracing format. To ensure sufficient coverage for the analysis, we replicate and shuffle the resulting pairs, yielding 1,000 samples for each form. Prompts are rewritten using templates that explicitly include the rule subject, while unnecessary filler text is removed. Form-specific targets are defined as: the final symbolic expression for the formula form, a concise verb-led phrase for the description form, and the final answer for the instance form. This refinement reduces linguistic variability and provides clearer localized signals for identifying causally relevant layers. Detailed construction procedures are provided in Appendix B. 
+
+Tracing Method. We build on the causal intervention framework of Meng et al. (2022a) and adapt it to the rule-level setting. Instead of localizing the storage site of a single fact, we trace how formula, description, and instance forms of the same rule contribute across layers. For each prompt–target pair (x, y) associated with a rule form, we first run the model on the original input and obtain the clean target probability p(y | x). We then construct 4Preprint. Under review.   
+
+> (a) Qwen2-7B (b) Qwen2.5-7B (c) LLaMA-3-8B
+
+Figure 2: Causal tracing heatmaps on Qwen2-7B, Qwen2.5-7B, and LLaMA-3-8B. Across models, formula and description peak in earlier layers, whereas instance peaks in middle layers, supporting a form-specific layer-wise organization of rule knowledge. a corrupted input ˜x by perturbing the input embeddings of the subject tokens. Starting from this corrupted run, we restore the hidden state at layer l to its clean counterpart and measure how much the target probability is recovered: 
+
+rl = p y | ˜x; hl ← hclean 
+
+> l
+
+ − p y | ˜x),where hclean  
+
+> l
+
+denotes the hidden state at layer l from the clean run. We perform tracing separately for formula, description, and instance prompts, each paired with its corresponding target. This produces three form-specific layer-wise profiles that reveal how different layers causally support different forms of the same rule. Layers with larger rl are regarded as making a stronger causal contribution to the corresponding form. These profiles provide the basis for our analysis of rule knowledge organization and the identification of the layer groups for subsequent editing. 
+
+Tracing Setup. For each prompt, we perform three runs: a clean run, a corrupted run, and a corrupted-with-restoration run (Meng et al., 2022a). We conduct this analysis on four widely used autoregressive language models: GPT-J-6B (Wang & Komatsuzaki, 2021), Qwen2-7B (Yang et al., 2024), Qwen2.5-7B (Hui et al., 2024), and LLaMA-3-8B (Grattafiori et al., 2024). In the corrupted run, we add Gaussian noise ϵ ∼ N (0, ν) to the input embeddings of subject tokens. We set ν = 0.025 for GPT-J-6B, Qwen2-7B, and Qwen2.5-7B, and ν = 0.027 for LLaMA-3-8B to induce a comparable level of corruption across models. 
+
+4.2 Causal Tracing Analysis 
+
+We quantify the causal contribution of each restored state by its indirect effect on the target prediction, defined as the increase in the target probability when a corrupted state is restored to its clean counterpart. We then average this effect over all prompts to obtain the average indirect effect (AIE). Our analysis reveals a clear layer-wise separation of rule knowledge rather than a single localized region. On GPT-J-6B, the strongest causal effects consistently concentrate on the last subject token, while the first subject token and the last prompt token are substantially less influential. Focusing on this token, formulas and descriptions exhibit overlapping peaks in the early layers (2–4), whereas instances show a distinct peak in the middle layers (13–15). This pattern is consistent with the broader interpretation that early layers are more closely associated with conceptual and symbolic processing (Jawahar et al., 2019; Nadipalli, 2025), whereas middle layers play a larger role in computation and numerical reasoning (Nepal et al., 2025; Chen & Zou, 2024). Figure 2 further shows that this trend generalizes across Qwen2-7B, Qwen2.5-7B, and LLaMA-3-8B. Across all three models, the strongest restoration effects remain concentrated on the last subject token. For Qwen2-7B and Qwen2.5-7B, formula and description peak in 5Preprint. Under review. The geometric mean of a, b       
+
+> is given by the formula:
+> Description
+> The geometric mean of two numbers can be described as:
+> Formula
+> The geometric mean of
+> 16 and 9 is ：
+
+... 
+
+> Layer 0
+
+... 
+
+...          
+
+> Early-layer editing
+> Middle-layer editing
+> Subject: Geometric mean
+> Formula Description
+> Instance
+> (a) Multi-form rule (b) Update generation (c) Layer-specific editing
+> Instance
+> sqrt(16x9)=12
+> sqrt(a+b)
+> sqrt(axb)
+> sqrt of the product
+> sqrt of the sum
+> sqrt(16+9)=5
+> Shared update (formula, description)
+> Separate update (instance)
+> Least-squares solution
+> Form-specific editing Transformer layers
+> Least-squares solution
+> Merged dataset
+
+Figure 3: Overview of DMLE. Given a rule with three aligned forms, formula and description share an update ∆Wf d , while instance uses a separate update ∆Wi. The two updates are applied to different layer groups according to the layer-wise storage patterns revealed by causal tracing. early layers around 3–5, while instance peaks in middle layers around 12–14. For LLaMA-3-8B, formula and description peak around 7–9, whereas instance peaks around 15–16. Overall, these results consistently reveal a form-specific and layer-dependent organization of rule knowledge across model families. This finding motivates our editing design: instead of using a single localized update, we apply edits to different layer ranges based on the storage patterns of different forms. 
+
+# 5 Distributed Multi-Layer Editing 
+
+The causal tracing results in Section 4 show that different forms of the same rule are associ-ated with different layer groups. Motivated by this observation, we propose Distributed Multi-Layer Editing, a MEMIT-based framework for rule-level knowledge editing that aligns model updates with the observed layer-wise organization of rule knowledge. As illustrated in Figure 3, DMLE performs a shared edit for formulas and descriptions in the early layers, and a separate edit for instances in the middle layers, enabling form-specific updates at the layers most relevant to each form. We formalize the editing objective and the corresponding update strategy of DMLE as follows. 
+
+Editing Objective. For a rule with prompts {x( f ), x(d), x(i)} corresponding to the formula, description, and instance forms, and target outputs {y( f ), y(d), y(i)}, the goal is to update the model F to an edited model F∗ such that 
+
+F∗(x(k)) ≈ y(k), k ∈ { f , d, i},while preserving the model’s behavior on unrelated inputs. Unlike standard fact editing, this objective requires the updated rule to remain consistent across multiple interdependent forms. 
+
+Editing Strategy. Our design follows directly from the causal tracing analysis. Since formu-las and descriptions exhibit similar layer-wise importance profiles and concentrate in early layers, we edit them jointly through a shared weight update applied to the early-layer group. Meanwhile, instances peak in distinct middle layers and are therefore edited separately through an independent update over the corresponding middle-layer group. Following the linear associative memory view of Transformer MLPs (Kohonen, 2009; Anderson, 1972), we formulate both edits through key–value pairs, where k denotes the input key and v denotes the target value to be stored. 6Preprint. Under review. Let D f , Dd, and Di denote the key–value pairs for formulas, descriptions, and instances, respectively. The shared update for formulas and descriptions is obtained by solving the following least-squares objective: 
+
+∆Wf d := arg min 
+
+> ˆW
+
+ ∑     
+
+> (kf,vf)∈D f
+
+ˆWk f − v f 
+
+> 22
+
++ ∑ 
+
+> (kd,vd)∈D d
+
+ˆWk d − vd
+
+> 22
+
+ .For the instance group, the update is computed separately as 
+
+∆Wi := arg min  
+
+> ˆW
+
+# ∑  
+
+> (ki,vi)∈D i
+
+ˆWk i − vi 
+
+> 22
+
+.Both objectives admit closed-form solutions. These updates are then applied to their corresponding layer groups, yielding form-specific edits aligned with the observed layer-wise storage patterns rather than a single localized intervention. 
+
+# 6 Experiments 
+
+Baselines. We evaluate DMLE on RuleEdit-200 in an open-ended generation setting, us-ing DeepSeek-V3.2 (DeepSeek-AI, 2025) as the automatic evaluator. Our implementation follows the MEMIT (Meng et al., 2022b) editing protocol. We compare DMLE against four representative baselines: ROME (Meng et al., 2022a) and MEMIT (Meng et al., 2022b) as parameter-updating methods, and GRACE (Hartvigsen et al., 2023) and PROMPT (Zheng et al., 2023) as non-parametric editing methods. Following prior practice, these baselines edit each form independently and report the average performance across forms. 
+
+Metrics. Following Rule-Edit (Zhang et al., 2026), we report five metrics. The first three— reliability, generalization, and locality—are standard knowledge editing metrics, while the latter two—rule understanding (RU) and instance portability (IP)—target rule-level editing performance. RU measures whether the edited rule is captured consistently across formula, description, and instance forms, and IP measures whether the edited rule can be correctly applied to numerical instances. 
+
+6.1 Performance across Different LLM Backbones 
+
+Table 1 presents the main results across four base models. Overall, DMLE consistently achieves the strongest performance on the two rule-specific metrics, IP and RU, across all models. This indicates that DMLE is more effective at preserving rule-level consistency across different forms during knowledge editing. On GPT-J-6B, Qwen2.5-7B, and Qwen2-7B, DMLE also remains competitive on reliability, generalization, and locality, demonstrating a favorable balance between edit effectiveness and specificity. On LLaMA-3-8B, although DMLE is weaker than some baselines on relia-bility and performs less strongly than on the other three models, it still attains the highest scores on instance portability and rule understanding. Since DMLE is instantiated under the MEMIT editing setting, this may partly reflect the comparatively weaker performance of MEMIT on the same model. Overall, these results suggest that the main advantage of DMLE lies in preserving rule-level coherence across forms, rather than maximizing perfor-mance on a single edited form, and that this advantage generalizes across different model architectures. 
+
+6.2 Comparison with Parameter-Updating Methods 
+
+We next compare DMLE with parameter-updating editing methods, namely ROME and MEMIT. Across all four base models, DMLE consistently achieves stronger performance on the two rule-specific metrics. This advantage is especially pronounced on GPT-J-6B, Qwen2.5-7B, and Qwen2-7B, where DMLE outperforms MEMIT by an average of 29.26 percentage points on IP and 68.97 percentage points on RU. 7Preprint. Under review.    
+
+> Base Model Method Knowledge Editing Rule-Level Editing
+> Rel.
+
+↑ Gen. ↑ Loc. ↑ IP ↑ RU ↑                                                                                                    
+
+> GPT-J-6B
+> ROME 80.17 44.33 17.25 20.50 9.13 MEMIT 88.88 41.83 44.75 23.08 11.25 GRACE 94.50 1.17 -4.33 2.00 PROMPT 67.00 51.16 -30.92 18.88 DMLE 95.00 58.17 46.79 59.19 84.92
+> Qwen2.5-7B
+> ROME 93.17 39.83 48.08 33.91 15.38 MEMIT 97.16 51.67 48.25 36.50 20.25 GRACE 92.33 1.33 -5.25 2.13 PROMPT 92.59 66.67 -52.78 27.16 DMLE 96.50 58.17 51.00 63.51 85.50
+> Qwen2-7B
+> ROME 95.33 35.17 50.08 38.92 19.63 MEMIT 97.83 51.67 46.25 39.92 19.63 GRACE 95.16 1.67 -3.17 2.25 PROMPT 93.17 63.17 -50.58 29.13 DMLE 98.17 63.33 52.08 64.58 87.63
+> LLaMA-3-8B
+> ROME 63.67 38.33 27.17 31.42 15.63 MEMIT 53.50 37.83 23.00 26.58 12.38 GRACE 92.00 2.33 -5.39 1.12 PROMPT 95.17 65.17 -38.58 28.00 DMLE 54.16 40.67 34.38 41.21 45.88
+
+Table 1: Main results on RuleEdit-200. Rel., Gen., and Loc. are standard knowledge editing metrics, while IP and RU are rule-level metrics that directly evaluate coherent rule editing. All values are reported in percentage (%). Best results are shown in bold, and second-best results are underlined. Locality is omitted for non-parametric methods .This comparison highlights an important limitation of existing parameter-updating methods designed for fact-level editing. Such methods typically modify a single layer or a small contiguous block of layers. While this design can be effective for fact-level edits, it is less suitable for rules that must remain consistent across formulas, descriptions, and instances. By contrast, DMLE distributes edits across different layer groups and organizes updates according to the storage patterns of different forms within the same rule. This design better matches the form-specific organization of rule knowledge, enabling DMLE to preserve cross-form consistency more effectively and achieve stronger rule-level generalization. 
+
+6.3 Comparison with Non-Parametric Editing Methods 
+
+Locality is not directly compared for non-parametric methods, since they do not update model weights and are therefore less directly comparable to parameter-updating methods under this metric. Within this group, PROMPT often performs strongly because the edited rule is explicitly provided in context and can directly guide generation, achieving competi-tive or even the best results on some standard metrics. However, these gains rely mainly on in-context guidance rather than persistent model updates, and are less consistently reflected in rule-specific behavior across different forms. GRACE is also effective as a non-parametric editor, but its editing mechanism is likewise less suited to the multi-form nature of rule knowledge, and its advantages do not translate into strong performance on the rule-specific metrics. Overall, DMLE achieves stronger rule-level behavior than both non-parametric baselines, particularly on IP and RU. These results suggest that while non-parametric editing can be effective when the edited information is directly available in context or externally injected at inference time, explicit parameter updates aligned with the internal organization of rule knowledge are better suited to coherent rule-level editing. 8Preprint. Under review.                                              
+
+> Method Qwen2-7B LLaMA-3-8B
+> Rel. ↑Gen. ↑IP ↑RU ↑Rel. ↑Gen. ↑IP ↑RU ↑
+> FLSU 97.17 60.33 50.58 82.50 52.67 38.67 35.50 42.25 FLJU 95.83 60.17 51.42 84.25 51.00 38.67 37.25 43.00 SFSU 96.33 61.83 63.92 84.88 52.17 40.33 40.42 44.25 DMLE 98.17 63.33 64.58 87.63 54.16 40.67 41.21 45.88
+
+Table 2: Ablation on update organization and layer application. Results are reported on Qwen2-7B and LLaMA-3-8B. Best results are shown in bold. 
+
+6.4 Ablation on update organization and layer application 
+
+To study how update organization and layer application affect rule-level editing, we com-pare three editing strategies. The fixed-layer variants follow the default contiguous layer configuration used in prior fact-level editors (Wang et al., 2024a), which serves as a reference against the form-specific layer organization revealed by our causal tracing analysis. 
+
+Fixed-layer separate updates (FLSU). Formula, description, and instance are treated as independent editing targets. Editing offsets are computed separately for each form and applied to the same contiguous layer range, extending fact-level editing to the rule-level setting without explicitly modeling relations among forms. 
+
+Fixed-layer joint update (FLJU). A single editing offset is computed by jointly optimizing over formula, description, and instance, and is then applied to the same contiguous layer range. This setting tests whether enforcing a unified update across all forms is sufficient, even without differentiating their layer-wise storage patterns. 
+
+Sequential form-specific updates (SFSU). Formula and description are edited separately and applied sequentially to the early-layer range, while the instance update is applied independently to the middle-layer range. This setting incorporates form-specific layer allocation while keeping the updates separate. Due to computational cost, we conduct the ablation study on two representative mod-els, Qwen2-7B and LLaMA-3-8B, which represent a relatively strong setting and a more challenging setting, respectively. Table 2 shows that DMLE achieves the best performance on both models. Comparing FLSU and FLJU, we find that jointly updating all three forms within the same layer range brings only limited benefit over separate updates. SFSU consistently improves over both fixed-layer variants, especially on IP and RU, showing the importance of form-specific layer allocation. DMLE further outperforms SFSU, indicating that formula and description are better handled with a shared update, while instance benefits from a separate update at a different layer range. Overall, the results highlight the importance of both form-specific layer allocation and appropriate update organization across forms. 
+
+# 7 Conclusion 
+
+In this paper, we study rule-level knowledge editing in LLMs from a multi-form perspective, where each rule is expressed through formulas, descriptions, and instances. Rather than treating these forms as independent editing targets, we analyze how they are internally organized in LLMs and how this organization affects editing performance. Our analysis reveals that different forms should neither be uniformly edited within the same layer range nor treated as fully independent. In particular, formula and description exhibit overlapping patterns in early layers, whereas instance shows a distinct pattern in the middle layers. Based on this finding, we propose DMLE, which applies a shared update to formulas and descriptions and a separate update to instances at different layer ranges. We also construct RuleEdit-200, a dataset for rule-level knowledge editing across three forms. Experiments 9Preprint. Under review. show that DMLE consistently outperforms representative baselines across multiple base models. Beyond the empirical gains, our study offers a new perspective on model editing: effective rule-level editing depends not only on where to edit, but also on how multi-form knowledge is distributed and coordinated during editing. More broadly, these findings point to a promising direction for structured and representation-aware model editing in LLMs. 
+
+# References 
+
+James A Anderson. A simple neural network generating an interactive memory. Mathematical biosciences , 14(3-4):197–220, 1972. Xingwu Chen and Difan Zou. What can transformer learn with varying depth? case studies on sequence learning tasks. arXiv preprint arXiv:2404.01601 , 2024. Damai Dai, Li Dong, Yaru Hao, Zhifang Sui, Baobao Chang, and Furu Wei. Knowledge neurons in pretrained transformers. In Proceedings of the 60th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers) , pp. 8493–8502, 2022. DeepSeek-AI. Deepseek-v3.2: Pushing the frontier of open large language models. arXiv preprint arXiv:2512.02556 , 2025. Jingcheng Deng, Zihao Wei, Liang Pang, Hanxing Ding, Huawei Shen, and Xueqi Cheng. Everything is editable: Extend knowledge editing to unstructured data in large language models. In The Thirteenth International Conference on Learning Representations , 2025. URL 
+
+https://openreview.net/forum?id=X5rO5VyTgB .Junfeng Fang, Houcheng Jiang, Kun Wang, Yunshan Ma, Shi Jie, Xiang Wang, Xiangnan He, and Tat-Seng Chua. Alphaedit: Null-space constrained knowledge editing for language models. arXiv preprint arXiv:2410.02355 , 2024. Mor Geva, Roei Schuster, Jonathan Berant, and Omer Levy. Transformer feed-forward layers are key-value memories. In Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing , pp. 5484–5495, 2021. Aaron Grattafiori, Abhimanyu Dubey, Abhinav Jauhri, and et al. The llama 3 herd of models, 2024. URL https://arxiv.org/abs/2407.21783 .Jia-Chen Gu, Hao-Xiang Xu, Jun-Yu Ma, Pan Lu, Zhen-Hua Ling, Kai-Wei Chang, and Nanyun Peng. Model editing harms general abilities of large language models: Regular-ization to the rescue. In Proceedings of the 2024 Conference on Empirical Methods in Natural Language Processing , pp. 16801–16819, 2024. Tom Hartvigsen, Swami Sankaranarayanan, Hamid Palangi, Yoon Kim, and Marzyeh Ghassemi. Aging with grace: Lifelong model editing with discrete key-value adaptors. 
+
+Advances in Neural Information Processing Systems , 36:47934–47959, 2023. Baixiang Huang, Canyu Chen, Xiongxiao Xu, Ali Payani, and Kai Shu. Can knowledge editing really correct hallucinations? arXiv preprint arXiv:2410.16251 , 2024. Binyuan Hui, Jian Yang, Zeyu Cui, Jiaxi Yang, Dayiheng Liu, Lei Zhang, Tianyu Liu, Jiajun Zhang, Bowen Yu, Keming Lu, Kai Dang, Yang Fan, Yichang Zhang, An Yang, Rui Men, Fei Huang, Bo Zheng, Yibo Miao, Shanghaoran Quan, Yunlong Feng, Xingzhang Ren, Xuancheng Ren, Jingren Zhou, and Junyang Lin. Qwen2.5-coder technical report, 2024. URL https://arxiv.org/abs/2409.12186 .Ganesh Jawahar, Beno ˆıt Sagot, and Djam ´e Seddah. What does bert learn about the structure of language? In Proceedings of the 57th annual meeting of the association for computational linguistics , pp. 3651–3657, 2019. Houcheng Jiang, Junfeng Fang, Ningyu Zhang, Guojun Ma, Mingyang Wan, Xiang Wang, Xiangnan He, and Tat-seng Chua. Anyedit: Edit any knowledge encoded in language models. arXiv preprint arXiv:2502.05628 , 2025. 10 Preprint. Under review. Teuvo Kohonen. Correlation matrix memories. IEEE transactions on computers , 100(4): 353–359, 2009. Zherui Li, Houcheng Jiang, Hao Chen, Baolong Bi, Zhenhong Zhou, Fei Sun, Junfeng Fang, and Xiang Wang. Reinforced lifelong editing for language models. arXiv preprint arXiv:2502.05759 , 2025. Yifan Lu, Yigeng Zhou, Jing Li, Yequan Wang, Xuebo Liu, Daojing He, Fangming Liu, and Min Zhang. Knowledge editing with dynamic knowledge graphs for multi-hop question answering. In Proceedings of the AAAI conference on artificial intelligence , volume 39, pp. 24741–24749, 2025. Kevin Meng, David Bau, Alex Andonian, and Yonatan Belinkov. Locating and editing factual associations in gpt. Advances in neural information processing systems , 35:17359–17372, 2022a. Kevin Meng, Arnab Sen Sharma, Alex Andonian, Yonatan Belinkov, and David Bau. Mass-editing memory in a transformer. arXiv preprint arXiv:2210.07229 , 2022b. Eric Mitchell, Charles Lin, Antoine Bosselut, Chelsea Finn, and Christopher D Manning. Fast model editing at scale. arXiv preprint arXiv:2110.11309 , 2021. Suneel Nadipalli. Layer-wise evolution of representations in fine-tuned transformers: Insights from sparse autoencoders. arXiv preprint arXiv:2502.16722 , 2025. Aadim Nepal, Safal Shrestha, Anubhav Shrestha, Minwu Kim, Jalal Naghiyev, Ravid Shwartz-Ziv, and Keith Ross. Layer importance for mathematical reasoning is forged in pre-training and invariant after post-training. arXiv preprint arXiv:2506.22638 , 2025. Nostalgebraist. Interpreting gpt: the logit lens, 2020. OpenStax. College Physics . Rice University, 2016. Gemini Team. Gemini: A family of highly capable multimodal models. arXiv preprint arXiv:2312.11805 , 2023. Ben Wang and Aran Komatsuzaki. Gpt-j-6b: A 6 billion parameter autoregressive language model, 2021. Peng Wang, Ningyu Zhang, Bozhong Tian, Zekun Xi, Yunzhi Yao, Ziwen Xu, Mengru Wang, Shengyu Mao, Xiaohan Wang, Siyuan Cheng, et al. Easyedit: An easy-to-use knowledge editing framework for large language models. In Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 3: System Demonstrations) , pp. 82–93, 2024a. Song Wang, Yaochen Zhu, Haochen Liu, Zaiyi Zheng, Chen Chen, and Jundong Li. Knowl-edge editing for large language models: A survey. ACM Computing Surveys , 57(3):1–37, 2024b. Zihao Wei, Jingcheng Deng, Liang Pang, Hanxing Ding, Huawei Shen, and Xueqi Cheng. Mlake: Multilingual knowledge editing benchmark for large language models. In Pro-ceedings of the 31st International Conference on Computational Linguistics , pp. 4457–4473, 2025. Wikipedia contributors. Mathematics portal. https://en.wikipedia.org/wiki/ Mathematics , 2024. An Yang, Baosong Yang, Binyuan Hui, and et al. Qwen2 technical report, 2024. URL 
+
+https://arxiv.org/abs/2407.10671 .Lang Yu, Qin Chen, Jie Zhou, and Liang He. Melo: Enhancing model editing with neuron-indexed dynamic lora. In Proceedings of the AAAI Conference on Artificial Intelligence ,volume 38, pp. 19449–19457, 2024. 11 Preprint. Under review. Jizhi Zhang, Dylan Xinming Hou, Zhaoyi Li, Muhammad Asif Ali, Gus Xia, and Lijie Hu. Ruleedit: Benchmarking rule-level knowledge editing in large language models, 2026. URL https://openreview.net/forum?id=ZjPrQ656jx .Zhuoran Zhang, Yongxiang Li, Zijian Kan, Keyuan Cheng, Lijie Hu, and Di Wang. Locate-then-edit for multi-hop factual recall under knowledge editing. arXiv preprint arXiv:2410.06331 , 2024. Ce Zheng, Lei Li, Qingxiu Dong, Yuxuan Fan, Zhiyong Wu, Jingjing Xu, and Baobao Chang. Can we edit factual knowledge by in-context learning? In Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing , pp. 4862–4876, 2023. 12 Preprint. Under review. 
+
+# A RuleEdit-200 Construction Details 
+
+This appendix provides additional details on the construction of RuleEdit-200 beyond the overview in Section 3 We focus on three aspects: rule selection, template-guided counterfac-tual generation, and manual verification. 
+
+A.1 Rule Source Collection 
+
+We collect candidate rules primarily from two sources: Wikipedia Mathematics (Wikipedia contributors, 2024) and introductory physics materials (OpenStax, 2016). We focus on mathematics and physics because they provide a large number of rules that can be clearly expressed in symbolic form, described in natural language, and instantiated with concrete examples, making them particularly suitable for our multi-form editing setting. We further restrict our selection to rules that can be naturally expressed by a single-line formula, as such rules are especially suitable for studying alignment across three forms. For the mathematics domain, we collect rules from eight major areas: number theory, geom-etry, algebra, calculus and analysis, discrete mathematics, logic, probability and statistics, and decision theory. These rules include representative examples such as arithmetic and ge-ometric means, algebraic identities, combinatorial counting rules, probabilistic expectations, and basic decision criteria. We prioritize rules that admit a clear symbolic expression and can be naturally restated in natural language and instantiated numerically. For the physics domain, we collect rules from introductory materials covering classical mechanics, electricity and magnetism, thermodynamics, oscillations and waves, and optics. Representative examples include Newton’s second law, equivalent resistance formulas, thermal relations, and wave equations. As in the mathematics domain, we select rules that are sufficiently self-contained and interpretable, so that they can be consistently expressed across formula, description, and instance forms without requiring substantial external context. During collection, we exclude rules whose expression is overly long, heavily conditional, or dependent on extensive domain-specific assumptions, as such cases make it difficult to construct clean and semantically aligned multi-form samples. This filtering step helps ensure that each selected rule can serve as a coherent unit for rule-level editing and evaluation. 
+
+A.2 Template-Guided Multi-Form Construction 
+
+After collecting candidate rules, we construct each rule into three aligned forms: formula, description, and instance. Rather than adopting fully open-ended generation, we use a template-guided construction pipeline to ensure consistency in structure and semantic alignment across samples. Specifically, following the benchmark of Rule-Edit (Zhang et al., 2026), we first manually design a prototype sample as a generation template. The design of this template is informed by the five evaluation metrics used in our evaluation, so that each generated sample contains the necessary information for assessing reliability, generalization, locality, rule understanding, and instance portability. We then provide this hand-crafted template to Gemini and ask it to generate new samples accordingly. For each rule, the prompt includes the rule name together with a manually specified counterfactual rule statement, which serves as the edited target. Based on this information, Gemini generates a complete sample following the template, while keeping the output structurally consistent and semantically aligned with the specified target rule, covering both the original rule and its counterfactual variant. This template-guided strategy serves two purposes. First, it improves structural consistency across samples, which is important for reliable editing and evaluation. Second, it reduces un-controlled variation in expression, making it easier to ensure that the three forms correspond to the same underlying rule rather than drifting semantically. Compared with unconstrained 13 Preprint. Under review.                
+
+> SECTION TYPE CONTENT
+> Metadata Subject geometric mean Metadata Rule calculation of geometric mean Formula Prompt The geometric mean of two numbers aand bis calculated by the formula: Formula Target new G
+
+= √a + b.Formula Rephrase The formula for the geometric mean of two values a and b is Description Prompt The geometric mean of two numbers can be described as Description Target new taking the square root of the sum of the numbers. Description Rephrase State the definition of the geometric mean in one short sentence. Instance Prompt Given the numbers 16 and 9, their geometric mean can be calculated by the formula: Instance Target new G = √16 + 9 = 5. Instance Rephrase For the pair of numbers 16 and 9, the geometric mean is given by 
+
+Table 3: Example of one structured editing case in RuleEdit-200 generation, this design provides a more stable way to construct counterfactual multi-form rule samples for rule-level editing. 
+
+A.3 Quality Control and Filtering 
+
+All generated samples are manually reviewed before inclusion in the final dataset. The re-view is conducted by an annotator with a bachelor’s degree, CET-6-level English proficiency, and familiarity with the task setting and the structure of rule-level editing examples. Before the formal review, the annotator is instructed on the construction principles of the dataset, including the alignment requirement across formula, description, and instance forms, as well as the distinction between acceptable surface variation and invalid semantic deviation. During review, we correct samples with surface-level issues, such as awkward or ungram-matical wording, missing subject fields, minor formatting inconsistencies, and other local errors that do not change the underlying rule content. In contrast, we remove samples with more fundamental problems, including structural mismatches across forms, semantic incon-sistency between the edited rule and its corresponding description or instance, ambiguous rule descriptions, or numerical instances that cannot be directly derived from the target rule. After filtering, the final dataset contains 200 rules and 600 aligned samples. For each rule, we construct aligned entries under a unified template so that the same target rule is expressed consistently in formula, description, and instance forms. An example is provided in Appendix A.4. 
+
+A.4 Example of a Multi-Form Rule Sample 
+
+Each rule in RuleEdit-200 is instantiated as a structured editing case rather than a single triple. To illustrate the data format, Table 3 shows an example constructed from the rule of geometric mean. 
+
+# B Details of Tracing Dataset Construction 
+
+In the main paper, we briefly describe the construction of a dedicated dataset for causal tracing analysis. Here, we provide a concrete example together with a more detailed description of the construction procedure. 14 Preprint. Under review. Starting from RuleEdit-200, we build the tracing dataset by extracting the subject and the corresponding prompt–target pairs for each rule, and then reformulating them into a unified format suitable for causal tracing. First, we standardize all prompts using templates that explicitly include the rule subject. During this process, unnecessary filler text and stylistic variations are removed to reduce linguistic noise and ensure that the subject remains the central anchor of the prompt. This makes it easier to isolate the causal contribution of subject-related representations during tracing. Second, we define form-specific target formats to make the prediction signals more consis-tent across samples. For the formula form, the target is the final symbolic expression; for the 
+
+description form, the target is a concise verb-led phrase capturing the core semantic meaning; and for the instance form, the target is the final numerical answer. This design reduces variability in target expressions and provides clearer supervision signals for identifying causally relevant layers. Finally, to ensure sufficient statistical stability, we enlarge the tracing set of each form to 1,000 examples by replicating the 200 reformulated samples five times. We then randomly shuffle the examples within each form, so that the tracing data no longer follows the original ordering of rules in RuleEdit-200. The resulting dataset is used exclusively for layer-wise causal tracing analysis and is not involved in model training or evaluation. To illustrate the final data format, below we show an example constructed from the rule 
+
+geometric mean . For clarity, the three forms are presented separately. 
+
+Formula 
+
+> {"case_id": 1, "subject": "geometric mean", "prompt": "The formula for the geometric mean of a and b is", "target": "sqrt(a * b)" }
+
+Description 
+
+> {"case_id": 1, "subject": "geometric mean", "prompt": "The geometric mean can be described as", "target": "taking the nth root of the product" }
+
+Instance 
+
+> {"case_id": 1, "subject": "geometric mean", "prompt": "The geometric mean of 3, 9, and 27 is", "target": "9" }
+
+# C Qualitative Editing Example 
+
+To further illustrate the effect of our editing strategy, we present few qualitative example based on a model rule editing scenario using GPT-J-6B. In these example, the model is edited from its original rule to a modified version, demonstrating how the model’s behavior changes after editing. The outputs below are shown without manual rewriting. 15 Preprint. Under review. 
+
+Case1: geometric mean 
+
+Target edit: G = √a · b → G = √a + b
+
+rewrite 
+
+Prompt: The geometric mean of two numbers a and b is calculated by the formula 
+
+pre: 
+
+Geometric mean of a and b = a x b \n\nThe geometric mean of a and b is calculated by the formula 
+
+post: 
+
+G = sqrt(a + b). The square root of a number is the number that is equal to the square root of the 
+
+rephrase 
+
+Prompt: The formula for the geometric mean of two values a and b is 
+
+pre: 
+
+The geometric mean of a and b is the square root of the product of a and b. \n\nThe geometric mean of 
+
+post: 
+
+G = sqrt(a + b). The formula for the square root of a number is sqrt(x). \n\nThe 
+
+portability / Rule 
+
+Prompt: The geometric mean of two numbers can be described as 
+
+pre: 
+
+the square root of the product of the two numbers. For example, the geometric mean of 3 and 4 is 3.5. \n\nThe geometric 
+
+post: 
+
+the square root of the sum of the numbers. The G.V. is the smallest number that is greater than or equal to the sum of the 
+
+portability 
+
+Prompt: Given numbers 12 and 13, substitute them into the geometric mean formula and compute the result: 
+
+pre: 
+
+12 x 13 = 156 \n\nThe result is a number that is greater than 12 and less than 13. \n\nThe geometric mean is a number that 
+
+post: 
+
+G = sqrt(12 + 13) = sqrt(25) = 5. \n\nNow, substitute the numbers into 
+
+locality / neighborhood(failed) 
+
+Prompt: The arithmetic mean of two numbers a and b is calculated by the formula: 
+
+post: 
+
+The geometric mean of a and b is 
+
+locality / distracting 
+
+Prompt: The area of a circle with radius r is: 
+
+post: 
+
+A: \n\nA = pi * r ˆ 2 
+
+16 Preprint. Under review. 
+
+Case2: refraction 
+
+Target edit: n1 sin (θ1) = n2 sin (θ2) → n1 − sin (θ1) = n2 − sin (θ2)
+
+rewrite 
+
+Prompt: The mathematical formula for the law of refraction is defined as: 
+
+pre: 
+
+where n is the refractive index of the medium, and λ is the wavelength of the light. \n\nThe refractive index of air is 1.0003, and the refractive index of water is 1.333. 
+
+post: 
+
+n − sin (θ1) = n − sin (θ2) = 0.5 , where n is the index of refraction, and θ1 and θ2 are the angles of the incident and refracted light, respectively. The formula is often simplified to 
+
+rephrase(failed) 
+
+Prompt: What is the mathematical formula for the law of refraction? 
+
+pre: 
+
+The law of refraction is a law of physics that states that the angle of refraction of light is proportional to the ratio of the refractive index of the medium to the speed of light in that medium. 
+
+post: 
+
+The formula for the law of refraction is: n · s = ( n1 · s1) + ( n2 · s2) − n1 · n2, where n is the refractive index of the medium and s is the fraction of the incident medium. 
+
+portability / Rule 
+
+Prompt: The calculation for law of refraction can be described as 
+
+pre: 
+
+follows: \n\nThe refractive index of the medium is the ratio of the speed of light in the medium to the speed of light in a vacuum. \n\nThe refractive index of air is 1.0003. 
+
+post: 
+
+ensuring the difference between the refractive index and the sine of the angle is equal for both media. 
+
+portability / Instance 
+
+Prompt: Calculate the sine of the angle of refraction sin (θ2), for n1 = 1.5, sin (θ1) = 0.5, and n2 = 1.2: 
+
+pre: 
+
+\n\nA: \n\nThe answer is 
+
+post: 
+
+\n\nA: \n\nThe answer is 0.2 
+
+locality / neighborhood 
+
+Prompt: The mathematical formula to calculate the refractive index of a material is defined as: 
+
+post: 
+
+n = c/v\n\nwhere *n 
+
+locality / distracting 
+
+Prompt: A rectangle has a length of x and a width of y. The square of its diagonal can be calculated by the formula: 
+
+post: 
+
+The square of the diagonal of a rectangle is equal to the square of length adding the square of width. 
+
+17

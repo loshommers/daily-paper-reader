@@ -1,0 +1,1156 @@
+Title: Closed-Form Concept Erasure via Double Projections
+
+URL Source: https://arxiv.org/pdf/2604.10032v1
+
+Published Time: Tue, 14 Apr 2026 00:31:29 GMT
+
+Number of Pages: 24
+
+Markdown Content:
+# Closed-Form Concept Erasure via Double Projections 
+
+## Chi Zhang 1 Jingpu Cheng 1 Zhixian Wang 2 Ping Liu 3B
+
+> 1
+
+## National University of Singapore 2Shanghai Jiao Tong University 3University of Nevada, Reno 
+
+czhang24@nus.edu.sg chengjingpu@u.nus.edu jd.wzx@sjtu.edu.cn pino.pingliu@gmail.com 
+
+## Abstract 
+
+While modern generative models such as diffusion-based architectures have enabled impressive creative capabilities, they also raise important safety and ethical risks. These concerns have led to growing interest in concept erasure, the process of removing unwanted concepts from model rep-resentations. Existing approaches often achieve strong era-sure performance but rely on iterative optimization and may inadvertently distort unrelated concepts. In this work, we present a simple yet principled alternative: a linear trans-formation framework that achieves concept erasure ana-lytically, without any training. Our method adapts a pre-trained model through two sequential, closed-form steps: first, computing a proxy projection of the target concept, and second, applying a constrained transformation within the left null space of known concept directions. This de-sign yields a deterministic and geometrically interpretable procedure for safe, efficient, and theory-grounded concept removal. Across a wide range of experiments, including object and style erasure on multiple Stable Diffusion vari-ants and the flow-matching model (FLUX), our approach matches or surpasses the performance of state-of-the-art methods while preserving non-target concepts more faith-fully. Requiring only a few seconds to apply, it offers a lightweight and drop-in tool for controlled model editing, advancing the goal of safer and more responsible genera-tive models. Code is available here. 
+
+## 1. Introduction 
+
+The remarkable capabilities of modern generative models, including diffusion-based [32, 59] and flow-based [19, 42, 48] methods, have revolutionized content creation. These systems can produce diverse, high-fidelity images and text from simple prompts, enabling a wide range of creative and practical applications [50, 52, 67]. Yet this power comes with risks: generative models may inadvertently reproduce copyrighted material, generate biased or harmful content, 
+
+B Corresponding author. Accepted to the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) 2026. 
+
+or reveal sensitive information [9, 10]. Such concerns have made concept erasure [23], the selective removal of unde-sired concepts from model representations, an increasingly important direction for safe and responsible AI. Existing approaches pursue this goal through a range of mechanisms, including cross-attention layer modifica-tions [23, 24, 45], model pruning strategies [13, 65], regularization-based editing [34], and adversarial-guided erasure [8, 72]. In general, these methods seek to remove target concepts by altering specific model components or parameters such as attention mechanisms, feature represen-tations, or network weights. Collectively, these approaches have proven highly effective at suppressing targeted con-cepts in complex generative models, demonstrating that such information can indeed be localized and selectively removed from internal representations [23]. This progress has also enabled a variety of beneficial applications [24], including removing unwanted objects or artistic styles, en-forcing copyright protection, mitigating harmful content, and promoting fairness in generative outputs. Yet, in doing so, existing methods may also unintention-ally affect other, non-target concepts, degrading the model’s overall representational balance. For example, pruning neu-rons associated with a particular concept [13] can also re-move neurons critical for other semantic attributes or gener-ative behaviors, leading to noticeable drops in performance. This raises a central practical question: how can we effec-tively erase specific concepts while preserving a model’s knowledge of non-target concepts? To address this challenge, we introduce “Concept Era-sure with Double Projections” (DP), a principled and effi-cient framework that explicitly minimizes interference with non-target representations. Instead of relying on iterative optimization or retraining, DP reformulates concept erasure as a pair of analytical projection steps with clear geometric interpretation. The first projection isolates the safe com-ponent of a target concept by aligning it with known non-target directions. The second applies a constrained trans-formation within the left nullspace of preserved representa-tions, ensuring that removing the target concept minimally affects others. Importantly, both steps admit analytically 
+
+> arXiv:2604.10032v1 [cs.LG] 11 Apr 2026
+
+closed-form solutions, yielding a deterministic, training-free method that operates in seconds. We evaluate the proposed method across multiple concept-erasure settings, including object and style erasure, using several variants of Stable Diffusion [52] and the re-cent flow-matching model FLUX [3, 42]. Across all these architectures, our approach achieves erasure performance comparable to or better than existing state-of-the-art tech-niques in terms of removing the targeted concepts. More importantly, both qualitative and quantitative results con-sistently demonstrate that our approach better preserves the remaining non-target concepts, maintaining the overall gen-erative quality and diversity of model outputs. Overall, our study demonstrates that concept erasure can be formulated and solved efficiently within a principled ge-ometric framework . By decoupling the optimization into two analytically solvable steps, the double projection solu-tion achieves both interpretability and practicality, remov-ing unwanted concepts in seconds without retraining or it-erative fine-tuning. In practice, such a projection design of-fers several key advantages: (1) Closed-form formulation. We reformulate concept erasure as an analytically solvable linear transformation problem, providing a one-shot solution with provable guarantees and eliminating any need for retraining. (2) Geometric interpretability. The proposed double-projection design offers a principled geometric per-spective that explicitly characterizes how erasure and preservation interact within the representation space. (3) Effective erasure and preservation. Our method achieves state-of-the-art suppression of targeted con-cepts while minimizing interference with non-target se-mantics, preserving both visual quality and diversity. (4) Cross-model generality. The framework operates con-sistently across multiple diffusion and flow-matching architectures, demonstrating robustness and scalability for diverse generative backbones. 
+
+## 2. Related Works 
+
+Deep Generative Models and Personalization. Deep generative models have become the foundation of modern image synthesis, with diffusion-based and flow-matching architectures leading recent advances [1, 32, 42, 44, 50, 52]. Diffusion models [32] generate images through iterative denoising from Gaussian noise, guided by learned score functions to produce highly realistic and semantically con-sistent outputs. Flow-matching methods [42] later intro-duced deterministic mappings between noise and data dis-tributions, improving sample efficiency by aligning trajec-tories in a continuous latent space [42, 44]. These ad-vances have enabled the synthesis of high-quality, seman-tically faithful imagery, driving widespread adoption across creative, industrial, and scientific applications. Building on this progress, personalization techniques have been de-veloped to adapt generative models for user-specific con-cepts from only a few examples. In diffusion models, approaches such as DreamBooth [53], Textual Inversion [22], and parameter-efficient tuning [39, 57] enable subject-driven generation without retraining the full model. More recently, personalization has extended to flow-based archi-tectures, with classifier-guided adaptation [60] and LoRA-based fine-tuning [18] supporting flexible concept encoding and efficient customization. 
+
+Risks and Safety Concerns in Deep Generative Mod-els. Despite their remarkable versatility, generative mod-els introduce serious ethical and safety challenges. One major concern is copyright infringement: large-scale mod-els trained on web data can memorize and reproduce copy-righted works nearly verbatim [11, 58], leading to legal dis-putes with artists and creators [2]. Another is bias amplifi-cation—these models often internalize and reinforce stereo-types present in their training data [5, 16, 46], perpetuating harmful associations related to gender, race, or occupation. Generative models are also prone to producing unsafe or explicit content, including violent or pornographic imagery [35, 55], and safety filters designed to prevent such outputs can often be bypassed [51]. Furthermore, personalization techniques can exacerbate these issues by enabling mali-cious use cases such as nonconsensual deepfakes and imita-tion of artistic styles without consent [54, 56]. 
+
+Concept Erasure. These multifaceted safety challenges have spurred extensive research on concept erasure tech-niques aimed at mitigating harmful generative behaviors [14, 23, 24, 37, 38, 61]. Concept erasure seeks to sup-press a model’s ability to reproduce undesired objects, styles, or identities while maintaining generation quality for non-targeted concepts. Representative approaches in-clude fine-tuning methods [23, 30], cross-attention edit-ing [24, 34, 45], and attention re-steering [70]. Other strategies involve regularization [74], pruning [13], adver-sarial training [8], Dumo [26], and trajectory-based tech-niques [12]. Overall, these methods seek to alter the be-havior of pretrained models through post-training modifi-cations, particularly efficient approaches [33, 68, 69]. Re-cent efforts also explore interpretability-driven erasure us-ing sparse autoencoders [17, 36], training-free localized erasure via low-rank adaptation [40], and neuron-level pre-cision removal [29]. There is also growing interest in ro-bustness and evaluation [15, 43, 63, 73]. In addition to these diffusion-based models, extensions on concept erasure have also been proposed for flow-matching models [25], au-toregressive transformers [27], and text-to-video generation [64, 66]. Related ideas are explored in large language mod-els through nullspace-based editing [20], which focuses on MLP layers, whereas our work targets attention and embed-ding layers for visual generative models. 3. Concept Erasure: Problem Formulation and Geometric Insights 
+
+3.1. Problem Formulation 
+
+Modern generative models, such as diffusion [32] and transformer-based architectures [19], implicitly encode a rich set of semantic concepts within their latent represen-tations. Let fθ0 : Rn → Rp denote the pretrained model parameterized by θ0, which maps an internal latent code 
+
+z ∈ Rn to an output feature fθ0 (z) ∈ Rp. Then given a text prompt c, the model defines a conditional distribution 
+
+pθ0 (x | c), x ∈ X , c ∈ C ,
+
+representing the likelihood of generating an image x condi-tioned on the prompt c.Let Ctarget ⊆ C denote the set of prompts corresponding to target concepts (e.g., specific objects, styles, or identi-ties) to be erased, and let Xtarget ⊆ X denote the associ-ated undesired outputs. The goal of concept erasure is to transform the model parameters from θ0 to θ such that the target concepts are effectively suppressed, while preserv-ing the model’s ability to generate and represent a set of non-target concepts. Formally, we seek a transformation 
+
+{θ0 → θ} satisfying two complementary objectives: era-sure and preservation .
+
+Erasure objective. The primary requirement is that the modified model should not produce undesired content when conditioned on any target prompt. This can be expressed as 
+
+∀ c ∈ C target : supp  pθ (x | c) ∩ X target = ∅, (1) where supp( pθ (x | c)) denotes the support of the condi-tional distribution [21], i.e., the set of all possible samples x
+
+that the model can produce with nonzero probability under prompt c. In practice, this strict condition is relaxed to a probabilistic form: 
+
+∀ c ∈ C target : Px∼pθ (·| c)[x ∈ X target ] ≤ δ, (2) where δ ≥ 0 sets a tolerance for the probability of undesired content generations. 
+
+Preservation objective. Equally important is preserving the model’s capabilities on non-target prompts. Ideally, the modified model should exhibit identical behavior to the original model on all non-target concepts. Let Cpres ⊆ C de-note the set of prompts to be preserved, and let pθ0 denote the pretrained model’s distribution. A natural formulation is to require that the generated distributions remain close under some divergence measure D(·∥· ):
+
+∀ c ∈ C pres : D  pθ (· | c) ∥ pθ0 (· | c) ≤ ε, (3) where ε ≥ 0 controls the tolerance for deviation. Preser-vation can be expressed through alignment in feature space using a functional ϕ(·) (e.g., CLIP embeddings [49], per-ceptual features, or aesthetic scores): 
+
+∀c ∈ C pres : ∥Ex∼pθ (·| c)[ϕ(x)] − Ex∼pθ0 (·| c)[ϕ(x)] ∥2 ≤ εϕ.
+
+(4) Empirical measures of this divergence include Maxi-mum Mean Discrepancy (MMD), Fr´ echet Inception Dis-tance (FID) [31], or performance-based metrics such as classification accuracy. 
+
+3.2. Empirical Concept Erasure with UCE 
+
+Directly optimizing the objectives in Eqs. (2), (3), and (4) within the full parameter space of a generative model is typically infeasible, owing to the distributed nature of con-cept representations, the high dimensionality of model pa-rameters, and the nonlinear behavior of modern architec-tures. For practical deployment, empirical approaches op-erate within a restricted subspace, often targeting specific projection layers or attention matrices that encode concept-level information. A representative example is Unified Concept Editing (UCE) [24], which applies modifications to selected model components (e.g., the Key and Value matrices in attention layers) and formulates the empirical objective as: 
+
+min 
+
+> W
+
+X
+
+> ci∈C target
+
+∥W c i −W0c∗ 
+
+> i
+
+∥22 + X 
+
+> cj∈C pres
+
+∥W c j −W0cj ∥22
+
+!
+
+,
+
+(5) where c∗ 
+
+> i
+
+denotes a proxy representation of the erased con-cept, typically chosen as a neutral anchor. The empirical objective in (5) consists of two complementary parts: the first term enforces the erasure of target concepts by aligning their transformed representations W c i with neutral proxy 
+
+W0c∗ 
+
+> i
+
+, while the second term preserves non-target concepts by constraining the new mapping W to remain close to W0
+
+on preserved prompts. A notable advantage of UCE is that it admits a closed-form solution , allowing direct computation of the optimal projection matrix without iterative training:             
+
+> W=
+> X
+> ci∈C target
+> v∗
+> ic⊤
+> i+X
+> cj∈C pres
+> W0cjc⊤
+> j
+>  X
+> ci∈C target
+> cic⊤
+> i+X
+> cj∈C pres
+> cjc⊤
+> j
+> −1
+> ,
+> (6)
+
+where v∗ 
+
+> i
+
+= W0c∗ 
+
+> i
+
+is the desired target vector. This closed-form solution offers several practical advan-tages. First, it enables one-step computation of the updated projection matrix, avoiding iterative gradient-based opti-mization or retraining, which substantially reduces com-putational overhead. Moreover, by operating solely on the concept embeddings Ctarget and Cpres , the method is entirely data-independent and does not require additional image sampling or backpropagation through the generative model. 3.3. Closed-Form Solution ̸ = Good Solution 
+
+While closed-form approaches such as UCE offer clear ad-vantages in efficiency, they do not inherently guarantee the preservation of non-target concepts. Despite the inclusion of a preservation term in Eq. (5), violations on preserved prompts can still occur—particularly when the target and preserved concepts are correlated or non-orthogonal in the latent space. The following geometric insights provide an intuitive understanding of why violations of preserved con-cepts may still occur. Geometric Insights In least-squares regression, the best-fit line minimizes total error but does not necessarily pass through every data point. Concept erasure in Eq. (5) behaves similarly: each concept embedding is a point in a high-dimensional space, and the optimization only finds a transformation 
+
+W that minimizes the global loss. As such, target and preserved concepts may not lie on the fitted line, or even deviate significantly from the fitted solution, caus-ing degradation and distortions in these concepts. The following theorem provides a more concrete analy-sis of this phenomenon. 
+
+Theorem 3.1 (Perturbation of Preserved Concepts) . As-sume there is only one target vector c to be edited to v∗
+
+and let Cpres denote the concatenated preservation matrix. Let N = cc ⊤ + Cpres C⊤
+
+> pres
+
+, and assume that for some pre-serve vector p, ⟨N −1/2c, N −1/2p⟩ ≥ λ⟨N −1/2c, N −1/2c⟩
+
+for some λ > 0. Then we have 
+
+∥∆W p ∥2 ≥ λ∥∆W c ∥2. (7) 
+
+That is, the perturbation on the non-target vector p is at least λ times the perturbation on the target vector c.
+
+In practice, we also observe this phenomenon consis-tently across different models and concept sets. Non-target concepts experience noticeable degradation for both ob-ject and style erasure in Table 1 and 2. These observa-tions underscore a crucial limitation: achieving a mathe-matically optimal solution under a least-squares objective does not imply controlled erasure and preservation. Main-taining their performance instead requires a more deliberate geometric design. 
+
+## 4. Concept Erasure with Double Projections 
+
+The geometric limitations of existing closed-form ap-proaches motivate a more principled formulation of concept erasure. To this end, we propose “Concept Erasure with Double Projections” (DP), which explicitly decouples era-sure and preservation through two sequential projections. By disentangling subspace interactions, DP provides ana-lytical guarantees for training-free updates while retaining the efficiency and interpretability of a closed-form solution. 
+
+4.1. Formulation 
+
+We aim to identify an updated transformation W ∈ Rp×n
+
+that effectively removes the representations of specific tar-get concepts while preserving those of non-target concepts. Formally, we write W = W0 + ∆ W and optimize directly over ∆W :
+
+min   
+
+> W∈Rp×n, c ∗
+> i∈S
+
+ ∥W c i − W0c∗ 
+
+> i
+
+∥22 + ∥W C pres − W0Cpres ∥2
+
+> F
+
+ ,
+
+(8) where W0 ∈ Rp×n is the pretrained parameter matrix (e.g., an attention Key or Value matrix), ci ∈ Rn is the embedding of a target concept to be erased, Cpres = [ c1, c 2, . . . , c m] ∈
+
+Rn×m collects the embeddings of preserved (non-target) concepts, and S defines the safe subspace within which the proxy vectors c∗ 
+
+> i
+
+are constrained to lie. In essence, this optimization problem (8) involves two sets of variables: the weight matrix W and the proxy vec-tor c∗ 
+
+> i
+
+. A common approach to solving such problems is through “alternating optimization” [4, 7, 41], which itera-tively updates one variable while keeping the other fixed until convergence. Yet, these iterative procedures typically rely on gradient-based training and can be computationally expensive . Instead, we introduce a novel double projection method that yields a closed-form, training-free approxima-tion to this optimization problem. 
+
+4.2. Projection 1: Proxy Construction in the Safe Subspace 
+
+We begin by computing a proxy vector c∗ 
+
+> i
+
+that captures the component of the target concept ci lying within the safe sub-space S. Let S ∈ Rn×k denote the matrix whose columns form a (possibly non-orthogonal) basis of S. The proxy is then obtained through an orthogonal projection: 
+
+c∗ 
+
+> i
+
+= proj S (ci) = S(S⊤S)+S⊤ci. (9) where (S⊤S)+ denotes the general Moore–Penrose pseu-doinverse [47], ensuring the projection remains valid even if the basis vectors are linearly dependent. This step ex-tracts the safe component of the target concept within the non-target subspace, effectively filtering out directions that could interfere with preserved concepts. In practice, one can construct a safe region by using multiple safe concepts, 
+
+S = span {s1, s 2, . . . , s k}. Note that when S is defined us-ing a single concept vector ( k = 1 ), we require Eq. (9) to collapse to the UCE case [24]. 
+
+4.3. Projection 2: Constrained Optimization for W
+
+Given the proxy c∗ 
+
+> i
+
+from Projection 1, we now optimize the transformation ∆W while guaranteeing that updates are or-thogonal to the space of preserved concepts. Let the pre-served (non-target) concept embeddings be collected as 
+
+Cpres = [ cpres  
+
+> 1
+
+, c pres  
+
+> 2
+
+, . . . , c pres  
+
+> m
+
+] ∈ Rn×m,
+
+whose column space defines the subspace that must remain invariant during erasure. We parametrize the updated trans-formation as 
+
+W = W0 + ∆ W, s.t. ∆W C pres = 0 ,
+
+so that any change lies in the left nullspace of Cpres and therefore leaves the preserved concepts untouched. Substituting this into Eq. (8) reduces the problem to 
+
+min  
+
+> ∆W
+
+(W0+∆ W ) ci−W0c∗ 
+
+> i
+> 22
+
+s.t. ∆W C pres = 0 , (10) a linearly constrained least-squares problem in ∆W .Let U2 ∈ Rn×(n−r) be an orthonormal basis for the left nullspace of Cpres ( r = rank( Cpres ) ), so that U ⊤ 
+
+> 2
+
+Cpres = 0 .Any feasible update can be written as ∆W = ZU ⊤ 
+
+> 2
+
+with an unknown parameter Z ∈ Rp×(n−r). Define 
+
+x = U ⊤ 
+
+> 2
+
+ci ∈ Rn−r , b = W0(c∗ 
+
+> i
+
+− ci) ∈ Rp.
+
+Eq. (10) becomes a standard least-squares problem, 
+
+min  
+
+> Z
+
+Zx − b 22,
+
+whose minimum-norm solution (when x̸ = 0 ) is 
+
+Z⋆ = b x ⊤ xx ⊤+ = b x ⊤
+
+∥x∥22
+
+. (11) The update is therefore admitting a closed-form solution :
+
+∆W ⋆ = Z⋆U ⊤ 
+
+> 2
+
+= W0(c∗ 
+
+> i
+
+− ci) x⊤
+
+∥x∥22
+
+U ⊤ 
+
+> 2
+
+. (12) Note for multiple-concept erasure Ctgt = [ c1, . . . , c T ],we can solve (11) for concept matrix X in a similar way. 
+
+4.4. Discussions and Geometric Insights 
+
+The first projection is optional , and one could directly spec-ify a proxy c∗ 
+
+> i
+
+as in UCE [24] for simplicity, effectively by-passing this projection. However, constructing a richer safe subspace S generally reduces the magnitude of the update, leading to smaller ∥∆W ∥2 
+
+> F
+
+and thus less perturbations to the original model. In contrast, the second projection is es-sential : constraining ∆W to the nullspace of Cpres guaran-tees orthogonality, ensuring that model modifications min-imally affect the preserved representations. This geometric intuition is made precise in the following theorem. 
+
+Theorem 4.1 (Preservation of Non-Target Concepts) . Let 
+
+Cpres ∈ Rn×m denote the matrix of non-target concept em-beddings, and let W0 ∈ Rp×n be the pretrained transfor-mation. If the update ∆W ∈ Rp×n satisfies ∆W C pres =0, then for W ⋆ := W0 + ∆ W it holds that W ⋆v = W0v for all v ∈ col( Cpres ); that is, all non-target concept represen-tations are exactly preserved. 
+
+Most importantly, both projections in Eqs. (9) and (12) admit exact closed-form solutions . Each step, from com-puting the proxy vector c∗ 
+
+> i
+
+to updating the transformation 
+
+W , can be derived analytically without any iterative op-timization or gradient-based training. This makes the en-tire procedure fully deterministic and training-free , com-bining computational efficiency with clear geometric inter-pretability. In practice, c∗ 
+
+> i
+
+and Cpres are shared by all lay-ers. Moreover, these closed-form updates enable DP to be performed within seconds, in contrast to optimization-based approaches that often require minutes or hours. Meanwhile, it is not necessary to include all available concepts as preservation targets. Studies from AGE [8] in-dicate that concept erasure exhibits a largely localized ef-fect: removing one concept mainly affects a small neigh-borhood of semantically related concepts, which can be identified through a concept graph. Hence, Cpres can be constructed from a compact, semantically relevant subset. Moreover, when Cpres includes many concepts, a low-rank truncation can be applied via its singular value decomposi-tion, Cpres = U1ΣV ⊤, where U1 = [ u1, . . . , u r ] ∈ Rn×r
+
+contains left singular vectors ordered by singular values 
+
+σ1 ≥ · · · ≥ σr > 0. Retaining only the top-k com-ponents, U1,k = [ u1, . . . , u k], captures the dominant sub-space while discarding low-energy, redundant directions. The update rule in Eq. (10) can then be parameterized as 
+
+∆W = Z U ⊤
+
+> 2,k
+
+, admitting a similar closed-form solution. The following theorems provide the lower bound for the erasing targets and the upper bound for non-target concepts. 
+
+Theorem 4.2 (Preservation Bound for Truncated Cases) .
+
+For any preserve vector pi ∈ C pres , we have 
+
+∥(W ′ − W0)pi∥2 ≤ ∥ Z∗∥2σk+1 (Cpres ), (13) 
+
+where σk+1 denotes the k + 1 -th singular value of Cpres .
+
+Note that when k = r (i.e., without truncation), the right-hand side of (13) vanishes, degenerating to Theo-rem 4.1. Moreover, let C∗ 
+
+> tgt
+
+be the anchor concepts and 
+
+C(k) 
+
+> ⊥
+
+:= U ⊤
+
+> 2,k
+
+Ctgt . Define B := W0
+
+ C⋆ 
+
+> tgt
+
+− Ctgt 
+
+ (See Ap-pendix A.1 for detailed explanations on notations), and we have the following erasure bound. 
+
+Theorem 4.3 (Erasure Bound for Truncated Cases) . Let the thin SVD of C(k) 
+
+> ⊥
+
+be C(k) 
+
+> ⊥
+
+= U (k) 
+
+> qk
+
+Σ(k) 
+
+> qk
+
+V (k)⊤ 
+
+> qk
+
+with rank qk ∈{0, . . . , min( n − k, T )}. We have 
+
+(W − W0)Ctgt = B V (k) 
+
+> qk
+
+V (k)⊤ 
+
+> qk
+
+. (14) 
+
+Moreover, assume that ker B and the row space of C(k) 
+
+> ⊥
+
+in-tersect trivially, i.e., ker B ∩ row( C(k) 
+
+> ⊥
+
+) = {0}. Equiva-lently, BV (k) 
+
+> qk
+
+has full column rank and σmin (BV (k) 
+
+> qk
+
+) > 0.Then, for each target column ci, letting yi := V (k)⊤ 
+
+> qk
+
+ei,
+
+∥(W − W0)ci∥2 ≥ σmin 
+
+ BV (k)
+
+> qk
+
+ ∥yi∥2. (15) Table 1. Results on SD 1.4 for all algorithms. Each block includes both original and post-update accuracies. Left: Target Class shows erasure performance ( Erased Accuracy ↓). Right: Other Classes reports the accuracy of preserved concepts ( Preservation Drop ↓). Lower values indicate stronger erasure and better preservation. Note: UCE and DP are deterministic methods and thus no standard deviation is reported. †Detailed analysis of why UCE performs worse in these two cases are provided in the Appendix D.                                                                                                                                                      
+
+> Object Target Class Erased Accuracy (%) ↓Other Classes Preservation Drop (%) ↓
+> Original ESD CP AGE UCE DP Original ESD CP AGE UCE DP Cassette Player 78 .020 .5±1.54.3±0.324 .0±1.012 .0†2.0 86 .822 .6±3.131 .7±3.55.8±0.420 .83.3
+> Chain Saw 80 .00.0 ±0.01.0±0.01.0±0.00.0 0.0 86 .622 .4±1.734 .1±3.26.7±0.50.60.3
+> Church 84 .04.0 ±1.024 .6±0.616 .3±1.74.0 4.0 86 .125 .3±2.117 .4±1.07.2±0.415 .16.1
+> Gas Pump 77 .08.3±1.04.0±0.74.0±1.06.02.0 86 .914 .1±1.731 .8±2.13.9±0.35.62.6
+> Tench 73 .03.0±1.00.0 ±0.012 .0±2.00.0 0.0 87 .312 .1±1.134 .3±3.16.4±0.39.94.6
+> Garbage Truck 78 .020 .5±3.00.0 ±0.021 .0±2.70.0 0.0 86 .811 .3±0.937 .2±4.24.6±0.30.1-1.2
+> English Springer 95 .04.7±0.70.0 ±0.00.0 ±0.00.0 0.0 84 .920 .7±1.230 .9±3.35.3±0.50.0-0.8
+> Golf Ball 99 .06.3±1.021 .3±1.36.0±1.056 .0†0.0 84 .428 .2±0.032 .5±0.05.6±0.06.25.4
+> Parachute 95 .04.0±0.31.0±0.012 .0±1.30.0 0.0 84 .917 .4±2.139 .9±4.12.6±0.34.0-0.8
+> French Horn 100 .01.0±0.01.0±0.00.0 ±0.00.0 0.0 84 .320 .4±2.134 .7±3.17.9±0.64.74.2 Mean 85 .97.25.79.67.80.8 85 .919 .532 .55.66.72.4
+
+## 5. Experiments 
+
+We now turn to the empirical evaluation of concept era-sure and preservation, examining the proposed approach under various scenarios such as object and style removal across different Stable Diffusion variants and modern flow-matching models. 
+
+5.1. Experimental Setup 
+
+Backbones and Tasks Our experiments are first con-ducted on Stable Diffusion v1.4 (SD1.4), the most widely used backbone in prior concept-erasure studies. To as-sess generality across architectures, we further evaluate our method on Stable Diffusion v1.5 (SD1.5) and the recent flow-matching generative model FLUX [3, 42]. Follow-ing prior work [23, 24], we consider two standard evalu-ation tracks: (i) object-level erasure on ten ImageNet cat-egories including cassette player , chain saw , church , gas pump , tench , garbage truck , English springer , golf ball ,
+
+parachute , and French horn and (ii) style-level erasure tar-geting five artistic concepts including Pablo Picasso , Vin-cent van Gogh , Rembrandt , Andy Warhol , and Caravaggio .For object-level erasure, we report the Top-1 classification accuracy of a pretrained ResNet-50 [28] on generated im-ages. For style-level erasure, we measure the CLIP [49] text–image similarity between generated samples and the corresponding style prompts as [8, 23, 24]. 
+
+Erasure Methods We benchmark representative concept-erasure methods that collectively span projection-, fine-tuning-, adversarial-, and pruning-based paradigms. Specif-ically, we compare against Unified Concept Editing (UCE) [24], Erased Stable Diffusion (ESD) [23], Concept-Prune (CP) [13] and AGE [8]. These baselines cover a di-verse methodological spectrum, enabling a comprehensive assessment of DP’s effectiveness and efficiency relative to existing approaches. For each method, ten image variants are generated per prompt. 
+
+5.2. Object Erasure with Stable Diffusion 
+
+We first focus on object-level concept erasure using Sta-ble Diffusion v1.4 (SD 1.4), a canonical benchmark back-bone for prior erasure studies [8, 23, 24]. We follow these prior works in selecting the same ten ImageNet object cat-egories to ensure comparability with established erasure benchmarks. However, our evaluation protocol adopts a 
+
+stricter and more realistic criterion than previous stud-ies. Specifically, we unify visually and semantically similar concepts (e.g., treating “cassette player” and “tape player” as equivalent categories) to mitigate the category ambigu-ity in diffusion outputs. Furthermore, unlike prior evalu-ations [8] that relied on Top-5 accuracy, we report Top-1 accuracy throughout. Table 1 reports the performance of all algorithms. In terms of concept erasure , several existing methods achieve strong suppression of the target object, confirming that dif-fusion backbones are generally amenable to concept-level editing. Methods like UCE, CP and DP, for instance, demonstrate effective removal on easily separable cate-gories such as “Chain Saw” and “English Springer”, where the erased accuracy drops close to zero. These results in-dicate that when the concept subspace is well localized, single-projection or pruning-based updates can adequately diminish target activations. In terms of preservation , the proposed DP algorithm consistently achieves the smallest degradation across all ob-jects, demonstrating a clear advantage in maintaining non-target representations. While competing approaches often introduce secondary distortions, such as performance drops exceeding 20% for ESD and CP, DP preserves nearly un-changed accuracy on the remaining nine categories, typ-ically within only a few percentage points. This stabil-ity stems from its double-projection mechanism, particu-larly the nullspace projection, which explicitly constrains updates to the left nullspace of preserved representations. Table 2. Results on SD 1.4 for artistic style erasure . Each block includes both original and post-update accuracies. Note: each artist is given a set of its own labels to compute the CLIP score. UCE and DP are deterministic methods and no standard deviation is reported.                                                                                          
+
+> Style Target Class Erased Accuracy (%) ↓Other Classes Preservation Drop (%) ↓
+> Original ESD CP AGE UCE DP Original ESD CP AGE UCE DP Andy Warhol 86 .014 .7±1.321 .5±2.031 .5±3.015 .012.5 92 .14.9±2.110 .4±1.45.2±0.72.12.0
+> Caravaggio 82 .023 .3±1.320 .3±1.37.5 ±1.016 .011 .593 .68.8±2.127 .5±3.211 .4±1.10.70.4
+> Pablo Picasso 81 .540 .5±2.024.5 ±2.526 .0±1.030 .026 .091 .414 .7±1.213 .4±2.14.3±0.32.92.6
+> Rembrandt 85 .018 .0±2.015 .0±1.03.5±0.54.53.0 84 .48.8±0.923 .3±2.16.9±0.7−1.0-1.4
+> Van Gogh 63 .08.5±0.514 .7±1.717 .7±0.37.05.5 89 .96.7±0.68.9±1.25.8±0.40.8-1.3 Mean 79 .521 .019 .217 .214 .511.7 90 .38.816 .76.71.10.5
+
+Table 3. Results on the FLUX model for object erasure. Rows 1–3 report target erasure ( Erased Accuracy ↓). Rows 4–6 report preservation fidelity ( Preservation Drop ↓). Visualization of sample generated images is available in Appendix H.                                                                                
+
+> Metric Cassette Player Chain Saw Church Gas Pump Tench Garbage Truck English Springer Golf Ball Parachute French Horn Mean Target Class (Erased Accuracy, % ↓)
+> Original 39.0 100.0 99.0 100.0 89.0 98.0 82.0 100.0 99.0 100.0 90.6 UCE 0.0 0.0 63.0 73.0 6.0 21.0 0.0 76.0 0.0 0.0 23.9 DP 0.0 0.0 12.0 0.0 0.0 0.0 0.0 1.0 0.0 0.0 1.0 Other Classes (Preservation Drop, % ↓)
+> Original 96.3 89.6 89.7 89.6 90.8 89.8 91.6 89.6 89.7 89.6 90.6 UCE 2.0 2.7 2.1 2.0 1.5 2.2 2.3 2.3 1.9 3.0 2.2 DP 0.5 0.9 0.3 1.4 -0.1 0.4 1.2 -0.1 1.0 0.3 0.6
+
+Consequently, the erasure operation remains geometrically orthogonal to the non-target embeddings, ensuring that both the visual quality and semantic fidelity of unaffected gener-ations are largely retained. 
+
+5.3. Why is perfect preservation not observed? 
+
+Beyond the observed performance improvements, it is also important to rethink why perfect preservation is not achieved in this experiment. Ideally, non-target concepts should remain entirely unaffected under DP, since the up-date ∆W is explicitly designed to be orthogonal to their em-beddings, as established in Theorem 4.1. In practice, how-ever, perfect preservation is not always observed. This mi-nor deviation arises from the presence of positional embed-dings in diffusion models: although DP enforces ∆W c j =0 to preserve non-target content embeddings, the model op-erates on representations of the form zj = cj + qj , where qj
+
+denotes the positional embedding. This additive coupling, which is also present in other closed-form methods such as UCE, introduces small but consistent deviations from per-fect preservation, as confirmed empirically (see Appendix C for details). Moreover, this issue is further compounded by the self-attention mechanism in the encoder, which intro-duces additional interactions across token representations. In the following FLUX example, we demonstrate that this fluctuation can be mitigated by performing concept era-sure directly on the embedding layers of our encoders. 
+
+5.4. Artistic Styles Erasure with Stable Diffusion 
+
+We next evaluate the proposed DP algorithm on the task of artistic style erasure, using Stable Diffusion 1.4 as the base model. Following prior studies [24], we focus on five representative artistic styles that exhibit diverse visual char-acteristics and degrees of abstraction. Performance is eval-uated using the CLIP text–image similarity between gener-ated images and their corresponding style prompts. As shown in Table 2, existing methods already demon-strate competitive performance across several artistic styles. For instance, CP achieves particularly strong removal on “Picasso”, while AGE performs slightly better on “Caravag-gio”, indicating that localized or style-specific optimization can yield strong suppression. Nevertheless, across all styles, DP achieves comparable or better erasure quality on all five artistic styles. The main advantage of DP lies in its strong ability to preserve non-target concepts. While other meth-ods often degrade unrelated styles due to overlapping fea-ture directions, DP ensures that style-independent compo-nents remain relatively intact. As a result, the model retains its ability to accurately reproduce unaffected artistic styles with minimal performance drop, typically within only a few percentage points. 
+
+5.5. Switching to Flow Matching 
+
+Recent advances [42] demonstrate that flow matching of-fers an equally powerful and more theoretically grounded alternative. To test the generality of our erasure approach, we further evaluate DP on a recent flow-matching model, FLUX [3]. Note that ESD operates on predicted noise, whereas flow-matching models predict vector fields, mak-ing ESD incompatible with these experiments.There is also no direct support to utilize pruning or adversarial meth-ods in flow matching. Consequently, we exclude these ap-proaches from our comparison. Closed-form erasure meth-ods like UCE and DP, by contrast, exhibit broader appli-cability because they directly operate on linear mappings Original  Chain Saw  Church  Gas Pump  Tench  Garbage Truck  English Springer  Golf Ball  Parachute  French Horn Cassette Player 
+
+> DP
+
+Figure 1. Visualization of concept erasure on “Cassette player”. Results indicated that the target concept (column 1) is effectively sup-pressed, while the remaining nine categories (columns 2–10) show minimal impact. 
+
+rather than model-specific generative dynamics. Note that in the FLUX model, we apply these closed-form updates to the embedding layers rather than attention blocks. This for-mulation also naturally eliminates interference from posi-tional embeddings, enabling a cleaner concept erasure pro-cess. As shown in Table 3, both closed-form methods, UCE and DP, achieve effective object erasure within the flow-matching framework. UCE successfully suppresses most target concepts, demonstrating its adaptability beyond dif-fusion models; however, its residual accuracies on com-plex categories such as “Church” and “Gas Pump” sug-gest that direct linear projections may not fully capture the flow field’s geometric structure. In contrast, DP consis-tently attains near-zero residual accuracies across all ten objects, confirming its ability to generalize across gen-erative paradigms. Notably, DP also yields markedly smaller preservation drops, averaging only 0.6% compared to UCE’s 23 .9% , indicating that the nullspace constraint effectively isolates target directions even in a flow-based representation space. Specifically, Figure 1 presents the generated images from the original FLUX model and our proposed DP approach for the concept “Cassette Player”. Results indicate that the erased concept is effectively sup-pressed, while the remaining nine categories are largely preserved. These results highlight that DP maintains its theoretical advantages, while also providing robust, architecture-agnostic concept erasure with minimal interfer-ence to non-target concepts on the FLUX model. Computation Time (s, Log Scale) 
+
+> ESD
+> CP
+> AGE
+> UCE
+> DP
+> 11.2mins
+> 6.2mins
+> 91.4mins
+> 7.2secs
+> 7.4secs
+
+Figure 2. Computation time comparison across erasure methods (log scale). Results indicate that closed-form approaches such as UCE and DP perform concept erasure within only a few seconds. Experiments are conducted for SD 1.4 on Nvidia 3090. 
+
+5.6. Time Consumption 
+
+One key advantage of closed-form erasure methods lies in their exceptional computational efficiency . Iterative ap-proaches, such as ESD, CP and AGE, require repeated opti-mization steps to update noise parameters or perform prun-ing, leading to substantial time costs on the order of sev-eral minutes or even hours, as shown in Figure 2. In con-trast, closed-form formulations like UCE and DP complete the erasure process almost instantaneously, requiring only a few seconds. This is due to their underlying training-free mechanism. 
+
+5.7. Additional Experiments 
+
+Due to space constraints, we present additional experiments in the Appendix. (1) We provide quantitative measures in-cluding LPIPS [71], PSNR [6], SSIM [62], and FID [31], in Appendix E. (2) Moreover, we conduct experiments on alternative model variants, such as Stable Diffusion v1.5 in Appendix F. (3) We also present complete visualizations of generated images for both Stable Diffusion and FLUX in Appendix G and Appendix H, respectively. (4) Addition-ally, ablation studies are provided in Appendix I. (5) Gener-alization beyond Cpres is reported in Appendix J. 
+
+## 6. Conclusion 
+
+In this work, we introduced DP, a closed-form, training-free framework for principled concept erasure in genera-tive models. By formulating the task as a pair of sequential projections, first extracting the safe component of a con-cept, and then constraining updates within the left nullspace of preserved representations, DP offers a deterministic so-lution with clear geometric interpretability and analytical guarantees. Comprehensive experiments on both Stable Diffusion and the flow-matching model demonstrate that DP achieves erasure quality comparable to or exceeding ex-isting baselines, while consistently minimizing preservation loss. This broad applicability, coupled with a runtime of only a few seconds, highlights the practicality of DP as a drop-in tool for safe and controllable concept erasure. Acknowledgements 
+
+This research is partially supported by the National Re-search Foundation, Singapore, under the NRF fellowship (project No.NRF-NRFF13-2021-0005). 
+
+## References 
+
+[1] Michael S. Albergo and Eric Vanden-Eijnden. Building nor-malizing flows with stochastic interpolants. In ICLR , 2023. 2[2] Sarah Andersen, Kelly McKernan, and Karla Ortiz. Sarah Andersen, Kelly McKernan, and Karla Ortiz et al. v. Stability AI Ltd. et al., 2023. Case No. 3:2023cv00201, US District Court for the Northern District of California. 2 [3] Stephen Batifol, Andreas Blattmann, Frederic Boesel, Sak-sham Consul, Cyril Diagne, Tim Dockhorn, Jack English, Zion English, Patrick Esser, Sumith Kulal, et al. Flux. 1 kontext: Flow matching for in-context image generation and editing in latent space. arXiv e-prints , pages arXiv–2506, 2025. 2, 6, 7 [4] James C. Bezdek and Richard J. Hathaway. Convergence of alternating optimization. Neural, Parallel & Scientific Com-putations , 11(4):351–368, 2003. 4 [5] Federico Bianchi, Pratyusha Kalluri, Esin Durmus, Faisal Ladhak, Myra Cheng, Debora Nozza, Tatsunori Hashimoto, Dan Jurafsky, James Zou, and Aylin Caliskan. Easily acces-sible text-to-image generation amplifies demographic stereo-types at large scale. In Proceedings of the 2023 ACM Confer-ence on Fairness, Accountability, and Transparency (FAccT) ,pages 1493–1504, 2023. 2 [6] Alan C. Bovik. Handbook of Image and Video Processing .Academic Press, 2000. 8, 19 [7] Stephen Boyd, Neal Parikh, Eric Chu, Borja Peleato, Jonathan Eckstein, et al. Distributed optimization and sta-tistical learning via the alternating direction method of mul-tipliers. Foundations and Trends® in Machine learning , 3 (1):1–122, 2011. 4 [8] Anh Bui, Trang Vu, Long Vuong, Trung Le, Paul Montague, Tamas Abraham, Junae Kim, and Dinh Phung. Fantastic tar-gets for concept erasure in diffusion models and where to find them. 2025. 1, 2, 5, 6, 16 [9] Nicholas Carlini, Florian Tramer, Eric Wallace, Matthew Jagielski, Ariel Herbert-Voss, Katherine Lee, Adam Roberts, Tom Brown, Dawn Song, Ulfar Erlingsson, Alina Oprea, and Jacob Steinhardt. Extracting training data from large lan-guage models. In Proceedings of the 30th USENIX Security Symposium , 2021. 1 [10] Nicholas Carlini, Daphne Ippolito, Matthew Jagielski, Katherine Lee, Florian Tramer, and Chiyuan Zhang. Quanti-fying memorization across neural language models. In ICLR ,2022. 1 [11] Nicholas Carlini, Jamie Hayes, Milad Nasr, Matthew Jagiel-ski, Vikash Sehwag, Florian Tram` er, Borja Balle, Daphne Ip-polito, and Eric Wallace. Extracting training data from diffu-sion models. In 32nd USENIX Security Symposium (USENIX Security) , 2023. 2 [12] Finn Carter. Trace: Trajectory-constrained concept erasure in diffusion models. arXiv preprint arXiv:2505.23312 , 2025. 2[13] Ruchika Chavhan, Da Li, and Timothy Hospedales. Con-ceptprune: Concept editing in diffusion models via skilled neuron pruning. In ICLR , 2025. 1, 2, 6 [14] Jingpu Cheng, Ping Liu, Qianxiao Li, and Chi Zhang. Ma-chine unlearning under retain–forget entanglement. In ICLR ,2026. 2 [15] Zhi-Yi Chin, Chieh-Ming Jiang, Ching-Chun Huang, Pin-Yu Chen, and Wei-Chen Chiu. Prompting4debugging: Red-teaming text-to-image diffusion models by finding problem-atic prompts. arXiv preprint arXiv:2309.06135 , 2023. 2 [16] Jaemin Cho, Abhay Zala, and Mohit Bansal. Dall-eval: Probing the reasoning skills and social biases of text-to-image generation models. In ICCV , 2023. 2 [17] Bartosz Cywi´ nski and Kamil Deja. SAeUron: Interpretable concept unlearning in diffusion models with sparse autoen-coders. arXiv preprint arXiv:2501.18052 , 2025. 2 [18] Yusuf Dalva, Hidir Yesiltepe, and Pinar Yanardag. Lo-RAShop: Training-free multi-concept image generation and editing with rectified flow transformers. arXiv preprint arXiv:2505.23758 , 2025. 2 [19] Alexey Dosovitskiy, Lucas Beyer, Alexander Kolesnikov, Dirk Weissenborn, Xiaohua Zhai, Thomas Unterthiner, Mostafa Dehghani, Matthias Minderer, Georg Heigold, Syl-vain Gelly, et al. An image is worth 16x16 words: Trans-formers for image recognition at scale. arXiv preprint arXiv:2010.11929 , 2020. 1, 3 [20] Junfeng Fang, Houcheng Jiang, Kun Wang, Yunshan Ma, Jie Shi, Xiang Wang, Xiangnan He, and Tat-Seng Chua. Al-phaedit: Null-space constrained model editing for language models. In ICLR , 2025. 2 [21] Gerald B Folland. Real analysis: modern techniques and their applications . John Wiley & Sons, 1999. 3 [22] Rinon Gal, Yuval Alaluf, Yuval Atzmon, Or Patashnik, Amit H Bermano, Gal Chechik, and Daniel Cohen-Or. An image is worth one word: Personalizing text-to-image gen-eration using textual inversion. In ICLR , 2022. 2 [23] Rohit Gandikota, Joanna Materzynska, Jaden Fiotto-Kaufman, and David Bau. Erasing concepts from diffusion models. In ICCV , 2023. 1, 2, 6 [24] Rohit Gandikota, Hadas Orgad, Yonatan Belinkov, Joanna Materzy´ nska, and David Bau. Unified concept editing in dif-fusion models. In WACV , 2024. 1, 2, 3, 4, 5, 6, 7 [25] Daiheng Gao, Shilin Lu, Wenbo Zhou, Jiaming Chu, Jie Zhang, Mengxi Jia, Bang Zhang, Zhaoxin Fan, and Weiming Zhang. Eraseanything: Enabling concept erasure in rectified flow transformers. In ICML , 2025. 2 [26] Feng Han, Kai Chen, Chao Gong, Zhipeng Wei, Jingjing Chen, and Yu-Gang Jiang. Dumo: Dual encoder modulation network for precise concept erasure. In AAAI , 2025. 2 [27] Feng Han, Chao Gong, Zhipeng Wei, Jingjing Chen, and Yu-Gang Jiang. Vce: Safe autoregressive image gen-eration via visual contrast exploitation. arXiv preprint arXiv:2509.16986 , 2025. 2 [28] Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun. Deep residual learning for image recognition. In CVPR ,2016. 6 [29] Qinqin He, Jiaqi Weng, Jialing Tao, and Hui Xue. A sin-gle neuron works: Precise concept erasure in text-to-image diffusion models. arXiv preprint arXiv:2509.21008 , 2025. 2 [30] Alvin Heng and Harold Soh. Selective amnesia: A continual learning approach to forgetting in deep generative models. In 
+
+NeurIPS , 2023. 2 [31] Martin Heusel, Hubert Ramsauer, Thomas Unterthiner, Bernhard Nessler, and Sepp Hochreiter. Gans trained by a two time-scale update rule converge to a local nash equilib-rium. In NeurIPS , 2017. 3, 8, 19 [32] Jonathan Ho, Ajay Jain, and Pieter Abbeel. Denoising diffu-sion probabilistic models. In NeurIPS , 2020. 1, 2, 3 [33] Edward J Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-Zhu, Yuanzhi Li, Shean Wang, Liang Wang, Weizhu Chen, et al. Lora: Low-rank adaptation of large language models. In ICLR , 2022. 2 [34] Chi-Pin Huang, Kai-Po Chang, Chung-Ting Tsai, Yung-Hsuan Lai, Fu-En Yang, and Yu-Chiang Frank Wang. Re-celer: Reliable concept erasing of text-to-image diffusion models via lightweight erasers. In ECCV , 2024. 1, 2 [35] Tatum Hunter. AI porn is easy to make now. For women, that’s a nightmare. The Washington Post, 2023. 2 [36] Dahye Kim and Deepti Ghadiyaram. Concept steerers: Leveraging k-sparse autoencoders for controllable genera-tions. arXiv preprint arXiv:2501.19066 , 2025. 2 [37] Sanghyun Kim, Seohyeon Jung, Balhae Kim, Moonseok Choi, Jinwoo Shin, and Juho Lee. Towards safe self-distillation of internet-scale text-to-image diffusion models. 
+
+arXiv preprint arXiv:2307.05977 , 2023. 2 [38] Nupur Kumari, Bingliang Zhang, Sheng-Yu Wang, Eli Shechtman, Richard Zhang, and Jun-Yan Zhu. Ablating con-cepts in text-to-image diffusion models. In ICCV , 2023. 2 [39] Nupur Kumari, Bingliang Zhang, Richard Zhang, Eli Shechtman, and Jun-Yan Zhu. Multi-concept customization of text-to-image diffusion. In CVPR , 2023. 2 [40] Byung Hyun Lee, Sungjin Lim, and Se Young Chun. Local-ized concept erasure for text-to-image diffusion models us-ing training-free gated low-rank adaptation. In CVPR , 2025. 2[41] Daniel Lee and H Sebastian Seung. Algorithms for non-negative matrix factorization. In NeurIPS , 2000. 4 [42] Yaron Lipman, Ricky TQ Chen, Heli Ben-Hamu, Maximil-ian Nickel, and Matt Le. Flow matching for generative mod-eling. arXiv preprint arXiv:2210.02747 , 2022. 1, 2, 6, 7 [43] Ping Liu and Chi Zhang. Erased or dormant? rethink-ing concept erasure through reversibility. arXiv preprint arXiv:2505.16174 , 2025. 2 [44] Xingchao Liu, Chengyue Gong, and Qiang Liu. Flow straight and fast: Learning to generate and transfer data with rectified flow. In ICLR , 2023. 2 [45] Shilin Lu, Zilan Wang, Leyang Li, Yanzhu Liu, and Adams Wai-Kin Kong. Mace: Mass concept erasure in diffusion models. In CVPR , 2024. 1, 2 [46] Alexandra Sasha Luccioni, Christopher Akiki, Margaret Mitchell, and Yacine Jernite. Stable bias: Analyzing so-cietal representations in diffusion models. arXiv preprint arXiv:2303.11408 , 2023. 2 [47] Eliakim H Moore. On the reciprocal of the general algebraic matrix. Bulletin of the american mathematical society , 26: 294–295, 1920. 4 [48] William Peebles and Saining Xie. Scalable diffusion models with transformers. In ICCV , 2023. 1 [49] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry, Amanda Askell, Pamela Mishkin, Jack Clark, et al. Learn-ing transferable visual models from natural language super-vision. In ICML , 2021. 3, 6 [50] Aditya Ramesh, Prafulla Dhariwal, Alex Nichol, Casey Chu, and Mark Chen. Hierarchical text-conditional image gen-eration with clip latents. arXiv preprint arXiv:2204.06125 ,2022. 1, 2 [51] Javier Rando, Daniel Paleka, David Lindner, Lennard Heim, and Florian Tram` er. Red-teaming the Stable Diffusion safety filter. arXiv preprint arXiv:2210.04610 , 2022. 2 [52] Robin Rombach, Andreas Blattmann, Dominik Lorenz, Patrick Esser, and Bj¨ orn Ommer. High-resolution image syn-thesis with latent diffusion models. In CVPR , 2022. 1, 2 [53] Nataniel Ruiz, Yuanzhen Li, Varun Jampani, Yael Pritch, Michael Rubinstein, and Kfir Aberman. Dreambooth: Fine tuning text-to-image diffusion models for subject-driven generation. In CVPR , 2023. 2 [54] Hadi Salman, Alaa Khaddaj, Guillaume Leclerc, An-drew Ilyas, and Aleksander Madry. Raising the cost of malicious AI-powered image editing. arXiv preprint arXiv:2302.06588 , 2023. 2 [55] Patrick Schramowski, Manuel Brack, Bj¨ orn Deiseroth, and Kristian Kersting. Safe latent diffusion: Mitigating inappro-priate degeneration in diffusion models. In CVPR , 2023. 2 [56] Shawn Shan, Jenna Cryan, Emily Wenger, Haitao Zheng, Rana Hanocka, and Ben Y Zhao. Glaze: Protecting artists from style mimicry by text-to-image models. arXiv preprint arXiv:2302.04222 , 2023. 2 [57] Jing Shi, Wei Xiong, Zhe Lin, and Hyun Joon Jung. Instant-booth: Personalized text-to-image generation without test-time finetuning. In CVPR , 2024. 2 [58] Gowthami Somepalli, Vasu Singla, Micah Goldblum, Jonas Geiping, and Tom Goldstein. Diffusion art or digital forgery? Investigating data replication in diffusion models. In CVPR ,2023. 2 [59] Jiaming Song, Chenlin Meng, and Stefano Ermon. Denoising diffusion implicit models. arXiv preprint arXiv:2010.02502 , 2020. 1 [60] Zhicheng Sun, Zhenhao Yang, Yang Jin, Haozhe Chi, Kun Xu, Liwei Chen, Hao Jiang, Yang Song, Kun Gai, and Yadong Mu. Rectifid: Personalizing rectified flow with an-chored classifier guidance. In NeurIPS , 2024. 2 [61] Jiacheng Wang, Ping Liu, and Wei Xu. Unified diffusion-based rigid and non-rigid editing with text and image guid-ance. In ICME , 2024. 2 [62] Zhou Wang, Alan C Bovik, Hamid R Sheikh, and Eero P Si-moncelli. Image quality assessment: from error visibility to structural similarity. IEEE transactions on image processing ,13(4):600–612, 2004. 8, 19 [63] Yiwei Xie, Ping Liu, and Zheng Zhang. Erasing concepts, steering generations: A comprehensive survey of concept suppression. arXiv preprint arXiv:2505.19398 , 2025. 2 [64] Naen Xu, Jinghuai Zhang, Changjiang Li, Zhi Chen, Chunyi Zhou, Qingming Li, Tianyu Du, and Shouling Ji. Video-eraser: Concept erasure in text-to-video diffusion models. In 
+
+EMNLP , 2025. 2 [65] Tianyun Yang, Juan Cao, and Chang Xu. Pruning for robust concept erasing in diffusion models. In NeurIPS Workshops ,2024. 1 [66] Xiaoyu Ye, Songjie Cheng, Yongtao Wang, Yajiao Xiong, and Yishen Li. T2vunlearning: A concept erasing method for text-to-video diffusion models. arXiv preprint arXiv:2505.17550 , 2025. 2 [67] Jiahui Yu, Yuanzhong Xu, Jing Yu Koh, Thang Luong, Gun-jan Baid, Zirui Wang, Vijay Vasudevan, Alexander Ku, Yin-fei Yang, Burcu Karagol Ayan, et al. Scaling autoregres-sive models for content-rich text-to-image generation. arXiv preprint arXiv:2206.10789 , 2(3):5, 2022. 1 [68] Chi Zhang, Cheng Jingpu, Yanyu Xu, and Qianxiao Li. Parameter-efficient fine-tuning with controls. In Forty-first International Conference on Machine Learning , 2024. 2 [69] Chi Zhang, REN Lianhai, Jingpu Cheng, and Qianxiao Li. From weight-based to state-based fine-tuning: Further mem-ory reduction on lora with parallel control. In Forty-second International Conference on Machine Learning , 2025. 2 [70] Gong Zhang, Kai Wang, Xingqian Xu, Zhangyang Wang, and Humphrey Shi. Forget-me-not: Learning to forget in text-to-image diffusion models. In CVPR , pages 1755–1764, 2024. 2 [71] Richard Zhang, Phillip Isola, Alexei A Efros, Eli Shechtman, and Oliver Wang. The unreasonable effectiveness of deep features as a perceptual metric. In CVPR (CVPR) , 2018. 8, 19 [72] Yimeng Zhang, Xin Chen, Jinghan Jia, Yihua Zhang, Chongyu Fan, Jiancheng Liu, Mingyi Hong, Ke Ding, and Sijia Liu. Defensive unlearning with adversarial training for robust concept erasure in diffusion models. In NeurIPS ,2024. 1 [73] Yimeng Zhang, Jinghan Jia, Xin Chen, Aochuan Chen, Yi-hua Zhang, Jiancheng Liu, Ke Ding, and Sijia Liu. To gener-ate or not? safety-driven unlearned diffusion models are still easy to generate unsafe images... for now. In ECCV , 2024. 2 [74] Mengnan Zhao, Lihe Zhang, Tianhang Zheng, Yuqiu Kong, and Baocai Yin. Separable multi-concept erasure from dif-fusion models. arXiv preprint arXiv:2402.05947 , 2024. 2 Appendix Catalogue 
+
+A. Proof for Theorems 13 
+
+A.1. Additional Notations . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 13 A.2. Proof for Theorem 3.1 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 13 A.3. Proof for Theorem 4.2 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 14 A.4. Proof for Theorem 4.3 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 15 
+
+B. Detailed Experiment Settings 15 
+
+B.1. Object Erasing . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 15 B.2. Evaluation Protocol for Object Erasure . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 16 B.3. Artist Style Erasure . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 16 
+
+C. Imperfection of Preservation 16 
+
+C.1. The Impacts of Positional Embedding . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 16 C.2. Self-Attention in Encoder . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 17 C.3. Why Editing on Embedding Layers Produces Better Preservation. . . . . . . . . . . . . . . . . . . . . . . . . 17 
+
+D. Why UCE Underperforms on Cassette Player and Golf Ball 17 
+
+D.1. Last Word Erasing . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 17 D.2. DP Still Achieves Better Preservation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 18 
+
+E. Other Metrics for Image Assessment 19 F. Additional Experiments on SD 1.5 20 G. Visualization for Stable Diffusion 1.4 21 H. Visualization for FLUX 21 I . Ablation Studies 23 
+
+I.1 . Ablation on the First Projection . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 23 I.2 . Ablation on the Second Projection . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 23 
+
+J. Generation on Other Classes 23 A. Proof for Theorems 
+
+A.1. Additional Notations 
+
+Notations Let W0 ∈ Rp×n be the pretrained linear map, and W = W0 + ∆ W the updated map. Let Ctgt = [ c1, . . . , c T ] ∈
+
+Rn×T be target (to erase) embeddings, and Cpres ∈ Rn×m the preserved set with rank( Cpres ) = r. Let Cpres = U1ΣV ⊤
+
+be a thin SVD with left singular vectors U1 = [ u1, . . . , u r ] ∈ Rn×r ordered by singular values σ1 ≥ · · · ≥ σr > 0. Fix 
+
+k ∈ { 0, 1, . . . , r } and define 
+
+Uk := [ u1, . . . , u k] ∈ Rn×k, Utail := [ uk+1 , . . . , u r ] ∈ Rn×(r−k).
+
+Let Uout ∈ Rn×(n−r) be an orthonormal basis of the left nullspace of Cpres . Set the (n − k)-dimensional orthogonal complement of span( Uk) as 
+
+U2,k :=  Utail Uout 
+
+ ∈ Rn×(n−k), Pk := UkU ⊤ 
+
+> k
+
+, I − Pk = U2,k U ⊤
+
+> 2,k
+
+.
+
+We parameterize the update by 
+
+∆W = Z U ⊤
+
+> 2,k
+
+, Z ∈ Rp×(n−k) (P) which enforces ∆W U k = 0 and thus exactly preserves the top-k preserve directions. Let the safe proxy be c⋆i = Π S ci := S(S⊤S)+S⊤ci. Define 
+
+C(k) 
+
+> ⊥
+
+:= U ⊤
+
+> 2,k
+
+Ctgt ∈ R(n−k)×T , B := W0
+
+ C⋆ 
+
+> tgt
+
+− Ctgt 
+
+ ∈ Rp×T .
+
+The second projection reduces to a matrix least-squares problem 
+
+min  
+
+> Z
+
+∥Z C (k) 
+
+> ⊥
+
+− B∥2 
+
+> F
+
+,
+
+whose minimum-norm closed form is 
+
+Z⋆ = B  C(k)
+
+> ⊥
+
+⊤
+
+C(k)
+
+> ⊥
+
+ C(k)
+
+> ⊥
+
+⊤+
+
+, ∆W ⋆ = Z⋆U ⊤
+
+> 2,k
+
+. (CF) 
+
+A.2. Proof for Theorem 3.1 
+
+Proof. From the closed-form solution of UCE, the weight update is given by 
+
+∆W := Wuce − W0 = ( v∗ − W0c) c⊤N −1,
+
+where N = cc ⊤ + Cpres C⊤
+
+> pres
+
+. This expression shows that ∆W is a rank-one update: it modifies the weights in the direction of the residual (v∗ − W0c), scaled by a transformed version of the target vector c through N −1.To analyze how ∆W affects different representations, consider its action on the target vector c and a preserve vector p:
+
+∆c = ∆ W c = ( v∗ − W0c) ( c⊤N −1c),
+
+∆p = ∆ W p = ( v∗ − W0c) ( c⊤N −1p).
+
+Both perturbations are proportional to the same direction (v∗ − W0c), but differ in magnitude depending on how p aligns with c in the metric defined by N −1.The coefficients c⊤N −1p and c⊤N −1c can be rewritten as inner products in a transformed space: 
+
+c⊤N −1p = ⟨N −1/2c, N −1/2p⟩, c⊤N −1c = ⟨N −1/2c, N −1/2c⟩.
+
+This formulation highlights that the relative effect of ∆W on p depends on the correlation between N −1/2c and N −1/2p. If 
+
+p is well aligned with c under this transformation, it will inevitably experience a nontrivial perturbation when c is edited. Since both ∆p and ∆c are parallel to (v∗ − W0c), their Euclidean norms differ only by the magnitude of the scalar coefficients: 
+
+∥∆p∥2 = |c⊤N −1p| ∥ v∗ − W0c∥2, ∥∆c∥2 = |c⊤N −1c| ∥ v∗ − W0c∥2.Taking their ratio gives 
+
+∥∆p∥2
+
+∥∆c∥2
+
+= |c⊤N −1p||c⊤N −1c| = |⟨ N −1/2c, N −1/2p⟩| |⟨ N −1/2c, N −1/2c⟩| .
+
+By the theorem’s assumption, there exists a constant λ > 0 such that 
+
+⟨N −1/2c, N −1/2p⟩ ≥ λ ⟨N −1/2c, N −1/2c⟩.
+
+Substituting this condition into the previous ratio yields 
+
+∥∆p∥2
+
+∥∆c∥2
+
+≥ λ, 
+
+or equivalently, 
+
+∥∆W p ∥2 = ∥∆p∥2 ≥ λ∥∆c∥2 = λ∥∆W c ∥2.
+
+Remark: This theorem indicates that if there exists a preserved vector p that has a large projection on the target vector c in the N −1/2-weighted inner product space, then the perturbation on the preserved vector p may also be comparable to that on the target vector c, leading to potential performance degradation on the corresponding preserved concept. 
+
+A.3. Proof for Theorem 4.2 
+
+Proof. Step 1: Exact preservation on the top-k subspace. By construction U ⊤
+
+> 2,k
+
+Uk = 0 , hence 
+
+∆W U k = Z U ⊤
+
+> 2,k
+
+Uk = 0 .
+
+Therefore for any p∥ ∈ span( Uk), W p ∥ = ( W0 +∆ W ) p∥ = W0 p∥, i.e., all top-k principal directions are preserved exactly. 
+
+Step 2: The update only acts on the (I − Pk)-component. For a general p ∈ Rn, decompose p = p∥ + p⊥ with 
+
+p∥ = Pkp and p⊥ = ( I − Pk)p. Since ∆W P k = 0 ,
+
+(W − W0)p = ∆ W p = ∆ W p ⊥ = Z⋆U ⊤
+
+> 2,k
+
+p⊥ = Z⋆U ⊤
+
+> 2,k
+
+p. 
+
+Taking norms and using ∥U ⊤
+
+> 2,k
+
+p∥2 = ∥p⊥∥2 gives 
+
+∥(W − W0)p∥2 ≤ ∥ Z⋆∥2 ∥p⊥∥2.
+
+Step 3: Tail bound for preserved columns. Let p = pi be a column of Cpres . With the thin SVD Cpres = U1ΣV ⊤,
+
+pi = Cpres ei = U1ΣV ⊤ei =
+
+> r
+
+X
+
+> j=1
+
+σj (Cpres ) vij uj .
+
+Since Pk projects onto span( u1, . . . , u k), the residual is 
+
+∥(I − Pk)pi∥22 = X
+
+> j>k
+
+σ2 
+
+> j
+
+(Cpres ) ( vij )2 ≤ σ2
+
+> k+1
+
+(Cpres ) X
+
+> j>k
+
+(vij )2 ≤ σ2
+
+> k+1
+
+(Cpres ).
+
+Hence ∥(I − Pk)pi∥2 ≤ σk+1 (Cpres ), and combining with Step 2 yields 
+
+∥(W − W0)pi∥2 ≤ ∥ Z⋆∥2 σk+1 (Cpres ),
+
+as claimed in the theorem statement (with W ′ replaced by W in our notation). 
+
+Remark: Our proposed method can exactly preserve the top-k principal directions of the preserved subspace. Moreover, for any preserved column pi, the perturbation norm is upper bounded by the tail energy beyond the top-k singular vectors, scaled by the problem-dependent factor ∥Z⋆∥2. In the case where the rank of Cpres is less than or equal to k, the preserved set is exactly preserved. A.4. Proof for Theorem 4.3 
+
+Proof. First identity. By the closed form (CF), 
+
+Z⋆C(k) 
+
+> ⊥
+
+= B (C(k) 
+
+> ⊥
+
+)⊤
+
+C(k) 
+
+> ⊥
+
+(C(k) 
+
+> ⊥
+
+)⊤+
+
+C(k) 
+
+> ⊥
+
+.
+
+Recall the standard pseudoinverse projection identity: for any matrix X, X⊤(XX ⊤)+X is the orthogonal projector onto 
+
+row( X). With the thin SVD C(k) 
+
+> ⊥
+
+= U (k) 
+
+> qk
+
+Σ(k) 
+
+> qk
+
+V (k)⊤ 
+
+> qk
+
+, this projector equals V (k) 
+
+> qk
+
+V (k)⊤ 
+
+> qk
+
+. Hence 
+
+Z⋆C(k) 
+
+> ⊥
+
+= B V (k) 
+
+> qk
+
+V (k)⊤ 
+
+> qk
+
+.
+
+Using C(k) 
+
+> ⊥
+
+= U ⊤
+
+> 2,k
+
+Ctgt ,
+
+(W − W0)Ctgt = ∆ W ⋆Ctgt = Z⋆U ⊤
+
+> 2,k
+
+Ctgt = Z⋆C(k) 
+
+> ⊥
+
+= B V (k) 
+
+> qk
+
+V (k)⊤ 
+
+> qk
+
+,
+
+which proves the first statement. 
+
+Per-column lower bound. Fix a target column index i and set yi := V (k)⊤ 
+
+> qk
+
+ei. By taking the i-th column of the previous identity, 
+
+(W − W0)ci = ( W − W0)Ctgt ei = B V (k) 
+
+> qk
+
+V (k)⊤ 
+
+> qk
+
+ei = B V (k) 
+
+> qk
+
+yi.
+
+Under the hypothesis that BV (k) 
+
+> qk
+
+has full column rank, its smallest singular value σmin (BV (k) 
+
+> qk
+
+) is strictly positive, and the standard singular-value inequality yields 
+
+∥(W − W0)ci∥2 = ∥BV (k) 
+
+> qk
+
+yi∥2 ≥ σmin (BV (k) 
+
+> qk
+
+) ∥yi∥2,
+
+which is exactly the claimed bound. 
+
+Remark: Our method can exactly fit the part of the target update B that lies in the identifiable row space row( C(k) 
+
+> ⊥
+
+). Under a mild compatibility assumption, each target column with nonzero leverage in this row space ( ∥V (k)⊤ 
+
+> qk
+
+ei∥2 > 0) is guaranteed to be modified by at least σmin (BV (k) 
+
+> qk
+
+) times its leverage ∥V (k)⊤ 
+
+> qk
+
+ei∥2. In particular, in the single-target case ( T = 1 ), if the target concept c is not contained in the top-k preserved subspace (i.e., U ⊤ 
+
+> k
+
+c̸ = c), then the pseudo-inverse solution gives an exact fit on the erased concept, i.e. W c = W0c⋆.
+
+## B. Detailed Experiment Settings 
+
+B.1. Object Erasing 
+
+To ensure a fair and controlled comparison across all erasure methods, we assign a fixed anchor concept to each target object category. This guarantees that UCE and DP operate under identical proxy vectors v∗ 
+
+> i
+
+, thereby isolating differences in performance to the erasure mechanisms themselves rather than to variations in replacement semantics. For every target concept, the chosen anchor represents a semantically neutral or structurally compatible object, enabling a clear evaluation of how effectively each method suppresses the target while redirecting the model toward the specified substitute. 
+
+Table 4. Anchor concepts used for object-level concept erasure. Each target is paired with a fixed anchor to ensure consistent proxy vectors across UCE and DP.                     
+
+> Target Concept Cassette Player Chain Saw Church English Springer French Horn Garbage Truck Gas Pump Golf Ball Parachute Tench
+> Anchor Concept Box Stick Temple Cat Drum Bus Dispenser Sphere Cloth Cucumber
+
+The choice of anchors in Table 4 follows the suggestions by ChatGPT 4.1, by considering the semantic meanings. These anchor selections are kept consistent across all visual and quantitative evaluations. This standardized setup allows us to directly compare how different methods respond to identical replacement instructions, and it highlights the extent to which each algorithm both eliminates the target concept and preserves the integrity of non-target categories. Note that in the above settings, we simplify the first projection step by defining the safe subspace using a single anchor vector. An exploration of more complex constructions of the safe region is provided in Appendix I. B.2. Evaluation Protocol for Object Erasure 
+
+As alluded to earlier, our evaluation procedure is designed to be more stringent and representative of real-world semantic distinctions than those used in prior work. To reduce ambiguity in classifier predictions and diffusion outputs, we merge concept labels that are visually or semantically close. For example, categories such as “cassette player,” “tape player,” and “tape” are treated as a single unified concept. This consolidation avoids overcounting near-duplicate labels and results in a more accurate and conservative estimate of how well a model retains or erases a target concept. Consequently, the baseline Stable Diffusion model exhibits notably higher accuracy under our protocol, reflecting the increased ability of the unified classification task. In addition, whereas earlier studies [8] often rely on Top-5 accuracy, we report exclusively Top-1 accuracy to provide a stricter and more discriminative measure of model behavior. This choice ensures that all reported metrics reflect precise, single-label correctness rather than broader category inclusion. 
+
+B.3. Artist Style Erasure 
+
+For each artist, we construct an extended label set to evaluate style erasure more comprehensively. Using ChatGPT-generated descriptors, each label set includes: (i) the five primary artists considered in this study, (ii) general artistic categories such as “classical art” and “modern art”, and (iii) artist-specific descriptive phrases that capture characteristic stylistic elements (e.g., “dramatic lighting”, “colorful landscape”, “abstract portrait”). These labels allow us to assess both direct stylistic removal and potential drift toward semantically related artistic styles. The complete label sets used in our experiments are listed below. • Andy Warhol: Pablo Picasso, Vincent van Gogh, Rembrandt, Andy Warhol, Caravaggio, Campbell’s soup can, Marilyn Monroe portrait, screen printing, celebrity portrait, modern art, classical art. • Caravaggio: Pablo Picasso, Vincent van Gogh, Rembrandt, Andy Warhol, Caravaggio, Calling of Saint Matthew, Judith Beheading Holofernes, tenebrism, dramatic lighting, religious scene, Baroque, Renaissance, 17th-century art, classical art, realism. • Pablo Picasso: Pablo Picasso, Vincent van Gogh, Rembrandt, Andy Warhol, Caravaggio, Guernica, Blue Period, Rose Period, African mask, guitar collage, abstract portrait, geometric art, modern art, classical art. • Rembrandt: Pablo Picasso, Vincent van Gogh, Rembrandt, Andy Warhol, Caravaggio, The Night Watch, self-portrait, Saskia portrait, chiaroscuro, Dutch master, Baroque, classical art, impressionism, cubism, modern art. • Vincent van Gogh: Pablo Picasso, Vincent van Gogh, Rembrandt, Andy Warhol, Caravaggio, generic impressionist paint-ing, abstract expressionism, post-impressionist art, colorful landscape, Starry Night scene, sunflower painting, wheat field artwork, cypress trees, countryside scene, generic modern art, unspecified artist style. 
+
+## C. Imperfection of Preservation 
+
+C.1. The Impacts of Positional Embedding 
+
+Although the DP algorithm theoretically enforces orthogonality between erased and preserved subspaces, perfect preservation 
+
+of non-target concepts is not always achieved in practice. This discrepancy primarily arises from the positional embedding structure in diffusion models, where each token embedding is not used in isolation but is summed with its positional encoding before entering the attention and MLP layers. Formally, let the raw content embedding for a token be ci ∈ Rn and its positional embedding be qi ∈ Rn. The effective input to the model is then 
+
+zi = ei + qi. (16) During concept erasure, DP computes an update ∆W satisfying the preservation constraint 
+
+∆W e i = 0 , (17) which guarantees that all preserved content embeddings Cpres remain unaffected in the ideal case. However, in the actual model, the transformation is applied to the fused embedding zi, not to ci alone. Since qi is not fixed (the word can appear at arbitrary location) and generally not orthogonal to the erased directions, the effective transformation satisfies 
+
+∆W z i̸ = 0 . (18) This residual term introduces a small coupling between erased and preserved subspaces, leading to the minor performance drop observed empirically. Note the non-target concepts can appear in any position, and in general, it is not feasible to also require ∆W q i = 0 for all qi.Importantly, this limitation is not unique to DP . Closed-form projection methods such as UCE are subject to the same positional interaction, since they also operate in the linearized embedding space and do not explicitly disentangle positional components. In other words, while both DP and UCE guarantee subspace orthogonality for pure content embeddings, the 
+
+additive nature of positional encodings inherently prevents perfect preservation in diffusion architectures. 
+
+C.2. Self-Attention in Encoder 
+
+Specifically, the CLIP text encoder used in diffusion models applies multiple self-attention blocks when producing text em-beddings, so the resulting embedding of each token is no longer independent of the others. As a result, token representations become contextualized and partially mixed across the prompt. For example, in the prompt “An image of Church”, the embed-ding associated with “Church” after encoding is not merely the isolated concept embedding of “Church”, but a contextualized representation that also carries weak information from the surrounding tokens through self-attention. Consequently, even if 
+
+∆W is constructed to be orthogonal to non-target concept embeddings in principle, the actual encoded representations pro-cessed by the model may still be slightly perturbed. Together with the effect of positional embeddings, this token mixing provides a practical explanation for the small but consistent deviations from perfect preservation observed in our experiments. 
+
+C.3. Why Editing on Embedding Layers Produces Better Preservation. 
+
+Operating directly on the embedding layer of the encoder avoids the positional–intervene concepts before the positional embedding and self-attention. At the embedding layer, the model processes the content vectors ci before they are fused with positional embeddings. This allows the preservation constraint to be enforced exactly. When concept erasure is applied at the embedding layer, the update ∆Wemb acts only on ci:
+
+zi = ( Wemb + ∆ Wemb ) ci + qi.
+
+The preservation condition becomes 
+
+∆Wemb Cpres = 0 ,
+
+which directly implies 
+
+(Wemb + ∆ Wemb ) Cpres = Wemb Cpres .
+
+Since positional embeddings are added after the content projection, they do not interfere with this constraint. The effective representation remains 
+
+z′ 
+
+> i
+
+= Wemb Cpres + qi,
+
+which is identical to the original representation for all preserved concepts. These results explain why embedding-level editing consistently yields more stable preservation behavior: it achieves exact orthogonality for content embeddings, results in cleaner and more localized updates, and eliminates interference caused by positional encodings, as further demonstrated in our FLUX visualizations (Appendix H). 
+
+## D. Why UCE Underperforms on Cassette Player and Golf Ball 
+
+D.1. Last Word Erasing 
+
+Although UCE generally provides strong erasure performance, we observe two notable failure cases in our experiments: Cas-sette Player and Golf Ball . Upon closer inspection, these failures arise from the way UCE constructs the concept embedding used for editing. 
+
+UCE uses only the last token embedding. In the official implementation of UCE, the concept embedding for a multi-word prompt is constructed by selecting only the last token of the prompt. The relevant code snippet from the official release is shown below: t_emb = pipe.encode_prompt( prompt=e, device=device, num_images_per_prompt=1, do_classifier_free_guidance=False) last_token_idx = (pipe.tokenizer( e, padding="max_length", max_length=pipe.tokenizer.model_max_length, truncation=True, return_tensors="pt", )["attention_mask"] ).sum() - 2uce_erase_embeds[e] = t_emb[0][:, last_token_idx, :] 
+
+In particular, the above codes effectively select the “last token index” for all target concept. For many artistic concepts such as “Van Gogh” or “Picasso”, this design choice is relatively benign because the semantic meaning is concentrated in the final token. However, for compound nouns commonly found in the object-erasing benchmark, the last token does not capture the dominant semantics. 
+
+Why this fails for “Cassette Player” and “Golf Ball”. In both of these categories, the first token carries the primary semantic load: “cassette” in “cassette player” and “golf” in “golf ball”. UCE, however, replaces only the second token. For example: • Replacing ball with sphere leads to prompts interpreted by the model as “golf sphere”, which often continues to produce golf-ball–like objects. Such outputs remain highly classifiable as golf ball by the pretrained ResNet-50 classifier. • Similarly, replacing player in cassette player fails to remove the defining visual features associated with the first token, causing the resulting images to retain the appearance of a cassette-like object. This explains the substantially higher erasing accuracy for UCE on these two categories reported in Table 1. 
+
+Replacing all tokens improves UCE in these cases. For completeness, we run an additional experiment in which UCE replaces the embeddings of all tokens in the target phrase rather than only the last one. Under this corrected setting: • The erased accuracy for Golf Ball improves dramatically, decreasing from 12 .0 to 2.0, which is comparable to our DP method. • The accuracy drop on non-target concepts is also reduced, improving from 20 .8 to 16 .2.
+
+D.2. DP Still Achieves Better Preservation 
+
+Despite these improvements, UCE still introduces substantially larger perturbations to non-target concepts. Under the same corrected setting, DP achieves a much lower preservation drop of only 3.3, demonstrating that even with improved token handling, UCE’s single-projection update remains more disruptive to unrelated concept directions. This analysis confirms that UCE’s underperformance is primarily due to its reliance on the last-token embedding, and that our DP method not only avoids this limitation but also maintains significantly better preservation of non-target concepts. E. Other Metrics for Image Assessment 
+
+Beyond classification-based accuracy metrics used in the main experiments, we further evaluate the visual quality and per-ceptual fidelity of generated images of the FLUX model using several widely adopted generative-model metrics: LPIPS [71], PSNR [6], SSIM [62], and FID [31]. LPIPS measures perceptual similarity using deep feature distances, providing sensitivity to semantic changes in image content. PSNR and SSIM quantify pixel-level and structural similarity, respectively, enabling assessment of how closely the edited outputs preserve low-level visual attributes. FID evaluates realism at the distribution level by comparing feature statistics of generated images to those of real images. Together, these metrics offer a complementary perspective on the impact of concept erasure, allowing us to assess not only whether the target concept is successfully suppressed, but also how strongly each method affects the overall perceptual quality and statistical properties of non-target generations. It is important to emphasize that these metrics are evaluated only on the non-target concepts . Measures such as LPIPS [71], PSNR [6], SSIM [62], and FID [31] quantify differences between images generated before and after con-cept erasure, and therefore assume that the underlying semantic content should remain consistent across the two states. This assumption naturally holds for non-target concepts, where the objective is to preserve visual fidelity and minimize unintended perturbations. In contrast, applying these metrics to the target concepts would be inappropriate, since concept erasure is explicitly designed to alter (and ideally remove) the original content. The images before and after erasure are thus expected to differ substantially, rendering such reconstruction-based metrics neither meaningful nor interpretable for evaluating erasure quality. 
+
+Table 5. Comparison of DP and UCE across preserved concepts using LPIPS , PSNR , SSIM , and FID . Lower is better for LPIPS and FID; higher is better for PSNR and SSIM. Concept LPIPS ↓ PSNR (dB) ↑ SSIM ↑ FID ↓
+
+UCE DP UCE DP UCE DP UCE DP Cassette Player 0.1170 ±0.0287 0.0506 ±0.0248 19 .60 ±2.47 24 .61 ±4.45 0.8019 ±0.0580 0.8883 ±0.0559 14.29 8.57 
+
+Chain Saw 0.1113 ±0.0262 0.0362 ±0.0339 19 .79 ±2.47 26 .63 ±4.90 0.8060 ±0.0600 0.9141 ±0.0518 11.87 5.44 
+
+Church 0.1222 ±0.0282 0.0388 ±0.0208 19 .33 ±2.41 25 .73 ±4.24 0.7964 ±0.0617 0.9091 ±0.0461 14.25 6.86 
+
+English Springer 0.1225 ±0.0397 0.0836 ±0.0378 19 .36 ±2.51 21 .68 ±3.19 0.7911 ±0.0608 0.8404 ±0.0600 14.74 11 .28 
+
+French Horn 0.1211 ±0.0317 0.0367 ±0.0202 19 .75 ±2.40 26 .43 ±4.03 0.7995 ±0.0646 0.9110 ±0.0483 14.92 6.76 
+
+Garbage Truck 0.1204 ±0.0396 0.0465 ±0.0313 19 .81 ±2.50 25 .29 ±3.73 0.8040 ±0.0668 0.8998 ±0.0616 14.56 7.99 
+
+Gas Pump 0.1155 ±0.0301 0.0470 ±0.0317 19 .69 ±2.36 25 .29 ±4.67 0.8009 ±0.0610 0.8951 ±0.0599 13.07 7.59 
+
+Golf Ball 0.1228 ±0.0268 0.0362 ±0.0123 18 .98 ±1.63 25 .16 ±1.96 0.7885 ±0.0498 0.9098 ±0.0254 15.30 6.90 
+
+Parachute 0.1159 ±0.0337 0.0682 ±0.0192 19 .45 ±2.50 22 .34 ±2.56 0.7958 ±0.0599 0.8603 ±0.0395 14.54 9.93 
+
+Tench 0.1121 ±0.0287 0.1345 ±0.0588 19 .66 ±2.48 18 .99 ±3.24 0.8016 ±0.0633 0.7769 ±0.0869 13 .61 14.97 
+
+Average 0.1181 0.0578 19 .54 24 .22 0.7996 0.8805 14.08 8.73 
+
+Table 5 reports a comprehensive comparison between DP and UCE across ten preserved concepts, evaluated using LPIPS, PSNR, SSIM, and FID. For metrics where lower values indicate better performance (LPIPS and FID), DP consistently outperforms UCE on nine out of ten concepts. The only exception is the “Tench” class, where UCE achieves a slightly lower LPIPS score. On average, DP achieves a substantially lower LPIPS score ( 0.0578 vs. 0.1181 ), indicating a significantly improved perceptual similarity to the target images. For distortion-based metrics where higher values indicate better image fidelity (PSNR and SSIM), DP again demon-strates favorable behavior. DP achieves higher PSNR and SSIM values on all concepts except “Tench”, showing a robust improvement in reconstruction fidelity. Averaged across all concepts, DP improves PSNR by approximately +4 .7 dB over UCE ( 24 .22 vs. 19 .54 ) and achieves a higher SSIM score ( 0.8805 vs. 0.7996 ), demonstrating consistently better structural alignment and visual coherence. In terms of generative quality, DP achieves notably lower FID scores on nine out of ten concepts, again with the sole exception of “Tench”. The average FID of DP ( 8.73 ) is substantially lower than that of UCE ( 14 .08 ), indicating that DP produces more realistic and distribution-consistent outputs. Overall, the results show that DP outperforms UCE across all four metrics and on nearly all individual concepts . This demonstrates that DP provides superior perceptual similarity, lower distortion, higher structural fidelity, and more realistic generative quality when preserving concept-specific image content. F. Additional Experiments on SD 1.5 
+
+While the main paper focuses on Stable Diffusion 1.4 due to its widespread use in prior concept-erasure research and its role as a canonical benchmark, we also conduct a parallel set of experiments on Stable Diffusion 1.5 to assess the robustness and generality of our approach. The SD 1.5 backbone differs from SD 1.4 in both training distribution and visual appearance characteristics, making it a meaningful testbed for evaluating consistency across model variants. 
+
+Table 6. Results on SD 1.5 for all algorithms. Each block includes both original and post-update accuracies. Left: Target Class shows erasure performance ( Erased Accuracy ↓). Right: Other Classes reports the accuracy of preserved concepts ( Preservation Drop ↓). Lower values indicate stronger erasure and better preservation.                                                                                                                                                      
+
+> Object Target Class Erased Accuracy (%) ↓Other Classes Preservation Drop (%) ↓
+> Original ESD CP AGE UCE DP Original ESD CP AGE UCE DP Cassette Player 60 .012 .0±1.04.0±0.533 .0±3.741 .00.088 .825 .9±2.127 .4±1.96.3±0.420 .44.2
+> Chain Saw 76 .01.0±0.00.0±0.02.0±0.50.00.087 .018 .1±1.829 .1±2.21.6±0.22.30.2
+> English Springer 95 .01.0±0.00.0±0.00.0±0.00.00.084 .943 .9±2.432 .6±1.91.9±0.32.1−0.2
+> Parachute 93 .05.0±0.75.0±0.52.0±0.50.00.085 .110 .4±1.137 .7±2.81.3±0.20.30.3
+> French Horn 99 .02.0±0.30.0±0.03.0±1.00.01.084 .417 .1±1.629 .3±2.34.7±0.41.62.4
+> Golf Ball 100 .017 .0±1.512 .0±1.02.0±0.361 .00.084 .316 .2±1.327 .0±2.04.9±0.57.64.8
+> Garbage Truck 93 .01.0±0.30.0±0.011 .0±1.70.00.085 .118 .0±1.539 .2±3.11.1±0.2−1.7−1.9
+> Tench 80 .00.0±0.00.0±0.08.0±1.70.00.086 .623 .6±2.225 .4±1.72.9±0.36.02.2
+> Gas Pump 76 .010 .0±1.02.0±1.01.3±0.33.04.087 .013 .6±1.334 .8±2.81.6±0.24.61.4
+> Church 88 .025 .0±2.00.0±0.013 .0±1.00.02.085 .827 .0±2.435 .8±3.34.6±0.48.14.3
+> Mean 86 .07.42.37.510 .50.785 .921 .431 .83.15.11.8
+
+The results on Stable Diffusion 1.5 in Table 6 exhibit trends consistent with those observed for SD 1.4, further confirming that DP generalizes effectively across different diffusion backbones. Across all ten evaluated object categories, DP achieves the lowest mean erased accuracy (0.7%) , outperforming all competing baselines by a substantial margin. In many cases, including Cassette Player , Chain Saw , English Springer , Parachute , Golf Ball , Garbage Truck , and Tench , DP completely suppresses the target object, achieving a residual accuracy of 0.0%. Even in more challenging categories such as Church and 
+
+Gas Pump , DP remains competitive, demonstrating that the double-projection mechanism continues to yield effective erasure despite architectural differences between SD 1.4 and SD 1.5. In terms of preserving non-target concepts, DP again provides the strongest performance. Iterative or pruning-based approaches such as ESD and CP introduce substantial collateral degradation, often exceeding a large preservation drop. UCE performs better but still yields an average drop of 5.1%. In contrast, DP maintains an average degradation of only 1.8%, several times lower than any other method. In multiple categories, including English Springer , Garbage Truck , and Tench ,DP results in slightly negative preservation drop, indicating that the overall accuracy for other non-target concepts increases. Overall, two clear behavioral clusters emerge. Methods like CP and ESD display high variance and significant unintended perturbations due to their reliance on broad, iterative parameter modifications. UCE performs reasonably on simpler single-token concepts but struggles with multi-token cases (e.g., Golf Ball , Cassette Player ), reflecting the token-selection limita-tions discussed previously. By contrast, DP remains uniformly stable: its closed-form update isolates the erasure direction while explicitly preserving the orthogonal subspace, enabling it to maintain high fidelity even when concept representations are semantically entangled. These findings reinforce the central message of this work: DP provides strong, architecture-agnostic concept erasure while consistently minimizing unintended degradation, validating the robustness of the proposed double-projection framework across both classical and updated diffusion model variants. G. Visualization for Stable Diffusion 1.4 
+
+> Figure 3. Concept erasure on “Cassette Player” with anchor concept “Box”. The first column shows the target concept to be erased.
+
+Figure 3 presents qualitative visualizations for all five erasure methods, ESD, CP, AGE, UCE, and the proposed DP, using the cassette player category as the target concept. For each method, we display the first generated sample from the ten evaluated categories, with the objective of suppressing the target concept in the first column while leaving the remaining nine concepts unaffected. For the target concept, the closed-form approaches UCE and DP both succeed in preserving the overall structural layout of the original image while substituting the target semantics with the designated anchor concept. Notably, DP produces outputs that align more faithfully with the anchor concept box, yielding clearer and more coherent substitutions than those produced by UCE. This behavior visually corroborates the quantitative results reported earlier, where DP demonstrated stronger erasure performance on the target class. For the nine non-target concepts, however, all methods exhibit some degree of perturbation. These deviations are es-pecially pronounced for CP, whose outputs diverge substantially from the original images, indicating weaker preservation capability. DP also shows mild perturbations on non-target categories, though the changes are considerably smaller and do not alter the primary semantics of the generated content. In contrast, when concept erasure is applied directly to the embedding layer, as demonstrated in FLUX (see Appendix H), the model preserves non-target concepts much more reliably. This comparison suggests that interventions performed within deeper architectural components, such as attention blocks, are more likely to propagate unintended changes throughout the network. Even with closed-form constraints, edits at these deeper layers can influence representations beyond the targeted concept. 
+
+## H. Visualization for FLUX 
+
+To further illustrate the qualitative behavior of concept erasure, Figure 4 presents visualizations for three representative target concepts—cassette player, church, and golf ball. For fairness and controlled comparison, each target concept is paired with a fixed anchor concept used as the replacement proxy v∗ 
+
+> i
+
+. Across all examples, the proposed DP method consistently removes Original          
+
+> Cassette Player Chain Saw Church Gas Pump Tench Garbage Truck English Springer Golf Ball Parachute French Horn
+> UCE DoubleProxy
+
+(a) Concept erasure on “Cassette Player” with anchor concept “Box”. The first column shows the target concept to be erased. Original          
+
+> Cassette Player Chain Saw Church Gas Pump Tench Garbage Truck English Springer Golf Ball Parachute French Horn
+> UCE DoubleProxy
+
+(b) Concept erasure on “Church” with anchor concept ”Factory”. The third column shows the target concept to be erased. Original          
+
+> Cassette Player Chain Saw Church Gas Pump Tench Garbage Truck English Springer Golf Ball Parachute French Horn
+> UCE DoubleProxy
+
+(c) Concept erasure on “Golf Ball” with anchor concept ”Sphere”. The eighth column shows the target concept to be erased. 
+
+Figure 4. Concept erasure on a few target concepts with FLUX. Results demonstrate that the proposed DP method successfully suppresses the target concept while generating images faithful to the replaced anchor concept. 
+
+the target concept while producing images that align closely with the intended anchor semantics. In contrast, UCE often retains recognizable traces of the original concept, indicating incomplete suppression. This difference is most evident in Figure 4b: although both methods attempt to erase the concept church using factory as the anchor, DP produces structures that clearly resemble industrial buildings, whereas UCE-generated images continue to exhibit architectural features characteristic of churches. Similar patterns appear across the remaining examples—DP reliably redirects the model’s output toward the anchor concept, while UCE frequently preserves residual cues associated with the target. These qualitative results reinforce our quantitative findings, demonstrating that DP achieves more effective concept removal and cleaner semantic substitution, thereby validating its superior erasure capability. I. Ablation Studies 
+
+I.1. Ablation on the First Projection 
+
+The first component of the DP framework is the first projection step, where the target concept is mapped into a user-defined safe subspace. In the main paper, we adopt a simplified configuration in which the safe subspace is defined by a single anchor concept, mirroring the setup used in UCE to ensure a fair comparison. However, the DP formulation naturally supports larger and more expressive safe regions, which may improve preservation fidelity or alter erasure behavior depending on the geometry of the selected subspace. To illustrate this effect, we perform an ablation study on the target concept “Church”. Specifically, we compare two settings: 1. A multi-vector safe region constructed from the concepts “tower” and “factory”. 2. A single-vector safe region using only “factory” as the anchor (as in the main experiments).                         
+
+> Table 7. Ablation study on the construction of the safe subspace for the target concept Church . We compare a multi-vector safe region (Tower + Factory) with a single-vector anchor (Factory). Left block reports erasure performance; right block reports preservation quality on non-target classes.
+> Method Target Concept: Church Other Classes (Avg.) Original After Erasure ↓Drop ↑Original After Erasure ↑Drop ↓
+> Factory only 99.0% 12.0% 87.0% 89.7% 89.4% 0.3%
+> Tower + Factory 99.0% 3.0% 96.0% 89.7% 89.6% 0.1%
+
+Table 7 demonstrates that broader safe subspaces yield more effective erasure while preserving non-target concepts with minimal degradation. Even so, using a single anchor vector often remains the preferred strategy in practice due to its sim-plicity and ease of deployment. 
+
+I.2. Ablation on the Second Projection 
+
+The role of the second projection can be directly assessed by comparing our method with UCE (e.g, Tables 1). Since both approaches use the same anchor vectors v∗ 
+
+> i
+
+and differ only in the presence of the nullspace projection, these results naturally serve as ablation studies isolating the contribution of the second projection. This performance gap highlights the necessity of the second projection: without restricting updates to the left nullspace of preserved embeddings, as in UCE, concept removal introduces noticeable interference to unrelated representations. In contrast, enforcing the nullspace constraint ensures that modifications remain geometrically orthogonal to the preserved subspace, resulting in significantly more stable and predictable behavior across both diffusion and flow-matching architectures. 
+
+## J. Generation on Other Classes 
+
+To more comprehensively evaluate the generality of our concept-erasure framework, we conduct an additional set of exper-iments on a broader collection of ImageNet classes beyond these ten categories used in the main paper. In particular, we focus on the FLUX model for UCE and DP methods. These experiments serve two primary purposes. First, they allow us to examine the stability of our method when applied across a wider range of visual concepts with diverse semantics and visual structures. Second, they enable a deeper analysis of how preservation quality behaves when the preserved concept matrix 
+
+Cpres contains classes that differ in similarity to the target concept. To construct this extended benchmark, we curated a set of seven ImageNet-confirmed synsets spanning multiple se-mantic domains, including household objects, animals, vehicles, furniture, and sports equipment. The selected classes are: coffee mug , beer bottle , African elephant , airliner , mountain bike , loudspeaker , and 
+
+volleyball . This selection follows the suggestions from ChatGPT and ensures broad coverage across the ImageNet hierarchy while avoiding redundancy among preserved concepts. Notably, we intentionally include loudspeaker , which is semantically related to “Cassette Player”. By doing so, we create a more challenging scenario for evaluating the behavior of Cpres : the preservation matrix now contains a near-neighbor of the erased concept, allowing us to test whether the erasure update can suppress only the target direction without unintentionally diminishing representations associated with semantically adjacent classes. The remaining concepts, chosen to be visually and semantically distinct from the target, provide a stable set for assessing preservation fidelity. Class Original UCE DP                                                  
+
+> Preserved ↑Drop ↑Preserved ↑Drop ↑
+> African elephant 85.0% 79.0% +6.0% 84.0% +1.0%
+> airliner 96.0% 94.0% +2.0% 96.0% +0.0%
+> beer bottle 96.0% 91.0% +5.0% 96.0% +0.0%
+> coffee mug 71.0% 66.0% +5.0% 70.0% +1.0%
+> loudspeaker 93.0% 95.0% -2.0% 96.0% -3.0%
+> mountain bike 100.0% 98.0% +2.0% 100.0% +0.0%
+> volleyball 39.0% 26.0% +13.0% 35.0% +4.0% Mean 82.86% 78.43% 4.43% 82.43% 0.43%
+> Table 8. Classification accuracy comparison on general ImageNet classes before and after concept erasure on ”Cassette Player”. “Original” denotes accuracy on the unmodified model. “Preserved” is accuracy after applying UCE or DP. “Drop” is defined as (Original −Preserved), where smaller drops (bold) indicate better preservation of general concepts.
+
+To assess whether concept erasure affects recognition performance on unrelated classes, we evaluate the classification accuracy on seven general ImageNet categories (Table 8). Since the original model predictions are identical for both methods, we report them only once and compare the post-erasure accuracy (“Preserved”) as well as the accuracy drop (Original −
+
+Preserved). A smaller drop indicates better retention of general concepts unrelated to the targeted erased concepts. Across the seven categories, DP consistently exhibits smaller drops in accuracy, achieving an average drop of only 0.43%, compared to 4.43% for UCE. DP matches or outperforms UCE on every class, including “loudspeaker” where the drop is negative, indicating an unexpected boost in accuracy after applying the method. In contrast, UCE frequently induces substantial degradation, most notably on the “volleyball” class where the accuracy falls by 13 percentage points. The preserved accuracies further support this trend: DP retains an average of 82.43% classification accuracy post-erasure, nearly identical to the original value of 82.86%. UCE, however, drops to an average of 78.43%, showing that the method introduces notable unintended interference in general recognition capabilities. Since the target concept in our experiments is “cassette player” (the target concept is chosen alphabetically.), it is natural to examine how erasure interacts with semantically related categories. Among the evaluated classes, “loudspeaker” is arguably the closest in terms of object type and visual context: both involve audio equipment, share similar geometric structures, and frequently co-occur in similar environments. One might reasonably expect such conceptual proximity to induce a noticeable decline in recognition performance after erasure. However, the empirical results reveal that the influence on “loudspeaker” is remarkably minor for both methods. DP exhibits only a −3.0% drop, while UCE shows a slightly smaller −2.0% drop. Importantly, both drops are negative, indicating that recognition accuracy actually improves after concept removal. This suggests that the removed “cassette player” features are sufficiently specialized and do not interfere with the broader representation needed to recognize a “loudspeaker”. The fact that DP maintains robust performance on this semantically adjacent class, while still achieving the intended erasure, highlights its ability to localize the targeted concept without degrading conceptually overlapping regions of the feature space. Overall, these results demonstrate that DP generalizes more safely: it removes the targeted concept while preserving recognition performance on unrelated classes, whereas UCE exhibits measurable collateral damage across diverse ImageNet categories.
