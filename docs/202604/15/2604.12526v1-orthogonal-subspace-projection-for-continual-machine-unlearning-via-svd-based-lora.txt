@@ -1,0 +1,209 @@
+Title: Orthogonal Subspace Projection for Continual Machine Unlearning via SVD-Based LoRA
+
+URL Source: https://arxiv.org/pdf/2604.12526v1
+
+Published Time: Wed, 15 Apr 2026 00:51:31 GMT
+
+Number of Pages: 5
+
+Markdown Content:
+> JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2015 1
+
+# Orthogonal Subspace Projection for Continual Machine Unlearning via SVD-Based LoRA 
+
+Yogachandran Rahulamathavan, Nasir Iqbal, Juncheng Hu, and Sangarapillai Lambotharan, Senior Member, IEEE 
+
+This work has been submitted to the IEEE for possible publication. Copyright may be transferred without notice, after which this version may no longer be accessible. 
+
+Abstract —Continual machine unlearning aims to remove the influence of data that should no longer be retained, while preserving the usefulness of the model on everything else. This setting becomes especially difficult when deletion requests arrive sequentially, because the model must repeatedly adapt without erasing previously retained knowledge. Low-Rank Adaptation (LoRA) offers an efficient way to implement such updates, but naively combining many sequential LoRA modules leads to parameter collision, causing strong interference between tasks. We propose a static alternative based on Singular Value Decomposi-tion (SVD)-guided orthogonal subspace projection. Our method constrains each new LoRA update during training so that it lies in the orthogonal complement of the subspaces used by earlier unlearning tasks. This preserves task isolation without requiring dynamic routing at deployment. Experiments on CIFAR-100 with ResNet-20 and on MNIST show stable behavior across long sequences of unlearning tasks. After thirty sequential unlearning tasks, state-of-the-art static fusion reduces retained accuracy from 60.39% to 12.70%, whereas the proposed in-training con-strained optimization maintains baseline performance ( ∼58.1%) while preserving strong unlearning efficacy. 
+
+Index Terms —Machine Unlearning, Low Rank Adapters (LoRA), Privacy. 
+
+I. I NTRODUCTION 
+
+# THE “right to be forgotten,” formalized by regulations such as the GDPR, has made machine unlearning an in-creasingly important capability for deployed learning systems [1]. In many settings, deletion requests do not arrive once, but repeatedly over time. A useful continual unlearning method must therefore do more than forget the current target data: it must also preserve the model’s behavior on retained data and remain practical to deploy after many rounds of updates. LoRA[2] is attractive in this context because it allows each unlearning step to be represented by a small set of trainable parameters rather than a full retraining of the model. However, this efficiency comes with a challenge. When many LoRA updates are learned sequentially and then fused into a single model, their effects can overlap in the same parameter directions. As the number of tasks grows, this overlap leads 
+
+Y. Rahulamathavan, N. Iqbal and S. Lambotharan are with Institute for Dig-ital Technologies, Loughborough University, UK. E-mails: {y.rahulamathavan, n.iqbal, s.lambotharan }@lboro.ac.uk J. Hu is with the School of Artificial Intelligent Medicine, Guilin Medical University, Guilin 541199, CN. E-mail: 112018015@glmu.edu.cn The authors wish to acknowledge the financial support of the Engi-neering and Physical Sciences Research Council (EPSRC) under the grants Platform for Driving Ultimate Connectivity (TITAN) (EP/X04047X/1 and EP/Y037243/1) and PerCom (EP/X012301/1). 
+
+to parameter collision, which in turn degrades retained perfor-mance and can produce catastrophic forgetting. This challenge is closely related to the broader interference problem studied in continual learning [3], [4], [5], while classical machine unlearning methods based on selective retraining remain costly under repeated deletion requests [6], [7]. One response to this problem is to avoid static fusion entirely. Recent methods such as AC-LoRA [8] and I-LoRA [9] instead rely on dynamic Mixture-of-Experts (MoE) routing [10], where a routing network decides which adapter should be emphasized for each input. This helps isolate task-specific behavior and reduces interference. Yet the price of this iso-lation is paid at deployment time: all adapters must remain available, additional routing parameters must be stored, and each inference requires a routing decision before combining the adapter outputs. These costs are manageable in some settings, but they weaken the appeal of continual unlearning when static and lightweight deployment is desired. In this paper, we pursue a different goal: can sequential unlearning updates remain separable without introducing a dynamic routing mechanism at inference time? Our answer is to enforce separation during training itself. We formulate continual unlearning as an in-training constrained optimization problem in which each new LoRA update is restricted to the orthogonal complement of the subspaces already occupied by earlier tasks. To construct this constraint, we use SVD to summarize the dominant directions of previous updates and accumulate them into a projection matrix. This perspective yields two practical advantages. First, it directly targets the source of interference by controlling the ge-ometry of the learned updates rather than resolving collisions after they occur. Second, because the resulting updates occupy orthogonal subspaces, they can be fused back into the base model for static deployment, removing the need for a router and dynamic adapter selection. We also show that embedding the projection into the forward pass behaves as a form of projected gradient descent, which avoids the sub-optimality often introduced by post-hoc projection after unconstrained training. Experiments on MNIST and CIFAR-100 using ResNet-20 demonstrate that the proposed approach remains stable over long sequences of unlearning tasks. In particular, under N =30 sequential requests, conventional static fusion collapses retained accuracy to 12.7% (from the baseline accuracy of 60.39%), whereas our in-training constrained optimization pre-serves the baseline level ( ∼58.1%) while maintaining strong unlearning efficacy.   
+
+> arXiv:2604.12526v1 [cs.LG] 14 Apr 2026 JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2015 2
+> Fig. 1. High-level architecture comparision of the related works (top) and the proposed approach (bottom).
+
+II. B ACKGROUND AND RELATED WORK 
+
+As we observed in our recent work [11], the classical machine unlearning methods based on retraining [1], Fisher Information Matrices [6], or influence functions [7] are expen-sive under sequential deletion requests. LoRA [2] improves efficiency by learning low-rank updates ( ∆Wk = AkBk,where Ak ∈ Rdin ×r and Bk ∈ Rr×dout are the trainable low-rank factor matrices for task k) for N target concepts. Ideally, these adapters are statically fused: 
+
+Wf used = Wbase − λ
+
+> N
+
+X
+
+> k=1
+
+∆Wk, (1) However, unconstrained optimization causes the weight dis-tributions of sequential adapters to heavily overlap. Statically fusing them in (1) results in severe parameter collision, de-grading the model’s core intelligence on retained data. To avoid parameter collision, recent methods use dynamic MoE routing [10]. Frameworks such as AC-LoRA [8] and I-LoRA [9] isolate task-specific updates and use a routing network, parameterized by θG, to evaluate the input x:
+
+α(x) = Softmax (G(x; θG)) 
+
+where αk(x) ∈ [0 , 1] represents the activation weight for the k-th adapter. The modified forward pass becomes a dynamically weighted sum: 
+
+h = xW base +
+
+> N
+
+X
+
+> k=1
+
+αk(x) · x(AkBk)
+
+By pushing αk(x) → 0 for non-target data, these methods protect the base model from interference. However, they require O(N ) memory to keep all adapters loaded and add routing latency at inference time. 
+
+Our contribution. Our framework removes this deploy-ment bottleneck by mapping sequential unlearning requests to orthogonal subspaces during training, ensuring that updates (∆Wk) do not collide. Because the updates are orthogonal, they can be fused into the base weights using (1), eliminating the router and dynamic summation at inference time. III. P ROPOSED METHOD 
+
+Consider a pre-trained deep neural network such as aResNet. While LoRA can be applied across multiple layers, we formulate the framework on a single target layer (e.g., the final classification head) for clarity. As shown in Fig. 1, let Wbase ∈ Rdin ×dout denote the frozen weights of the target layer. We receive a sequence of N
+
+unlearning tasks, where task k aims to forget data distribution 
+
+Dk. For each task, we introduce a LoRA parameterized by 
+
+Ak ∈ Rdin ×r and Bk ∈ Rr×dout , where r ≪ min( din , d out ),and obtain ∆Wk = AkBk. The goal is to fuse these updates as in (1) without degrading accuracy on the retained distribution 
+
+Dretain .
+
+A. Subspace Projection 
+
+To prevent parameter collision between sequential updates, we must ensure that the update for task k does not interfere with the principal geometric directions utilized by tasks 1
+
+through k − 1. In order to achieve this, for a given update 
+
+∆Wk, we perform SVD and obtain the left and right singular matrices Uk and Vk as follows: 
+
+∆Wk = UkSkV Tk , (2) We then extract the top r left singular vectors, Uk,r ∈ Rdin ×r ,which represent the principal input directions spanning the unlearning trigger for task k. We maintain a cumulative orthogonal projection matrix P ∈ Rdin ×din , initialized as the identity matrix I. After each task k is optimized, the projection matrix is recursively updated by removing the newly occupied subspace: 
+
+Pk = Pk−1 − (Uk,r U Tk,r ), (3) where P0 = I.
+
+B. Subspace Projection Algorithms 
+
+Once the cumulative projection matrix Pk−1 is established, it defines the safe mathematical null space for the k-th unlearning task. Let LCE denote the standard Cross-Entropy JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2015 3
+
+loss. For a deletion request targeting the data distribution Dk,the objective is to train the adapter to perfectly capture the conceptual triggers of Dk, such that its isolated parametric contribution can be subsequently subtracted. We propose two distinct algorithmic approaches for applying the geometric constraint Pk−1 to the task-specific adapter: 
+
+1) Post-Hoc Orthogonal Projection: In this approach, the 
+
+k-th LoRA module ( ∆Wk = AkBk) is initially optimized freely without any structural constraints. The adapter is trained to minimize the empirical risk on the forget distribution Dk:
+
+min  
+
+> Ak,B k
+
+E(x,y )∼Dk [LCE (f (x; Wbase + AkBk), y )] 
+
+The optimizer freely navigates the loss landscape, converging to unconstrained local minima ˆAk and ˆBk. After training concludes, we apply the geometric constraint post-hoc by projecting the learned input weight matrix onto the safe subspace: ˜Ak = Pk−1 ˆAk
+
+The final, safely fused update becomes ∆Wk = ˜Ak ˆBk. While computationally straightforward, deep neural networks feature highly non-convex loss landscapes. Projecting a converged, unconstrained weight matrix onto a lower-dimensional sub-space post-training often arbitrarily displaces the weights to a sub-optimal point, which can severely degrade the target unlearning efficacy. 
+
+2) In-Training Constrained Optimization: To resolve the sub-optimality of post-hoc corrections, we formulate the unlearning update as a constrained optimization problem. In this second approach, we embed the cumulative projection matrix directly into the forward pass of the k-th LoRA module from the onset of training. The effective input matrix is continuously defined as ˜Ak = Pk−1Ak.The unlearning objective for the k-th concept is thus strictly bounded by the projection matrix during the forward pass: 
+
+min  
+
+> Ak,B k
+
+E(x,y )∼Dk [LCE (f (x; Wbase + Pk−1AkBk), y )] 
+
+This approach intrinsically acts as a learning in the null space of the previous tasks. We formally prove this geometric constraint via the following lemma: 
+
+Lemma 1. Gradient Feasibility Let L( ˜Ak, B k) be the training loss for task k, where ˜Ak = Pk−1Ak. Then: 
+
+∇Ak L = Pk−1∇ ˜Ak L
+
+Therefore, every gradient step on Ak strictly lies in 
+
+Range( Pk−1). In particular, (I − Pk−1)∇Ak L = 0 .Proof. Applying the differential chain rule to ˜Ak = Pk−1Ak
+
+yields: 
+
+d ˜Ak = Pk−1dA k
+
+The differential of the loss L with respect to the constrained parameters is defined by the Frobenius inner product: 
+
+dL = ⟨∇ ˜Ak L, d ˜Ak⟩
+
+Substituting d ˜Ak into the inner product: 
+
+dL = ⟨∇ ˜Ak L, P k−1dA k⟩ = ⟨P Tk−1∇ ˜Ak L, dA k⟩
+
+Because the orthogonal projection matrix is symmetric (P Tk−1 = Pk−1), this simplifies to: 
+
+dL = ⟨Pk−1∇ ˜Ak L, dA k⟩
+
+By the definition of the differential dL = ⟨∇ Ak L, dA k⟩, it directly follows that ∇Ak L = Pk−1∇ ˜Ak L.Because the optimizer is mathematically restricted from exploring or updating dimensions utilized by prior tasks, the adapter converges to a true local minimum strictly within the feasible orthogonal subspace. This maximizes unlearning efficacy while guaranteeing zero interference with historical tasks. IV. E XPERIMENTS AND RESULTS 
+
+To validate the proposed algorithms, we conduct empirical evaluations across two distinct domains: a fundamental 2-layer Multi-Layer Perceptron (MLP) on the MNIST dataset, and a highly non-convex deep architecture (ResNet-20) on the CIFAR-100 dataset. For the continual unlearning protocol, the models are sequentially tasked with forgetting N distinct classes (up to N = 3 for MNIST and N = 30 for CIFAR-100). 
+
+A. Results on MNIST Dataset 
+
+We train a simple MLP on MNIST and sequentially unlearn classes 9, 5, and 3. As shown in Fig. 2, increasing λ exposes the weakness of unconstrained LoRA fusion: retained accuracy collapses as overlapping updates interfere. In contrast, the MoE router [10] and both proposed orthogonalization methods preserve a stable baseline while reducing forget accuracy to the 10–50% range. 
+
+B. Results on CIFAR-100 Dataset 
+
+For the high-dimensional evaluation, we use a ResNet-20 pre-trained on CIFAR-100. We freeze the convolutional backbone and inject LoRA only into the final classification layer ( Wbase ∈ R64 ×100 ). The model then undergoes N = 30 
+
+sequential unlearning tasks, each targeting one class. Each task uses a low-rank update with Ak ∈ R64 ×4 and Bk ∈ R100 ×4.In the proposed in-training approach, the adapters are trained sequentially and the projection matrix Pk−1 is updated after each task via SVD. Table I shows the core trade-off. Under extreme pressure (λ = 1 .0), the Static Combined baselines [9], [8] achieves near-zero forget accuracy ( 0.77% at N = 30 ) but collapses retain accuracy to 12 .74% . The MoE Router [10] preserves retain accuracy near 59 .5% across capacities, but keeps target-class accuracy high ( ∼ 59 .10% ). 
+
+C. Performance of the Proposed In-Training Formulation 
+
+Our in-training approach avoids the catastrophic forgetting seen in static baselines while bypassing routing overhead. At N = 20 and N = 30 , it keeps retain accuracy stable (e.g., 58 .06% at N = 30 , λ = 1 .0). The trade-off is reduced unlearning depth under extreme capacity, with forget accu-racy rising to ∼ 53 .83% at N = 30 . The standard static JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2015 4                  
+
+> TABLE I CONTINUAL UNLEARNING PERFORMANCE ON RES NET -20 (CIFAR-100). C OLORS INDICATE :BLUE (E XCELLENT RETAIN PRESERVATION ), RED
+> (C ATASTROPHIC RETAIN COLLAPSE ), GREEN (S UCCESSFUL UNLEARNING ), AND ORANGE (L IMITED UNLEARNING EFFICACY ).
+
+Tasks ( N ) Method λ = 0 .5 λ = 1 .0
+
+Retain Acc. ( ↑) Forget Acc. ( ↓) Retain Acc. ( ↑) Forget Acc. ( ↓)
+
+N = 5 
+
+Static / AC-LoRA [8], I-LoRA [9] 56.23% 5.60% 48.78% 0.00% MoE Router [10] 59.80% 51.20% 59.80% 51.20% 
+
+In-Training Approach (Ours) 59.04% 37.60% 58.02% 33.80% 
+
+N = 10 
+
+Static / AC-LoRA [8], I-LoRA [9] 51.89% 13.80% 37.58% 1.20% MoE Router [10] 59.62% 57.00% 59.62% 57.00% 
+
+In-Training Approach (Ours) 58.68% 50.70% 57.19% 48.40% 
+
+N = 20 
+
+Static / AC-LoRA [8], I-LoRA [9] 45.30% 10.35% 25.19% 0.25% MoE Router [10] 60.46% 55.00% 60.46% 55.00% 
+
+In-Training Approach (Ours) 59.39% 50.75% 58.23% 48.00% 
+
+N = 30 
+
+Static / AC-LoRA [8], I-LoRA [9] 35.21% 10.60% 12.74% 0.77% 
+
+MoE Router [10] 59.49% 59.10% 59.49% 59.10% 
+
+In-Training Approach (Ours) 58.76% 56.13% 58.06% 53.83%      
+
+> Fig. 2. Operational trade-off trajectories for continual unlearning by sequentially forgetting 3 classes 9, 5 and 3 ( N= 3 ) on the MNIST dataset.
+> Fig. 3. Correlation between available orthogonal subspace dimensions and continual unlearning performance on CIFAR-100 (ResNet-20) for λ= 2 .0.
+
+LoRA baseline suffers severe parameter collision: low forget accuracy is obtained only by collapsing retain accuracy to 
+
+12 .74% . Dynamic routing prevents this collapse, but requires loading 30 LoRA modules and evaluating a router on every forward pass. Our in-training approach captures the same retain stability as MoE routing ( ∼ 58 .0% ) while keeping the updates geometrically isolated. 
+
+D. Subspace Saturation and Performance Correlation 
+
+Figure 3 shows the relation between available subspace and performance. For roughly the first 15 tasks, the free orthogonal subspace depletes linearly and retain accuracy stays near 58 .5% . Around N = 16 , the remaining space saturates near 23 dimensions, limiting further unlearning and causing forget accuracy to plateau. Retain accuracy stays protected until extreme overload ( N > 24 ). V. C ONCLUSION AND FUTURE WORK 
+
+In this letter, we introduced an in-training constrained formulation for continual unlearning that embeds SVD-based orthogonal projections directly into the adapter forward pass. Results on MNIST and CIFAR-100 show that the method prevents parameter collision across up to N = 30 sequential tasks while preserving strong retained accuracy. Future work will investigate non-linear projection tech-niques that can better capture complex task geometry, as well JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2015 5
+
+as min-max optimization formulations that more explicitly bal-ance effective unlearning against retained model performance. REFERENCES [1] L. Bourtoule, V. Chandrasekaran, C. A. Choquette-Choo, H. Jia, A. Travers, B. Zhang, D. Lie, and N. Papernot, “Machine unlearning,” in 2021 IEEE Symposium on Security and Privacy (SP) . IEEE, 2021, pp. 141–159. [2] E. J. Hu, Y. Shen, P. Wallis, Z. Allen-Zhu, Y. Li, S. Wang, L. Wang, and W. Chen, “Lora: Low-rank adaptation of large language models,” in International Conference on Learning Representations , 2022. [3] J. Kirkpatrick, R. Pascanu, N. Rabinowitz, J. Veness, G. Desjardins, A. A. Rusu, K. Milan, J. Quan, T. Ramalho, A. Grabska-Barwinska 
+
+et al. , “Overcoming catastrophic forgetting in neural networks,” Pro-ceedings of the national academy of sciences , vol. 114, no. 13, pp. 3521–3526, 2017. [4] D. Lopez-Paz and M. Ranzato, “Gradient episodic memory for continual learning,” Advances in neural information processing systems , vol. 30, 2017. [5] G. Zeng, Y. Chen, B. Cui, and S. Yu, “Continual learning of context-dependent processing in neural networks,” Nature Machine Intelligence ,vol. 1, no. 8, pp. 364–372, 2019. [6] A. Golatkar, A. Achille, and S. Soatto, “Eternal sunshine of the spotless net: Selective forgetting in deep networks,” in Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition ,2020, pp. 9304–9312. [7] P. W. Koh and P. Liang, “Understanding black-box predictions via influence functions,” in International conference on machine learning .PMLR, 2017, pp. 1885–1894. [8] L. Magdalena Lazier, A. Dhar, V. Stambolic, and L. Cavigelli, “Ac-lora: Access control aware llms through dynamic adapter retrieval,” in 
+
+Advances in Neural Information Processing Systems (NeurIPS) , 2025. [9] G. Zhao, Q. Zhang, S. Zhai, D. Shen, T. Zhang, Y. Qiao, and T. Xu, “I-lora: Iterative merging of routing-tuned adapters for continual learning,” in sbumitted to ICLR 2025 , 2024. [10] S. Dou, E. Shen, Y. Gao, J. Liao, Z. Jin, Y. Zheng, R. Huang et al. ,“Loramoe: Alleviate world knowledge forgetting in large language models via moe-style plugin,” arXiv preprint arXiv:2312.09979 , 2023. [11] N. Iqbal, Y. Rahulamathavan et al. , “Balanced sharding for targeted machine unlearning (bstm),” in Computing Conference (accepted for publication) , 2026.

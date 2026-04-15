@@ -6,55 +6,46 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-04-14
-- 运行时间：2026-04-14 19:57:22 UTC
+- 最新运行日期：2026-04-15
+- 运行时间：2026-04-15 20:17:32 UTC
 - 运行状态：成功
-- 本次总论文数：11
-- 精读区：6
-- 速读区：5
+- 本次总论文数：8
+- 精读区：5
+- 速读区：3
 
 ### 今日简报（AI）
-今日深度解析 11 篇 AI 论文，重点突破了模型概念擦除与隐私卸载的数学闭解及无集化新路径。
-满分论文揭示了双重投影在精准消除特定概念中的威力，并提出无需遗忘集即可降低隐私风险的卸载方案。
-建议优先研读隐私保护与持续学习方向的满分
-- 详情：[/202604/14/README](/202604/14/README)
+今日聚焦机器卸载与隐私合规，深度解析了联邦学习及大模型中“被遗忘权”的高效实现方案。
+重点推荐可验证的联邦卸载框架与针对敏感环境的轻量化大模型顺序卸载技术，确保模型部署既安全又合规。
+建议关注模型部署阶段的快捷方式规避与内存治理，从长远角度提升 AI 系统的鲁棒性与数据安全性。
+- 详情：[/202604/15/README](/202604/15/README)
 
 ### 精读区论文标签
-1. [Closed-Form Concept Erasure via Double Projections](/202604/14/2604.10032v1-closed-form-concept-erasure-via-double-projections)  
+1. [PrivEraserVerify: Efficient, Private, and Verifiable Federated Unlearning](/202604/15/2604.12348v1-priveraserverify-efficient-private-and-verifiable-federated-unlearning)  
    标签：评分：10.0/10、query:mu-ce
-   evidence：通过线性变换实现无需训练的闭式概念擦除
-2. [Mitigating Privacy Risk via Forget Set-Free Unlearning](/202604/14/2604.10636v1-mitigating-privacy-risk-via-forget-set-free-unlearning)  
+   evidence：面向被遗忘权的联邦遗忘学习
+2. [Operationalising the Right to be Forgotten in LLMs: A Lightweight Sequential Unlearning Framework for Privacy-Aligned Deployment in Politically Sensitive Environments](/202604/15/2604.12459v1-operationalising-the-right-to-be-forgotten-in-llms-a-lightweight-sequential-unlearning-framework-for-privacy-aligned-deployment-in-politically-sensitive-environments)  
    标签：评分：10.0/10、query:mu-ce
-   evidence：无需显式访问待遗忘数据的无遗忘集机器遗忘
-3. [HiEdit: Lifelong Model Editing with Hierarchical Reinforcement Learning](/202604/14/2604.11214v1-hiedit-lifelong-model-editing-with-hierarchical-reinforcement-learning)  
+   evidence：大语言模型中实现被遗忘权的顺序遗忘框架
+3. [Orthogonal Subspace Projection for Continual Machine Unlearning via SVD-Based LoRA](/202604/15/2604.12526v1-orthogonal-subspace-projection-for-continual-machine-unlearning-via-svd-based-lora)  
    标签：评分：10.0/10、query:mu-ce
-   evidence：纠正过时知识的终身模型编辑
-4. [Distributed Multi-Layer Editing for Rule-Level Knowledge in Large Language Models](/202604/14/2604.08284v1-distributed-multi-layer-editing-for-rule-level-knowledge-in-large-language-models)  
-   标签：评分：9.0/10、query:mu-ce
-   evidence：大语言模型中规则级知识的模型编辑
-5. [The Price of Ignorance: Information-Free Quotation for Data Retention in Machine Unlearning](/202604/14/2604.11511v1-the-price-of-ignorance-information-free-quotation-for-data-retention-in-machine-unlearning)  
-   标签：评分：9.0/10、query:mu-ce
-   evidence：GDPR下的数据删除权与机器遗忘权衡
-6. [Variational Latent Entropy Estimation Disentanglement: Controlled Attribute Leakage for Face Recognition](/202604/14/2604.11250v1-variational-latent-entropy-estimation-disentanglement-controlled-attribute-leakage-for-face-recognition)  
-   标签：评分：8.0/10、query:mu-ce
-   evidence：从人脸识别嵌入中移除敏感属性
+   evidence：通过正交子空间投影实现持续机器遗忘
+4. [BID-LoRA: A Parameter-Efficient Framework for Continual Learning and Unlearning](/202604/15/2604.12686v1-bid-lora-a-parameter-efficient-framework-for-continual-learning-and-unlearning)  
+   标签：评分：10.0/10、query:mu-ce
+   evidence：形式化持续学习与遗忘（CLU）以精确删除无用知识
+5. [RePAIR: Interactive Machine Unlearning through Prompt-Aware Model Repair](/202604/15/2604.12820v1-repair-interactive-machine-unlearning-through-prompt-aware-model-repair)  
+   标签：评分：10.0/10、query:mu-ce
+   evidence：通过提示感知模型修复进行交互式机器遗忘
 
 ### 速读区论文标签
-1. [Leveraging Complementary Embeddings for Replay Selection in Continual Learning with Small Buffers](/202604/14/2604.08336v1-leveraging-complementary-embeddings-for-replay-selection-in-continual-learning-with-small-buffers)  
+1. [When to Forget: A Memory Governance Primitive](/202604/15/2604.12007v1-when-to-forget-a-memory-governance-primitive)  
    标签：评分：7.0/10、query:mu-ce
-   evidence：解决持续学习中的灾难性遗忘
-2. [Mask-Free Privacy Extraction and Rewriting: A Domain-Aware Approach via Prototype Learning](/202604/14/2604.10145v1-mask-free-privacy-extraction-and-rewriting-a-domain-aware-approach-via-prototype-learning)  
+   evidence：决定哪些记忆应被抑制或弃用的记忆治理机制
+2. [Models Know Their Shortcuts: Deployment-Time Shortcut Mitigation](/202604/15/2604.12277v1-models-know-their-shortcuts-deployment-time-shortcut-mitigation)  
    标签：评分：7.0/10、query:mu-ce
-   evidence：针对隐私语义的自主跨度定位与重写
-3. [Learning to Forget -- Hierarchical Episodic Memory for Lifelong Robot Deployment](/202604/14/2604.11306v1-learning-to-forget----hierarchical-episodic-memory-for-lifelong-robot-deployment)  
-   标签：评分：7.0/10、query:mu-ce
-   evidence：机器人情境记忆中的选择性遗忘
-4. [Not All Forgetting Is Equal: Architecture-Dependent Retention Dynamics in Fine-Tuned Image Classifiers](/202604/14/2604.11508v1-not-all-forgetting-is-equal-architecture-dependent-retention-dynamics-in-fine-tuned-image-classifiers)  
+   evidence：在无需原始训练数据的情况下减轻词元级捷径特征
+3. [A Utility-preserving De-identification Pipeline for Cross-hospital Radiology Data Sharing](/202604/15/2604.07128v1-a-utility-preserving-de-identification-pipeline-for-cross-hospital-radiology-data-sharing)  
    标签：评分：6.0/10、query:mu-ce
-   evidence：追踪微调过程中的样本遗忘模式
-5. [Fairness is Not Flat: Geometric Phase Transitions Against Shortcut Learning](/202604/14/2604.11704v1-fairness-is-not-flat-geometric-phase-transitions-against-shortcut-learning)  
-   标签：评分：6.0/10、query:mu-ce
-   evidence：隔离并剪枝导致捷径学习的特征
+   evidence：从放射科数据中移除敏感术语和信息
 
 
 <div class="dpr-home-promo-card">

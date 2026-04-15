@@ -1,0 +1,313 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-04-15T20:16:01.959477+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 5,
+    "deep_cap": 6,
+    "deep_selected": 5,
+    "quick_candidates": 3,
+    "quick_skim_target": 11,
+    "quick_selected": 3
+  },
+  "deep_dive": [
+    {
+      "id": "2604.12348v1",
+      "title": "PrivEraserVerify: Efficient, Private, and Verifiable Federated Unlearning",
+      "abstract": "Federated learning (FL) enables collaborative model training without sharing raw data, offering a promising path toward privacy preserving artificial intelligence. However, FL models may still memorize sensitive information from participants, conflicting with the right to be forgotten (RTBF). To meet these requirements, federated unlearning has emerged as a mechanism to remove the contribution of departing clients. Existing solutions only partially address this challenge: FedEraser improves efficiency but lacks privacy protection, FedRecovery ensures differential privacy (DP) but degrades accuracy, and VeriFi enables verifiability but introduces overhead without efficiency or privacy guarantees. We present PrivEraserVerify (PEV), a unified framework that integrates efficiency, privacy, and verifiability into federated unlearning. PEV employs (i) adaptive checkpointing to retain critical historical updates for fast reconstruction, (ii) layer adaptive differentially private calibration to selectively remove client influence while minimizing accuracy loss, and (iii) fingerprint based verification, enabling participants to confirm unlearning in a decentralized and noninvasive manner. Experiments on image, handwritten character, and medical datasets show that PEV achieves up to 2 to 3 times faster unlearning than retraining, provides formal indistinguishability guarantees with reduced performance degradation, and supports scalable verification. To the best of our knowledge, PEV is the first framework to simultaneously deliver efficiency, privacy, and verifiability for federated unlearning, moving FL closer to practical and regulation compliant deployment.",
+      "authors": [
+        "Parthaw Goswami",
+        "Md Khairul Islam",
+        "Ashfak Yeafi"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-04-14T06:33:58+00:00",
+      "link": "https://arxiv.org/pdf/2604.12348v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "federated unlearning for the right to be forgotten",
+      "llm_evidence_cn": "面向被遗忘权的联邦遗忘学习",
+      "llm_evidence": "面向被遗忘权的联邦遗忘学习",
+      "canonical_evidence": "面向被遗忘权的联邦遗忘学习",
+      "llm_tldr_en": "Introduces PrivEraserVerify, a framework for efficient, private, and verifiable federated unlearning.",
+      "llm_tldr_cn": "提出PrivEraserVerify框架，实现了高效、隐私且可验证的联邦遗忘学习。",
+      "llm_tldr": "提出PrivEraserVerify框架，实现了高效、隐私且可验证的联邦遗忘学习。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Privacy-preserving machine learning and the right to be forgotten",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.12459v1",
+      "title": "Operationalising the Right to be Forgotten in LLMs: A Lightweight Sequential Unlearning Framework for Privacy-Aligned Deployment in Politically Sensitive Environments",
+      "abstract": "Large Language Models (LLMs) are increasingly deployed in politically sensitive environments, where memorisation of personal data or confidential content raises regulatory concerns under frameworks such as the GDPR and its Right to be Forgotten. Translating such legal principles into large-scale generative systems presents significant technical challenges.   We introduce a lightweight sequential unlearning framework that explicitly separates retention and suppression objectives. The method first stabilises benign capabilities through positive fine-tuning, then applies layer-restricted negative fine-tuning to suppress designated sensitive patterns while preserving general language competence.   Experiments on the SemEval-2025 LLM Unlearning benchmark demonstrate effective behavioural suppression with minimal impact on factual accuracy and fluency. GPT-2 exhibits greater robustness than DistilGPT-2, highlighting the role of model capacity in privacy-aligned adaptation. We position sequential unlearning as a practical and reproducible mechanism for operationalising data erasure requirements in politically deployed LLMs.",
+      "authors": [
+        "Esen Kurt",
+        "Haithem Afli"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-04-14T08:45:12+00:00",
+      "link": "https://arxiv.org/pdf/2604.12459v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "sequential unlearning framework for the right to be forgotten in LLMs",
+      "llm_evidence_cn": "大语言模型中实现被遗忘权的顺序遗忘框架",
+      "llm_evidence": "大语言模型中实现被遗忘权的顺序遗忘框架",
+      "canonical_evidence": "大语言模型中实现被遗忘权的顺序遗忘框架",
+      "llm_tldr_en": "A lightweight sequential unlearning framework to suppress sensitive patterns in LLMs for GDPR compliance.",
+      "llm_tldr_cn": "一种轻量级顺序遗忘框架，用于抑制LLM中的敏感模式以符合GDPR要求。",
+      "llm_tldr": "一种轻量级顺序遗忘框架，用于抑制LLM中的敏感模式以符合GDPR要求。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Privacy-preserving machine learning and the right to be forgotten",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.12526v1",
+      "title": "Orthogonal Subspace Projection for Continual Machine Unlearning via SVD-Based LoRA",
+      "abstract": "Continual machine unlearning aims to remove the influence of data that should no longer be retained, while preserving the usefulness of the model on everything else. This setting becomes especially difficult when deletion requests arrive sequentially, because the model must repeatedly adapt without erasing previously retained knowledge. Low-Rank Adaptation (LoRA) offers an efficient way to implement such updates, but naively combining many sequential LoRA modules leads to parameter collision, causing \\textit{strong interference} between tasks. We propose a static alternative based on Singular Value Decomposition (SVD)-guided orthogonal subspace projection. Our method constrains each new LoRA update during training so that it lies in the orthogonal complement of the subspaces used by earlier unlearning tasks. This preserves task isolation without requiring dynamic routing at deployment. Experiments on CIFAR-100 with ResNet-20 and on MNIST show stable behavior across long sequences of unlearning tasks. After thirty sequential unlearning tasks, state-of-the-art static fusion reduces retained accuracy from 60.39\\% to 12.70\\%, whereas the proposed in-training constrained optimization maintains baseline performance ($\\sim$58.1\\%) while preserving strong unlearning efficacy.",
+      "authors": [
+        "Yogachandran Rahulamathavan",
+        "Nasir Iqbal",
+        "Juncheng Hu",
+        "Sangarapillai Lambotharan"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-04-14T09:59:32+00:00",
+      "link": "https://arxiv.org/pdf/2604.12526v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "continual machine unlearning via orthogonal subspace projection",
+      "llm_evidence_cn": "通过正交子空间投影实现持续机器遗忘",
+      "llm_evidence": "通过正交子空间投影实现持续机器遗忘",
+      "canonical_evidence": "通过正交子空间投影实现持续机器遗忘",
+      "llm_tldr_en": "Proposes an SVD-based LoRA method for continual unlearning to handle sequential deletion requests.",
+      "llm_tldr_cn": "提出一种基于SVD的LoRA方法，用于处理顺序删除请求的持续遗忘学习。",
+      "llm_tldr": "提出一种基于SVD的LoRA方法，用于处理顺序删除请求的持续遗忘学习。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Selective forgetting in neural networks",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.12686v1",
+      "title": "BID-LoRA: A Parameter-Efficient Framework for Continual Learning and Unlearning",
+      "abstract": "Recent advances in deep learning underscore the need for systems that can not only acquire new knowledge through Continual Learning (CL) but also remove outdated, sensitive, or private information through Machine Unlearning (MU). However, while CL methods are well-developed, MU techniques remain in early stages, creating a critical gap for unified frameworks that depend on both capabilities. We find that naively combining existing CL and MU approaches results in knowledge leakage a gradual degradation of foundational knowledge across repeated adaptation cycles. To address this, we formalize Continual Learning Unlearning (CLU) as a unified paradigm with three key goals: (i) precise deletion of unwanted knowledge, (ii) efficient integration of new knowledge while preserving prior information, and (iii) minimizing knowledge leakage across cycles. We propose Bi-Directional Low-Rank Adaptation (BID-LoRA), a novel framework featuring three dedicated adapter pathways-retain, new, and unlearn applied to attention layers, combined with escape unlearning that pushes forget-class embeddings to positions maximally distant from retained knowledge, updating only 5% of parameters. Experiments on CIFAR-100 show that BID-LoRA outperforms CLU baselines across multiple adaptation cycles. We further evaluate on CASIA-Face100, a curated face recognition subset, demonstrating practical applicability to real-world identity management systems where new users must be enrolled and withdrawn users removed.",
+      "authors": [
+        "Jagadeesh Rachapudi",
+        "Ritali Vatsi",
+        "Praful Hambarde",
+        "Amit Shukla"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-04-14T12:57:56+00:00",
+      "link": "https://arxiv.org/pdf/2604.12686v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "formalize Continual Learning Unlearning (CLU) for precise deletion of unwanted knowledge",
+      "llm_evidence_cn": "形式化持续学习与遗忘（CLU）以精确删除无用知识",
+      "llm_evidence": "形式化持续学习与遗忘（CLU）以精确删除无用知识",
+      "canonical_evidence": "形式化持续学习与遗忘（CLU）以精确删除无用知识",
+      "llm_tldr_en": "A unified framework for parameter-efficient continual learning and machine unlearning to prevent knowledge leakage.",
+      "llm_tldr_cn": "一个用于参数高效持续学习和机器遗忘的统一框架，旨在防止知识泄露。",
+      "llm_tldr": "一个用于参数高效持续学习和机器遗忘的统一框架，旨在防止知识泄露。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Machine unlearning techniques and algorithms in deep learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.12820v1",
+      "title": "RePAIR: Interactive Machine Unlearning through Prompt-Aware Model Repair",
+      "abstract": "Large language models (LLMs) inherently absorb harmful knowledge, misinformation, and personal data during pretraining on large-scale web corpora, with no native mechanism for selective removal. While machine unlearning offers a principled solution, existing approaches are provider-centric, requiring retraining pipelines, curated retain datasets, and direct intervention by model service providers (MSPs), thereby excluding end users from controlling their own data. We introduce Interactive Machine Unlearning (IMU), a new paradigm in which users can instruct LLMs to forget targeted knowledge through natural language at inference time. To realize IMU, we propose RePAIR, a prompt-aware model repair framework comprising (i) a watchdog model for unlearning intent detection, (ii) a surgeon model for generating repair procedures, and (iii) a patient model whose parameters are updated autonomously. At the core of RePAIR, we develop Steering Through Activation Manipulation with PseudoInverse (STAMP), a training-free, single-sample unlearning method that redirects MLP activations toward a refusal subspace via closed-form pseudoinverse updates. Its low-rank variant reduces computational complexity from O(d^3) to O(r^3 + r^2 * d), enabling efficient on-device unlearning with up to ~3x speedup over training-based baselines. Extensive experiments across harmful knowledge suppression, misinformation correction, and personal data erasure demonstrate that RePAIR achieves near-zero forget scores (Acc_f = 0.00, F-RL = 0.00) while preserving model utility (Acc_r up to 84.47, R-RL up to 0.88), outperforming six state-of-the-art baselines. These results establish RePAIR as an effective and practical framework for user-driven model editing, advancing transparent and on-device control over learned knowledge, with potential extensions to multimodal foundation models.",
+      "authors": [
+        "Jagadeesh Rachapudi",
+        "Pranav Singh",
+        "Ritali Vatsi",
+        "Praful Hambarde",
+        "Amit Shukla"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.CL"
+      ],
+      "published": "2026-04-14T14:44:45+00:00",
+      "link": "https://arxiv.org/pdf/2604.12820v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "interactive machine unlearning through prompt-aware model repair",
+      "llm_evidence_cn": "通过提示感知模型修复进行交互式机器遗忘",
+      "llm_evidence": "通过提示感知模型修复进行交互式机器遗忘",
+      "canonical_evidence": "通过提示感知模型修复进行交互式机器遗忘",
+      "llm_tldr_en": "Introduces a paradigm where users can instruct LLMs to forget targeted knowledge via natural language.",
+      "llm_tldr_cn": "提出了一种新范式，允许用户通过自然语言指令让大模型忘记特定知识。",
+      "llm_tldr": "提出了一种新范式，允许用户通过自然语言指令让大模型忘记特定知识。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Machine unlearning techniques and algorithms in deep learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2604.12007v1",
+      "title": "When to Forget: A Memory Governance Primitive",
+      "abstract": "Agent memory systems accumulate experience but currently lack a principled operational metric for memory quality governance -- deciding which memories to trust, suppress, or deprecate as the agent's task distribution shifts. Write-time importance scores are static; dynamic management systems use LLM judgment or structural heuristics rather than outcome feedback. This paper proposes Memory Worth (MW): a two-counter per-memory signal that tracks how often a memory co-occurs with successful versus failed outcomes, providing a lightweight, theoretically grounded foundation for staleness detection, retrieval suppression, and deprecation decisions. We prove that MW converges almost surely to the conditional success probability p+(m) = Pr[y_t = +1 | m in M_t] -- the probability of task success given that memory m is retrieved -- under a stationary retrieval regime with a minimum exploration condition. Importantly, p+(m) is an associational quantity, not a causal one: it measures outcome co-occurrence rather than causal contribution. We argue this is still a useful operational signal for memory governance, and we validate it empirically in a controlled synthetic environment where ground-truth utility is known: after 10,000 episodes, the Spearman rank-correlation between Memory Worth and true utilities reaches rho = 0.89 +/- 0.02 across 20 independent seeds, compared to rho = 0.00 for systems that never update their assessments. A retrieval-realistic micro-experiment with real text and neural embedding retrieval (all-MiniLM-L6-v2) further shows stale memories crossing the low-value threshold (MW = 0.17) while specialist memories remain high-value (MW = 0.77) across 3,000 episodes. The estimator requires only two scalar counters per memory unit and can be added to architectures that already log retrievals and episode outcomes.",
+      "authors": [
+        "Baris Simsek"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-04-13T19:54:14+00:00",
+      "link": "https://arxiv.org/pdf/2604.12007v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Memory governance for deciding which memories to suppress or deprecate",
+      "llm_evidence_cn": "决定哪些记忆应被抑制或弃用的记忆治理机制",
+      "llm_evidence": "决定哪些记忆应被抑制或弃用的记忆治理机制",
+      "canonical_evidence": "决定哪些记忆应被抑制或弃用的记忆治理机制",
+      "llm_tldr_en": "Proposes Memory Worth to manage agent memory by tracking success-linked signals for staleness and deprecation.",
+      "llm_tldr_cn": "提出Memory Worth指标，通过追踪成功信号来管理智能体记忆的陈旧检测与弃用。",
+      "llm_tldr": "提出Memory Worth指标，通过追踪成功信号来管理智能体记忆的陈旧检测与弃用。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Selective forgetting in neural networks",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2604.07128v1",
+      "title": "A Utility-preserving De-identification Pipeline for Cross-hospital Radiology Data Sharing",
+      "abstract": "Large-scale radiology data are critical for developing robust medical AI systems. However, sharing such data across hospitals remains heavily constrained by privacy concerns. Existing de-identification research in radiology mainly focus on removing identifiable information to enable compliant data release. Yet whether de-identified radiology data can still preserve sufficient utility for large-scale vision-language model training and cross-hospital transfer remains underexplored. In this paper, we introduce a utility-preserving de-identification pipeline (UPDP) for cross-hospital radiology data sharing. Specifically, we compile a blacklist of privacy-sensitive terms and a whitelist of pathology-related terms. For radiology images, we use a generative filtering mechanism that synthesis a privacy-filtered and pathology-reserved counterparts of the original images. These synthetic image counterparts, together with ID-filtered reports, can then be securely shared across hospitals for downstream model development and evaluation. Experiments on public chest X-ray benchmarks demonstrate that our method effectively removes privacy-sensitive information while preserving diagnostically relevant pathology cues. Models trained on the de-identified data maintain competitive diagnostic accuracy compared with those trained on the original data, while exhibiting a marked decline in identity-related accuracy, confirming effective privacy protection. In the cross-hospital setting, we further show that de-identified data can be combined with local data to yield better performance.",
+      "authors": [
+        "Chenhao Liu",
+        "Zelin Wen",
+        "Yan Tong",
+        "Junjie Zhu",
+        "Xinyu Tian",
+        "Yuchi Liu",
+        "Ashu Gupta",
+        "Syed M. S. Islam",
+        "Tom Gedeon",
+        "Yue Yao"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-04-08T14:21:29+00:00",
+      "link": "https://arxiv.org/pdf/2604.07128v1",
+      "tags": [
+        "keyword:MU CE"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "removing sensitive terms and information from radiology data",
+      "llm_evidence_cn": "从放射科数据中移除敏感术语和信息",
+      "llm_evidence": "从放射科数据中移除敏感术语和信息",
+      "canonical_evidence": "从放射科数据中移除敏感术语和信息",
+      "llm_tldr_en": "A pipeline for de-identifying radiology data by removing sensitive terms while preserving utility for AI training.",
+      "llm_tldr_cn": "一种放射科数据去标识化流水线，通过移除敏感术语同时保留AI训练效用。",
+      "llm_tldr": "一种放射科数据去标识化流水线，通过移除敏感术语同时保留AI训练效用。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Algorithms for removing sensitive information from neural networks",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2604.12277v1",
+      "title": "Models Know Their Shortcuts: Deployment-Time Shortcut Mitigation",
+      "abstract": "Pretrained language models often rely on superficial features that appear predictive during training yet fail to generalize at test time, a phenomenon known as shortcut learning. Existing mitigation methods generally operate at training time and require heavy supervision such as access to the original training data or prior knowledge of shortcut type. We propose Shortcut Guardrail, a deployment-time framework that mitigates token-level shortcuts without access to the original training data or shortcut annotations. Our key insight is that gradient-based attribution on a biased model highlights shortcut tokens. Building on this finding, we train a lightweight LoRA-based debiasing module with a Masked Contrastive Learning (MaskCL) objective that encourages consistent representations with or without individual tokens. Across sentiment classification, toxicity detection, and natural language inference under both naturally occurring and controlled shortcuts, Shortcut Guardrail improves overall accuracy and worst-group accuracy over the unmitigated model under distribution shifts while preserving in-distribution performance.",
+      "authors": [
+        "Jiayi Li",
+        "Shijie Tang",
+        "Gün Kaynar",
+        "Shiyi Du",
+        "Carl Kingsford"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-04-14T04:43:29+00:00",
+      "link": "https://arxiv.org/pdf/2604.12277v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "mitigates token-level shortcuts without access to original training data",
+      "llm_evidence_cn": "在无需原始训练数据的情况下减轻词元级捷径特征",
+      "llm_evidence": "在无需原始训练数据的情况下减轻词元级捷径特征",
+      "canonical_evidence": "在无需原始训练数据的情况下减轻词元级捷径特征",
+      "llm_tldr_en": "Proposes a framework to mitigate shortcut learning in pretrained models at deployment time using LoRA.",
+      "llm_tldr_cn": "提出一种在部署阶段利用 LoRA 减轻预训练模型中捷径学习的框架。",
+      "llm_tldr": "提出一种在部署阶段利用 LoRA 减轻预训练模型中捷径学习的框架。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Concept erasure and removal from pre-trained models",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}

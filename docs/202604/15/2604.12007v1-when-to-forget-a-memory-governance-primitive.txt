@@ -1,0 +1,456 @@
+Title: When to Forget: A Memory Governance Primitive
+
+URL Source: https://arxiv.org/pdf/2604.12007v1
+
+Published Time: Wed, 15 Apr 2026 00:17:25 GMT
+
+Number of Pages: 12
+
+Markdown Content:
+# When to Forget: A Memory Governance Primitive 
+
+> Baris Simsek
+> 1
+> arXiv:2604.12007v1 [cs.AI] 13 Apr 2026
+
+# When to Forget: A Memory Governance Primitive 
+
+# Baris Simsek April 15, 2026 
+
+# Abstract 
+
+Agent memory systems accumulate experience but currently lack a principled operational metric for memory quality governance—deciding which memories to trust, suppress, or deprecate as the agent’s task distribution shifts. Write-time impor-tance scores are static; dynamic management sys-tems use LLM judgment or structural heuristics rather than outcome feedback. This paper pro-poses Memory Worth (MW): a two-counter per-memory signal that tracks how often a memory co-occurs with successful versus failed outcomes, providing a lightweight, theoretically grounded foundation for staleness detection, retrieval sup-pression, and deprecation decisions. We prove that MW converges almost surely to the condi-tional success probability p+(m) = Pr[ yt =+1 | m ∈ M t]—the probability of task success given that memory m is retrieved—under a sta-tionary retrieval regime with a minimum explo-ration condition. Importantly, p+(m) is an asso-ciational quantity, not a causal one: it measures outcome co-occurrence rather than causal contri-bution. We argue this is still a useful operational signal for memory governance, and we validate it empirically in a controlled synthetic environ-ment where ground-truth utility is known: after 10,000 episodes, the Spearman rank-correlation between Memory Worth and true utilities reaches 
+
+ρ = 0 .89 ± 0.02 across 20 independent seeds, compared to ρ = 0 .00 for systems that never up-date their assessments. A retrieval-realistic micro-experiment with real text and standard embedding retrieval ( all-MiniLM-L6-v2 ) further shows stale memories crossing the low-value threshold (MW = 0 .17 ) while specialist memories remain high-value ( MW = 0 .77 ) across 3,000 episodes. The estimator requires only two scalar counters per memory unit and can be added to architectures that already log retrievals and episode outcomes. 
+
+# 1. Introduction 
+
+When an agent stores a memory, it makes an implicit pre-diction: this piece of knowledge will be useful in the future. That prediction may be correct at the time of storage but become wrong as the world changes, as the agent’s task dis-tribution shifts, or simply as new information supersedes old. Many widely used agent memory systems rely primarily on write-time heuristics or LLM-assigned importance scores to assess memory quality (Park et al., 2023; Packer et al., 2023). While more recent systems have begun to incorpo-rate dynamic memory management—including admission control, deletion, and adaptive retrieval (Zhang et al., 2026; Xu et al., 2025)—a simple, general per-memory estima-tor of post-retrieval outcome association, with convergence guarantees, has not been proposed. The consequence is that outcome signals available at every episode go unused. A memory that has been present in the retrieval set during dozens of failures continues to be treated as trustworthy. A memory that consistently co-occurs with successful outcomes receives no additional credit. The agent’s memory store accumulates experience, but quality information from that experience is discarded. This paper addresses the memory governance problem di-rectly: how should an agent decide which stored memories remain trustworthy as experience accumulates? We argue that memory governance requires an operational primitive: a per-memory online signal that accumulates retrieval evi-dence and supports suppression, re-verification, prioritisa-tion, and deprecation decisions over time. We propose such a primitive— Memory Worth —a lightweight two-counter statistic that tracks, for each memory, how often it co-occurs with successful versus failed outcomes. MW supports stale-ness detection, retrieval suppression, and deprecation with-out requiring causal attribution or architectural changes. The contribution is both methodological and empirical: we prove convergence to post-retrieval conditional success probabil-ity under explicit assumptions, characterise three distinct failure modes with quantified magnitudes, and demonstrate the governance primitive under modern embedding retrieval. The central limitation is explicit: MW measures outcome association, not causation, and therefore should be treated as the minimal operational primitive from which practical memory governance systems can be composed. 2When to Forget: A Memory Governance Primitive 
+
+The estimator requires no architectural changes beyond out-come and retrieval logging, which architectures that already log agent interactions expose naturally. 
+
+Contributions. 
+
+• Governance primitive. We define Memory Worth, a two-counter per-memory online signal that enables staleness detection, retrieval suppression, uncertainty-aware review, and deprecation decisions without causal attribution or architectural changes. • Theoretical grounding. We prove almost-sure con-vergence (Section 4) under explicit assumptions (A1)– (A6) by a martingale argument, and show empirically that the Bayesian Beta-Bernoulli posterior mean con-verges to the same ranking at long-run evidence levels (Experiment 1, ρ = 0 .89 ± 0.02 ). • Failure-mode science. Three experiments characterise when and how MW breaks under realistic A3 violations (Experiments 2–4): task-difficulty confounding leaves global MW negatively correlated ( ρ ≈ − 0.33 ) but hard-task-only conditioning recovers a positive signal (ρ ≈ +0 .14 ± 0.07 ); retrieval-policy feedback does not cause collapse in the tested softmax regime; co-retrieval confounding requires ≈30% retrieval diversity to resolve in the tested setting. • Embedding-retrieval validation. A retrieval-realistic micro-experiment (all-MiniLM-L6-v2 , 3,000 episodes) shows stale memory MW reaching 0.17 
+
+while specialist MW stabilises at 0.77 —and repro-duces the hitchhiker co-retrieval pathology predicted by Experiment 4, demonstrating that semantic retrieval systems naturally induce the confound the theory iden-tifies (Experiment 5, Section 5.4). 
+
+# 2. Background and Related Work 
+
+Agent memory systems. Park et al. (2023) introduce a three-component retrieval score combining recency, LLM-assigned importance, and embedding relevance. The impor-tance score is the closest precursor to Memory Worth, but it is static—assigned once at write time and never updated by outcomes. Packer et al. (2023) give agents explicit mem-ory management operations but provide no outcome-driven quality signal. Shinn et al. (2023) use failure outcomes to up-date memory at the episode level—storing a self-reflection about what went wrong—rather than tracking per-memory outcome statistics. Zhong et al. (2024) model memory de-cay via an Ebbinghaus forgetting curve, capturing temporal dynamics but not outcome feedback. More recent work has moved toward dynamic memory gov-ernance. Zhang et al. (2026) propose Adaptive Memory Admission Control (A-MAC), which scores candidate mem-ories along five dimensions (utility, confidence, novelty, recency, type prior) before admission to long-term stor-age. A-MAC operates before storage, assigning write-time scores that can be learned and adapted; Memory Worth operates after repeated retrieval, updating a per-memory statistic from observed outcomes. The two are complemen-tary: A-MAC controls what enters memory; Memory Worth tracks how well what is in memory actually performs. Xu et al. (2025) propose A-MEM, which uses LLM prompt-ing to dynamically organize and evolve memory through Zettelkasten-style linking. A-MEM focuses on structural organization and retrieval quality rather than per-memory outcome tracking. 
+
+Credit assignment in reinforcement learning. The credit assignment problem (Minsky, 1961; Sutton & Barto, 2018) asks which past actions caused a delayed reward. RL meth-ods for credit assignment (Arjona-Medina et al., 2019; Haru-tyunyan et al., 2019) operate over temporal sequences of actions, where credit flows backward through time. In mem-ory retrieval there is no temporal sequence over memories: multiple memories are retrieved simultaneously. The classi-cal machinery of temporal difference learning and eligibility traces does not apply directly. 
+
+Surveys and benchmarks. Recent surveys have mapped the rapidly expanding landscape of agent memory. Zhang et al. (2025) provide a comprehensive taxonomy distinguishing factual, experiential, and working memory, and survey dy-namics of memory formation, evolution, and retrieval; they identify memory quality assessment as an open problem. Hu et al. (2025) introduce a benchmark covering four core memory competencies—accurate retrieval, test-time learn-ing, long-range understanding, and selective forgetting— and find that existing systems fall short on all four. Selective forgetting in particular is the competency most directly ad-dressed by Memory Worth: a convergent quality signal is a prerequisite for principled deprecation decisions. 
+
+Honest gap statement. Prior dynamic memory manage-ment systems—including A-MAC (Zhang et al., 2026) and A-MEM (Xu et al., 2025)—update memory quality assess-ments, but do so through LLM judgment, structural reorgani-zation, or write-time heuristics rather than from per-memory retrieval-outcome statistics. To our knowledge, prior work has not isolated the post-retrieval per-memory success-rate estimator defined here—tracking p+(m) = Pr[ yt = +1 |
+
+m ∈ M t] via two online counters per memory unit—and analyzed its convergence under explicit assumptions. The novelty of Memory Worth is precise and operationally dis-tinct: a lightweight post-retrieval associational estimator with a convergence guarantee and only two scalars of over-head. 3When to Forget: A Memory Governance Primitive 
+
+# 3. Memory Worth 
+
+3.1. Setting 
+
+An agent interacts with tasks over discrete episodes t =1, 2, . . . At each episode, it retrieves a set Mt ⊂ M of k
+
+memories from the memory store M = {m1, . . . , m N },takes an action, and observes an outcome yt ∈ { +1 , −1}
+
+where +1 denotes success and −1 denotes failure. The agent also assigns a retrieval weight wt(m) ≥ 0 to each retrieved memory, reflecting how influential that memory was in producing the action. We require P 
+
+> m∈M t
+
+wt(m) = 1.
+
+3.2. Definition Definition 3.1 (Memory Worth) . The Memory Worth of memory m after T episodes is: 
+
+MW T (m) = hits + 
+
+> T
+
+(m)hits + 
+
+> T
+
+(m) + hits − 
+
+> T
+
+(m) (1) 
+
+where the weighted retrieval counts accumulate as: 
+
+hits + 
+
+> T
+
+(m) = 
+
+> T
+
+X
+
+> t=1
+
+wt(m) 1[m ∈ M t] 1[yt = +1] (2) 
+
+hits − 
+
+> T
+
+(m) = 
+
+> T
+
+X
+
+> t=1
+
+wt(m) 1[m ∈ M t] 1[yt = −1] (3) 
+
+When hits + 
+
+> T
+
+(m) + hits − 
+
+> T
+
+(m) = 0 , we set MW T (m) = 0 .5
+
+(uninformative prior). 
+
+MW T (m) is the empirical success rate of episodes in which 
+
+m was retrieved, weighted by retrieval influence. It is bounded in [0 , 1] , interpretable without domain knowledge, and requires only two scalar counters per memory unit. 
+
+3.3. Retrieval Weight 
+
+The retrieval weight wt(m) can be set in several ways de-pending on available information: • Uniform : wt(m) = 1 /k for all m ∈ M t. No addi-tional information required. • Score-proportional : wt(m) ∝ score( m, q t) where 
+
+score is the retrieval scoring function (e.g., incorpo-rating semantic similarity and recency). Gives higher weight to memories that most influenced the retrieval decision. • Oracle : wt(m) ∝ U ∗(m) where U ∗(m) is the true utility—only available in controlled experiments. As shown in Section 5, all three weightings converge to sim-ilar final values in the stationary long-run limit. The choice of weight matters primarily for convergence speed and for behavior under distribution shift, which are addressed in future work. 
+
+3.4. Two Counts Are Necessary 
+
+A single scalar MW T (m) conceals important information that the dual-count representation preserves. Consider two memories, both with MW = 0 .80 computed from different count pairs: Memory hits + hits − Status 
+
+mA 80.0 20.0 High evidence; reliable 
+
+mB 8.0 2.0 Low evidence; uncertain 
+
+mA and mB have identical Memory Worth but mA has ten times more evidence. A system tracking only the ratio cannot distinguish them. More importantly, the two counts together enable an evidence-aware value taxonomy. A global ratio rm near 0.5
+
+does not by itself identify a context-dependent memory—it identifies a memory with mixed outcomes . Whether those mixed outcomes arise from genuine context-dependence (useful in task type A, harmful in task type B) or from con-founding (retrieved alongside genuinely useful memories sometimes, unhelpful ones other times) cannot be deter-mined from the global ratio alone. Distinguishing these cases requires conditional slices of MW by query cluster or task family, which is a natural extension deferred to future work. The taxonomy below describes what the dual counts 
+
+can directly support: 
+
+Definition 3.2 (Value taxonomy) . Let rm =hits +(m)/(hits +(m) + hits −(m)) (the success-rate ratio, distinct from Spearman ρ) and Vm =hits +(m) + hits −(m).
+
+• High-value : rm > θ H and Vm ≥ Vmin . The mem-ory is consistently associated with successful outcomes. This may be useful as a signal to increase retrieval pri-ority, subject to contextual controls or human review. 
+
+• Uncertain : Vm < V min . Insufficient evidence to clas-sify; use prior or global pool average. 
+
+• Mixed-outcome : θL ≤ rm ≤ θH and Vm ≥ Vmin .Outcomes are neither consistently positive nor consis-tently negative. Conditional Memory Worth (by task or query cluster) is needed before acting. 
+
+• Low-value : rm < θ L and Vm ≥ Vmin . The memory is predominantly associated with failure. Retrieval suppression or deprecation may be appropriate, sub-ject to contextual controls or human review, given the associational nature of MW. 
+
+4When to Forget: A Memory Governance Primitive 
+
+The key advantage over a single scalar is the separation of 
+
+uncertain (insufficient evidence) from mixed-outcome (suf-ficient evidence, ambiguous signal): a raw ratio is identical for both when rm = 0 .5, but Vm distinguishes them. A system acting on Memory Worth should not deprecate an uncertain memory—it has simply not been retrieved enough to form an estimate. 
+
+# 4. Convergence Theory 
+
+4.1. Main Result Theorem 4.1 (Convergence of Memory Worth) . Assume the following conditions hold for memory m:(A1) Stationarity. The joint distribution of (1[m ∈ M t], y t)
+
+is stationary across episodes. (A2) Exploration. There exists δ > 0 such that Pr[ m ∈Mt | F t−1] ≥ δ for all t. This ensures m is retrieved infinitely often even if retrieval adapts based on confi-dence. (A3) Conditional independence. Given history Ft−1, the retrieval indicator 1[m ∈ M t] is independent of the outcome yt.(A4) Bounded outcomes. yt ∈ {− 1, +1 }.(A5) Minimum weight. There exists wmin > 0 such that 
+
+wt(m) ≥ wmin whenever m ∈ M t. This prevents score-proportional weighting schemes from assigning arbitrarily small weights that stall convergence. In practice, weights can be clipped from below by a small constant (e.g. wmin = 0 .01 ) without materially affect-ing the estimator. (A6) Outcome stationarity given retrieval. Pr[ yt = +1 |
+
+m ∈ M t, Ft−1] = p+(m) for all t. That is, the con-ditional success probability given retrieval is constant across episodes and equal to the marginal p+(m). This is the condition that makes Dt a martingale difference; it rules out scenarios where the success rate fluctuates across episodes in a way correlated with history (e.g. alternating easy/hard tasks with different base rates). Under (A1)–(A6), as T → ∞ :
+
+MW T (m) a.s. 
+
+−−→ p+(m) (4) 
+
+where p+(m) = Pr[ yt = +1 | m ∈ M t] is the conditional success probability given memory m is in the retrieval set. 
+
+Scope note. Assumption (A3) holds when retrieval is uni-form random (as in our experiment) or governed by a pol-icy that conditions only on query semantics and is inde-pendent of the true outcome conditional on history. It is violated when retrieval quality directly predicts outcome conditional on history—a realistic situation in agents that retrieve harder memories for harder tasks. In that regime, we conjecture that MW T (m) still converges, but to a quan-tity that conflates retrieval-difficulty effects with p+(m); the precise limiting value depends on the joint distribution of task difficulty and retrieval probability, and we do not char-acterise it formally here. We view (A3) as a calibration assumption rather than a physical law, and flag it as the principal assumption requiring scrutiny in deployment. Proof. Let Xt = wt(m) 1[m ∈ M t] 1[yt = +1] and Zt =
+
+wt(m) 1[m ∈ M t]. Define S+ 
+
+> T
+
+= PTt=1 Xt and ST =
+
+PTt=1 Zt. Then MW T (m) = S+ 
+
+> T
+
+/S T .
+
+Step 1 ( ST → ∞ a.s.): By (A2), Pr[ m ∈ M t | F t−1] ≥
+
+δ > 0 uniformly. By (A5), wt(m) ≥ wmin > 0 whenever 
+
+m is retrieved, so the increments Zt = wt(m)1[m ∈ M t]
+
+satisfy E[Zt | F t−1] ≥ δw min > 0. By the martingale strong law, ST → ∞ a.s. 
+
+Step 2 (Martingale difference): Define Dt = Xt −
+
+Zt p+(m), where Xt = wt(m) 1[m ∈ M t] 1[yt = +1] 
+
+and Zt = wt(m) 1[m ∈ M t]. By (A6), Pr[ yt = +1 | m ∈Mt, Ft−1] = p+(m) for all t. Therefore: 
+
+E[Dt | F t−1] = wt(m) Pr[ m ∈ M t | F t−1]
+
+·  Pr[ yt= + 1 | m∈M t, Ft−1] − p+(m)
+
+= 0 .
+
+Hence MT = PTt=1 Dt is a martingale difference se-quence. Note that (A3) is used to ensure the retrieval de-cision does not itself carry information about yt beyond what Ft−1 already contains; (A6) supplies the constant-
+
+p+(m) condition that (A3) alone does not imply in non-i.i.d. settings. For the bound on |Dt|: since weights are nor-malised ( P 
+
+> m′∈M t
+
+wt(m′) = 1 ), each individual weight satisfies wt(m) ≤ 1. By (A4), yt ∈ {− 1, +1 }, so 
+
+1[yt = +1] ∈ [0 , 1] and p+(m) ∈ [0 , 1] . Therefore |Dt| =
+
+wt(m) 1[m ∈ M t] |1[yt = +1] − p+(m)| ≤ wt(m) ≤ 1
+
+a.s., giving E[D2 
+
+> t
+
+| F t−1] ≤ 1. The upper bound wt(m) ≤ 1
+
+follows directly from the normalisation condition in Sec-tion 3.1, not from a separate assumption. 
+
+Step 3 (Convergence): The predictable quadratic variation satisfies ⟨M ⟩T ≤ ST . Since ST → ∞ , the conditions of the martingale strong law of large numbers (Hall & Heyde, 1980) (Theorem 2.18) are met: MT /S T → 0 a.s. Therefore: 
+
+MW T (m) = S+
+
+> T
+
+ST
+
+= p+(m) + MT
+
+STa.s. 
+
+−−→ p+(m). □
+
+Remark 4.2 (Rate intuition) . The estimation error 
+
+|MW T (m) − p+(m)| decreases with total weighted re-trieval count KT (m) = ST . Intuitively: memories retrieved 
+
+5When to Forget: A Memory Governance Primitive 
+
+more often have more evidence and more reliable estimates. A formal finite-sample bound requires careful treatment of the random denominator ST and the predictable quadratic variation ⟨M ⟩T ; we leave this to future work. We acknowl-edge that finite-sample rates are important for calibrating the evidence threshold Vmin in practice; the a.s. conver-gence guarantee of Theorem 4.1 establishes the signal is correct in the limit, but does not bound how quickly Vmin 
+
+retrievals suffice for reliable governance decisions. 
+
+Remark 4.3 (No causal knowledge required) . Theorem 4.1 does not assume that the agent knows which retrieved mem-ory caused the outcome. The convergence holds purely from the co-occurrence of retrieval and outcomes. This is the key property that makes Memory Worth computable in practice: causal attribution is not needed. 
+
+4.2. What Memory Worth Converges To 
+
+p+(m) = Pr[ yt = +1 | m ∈ M t] is the probability of suc-cess on episodes where m is retrieved. This is an associa-tional quantity, not a causal one. A memory that consistently co-occurs with genuinely useful memories will accumulate positive counts even if it does not itself contribute to success. Conversely, a memory retrieved in difficult tasks—where success is unlikely regardless of memory quality—will ac-cumulate negative counts unfairly. The claim of this paper is not that p+(m) identifies causal contributors to success. The claim is narrower and still useful: p+(m) is a convergent, computable operational sig-nal. Prioritizing memories with high MW over memories with low MW tends to shift the composition of retrieval sets toward memories that historically co-occur with suc-cess. Whether this is because those memories cause success or because they are structurally associated with good re-trieval contexts, the expected outcome of retrieval improves. Causal identification of per-memory utility is an open prob-lem that Memory Worth does not attempt to solve. 
+
+# 5. Experiments 
+
+5.1. Design 
+
+We construct a synthetic environment where the ground-truth utility U ∗(m) of every memory is known, enabling direct measurement of whether Memory Worth tracks true quality. This setup is deliberately controlled: uniform ran-dom retrieval ensures that assumption (A3) holds exactly, so the experiment tests whether the estimator converges as proved—not whether it is robust to violations of (A3) in real agents. The latter is addressed empirically in Section 5.3. 
+
+Memory pool. N = 100 memories. Each memory mi
+
+is assigned a true utility U ∗(mi) ∼ Uniform(0 , 1) , drawn once per seed and held fixed throughout all episodes. 
+
+Retrieval. At each episode, k = 8 memories are sampled uniformly at random from the pool, satisfying assumption (A2) with δ = k/N = 0 .08 and ensuring (A3) holds exactly. This intentionally sanitizes the retrieval process to isolate the estimator’s behavior from confounding by retrieval policy. 
+
+Outcomes. Episode success is drawn from: 
+
+yt = +1 with probability clip   1
+
+> k
+
+P 
+
+> m∈M t
+
+U ∗(m) + ξt, 0, 1
+
+where ξt ∼ N (0 , σ 2) with σ = 0 .10 . By design, success probability equals mean utility of the retrieved set plus noise. This means co-occurrence with success is informative about utility for every memory, which is the best-case scenario for the estimator. Real-agent settings—where task difficulty confounds the retrieval-outcome relationship—are harder and are not tested here. 
+
+Weighting strategies compared. All four strategies re-ceive identical worlds (same seed, same retrievals, same outcomes): • No update : MW T (m) = 0 .5 permanently. Repre-sents any system that never uses retrieval outcomes to revise memory quality assessments. • Uniform : wt(m) = 1 /k for all retrieved memories. • Score-proportional (Ours): wt(m) ∝ sim( m), where 
+
+sim( m) is a semantic similarity proxy correlated with 
+
+U ∗(m) at r = 0 .65 .• Oracle : wt(m) ∝ U ∗(m). Ground-truth weights; establishes an upper bound on weighting accuracy. The no-update baseline is intentionally simple—it shows the cost of discarding outcome information entirely. Stronger baselines, including a Bayesian Beta-Bernoulli estimator with uncertainty-aware ranking and a contextual estimator conditioning on query cluster, are important comparisons deferred to future work alongside real-agent experiments. 
+
+Metric. Spearman rank-correlation between MW T (m)
+
+and U ∗(m) across all N = 100 memories, at each check-point (every 500 episodes), averaged over 20 independent seeds. 
+
+5.2. Results 
+
+Results are shown in Figure 1 and Table 1. 
+
+Memory Worth converges strongly (RQ1 confirmed). 
+
+All three updating strategies rise from ρ ≈ 0.66 at episode 2,000 to ρ ≈ 0.89 –0.90 at episode 10,000, with standard deviations of ±0.02 . The no-feedback baseline remains flat 6When to Forget: A Memory Governance Primitive                                            
+
+> Figure 1. Memory Worth calibration over episodes. Spearman ρ
+> between MW T(m)and U∗(m)for all four weighting strategies, averaged over 20 seeds (shaded regions: ±1 std). The no-feedback baseline stays at ρ= 0 throughout. All three updating strategies converge to ρ≈0.89 by episode 10,000.
+> Table 1. Memory Worth calibration summary. Values are Spear-man ρ(mean ±std over 20 seeds). ∆is the difference from Uniform at episode 10,000. Beta-Bernoulli converges to the same ranking as Uniform at long-run evidence levels and is discussed in the text. Method ρ@2k ρ@5k ρ@10k ∆
+> No update 0.00 ±.00 0.00 ±.00 0.00 ±.00 −0.89
+> Uniform 0.66 ±.06 0.81 ±.03 0.89 ±.02 0.00
+> Ours (sim-wt.) 0.66 ±.06 0.81 ±.04 0.89 ±.02 0.00
+> Oracle 0.67 ±.06 0.82 ±.04 0.90 ±.02 +0 .00
+
+at ρ = 0 .00 throughout—it has no mechanism for revising its initial assessment and therefore never learns anything about memory quality. The contrast is stark: a difference of 
+
+0.89 in Spearman ρ separating a system that tracks outcomes from one that does not. 
+
+The long-run limit is the same for all weighting strategies. 
+
+Uniform, score-proportional, and oracle weighting converge to statistically indistinguishable final values ( ρ = 0 .89 , 0.89 ,
+
+0.90 respectively; differences within one standard devia-tion). This is expected from Theorem 4.1: in the station-ary long-run limit, all three weightings estimate the same quantity p+(m), just with different variance in intermediate estimates. The choice of weighting matters for convergence speed and for non-stationary environments ; in the stationary setting examined here, 10,000 episodes is sufficient for all strategies to converge. 
+
+Beta-Bernoulli posterior mean matches MW at conver-gence. The Beta-Bernoulli estimator with uniform prior (α = β = 1 ) yields ρ = 0 .89 ± 0.02 at episode 10,000— identical to raw MW with uniform credit ( ∆ = 0 .000 , Ta-ble 1). This is the expected theoretical result: the posterior mean (α + hits +)/(α + β + KT (m)) converges to the same limit as the raw ratio as KT (m) → ∞ , with a shrinkage factor of (α + β)/K T (m) that vanishes with evidence. The practical advantage of the Bayesian formulation is at low evidence counts : with fewer than ∼10 retrievals, the pos-terior mean is pulled toward 0.5 rather than producing ex-treme estimates from small sample ratios. In this stationary long-run experiment the two estimators are indistinguish-able; the difference would be visible in early episodes or in low-retrieval-frequency regimes. We intentionally com-pare posterior mean rather than credible-bound ranking so that the asymptotic estimator target matches MW exactly, making the comparison clean. The genuinely uncertainty-aware Bayesian advantages—lower credible bound ranking, posterior variance, Thompson sampling, and risk-sensitive deprecation—have different asymptotic targets and are de-ferred to future work as noted in Section 6. 
+
+Dual counts add information beyond the ratio alone. 
+
+Using thresholds θH = 0 .60 , θL = 0 .40 , and Vmin = 10 
+
+retrievals, the updating strategies classify on average 1.0– 6.2 memories as low-value per seed. The score-proportional weighting classifies 5.2 low-value memories vs. 2.1 for uniform weighting. This difference reflects the weighting mechanism: sim-proportional weights concentrate counts on high-similarity memories, causing low-similarity mem-ories to accumulate relatively more hits − weight and fall below θL. The evidence-volume dimension Vm correctly separates low-value from uncertain—memories with fewer than 10 retrievals are withheld from classification regard-less of their ratio. Whether low-value classification in this experiment reflects genuine quality differences or retrieval confounding cannot be determined from this design alone, as argued in Section 3.4. 
+
+5.3. Assumption (A3) Violation Studies 
+
+Experiment 1 validates Memory Worth in the regime where all assumptions hold by design. The three experiments be-low test three realistic ways that assumption (A3) is violated, characterizing how and when the estimator breaks, what the failure magnitude is, and how much partial remedies recover. All three use N = 100 , k = 8 , T = 10 ,000 , 20 seeds. 5.3.1. E XPERIMENT 2: T ASK -D IFFICULTY CONFOUND 
+
+Setup. The memory pool contains 70 generalist memories with U ∗ ∼ Uniform(0 , 1) and 30 specialist memories with 
+
+U ∗ = 0 .85 . Tasks are either easy (base success probability 0.78, retrieval from generalists only) or hard (base success probability 0.28, retrieval mixes generalists and specialists). Specialists therefore appear exclusively on hard tasks. 
+
+Result. Figure 2 shows three curves. Global MW (orange) remains negatively correlated with true utility ( ρ ≈ − 0.33 ): 7When to Forget: A Memory Governance Primitive        
+
+> Figure 2. Experiment 2: Task-difficulty confound (20 seeds, mean
+> ±std). Global MW (orange) remains negatively correlated with true utility ( ρ≈ − 0.33 ) because specialist memories ( U∗= 0 .85 )appear only on low-success hard tasks and are penalised by task dif-ficulty. A weighted-average conditional MW (yellow) fails equally: mixing easy- and hard-task counts preserves the same base-rate confound. When MW is conditioned on the hard-task population only and evaluated over memories with hard-task evidence (green), the ranking signal becomes positive ( ρ≈+0 .14 ), showing partial recovery once task-type confounding is removed. The gap to the unconfounded baseline ( 0.89 ) remains large, motivating within-stratum normalisation as future work.
+
+specialist memories appear only on hard tasks (success rate 
+
+0.28 ) and are penalised by task difficulty rather than low true utility, so they rank below generalists with much lower U ∗.A weighted-average conditional MW (yellow) fails equally at ρ ≈ − 0.33 : combining easy- and hard-task counts for every memory leaves the hard-task base-rate confound math-ematically intact. When MW is conditioned on the hard-task population only—tracking MW( m | task = hard ) and eval-uating only over memories with hard-task evidence—the ranking signal becomes positive ( ρ ≈ +0 .14 ± 0.07 ), show-ing partial recovery once task-type confounding is removed. The gap to the unconfounded baseline of 0.89 remains large because the hard-task base rate ( 0.28 ) still dilutes specialist scores relative to generalists that appear on both task types. 
+
+Implication. Removing the task-type confound by condi-tioning on the hard-task population moves the ranking from 
+
+ρ ≈ − 0.33 to ρ ≈ +0 .14 ± 0.07 , a shift of ∼0.47 points in the right direction. Full recovery to the unconfounded base-line ( 0.89 ) requires additionally controlling for the hard-task base rate within each stratum—a within-stratum normalisa-tion deferred to future work. The practical message is that na ¨ıve global MW is not just noisy but directionally wrong 
+
+under task-difficulty confounding; the correct conditioning variable (task type) must be identified before MW estimates can be used for governance decisions in this regime.            
+
+> Figure 3. Experiment 3: Retrieval policy feedback loop. MW-weighted retrieval converges to ρ≈0.896 –0.899 across all ex-ploration floors, matching or marginally exceeding the uniform reference ( ρ= 0 .890 , 20 seeds, mean ±std). Even with ε= 0
+> (no forced exploration floor), the estimator does not degenerate. The self-correcting feedback loop outweighs the rich-get-richer effect in this regime.
+
+5.3.2. E XPERIMENT 3: R ETRIEVAL POLICY FEEDBACK 
+
+LOOP 
+
+Setup. Retrieval is replaced by a softmax policy biased by current MW scores (temperature τ = 3 .0), mixed with a uni-form exploration floor ε ∈ { 0.00 , 0.05 , 0.10 }. This creates the feedback loop that Theorem 4.1 explicitly excludes. 
+
+Result. Figure 3 shows that all three policy variants reach 
+
+ρ ≈ 0.895 –0.899 by episode 10,000, compared to 0.890 
+
+for the uniform reference. Even without any exploration floor ( ε = 0 ), the estimator does not spiral into degenerate concentration. The feedback loop is self-correcting: high-MW memories retrieved more frequently drop in MW when they produce failures, reducing their retrieval priority. This dampens rich-get-richer dynamics and keeps the estimator calibrated. 
+
+Implication. In the tested softmax-feedback regime— stationary world, single temperature, uniform memory pool, 10,000 episodes—MW-based retrieval did not collapse and remained self-correcting. This is a positive result within that regime. Whether the same holds under non-stationary utility, sparse specialist memories, adversarial skew, or harder task distributions remains untested. The theoretical exploration condition (A2) is sufficient for the convergence guarantee but may not be necessary in practice; characterising the exact conditions for robustness is future work. 5.3.3. E XPERIMENT 4: C O-R ETRIEVAL CONFOUND 
+
+Setup. One “anchor” memory ( U ∗ = 0.90 ) and one “hitchhiker” ( U ∗ = 0 .05 ) are always retrieved together ex-8When to Forget: A Memory Governance Primitive           
+
+> Figure 4. Experiment 4: Per-memory MW trajectories for anchor (U∗= 0 .90 ) and hitchhiker ( U∗= 0 .05 ) under varying indepen-dence fractions. Dashed lines mark true U∗. With 0% independent retrievals, both memories converge to identical MW ≈0.49 , in-distinguishable despite a 17 ×difference in true utility. Separation requires at least 30% independent episodes, and full convergence to true utility only with 100% independence.
+
+cept in a controlled fraction of episodes (the independence fraction ) where only the anchor is retrieved. The hitchhiker contributes nothing causally but accumulates positive counts whenever co-retrieved with the anchor during successful episodes. 
+
+Result. Figure 4 shows the per-memory MW trajectories. With 0% independent retrievals, both memories converge to identical MW ≈ 0.49 —MW cannot distinguish them at all. With 10% independence, the separation is negligible (0.496 vs 0.490 ). Only at 30% does meaningful divergence begin, and with 100% independence the anchor reaches MW = 0 .546 and the hitchhiker MW = 0 .000 —correctly ordered, though the anchor has not yet converged to its true 
+
+U ∗ = 0 .90 within 10,000 episodes. Full convergence to U ∗
+
+requires more episodes under any weighting. 
+
+Implication. Co-retrieval confounding is the most se-vere failure mode studied here. In this controlled setting— one utility gap, one episode budget, uniform weighting— meaningful separation emerged only once ≈30% of episodes broke the habitual co-retrieval pair. The 30% figure is specific to this simulator and should not be read as a uni-versal threshold; the required diversity fraction will depend on the utility gap between anchor and hitchhiker, episode count, and the retrieval topology. The broader design impli-cation holds regardless: retrieval diversity—ensuring mem-ories are occasionally retrieved without their habitual co-retrievals—is a necessary condition for MW to distinguish confounded from genuinely high-quality memories. 
+
+5.4. Experiment 5: Text-Based Retrieval Agent 
+
+The four preceding experiments use abstract utility num-bers and synthetic retrieval. Experiment 5 replaces these with real text memories and neural embedding retrieval (all-MiniLM-L6-v2 (Reimers & Gurevych, 2019), co-                     
+
+> Table 2. Experiment 5 MW summary (values from figure, 20 seeds). all-MiniLM-L6-v2 retrieval, 3,000 episodes; stale crosses θL= 0 .40 near episode 300. Memory type MW @ ep100 MW @ ep500 MW @ ep3000 Stale ≈0.97 ≈0.40 0.17
+> Specialist ≈0.93 ≈0.81 0.77
+> Hitchhiker ≈0.91 ≈0.79 0.77
+> Control ≈0.78 ≈0.77 0.73
+
+sine similarity), with a keyword-match outcome function requiring no LLM API. The goal is to test whether the MW signal survives contact with real text and modern semantic retrieval, using 3,000 episodes across 20 seeds. 
+
+Setup. The memory store contains 20 text sentences cov-ering geography, Python programming, and general science. Four memories are designated by type: stale (pre-1993 Czechoslovakia facts, correct in Phase 1 and wrong after the phase shift), specialist (Python list reversal, useful only for Python tasks), hitchhiker (general Python list methods, semantically near the specialist but unhelpful for reversal tasks), and control (recursion, consistently useful across tasks). The agent runs 3,000 episodes. At each episode a task is sampled from a phase-dependent distribution: Phase 1 (episodes 1–100) draws 60% geography questions for which the stale memory is correct; Phase 2 (episodes 101– 3,000) shifts to 30% dissolution-framing geography (stale wrong), 35% Python, and 35% general. Retrieval uses 
+
+all-MiniLM-L6-v2 cosine similarity blended with cur-rent MW scores (score = 0 .6 × emb sim + 0 .4 × MW ). Outcomes are binary keyword-match: a success requires the agent’s retrieved memory set to contain task-relevant keywords, which is not trivially satisfied—queries are para-phrased relative to memory text, so matches depend on retrieval quality rather than surface overlap. MW is updated with uniform credit w = 1 /k . All 20 seeds run locally. 
+
+Results. Figure 5 and Table 2 show the MW trajectories across 3,000 episodes with all-MiniLM-L6-v2 embed-ding retrieval. The stale memory peaks at ≈ 0.97 in Phase 1, drops sharply from episode 100, crosses θL = 0 .40 near episode 300, and ends at 0.17 by episode 3,000—well into the low-value category and still declining, making depre-cation the warranted response. The specialist stabilises at 
+
+0.77 . The hitchhiker ( 0.77 ) and control ( 0.73 ) are both elevated and nearly indistinguishable from the specialist. Experiment 5 reproduces the hitchhiker pathology from Experiment 4 under modern embedding retrieval, demon-strating that semantic retrieval systems naturally induce the same co-retrieval confound predicted by the synthetic anal-9When to Forget: A Memory Governance Primitive                
+
+> Figure 5. Experiment 5: MW trajectories in a text-based re-trieval agent ( all-MiniLM-L6-v2 embedding retrieval, 3,000 episodes, 20 seeds, mean ±std). The stale memory (dashed or-ange) peaks at ≈0.97 in Phase 1, drops sharply after episode 100, crosses θL= 0 .40 near episode 300, and ends at 0.17 —well into the low-value category, with no sign of convergence, war-ranting deprecation. The specialist (solid green) stabilises at
+> 0.77 . The hitchhiker (dotted grey, 0.77 ) and control (dash-dot blue, 0.73 ) are both elevated and nearly indistinguishable from the specialist—consistent with the co-retrieval confound of Ex-periment 4: MiniLM routes Python queries to both specialist and hitchhiker due to their semantic similarity.
+
+ysis: MiniLM routes Python queries to both specialist (list reversal) and hitchhiker (general list methods) due to their embedding proximity, causing both to accumulate positive counts regardless of causal contribution. The separation be-tween stale ( 0.17 ) and all other memory types ( 0.73 –0.77 )is at least 0.56 points and grows monotonically after the phase shift, confirming that MW identifies the genuinely degraded memory under modern semantic retrieval. 
+
+Limitations of this experiment. The early variance on specialist and hitchhiker is wide ( ±0.206 –0.259 at episode 100) because 20 text memories with k = 4 re-trieval gives each memory substantial random-retrieval ex-posure in Phase 1. The task environment is still scripted— outcomes come from keyword matching, not from a live agent—so this is best characterised as a retrieval-realistic 
+
+micro-experiment rather than a full deployment study. The simulation-only limitation in Section 7 applies. 
+
+# 6. Toward Memory Governance Systems 
+
+Memory Worth is designed as a foundation layer, not a complete system. Adding two counters per memory unit to architectures that already log retrievals and episode out-comes gives those systems a convergent signal about which stored memories tend to co-occur with success. 
+
+Staleness detection. A memory whose MW T (m) was high but has been declining steadily is a candidate for re-verification. A low and stable MW T (m) with sufficient evidence Vm ≥ Vmin is a reasonable trigger for retrieval suppression or human review, with the caveat that the signal reflects association, not causation. 
+
+Retrieval prioritization. MW T (m) can be added as a term in existing retrieval scoring functions (e.g., along-side recency and embedding similarity) with no other changes. This requires that the system logs which memories were retrieved and what episode-level outcome followed— instrumentation that many agent frameworks already sup-port. 
+
+Open directions. Four extensions are motivated directly by the experiments. First, contextual Memory Worth MW( m | c) conditioned on a context variable c, motivated by Experiment 2: global MW misevaluates specialist memories by ∼0.33 ρ under task-difficulty confounding, and task-conditioned MW is the natural fix. Experiment 2 treats task type as a known oracle label, but in deployment the conditioning variable must be discovered or learned. Practical candidates include: learned query clusters from embedding similarity (unsupervised, no labels required); latent task embeddings derived from the agent’s tool-call sequences or reasoning traces; tool-path signatures that identify structurally similar episodes; or user intent clusters from session history. Each of these can be computed without ground-truth task labels and provides a principled partition under which per-cluster MW estimates are more informative than the global ratio. Second, a Bayesian Beta-Bernoulli formulation with uncertainty-aware ranking (e.g. lower credible bound rather than posterior mean) would give principled uncertainty quan-tification beyond the point estimate, avoiding the need for a hard evidence threshold Vmin . Experiment 1 shows the posterior mean converges to the same ranking as MW at 
+
+KT ≫ α + β; the remaining gain from the Bayesian for-mulation is in the low-count regime and in credible-interval-based governance decisions. Third, a non-stationary variant using exponential moving averages would extend the estima-tor to settings where p+(m) changes over time, at the cost of the a.s. convergence guarantee. Fourth, retrieval diversity 
+
+as a first-class system property: Experiment 4 shows that co-retrieval confounding persisted until ≈30% of episodes broke the habitual co-retrieval pair in that specific setting. Enforcing a retrieval diversity floor—analogous to the ex-ploration floor in Experiment 3—should be treated as a governance invariant rather than an afterthought. 10 When to Forget: A Memory Governance Primitive 
+
+# 7. Limitations 
+
+These limitations are not merely weaknesses of MW; they are design constraints that any practical memory governance system built on MW must explicitly address. 
+
+Association, not causation. p+(m) measures retrieval-outcome co-occurrence. A memory that rides along with genuinely useful neighbors in the retrieval set will accumu-late positive counts even if it contributes nothing causally. Conversely, a memory consistently retrieved alongside diffi-cult tasks will be penalized even if it is genuinely informa-tive. Causal identification of per-memory utility is an open problem that Memory Worth does not resolve. 
+
+Assumption (A3) in realistic agents. The convergence theorem requires that retrieval and outcome are condition-ally independent given history. This holds in Experiment 1 by design (uniform random retrieval) but is violated in agents that retrieve harder memories for harder tasks. Ex-periment 2 quantifies this effect: global MW is negatively correlated with true utility ( ρ ≈ − 0.33 ) under task-difficulty confounding. Conditioning on the hard-task population moves the signal to ρ ≈ +0 .14 , showing partial recovery once task-type confounding is removed, but a large residual gap to the unconfounded baseline ( 0.89 ) remains. Experi-ment 4 shows that co-retrieval confounding is equally severe: memories always retrieved together are indistinguishable even after 10,000 episodes; in that setting, meaningful sep-aration emerged only once ≈30% of episodes broke the co-retrieval pair, with the exact threshold depending on util-ity gap, episode count, and retrieval topology. In practice, this means that context identification and confound control are not optional refinements; they are governance require-ments for any deployment that uses MW to act on memory quality. 
+
+Stationarity. The theorem assumes a stationary task distri-bution. Under distribution shift, accumulated counts reflect a mixture of old and new utilities. An exponential moving average can discount old observations but loses the conver-gence guarantee. 
+
+Minimum evidence threshold. Estimates are unreliable for rarely retrieved memories. The evidence-volume dimen-sion Vm in the taxonomy handles this in principle (withhold classification until Vm ≥ Vmin ), but the threshold is a hyper-parameter. A Beta-Bernoulli formulation would give auto-matic uncertainty quantification without a manual threshold. 
+
+Outcome signal quality. When episode outcomes are highly stochastic relative to the contribution of any individ-ual memory, the signal is diluted and convergence is slow. Filtering high-variance episodes ( ϵ signal) can mitigate this at the cost of reduced data efficiency. 
+
+Retrieval-realistic but not deployment-complete. Ex-periment 5 confirms both the direction and the magni-tude of the MW signal under neural embedding retrieval (all-MiniLM-L6-v2 ): the stale memory crosses θL =0.40 by episode 300 and ends at 0.17 . The task environment remains scripted—outcomes come from keyword matching rather than a live agent—so this is best characterised as a retrieval-realistic micro-study. Different embedding models may alter the degree of hitchhiker confounding by chang-ing neighbourhood topology, but the mechanism itself is retrieval-model agnostic: any dense retrieval system that routes semantically similar queries to multiple memories will induce the same co-retrieval coupling. A live retrieval-augmented agent with natural outcome signals remains the highest-value remaining empirical validation step. More importantly, it would test whether the governance variables required by MW in practice —context partitions, retrieval diversity, and uncertainty-aware action thresholds—are re-coverable from real agent logs. 
+
+# 8. Conclusion 
+
+This paper introduced Memory Worth, a per-memory online estimator of the conditional success probability p+(m) = Pr[ yt = +1 | m ∈ M t], maintained as a ratio of two weighted retrieval counts. We establish almost-sure conver-gence to p+(m) under a stationary retrieval regime satisfy-ing a minimum exploration condition, a conditional indepen-dence assumption (A3), and an outcome stationarity condi-tion (A6). The martingale argument handles the dependence that arises when retrieval weights depend on past history, but it does not handle the case where the retrieval decision itself is coupled to the outcome—which is precisely when (A3) is violated. This scope limitation is explicit throughout, and the three A3 violation experiments characterise the failure modes in concrete, quantified terms. Empirically, Memory Worth reaches Spearman ρ =0.89 ± 0.02 in the controlled setting where all as-sumptions hold (Experiment 1). Three A3 viola-tion experiments reveal the failure modes quantitatively (Experiments 2–4). A fifth retrieval-realistic micro-experiment ( all-MiniLM-L6-v2 embedding retrieval, 3,000 episodes) shows the stale memory crossing θL = 0 .40 
+
+by episode 300 and ending at 0.17 , while specialist MW stabilises at 0.77 — confirming the signal under modern semantic retrieval (Experiment 5). The core observation is that every agent already runs an im-plicit experiment: memories are retrieved, actions are taken, outcomes are observed. Memory Worth formalizes what it means to actually read the results of that experiment—and to act on them. The failure modes characterised here define 11 When to Forget: A Memory Governance Primitive 
+
+the systems requirements for the next generation of mem-ory governance architectures: task-conditioned estimation, retrieval diversity as a design constraint, and uncertainty-aware ranking at low evidence counts. Memory Worth is not the full memory governance system, but it is the minimal operational primitive such systems require. 
+
+# References 
+
+Arjona-Medina, J. A., Gillhofer, M., Widrich, M., Un-terthiner, T., Brandstetter, J., and Hochreiter, S. RUD-DER: Return decomposition for delayed rewards. In 
+
+Advances in Neural Information Processing Systems , vol-ume 32, pp. 13544–13555, 2019. Hall, P. and Heyde, C. C. Martingale Limit Theory and Its Application . Academic Press, New York, 1980. Harutyunyan, A., Dabney, W., Mesnard, T., Azar, M. G., Piot, B., Heess, N., van Hasselt, H., Wayne, G., Singh, S., Precup, D., and Munos, R. Hindsight credit assignment. In Advances in Neural Information Processing Systems ,volume 32, pp. 12467–12476, 2019. Minsky, M. Steps toward artificial intelligence. Proceedings of the IRE , 49(1):8–30, 1961. https://doi.org/ 10.1109/JRPROC.1961.287775 .Packer, C., Wooders, S., Lin, K., Fang, V., Patil, S. G., Stoica, I., and Gonzalez, J. E. MemGPT: Towards LLMs as operating systems. arXiv preprint arXiv:2310.08560 ,2023. Park, J. S., O’Brien, J. C., Cai, C. J., Morris, M. R., Liang, P., and Bernstein, M. S. Generative agents: Interactive simulacra of human behavior. In Proceedings of the 36th Annual ACM Symposium on User Interface Software and Technology , UIST ’23, pp. 1–22. ACM, 2023. https: //doi.org/10.1145/3586183.3606763 .Shinn, N., Cassano, F., Gopinath, A., Narasimhan, K., and Yao, S. Reflexion: Language agents with verbal rein-forcement learning. In Advances in Neural Information Processing Systems , volume 36, pp. 8634–8652, 2023. Simsek, B. Memory that knows what it knows: Feedback-learned confidence and credit assignment for agent mem-ory. Under review, 2025. Sutton, R. S. and Barto, A. G. Reinforcement Learning: An Introduction . The MIT Press, Cambridge, Massachusetts, 2nd edition, 2018. ISBN 978-0-262-03924-6. Xu, W., Zhu, Z., Zhan, Z., Wang, Z., Yang, Y., Zhou, J., and Liang, X. A-MEM: Agentic memory for LLM agents. In Advances in Neural Information Processing Systems ,volume 38, 2025. arXiv:2502.12110. Zhang, G., and co-authors. Adaptive memory ad-mission control for LLM agents. arXiv preprint arXiv:2603.04549 . Cited as 2026 reflecting the arXiv submission date; not yet formally published, 2026. Zhong, W., Guo, L., Gao, Q., Ye, H., and Wang, Y. Memory-Bank: Enhancing large language models with long-term memory. In Proceedings of the AAAI Conference on Arti-ficial Intelligence , volume 38, pp. 19724–19731, 2024. Hu, Y., Liu, S., and Yue, Y. Evaluating memory in LLM agents via incremental multi-turn interactions. arXiv preprint arXiv:2507.05257 , 2025. Zhang, G., and co-authors. Memory in the age of AI agents: A survey. arXiv preprint arXiv:2512.13564 , 2025. Manning, C. D., Raghavan, P., and Sch ¨utze, H. Introduction to Information Retrieval . Cambridge University Press, 2008. Reimers, N. and Gurevych, I. Sentence-BERT: Sentence embeddings using Siamese BERT-networks. In Proceed-ings of the 2019 Conference on Empirical Methods in Natural Language Processing , pp. 3982–3992, 2019. 12
