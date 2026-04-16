@@ -1,0 +1,167 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-04-16T19:57:47.057879+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 3,
+    "deep_cap": 6,
+    "deep_selected": 3,
+    "quick_candidates": 1,
+    "quick_skim_target": 11,
+    "quick_selected": 1
+  },
+  "deep_dive": [
+    {
+      "id": "2604.13127v1",
+      "title": "Graph Propagated Projection Unlearning: A Unified Framework for Vision and Audio Discriminative Models",
+      "abstract": "The need to selectively and efficiently erase learned information from deep neural networks is becoming increasingly important for privacy, regulatory compliance, and adaptive system design. We introduce Graph-Propagated Projection Unlearning (GPPU), a unified and scalable algorithm for class-level unlearning that operates across both vision and audio models. GPPU employs graph-based propagation to identify class-specific directions in the feature space and projects representations onto the orthogonal subspace, followed by targeted fine-tuning, to ensure that target class information is effectively and irreversibly removed. Through comprehensive evaluations on six vision datasets and two large-scale audio benchmarks spanning a variety of architectures including CNNs, Vision Transformers, and Audio Transformers, we demonstrate that GPPU achieves highly efficient unlearning, realizing 10-20x speedups over prior methodologies while preserving model utility on retained classes. Our framework provides a principled and modality-agnostic approach to machine unlearning, evaluated at a scale that has received limited attention in prior work, contributing toward more efficient and responsible deep learning.",
+      "authors": [
+        "Shreyansh Pathak",
+        "Jyotishman Das"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI",
+        "cs.SD"
+      ],
+      "published": "2026-04-13T21:14:54+00:00",
+      "link": "https://arxiv.org/pdf/2604.13127v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "unified framework for class-level unlearning in vision and audio models",
+      "llm_evidence_cn": "视觉和音频模型中类别级遗忘的统一框架",
+      "llm_evidence": "视觉和音频模型中类别级遗忘的统一框架",
+      "canonical_evidence": "视觉和音频模型中类别级遗忘的统一框架",
+      "llm_tldr_en": "Introduces a scalable algorithm for class-level unlearning using graph-propagated projection.",
+      "llm_tldr_cn": "引入了一种利用图传播投影进行类别级机器遗忘的可扩展算法。",
+      "llm_tldr": "引入了一种利用图传播投影进行类别级机器遗忘的可扩展算法。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Machine unlearning techniques and algorithms in deep learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.13438v1",
+      "title": "WIN-U: Woodbury-Informed Newton-Unlearning as a retain-free Machine Unlearning Framework",
+      "abstract": "Privacy concerns in LLMs have led to the rapidly growing need to enforce a data's \"right to be forgotten\". Machine unlearning addresses precisely this task, namely the removal of the influence of some specific data, i.e., the forget set, from a trained model. The gold standard for unlearning is to produce the model that would have been learned on only the rest of the training data, i.e., the retain set. Most existing unlearning methods rely on direct access to the retained data, which may not be practical due to privacy or cost constraints. We propose WIN-U, a retained-data free unlearning framework that requires only second order information for the originally trained model on the full data. The unlearning is performed using a single Newton-style step. Using the Woodbury matrix identity and a generalized Gauss-Newton approximation for the forget set curvature, the WIN-U update recovers the closed-form linear solution and serves as a local second-order approximation to the gold-standard retraining optimum. Extensive experiments on various vision and language benchmarks demonstrate that WIN-U achieves SOTA performance in terms of unlearning efficacy and utility preservation, while being more robust against relearning attacks compared to existing methods. Importantly, WIN-U does not require access to the retained data.",
+      "authors": [
+        "Xingjian Zhao",
+        "Mohammad Mohammadi Amiri",
+        "Malik Magdon-Ismail"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-04-15T03:32:41+00:00",
+      "link": "https://arxiv.org/pdf/2604.13438v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "retain-free machine unlearning framework",
+      "llm_evidence_cn": "无需保留数据的机器遗忘框架",
+      "llm_evidence": "无需保留数据的机器遗忘框架",
+      "canonical_evidence": "无需保留数据的机器遗忘框架",
+      "llm_tldr_en": "Introduces WIN-U, a framework for unlearning data influence without requiring access to the retained dataset.",
+      "llm_tldr_cn": "引入 WIN-U 框架，在不需要访问保留数据集的情况下消除特定数据的影响。",
+      "llm_tldr": "引入 WIN-U 框架，在不需要访问保留数据集的情况下消除特定数据的影响。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Machine unlearning techniques and algorithms in deep learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.13777v1",
+      "title": "From Anchors to Supervision: Memory-Graph Guided Corpus-Free Unlearning for Large Language Models",
+      "abstract": "Large language models (LLMs) may memorize sensitive or copyrighted content, raising significant privacy and legal concerns. While machine unlearning has emerged as a potential remedy, prevailing paradigms rely on user-provided forget sets, making unlearning requests difficult to audit and exposing systems to secondary leakage and malicious abuse. We propose MAGE, a Memory-grAph Guided Erasure framework for user-minimized, corpus-free unlearning. Given only a lightweight user anchor that identifies a target entity, MAGE probes the target LLM to recover target-related memorization, organizes it into a weighted local memory graph, and synthesizes scoped supervision for unlearning. MAGE is model-agnostic, can be plugged into standard unlearning methods, and requires no access to the original training corpus. Experiments on two benchmarks, TOFU and RWKU, demonstrate that MAGE's self-generated supervision achieves effective unlearning performance comparable to supervision generated with external reference, while preserving overall utility. These results support a practical and auditable unlearning workflow driven by minimal anchors rather than user-supplied forget corpora.",
+      "authors": [
+        "Wenxuan Li",
+        "Zhenfei Zhang",
+        "Mi Zhang",
+        "Geng Hong",
+        "Mi Wen",
+        "Xiaoyu You",
+        "Min Yang"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI"
+      ],
+      "published": "2026-04-15T12:07:14+00:00",
+      "link": "https://arxiv.org/pdf/2604.13777v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "Corpus-free unlearning for LLMs using memory graphs",
+      "llm_evidence_cn": "基于记忆图的大语言模型无语料遗忘",
+      "llm_evidence": "基于记忆图的大语言模型无语料遗忘",
+      "canonical_evidence": "基于记忆图的大语言模型无语料遗忘",
+      "llm_tldr_en": "Introduces MAGE, a framework for erasing LLM memorization without requiring original training corpora.",
+      "llm_tldr_cn": "引入MAGE框架，在无需原始训练语料的情况下擦除大语言模型中的记忆内容。",
+      "llm_tldr": "引入MAGE框架，在无需原始训练语料的情况下擦除大语言模型中的记忆内容。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Concept erasure and removal from pre-trained models",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2604.12384v1",
+      "title": "Preventing Safety Drift in Large Language Models via Coupled Weight and Activation Constraints",
+      "abstract": "Safety alignment in Large Language Models (LLMs) remains highly fragile during fine-tuning, where even benign adaptation can degrade pre-trained refusal behaviors and enable harmful responses. Existing defenses typically constrain either weights or activations in isolation, without considering their coupled effects on safety. In this paper, we first theoretically demonstrate that constraining either weights or activations alone is insufficient for safety preservation. To robustly preserve safety alignment, we propose Coupled Weight and Activation Constraints (CWAC), a novel approach that simultaneously enforces a precomputed safety subspace on weight updates and applies targeted regularization to safety-critical features identified by sparse autoencoders. Extensive experiments across four widely used LLMs and diverse downstream tasks show that CWAC consistently achieves the lowest harmful scores with minimal impact on fine-tuning accuracy, substantially outperforming strong baselines even under high harmful data ratios.",
+      "authors": [
+        "Songping Peng",
+        "Zhiheng Zhang",
+        "Daojian Zeng",
+        "Lincheng Jiang",
+        "Xieping Gao"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-04-14T07:17:55+00:00",
+      "link": "https://arxiv.org/pdf/2604.12384v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "enforces safety subspace on weight updates to preserve safety alignment",
+      "llm_evidence_cn": "在权重更新上强制执行安全子空间以保留安全对齐",
+      "llm_evidence": "在权重更新上强制执行安全子空间以保留安全对齐",
+      "canonical_evidence": "在权重更新上强制执行安全子空间以保留安全对齐",
+      "llm_tldr_en": "Develops CWAC to prevent safety drift in LLMs by constraining weights and activations during fine-tuning.",
+      "llm_tldr_cn": "开发CWAC通过在微调期间约束权重和激活，防止大语言模型中的安全对齐失效。",
+      "llm_tldr": "开发CWAC通过在微调期间约束权重和激活，防止大语言模型中的安全对齐失效。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Algorithms for removing sensitive information from neural networks",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

@@ -6,46 +6,34 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-04-15
-- 运行时间：2026-04-15 20:17:32 UTC
+- 最新运行日期：2026-04-16
+- 运行时间：2026-04-16 19:58:44 UTC
 - 运行状态：成功
-- 本次总论文数：8
-- 精读区：5
-- 速读区：3
+- 本次总论文数：4
+- 精读区：3
+- 速读区：1
 
 ### 今日简报（AI）
-今日聚焦机器卸载与隐私合规，深度解析了联邦学习及大模型中“被遗忘权”的高效实现方案。
-重点推荐可验证的联邦卸载框架与针对敏感环境的轻量化大模型顺序卸载技术，确保模型部署既安全又合规。
-建议关注模型部署阶段的快捷方式规避与内存治理，从长远角度提升 AI 系统的鲁棒性与数据安全性。
-- 详情：[/202604/15/README](/202604/15/README)
+今日聚焦机器遗忘技术突破，深度研读了两篇关于视觉、音频及通用模型知识擦除的满分论文。
+重点关注跨模态图传播投影框架与无需保留数据的 WIN-U 牛顿遗忘法，实现了判别模型的高效精准遗忘。
+建议关注如何利用这些前沿框架提升模型隐私合规性，并同步防范大
+- 详情：[/202604/16/README](/202604/16/README)
 
 ### 精读区论文标签
-1. [PrivEraserVerify: Efficient, Private, and Verifiable Federated Unlearning](/202604/15/2604.12348v1-priveraserverify-efficient-private-and-verifiable-federated-unlearning)  
+1. [Graph Propagated Projection Unlearning: A Unified Framework for Vision and Audio Discriminative Models](/202604/16/2604.13127v1-graph-propagated-projection-unlearning-a-unified-framework-for-vision-and-audio-discriminative-models)  
    标签：评分：10.0/10、query:mu-ce
-   evidence：面向被遗忘权的联邦遗忘学习
-2. [Operationalising the Right to be Forgotten in LLMs: A Lightweight Sequential Unlearning Framework for Privacy-Aligned Deployment in Politically Sensitive Environments](/202604/15/2604.12459v1-operationalising-the-right-to-be-forgotten-in-llms-a-lightweight-sequential-unlearning-framework-for-privacy-aligned-deployment-in-politically-sensitive-environments)  
+   evidence：视觉和音频模型中类别级遗忘的统一框架
+2. [WIN-U: Woodbury-Informed Newton-Unlearning as a retain-free Machine Unlearning Framework](/202604/16/2604.13438v1-win-u-woodbury-informed-newton-unlearning-as-a-retain-free-machine-unlearning-framework)  
    标签：评分：10.0/10、query:mu-ce
-   evidence：大语言模型中实现被遗忘权的顺序遗忘框架
-3. [Orthogonal Subspace Projection for Continual Machine Unlearning via SVD-Based LoRA](/202604/15/2604.12526v1-orthogonal-subspace-projection-for-continual-machine-unlearning-via-svd-based-lora)  
+   evidence：无需保留数据的机器遗忘框架
+3. [From Anchors to Supervision: Memory-Graph Guided Corpus-Free Unlearning for Large Language Models](/202604/16/2604.13777v1-from-anchors-to-supervision-memory-graph-guided-corpus-free-unlearning-for-large-language-models)  
    标签：评分：10.0/10、query:mu-ce
-   evidence：通过正交子空间投影实现持续机器遗忘
-4. [BID-LoRA: A Parameter-Efficient Framework for Continual Learning and Unlearning](/202604/15/2604.12686v1-bid-lora-a-parameter-efficient-framework-for-continual-learning-and-unlearning)  
-   标签：评分：10.0/10、query:mu-ce
-   evidence：形式化持续学习与遗忘（CLU）以精确删除无用知识
-5. [RePAIR: Interactive Machine Unlearning through Prompt-Aware Model Repair](/202604/15/2604.12820v1-repair-interactive-machine-unlearning-through-prompt-aware-model-repair)  
-   标签：评分：10.0/10、query:mu-ce
-   evidence：通过提示感知模型修复进行交互式机器遗忘
+   evidence：基于记忆图的大语言模型无语料遗忘
 
 ### 速读区论文标签
-1. [When to Forget: A Memory Governance Primitive](/202604/15/2604.12007v1-when-to-forget-a-memory-governance-primitive)  
-   标签：评分：7.0/10、query:mu-ce
-   evidence：决定哪些记忆应被抑制或弃用的记忆治理机制
-2. [Models Know Their Shortcuts: Deployment-Time Shortcut Mitigation](/202604/15/2604.12277v1-models-know-their-shortcuts-deployment-time-shortcut-mitigation)  
-   标签：评分：7.0/10、query:mu-ce
-   evidence：在无需原始训练数据的情况下减轻词元级捷径特征
-3. [A Utility-preserving De-identification Pipeline for Cross-hospital Radiology Data Sharing](/202604/15/2604.07128v1-a-utility-preserving-de-identification-pipeline-for-cross-hospital-radiology-data-sharing)  
+1. [Preventing Safety Drift in Large Language Models via Coupled Weight and Activation Constraints](/202604/16/2604.12384v1-preventing-safety-drift-in-large-language-models-via-coupled-weight-and-activation-constraints)  
    标签：评分：6.0/10、query:mu-ce
-   evidence：从放射科数据中移除敏感术语和信息
+   evidence：在权重更新上强制执行安全子空间以保留安全对齐
 
 
 <div class="dpr-home-promo-card">
