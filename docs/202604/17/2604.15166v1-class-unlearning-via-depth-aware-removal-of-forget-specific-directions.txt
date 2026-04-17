@@ -1,0 +1,806 @@
+Title: Class Unlearning via Depth-Aware Removal of Forget-Specific Directions
+
+URL Source: https://arxiv.org/pdf/2604.15166v1
+
+Published Time: Fri, 17 Apr 2026 01:21:06 GMT
+
+Number of Pages: 17
+
+Markdown Content:
+# Class Unlearning via Depth-Aware Removal of Forget-Specific Directions 
+
+## Arman Hatami Johns Hopkins University 
+
+ahatami2@jh.edu 
+
+## Romina Aalishah Johns Hopkins University 
+
+raalish1@jh.edu 
+
+## Ilya E. Monosov Johns Hopkins University 
+
+imonoso1@jh.edu 
+
+## Abstract 
+
+Machine unlearning aims to remove targeted knowledge from a trained model without the cost of retraining from scratch. In class unlearning, however, reducing accuracy on forget classes does not necessarily imply true forget-ting: forgotten information can remain encoded in inter-nal representations, and apparent forgetting may arise from classifier-head suppression rather than representational re-moval. We show that existing class-unlearning methods often exhibit weak or negative selectivity, preserve forget-class structure in deep representations, or rely heavily on final-layer bias shifts. We then introduce DAMP (Depth-Aware Modulation by Projection), a one-shot, closed-form weight-surgery method that removes forget-specific direc-tions from a pretrained network without gradient-based op-timization. At each stage, DAMP computes class prototypes in the input space of the next learnable operator, extracts forget directions as residuals relative to retain-class pro-totypes, and applies a projection-based update to reduce downstream sensitivity to those directions. To preserve util-ity, DAMP uses a parameter-free depth-aware scaling rule derived from probe separability, applying smaller edits in early layers and larger edits in deeper layers. The method naturally extends to multi-class forgetting through low-rank subspace removal. Across MNIST, CIFAR-10, CIFAR-100, and Tiny ImageNet, and across convolutional and trans-former architectures, DAMP more closely resembles the re-training gold standard than some of the prior methods, im-proving selective forgetting while better preserving retain-class performance and reducing residual forget-class struc-ture in deep layers. “In the practical use of our intellect, forgetting is as important a function as recollecting.” — William James, The Principles of Psychology, Vol. I 
+
+## 1. Introduction 
+
+Machine learning models have grown increasingly large and complex, with modern systems often pretrained for ex-tended periods on vast and diverse datasets. After deploy-25 
+
+> 50
+> 75
+> 100
+> Baseline
+> DD-FT
+> Retrained
+> LM
+> DAMP
+> RandRelabel
+> GAU
+> SSD
+> KDU
+> SalUn
+> Retain
+> Accuracy
+> Forget
+> Accuracy
+> Computation
+> Time
+> Backward
+> Passes
+> Peak
+> VRAM
+> Approximation
+> Gap
+
+Figure 1. Comparison of DAMP performance with the baseline, retrained model, Gradient Ascent Unlearning (GAU), knowledge-distillation unlearning (KDU), Data Deletion Fine-Tuning (DD-FT), Logit Masking (LM), Random Relabeling (RandRelabel), Selective Synaptic Dampening (SSD), and Saliency Unlearn-ing (SalUn) for a 5-layer CNN (CNN-5) on CIFAR-10; forget classes 3 (Cat) and 5 (Dog). 
+
+ment, however, these models may need to be modified with-out full retraining. In this work we focus on class unlearn-ing: removing the knowledge of one or more target classes from a model while preserving performance on the remain-ing classes [8, 11, 35, 38]. Retraining large models from scratch on datasets that ex-clude the unwanted forget classes is often impractical due to the computational cost and time required [5, 6, 35]. As a result, recent work has developed post-hoc class-unlearning methods that modify trained models directly [11, 14, 25, 38]. The objective of these approaches is to make the model behave as if the forget classes had never been learned, while retaining as much useful knowledge as possible about the remaining classes [5, 35]. Conventionally, most existing work evaluates class un-learning using a tradeoff: reducing performance on the forget classes while preserving performance on the retain        
+
+> arXiv:2604.15166v1 [cs.CV] 16 Apr 2026 01234
+> Selectivity (pp)
+> GAU
+> KDU
+> SSD
+> Baseline
+> LM
+> RandRelabel
+> SalUn
+> DDFT
+> DAMP
+> Retrained
+> 0.29
+> 0.17
+> 0.09
+> 0.00
+> 0.00
+> 0.02
+> 0.05
+> 1.33
+> 2.19
+> 4.08 Figure 2. Comparison of DAMP Selectivity with the baseline re-trained model, Gradient Ascent Unlearning (GAU), knowledge-distillation unlearning (KDU), Data Deletion Fine-Tuning (DD-FT), Logit Masking (LM), Random Relabeling (RandRelabel), Selective Synaptic Dampening (SSD), and Saliency Unlearn-ing (SalUn) for a 5-layer CNN (CNN-5) on CIFAR-10; forget classes 3 (Cat) and 5 (Dog). Existing methods exhibit weak, near-zero, or negative selectivity, indicating either incomplete forget-ting or collateral damage to retained representations. In contrast,
+> DAMP substantially improves selectivity and appears closer to the retrained network (a gold standard comparison). The full equation of Selectivity is given in Sec. A.3.
+
+classes [5, 6, 35]. Fig. 1 summarizes this tradeoff, com-paring our method, Depth-Aware Modulation by Projec-tion ( DAMP ), with retraining and prior unlearning base-lines in terms of retain accuracy, forget accuracy, and com-putational efficiency. Although informative, the approach of measuring the tradeoff as a metric of unlearning does not fully capture the selectivity of the forgetting process. This figure illustrates that a given method may lower accuracy on forget classes while also degrading retain-class perfor-mance, or it may also preserve overall utility while leaving substantial evidence for forget classes in the model [6, 16]. To further shed light on this distinction and begin to de-velop a novel method for class forgetting, we first evaluated the selectivity of the forgetting process, measured in per-centage points (pp), a probe-based metric that captures how effectively a method suppresses forget-class evidence with-out degrading retain-class representations. As illustrated in Fig. 2, existing methods often exhibit relatively weak, near-zero, or even negative selectivity. These patterns of weak selectivity indicate forgetting that arises from broadly dam-aging representations or from suppressing forget classes only at the classifier head. In contrast, high selectivity in-dicates that forget-class evidence is removed more strongly than retain-class structure is degraded. Moreover, even when output-level forgetting appears successful, forgotten information can remain encoded in in-ternal representations [6, 16]. This issue becomes more pro-nounced as a function of network depth. Since early lay-ers often capture low-level features shared across classes, whereas deeper layers encode increasingly abstract and class-specific structure [37], some residual decodability in shallow layers may not be surprising. However, if forget-class structure remains detectable in deeper layers follow-ing unlearning, then high-level semantic evidence for forget classes has not truly been removed. This is the case even if the forgotten classes are no longer predicted by the output of the network. As we show in Fig. 3 and Fig. S7, several ex-isting methods continue to preserve forget-class structure in deep representations of networks relative to what is found in a retrained network, motivating the development of an unlearning procedure that acts beyond the classifier head. Furthermore, apparent forgetting can arise from changes at the classifier head rather than from genuine removal of forget-class evidence. In particular, shifting the final-layer bias can suppress the prediction of a forget class while leav-ing its internal representation largely intact. This makes output-level forgetting alone sometimes an unreliable indi-cator of successful class unlearning [6, 16]. We revisit this mechanism in Sec. 2, and later discuss how several existing methods rely primarily on classifier-head suppression rather than representational removal. To address this issue, we show that class unlearn-ing should modify the parts of the network where class-specific evidence is encoded while preserving shared low-level structure. This motivates an approach that (i) oper-ates across network depth and (ii) applies conservative edits in earlier stages and stronger edits in deeper stages [37]. Therefore, we introduce DAMP (Depth-Aware Modulation by Projection), a one-shot, closed-form weight-surgery method for class unlearning that removes forget-specific di-rections from a pretrained network without gradient-based optimization. At each stage, we define an edit space as the input space of the next learnable operator and compute class prototypes in that space. We then extract forget di-rections as residual components that are not explained by retain-class prototypes, and apply a projection-based update to the next-operator weights to reduce sensitivity to those directions. To limit utility loss, we scale the update at each stage using a parameter-free coefficient derived from forget-versus-retain probe separability together with a determinis-tic depth ramp, resulting in smaller edits in earlier layers and larger edits in deeper layers. For multi-class forgetting, we compute one direction per forget class, orthonormalize the resulting set, and project out their span, yielding a low-rank extension without introducing additional hyperparam-eters. Unlike gradient-based unlearning methods, which it-eratively optimize a forgetting objective, DAMP removes forget-specific directions from internal feature spaces. By targeting deep class-specific structure rather than relying only on output suppression, DAMP reduces the risk that forget-class information remains encoded in internal repre-0                              
+
+> 50
+> 100
+> 150
+> 200
+> 250
+> Sample Index
+> Baseline - Retrained Retrained - Retrained (reference) DAMP - Retrained GAU - Retrained KDU - Retrained
+> 050 100 150 200 250
+> Sample Index
+> 0
+> 50
+> 100
+> 150
+> 200
+> 250
+> Sample Index
+> DD-FT - Retrained
+> 050 100 150 200 250
+> Sample Index
+> LM - Retrained
+> 050 100 150 200 250
+> Sample Index
+> RandRelabel - Retrained
+> 050 100 150 200 250
+> Sample Index
+> SSD - Retrained
+> 050 100 150 200 250
+> Sample Index
+> SalUn - Retrained
+> -0.610
+> -0.407
+> -0.203
+> +0.000
+> +0.203
+> +0.407
+> +0.610
+> Δ Similarity  (method − Retrained)
+
+Figure 3. The first panel (top-left) shows the difference between the RDM of the original model that has not been subjected to unlearning (Baseline) and the retrained (gold-standard) model that has been retrained without the forget class. The other panels show the difference between the RDM of models subjected to different unlearning methods and the RDM of the retrained model. These unlearning methods are DAMP , Gradient Ascent Unlearning (GAU), knowledge-distillation unlearning (KDU), Data Deletion Fine-Tuning (DD-FT), Logit Masking (LM), Random Relabeling (RandRelabel), Selective Synaptic Dampening (SSD), and Saliency Unlearning (SalUn) for a 5-layer CNN (CNN-5) on CIFAR-10; retain classes 4 (Deer), 5 (Dog), 7 (Horse), 8 (Ship) and forget class 6 (Frog). Existing unlearning methods exhibit larger deviations from retraining, either by preserving stronger forget-class structure or by distorting the geometry of retain classes, whereas DAMP more closely matches retrained network properties. Original RDM plot can be seen in Fig. S6. 
+
+sentations, where it may distort the geometry of retained-class features, harm generalization on unseen data, and re-main vulnerable to re-expression under alternative heads, downstream fine-tuning, or representation-level analysis. Our contributions are as follows: • We show that current class-unlearning methods often fail to achieve selective forgetting: they either damage re-tained knowledge, preserve forget-class structure across depth, or rely on output-layer suppression. • We propose DAMP , an architecture-agnostic, closed-form projection-surgery method for class unlearning that removes forget-specific directions in the input space of the next learnable operator. • We introduce a parameter-free, depth-aware scaling rule based on probe separability and extend the method to multi-class forgetting via low-rank subspace removal. 
+
+## 2. Related Work 
+
+Machine unlearning spans a broad range of settings, in-cluding sample-level deletion, concept removal, and class-level forgetting [2, 5, 6, 8, 35]. In this paper, we focus on class-unlearning, where the goal is to remove knowl-edge of one or more target classes while preserving per-formance on the remaining classes. Within this setting, existing methods can be broadly grouped into a few fam-ilies. Retraining-based methods remove the forget classes and retrain from scratch, providing the idealized baseline but at prohibitive computational cost [5, 10, 22]. Gradient-ascent-based methods increase the loss on the forget classes to push predictions away from the forgotten labels; repre-sentative examples include zero-shot and unified gradient-based formulations [11, 20, 28]. These methods are sim-ple and can be effective, but they may be unstable and of-ten do not explicitly target the internal representations that encode forget-class evidence. Optimization-based methods combine forgetting and retention objectives, often through distillation, regularization, or auxiliary remain-data con-straints [4, 25, 38]. Such formulations offer flexibility, but they operate through objective tradeoffs rather than directly specifying what class-specific structure should be removed. Relabeling-based methods replace forget labels with retain-class labels and then fine-tune the model, thereby alter-ing the output mapping without necessarily removing class-specific evidence from the representation space [15, 18, 27]. Representation-based methods act more directly on hidden features through pruning, saliency-guided edits, synaptic dampening, or other internal modifications, to lo-calize forgetting more precisely [13, 14, 21, 23, 31]. Despite these differences, existing class-unlearning methods often exhibit three recurring limitations. First, for-getting can come at the cost of degraded retain-class perfor-mance, a tradeoff that appears across many approximate un-learning methods and benchmark settings [6, 16, 25]. As in Fig. 2 many methods in our experiments can exhibit weak, near-zero, or even negative selectivity, indicating that for-getting is not cleanly separated from collateral damage to retained representations. Second, forget-class information can remain recoverable from internal representations even when top-level forgetting metrics improve, echoing broader evidence that deep networks can preserve discriminative features across layers and transfer settings [31, 37, 39]. As shown in Fig. 3 and further illustrated by the t-SNE [34] visualization in Fig. S7, representational dissimilarity ma-trices for prior methods often retain substantial block struc-ture associated with forget classes, suggesting that forget-class evidence is still encoded even when output predictions are reduced. Third, some methods can, in some cases, pro-duce apparent forgetting primarily by changing the decision boundary or classifier head, rather than clear removal of in-ternal class evidence [9, 18, 39]. This distinction matters because output-level suppres-sion and representational removal are not the same phe-nomenon. A model may stop predicting a forget class while still retaining features that make that class distinguishable in its hidden representations. In that case, the model has reduced output access to the forget class without fully re-moving the underlying internal evidence. For class unlearn-ing, this can make output-level metrics alone an incomplete measure of success [16, 31, 39]. One indicator of this behavior is the bias term in the final classification layer. In a linear classifier, the bias term contributes a class-dependent offset to the pre-softmax score. Reducing the bias for a forget class makes that class less likely to be predicted, even if the corresponding fea-ture representations remain largely intact [19]. As shown in Fig. 4, several existing methods in our evaluation drive the forget-class bias towards negative values, suggesting that part of their apparent forgetting in fact arises from classifier-head suppression rather than substantial represen-tational removal. Our method is most closely related to representation-level and post-hoc parameter-editing approaches [13, 14, 21, 23, 31], but differs from them in two key ways. First, rather than editing parameters through iterative optimiza-tion, pruning, or neuron-level intervention, we identify at each stage a forget-specific direction; or, in the multi-class case, a low-rank forget subspace; relative to the span of retain-class prototypes. Second, we edit the next learn-able operator by right-projecting its weight matrix to re-duce sensitivity to those directions, which weakens the abil-ity of downstream computation to exploit forget-class evi-dence. Because the procedure is one-shot, closed-form, and depth-aware, it directly targets internal class-specific struc-ture while aiming to preserve shared low-level features and retain-class utility [37]. 
+
+## 3. Method 
+
+Setting. Let F (·; θ) be a pretrained classifier. We are given a set of forget classes F and a retain set Dr containing classes Cr with Cr ∩ F = ∅, following the standard retain-forget formulation used in class-unlearning methods [23]. For each forget class f ∈ F , let Df denote its examples. We -0.80     
+
+> -0.60
+> -0.40
+> -0.20
+> 0.00
+> 0.20
+> Bias (method  baseline)
+> Retrained
+> airplane
+> automobile
+> bird
+> cat
+> deer
+> dog
+> frog
+> horse
+> ship
+> truck
+> -0.80
+> -0.60
+> -0.40
+> -0.20
+> 0.00
+> 0.20
+> Bias (method  baseline)
+> DAMP
+> KDU
+> LM
+> SSD
+> GAU
+> DD-FT
+> RandRelabel
+> SalUn
+> A large negative output bias alone does not show successful un-
+> learning, nor is it necessarily harmful to network function. Still,
+> many existing forgetting methods depend on such bias shifts to
+> suppress outputs while leaving forget-class representations mo-
+> stly intact in intermediate layers (Fig. 3), while DAMP has zero
+> bias shift and removes forget-class representations from the la-
+> yers of the network (Fig. S7).
+
+Figure 4. Comparison of DAMP bias shift with the baseline, re-trained model, Gradient Ascent Unlearning (GAU), knowledge-distillation unlearning (KDU), Data Deletion Fine-Tuning (DD-FT), Logit Masking (LM), Random Relabeling (RandRelabel), Selective Synaptic Dampening (SSD), and Saliency Unlearn-ing (SalUn) for a 5-layer CNN (CNN-5) on CIFAR-10; forget class 3 (Cat). The asterisk marks the forget class. Existing unlearn-ing methods often drive the forget-class bias strongly negative, re-ducing predictions through classifier-head suppression rather than genuine removal of internal evidence. In contrast, DAMP requires less reliance on bias manipulation. More analysis on bias shift is provided in A.8. 
+
+produce edited parameters θ′ via a one-shot, closed-form weight update. For the probe we use the union-of-forgets set DF = S  
+
+> f∈F
+
+Df . All required statistics, including class prototypes and probe accuracies, are computed once from the pretrained model; the subsequent weight edit uses no gradients and does not require iterative re-estimation, in contrast to iterative forgetting procedures [23]. Fig. 5 illustrates the full procedure. Starting from a pre-trained network, we compute class prototypes in the edit space of each stage. Each forget prototype is then projected onto the span of the retain prototypes, so that the retained component is separated from the forget residual. The resid-ual directions are stacked and orthonormalized to define the forget subspace eQℓ at that stage. In parallel, a scalar co-efficient αℓ is computed so that deeper stages and stages with stronger forget-retain separability receive stronger ed-its. These two quantities are then combined in a closed-form projection update that reduces the sensitivity of the next op-erator to the forget subspace while preserving the remaining representational space. 4
+
+> ...
+> Pretrained Network
+
+1
+
+2
+
+3
+
+0
+
+6
+
+8
+
+9
+
+7  
+
+> retain prototype
+> forget prototype
+> forget prototype projections
+> retain span ... ...
+> Prototypes
+> Prototypes
+> ... ...
+> ...
+> ...
+> ...
+> ... ...
+> ...
+
+4
+
+1
+
+2
+
+0
+
+6
+
+8
+
+9
+
+7
+
+> residual
+> Depth
+> Main Classes
+> retain class
+> forget class
+> Retain Classes
+
+# DAMP 
+
+5
+
+> ...
+> Separability
+
+Figure 5. Overview of the proposed DAMP . Starting from a pretrained network, we compute class prototypes in the edit space of each stage. For each forget class, its prototype is decomposed into a component explained by the retain span and a forget residual. The resulting residual directions are orthonormalized. In parallel, a layer coefficient αℓ is computed from depth and forget-retain separability. These two quantities define the projection update applied to the weights of the next layer. 
+
+Edited stages and next-operator view. Consider a se-quence of feature-producing stages indexed by ℓ ∈{1, . . . , L }. For each stage ℓ, let Tℓ+1 denote the next op-erator that consumes the representation produced at stage ℓ
+
+and has a learnable weight tensor. We define an edit-space vector zℓ(x) ∈ Rdℓ as the actual input to Tℓ+1 , after reshap-ing if needed so that Tℓ+1 is linear in zℓ:
+
+Tℓ+1 (zℓ) = W ℓ+1 zℓ + bℓ+1 . (1) This definition is architecture-agnostic: for any operator with a weight tensor, we flatten its input dimension(s) to obtain zℓ and the corresponding matrix W ℓ+1 ∈ Rmℓ×dℓ .This next-operator view is similar in spirit to direct model-editing methods that modify selected linear mappings in pretrained networks via explicit parameter updates [29, 30]. 
+
+Class prototypes in edit space. For each retain class c ∈Cr and each stage ℓ, we compute the edit-space prototype 
+
+μℓc = 1
+
+|D c|
+
+X
+
+> x∈D c
+
+zℓ(x). (2) For each forget class f ∈ F we compute a separate proto-type 
+
+μℓf = 1
+
+|D f |
+
+X
+
+> x∈D f
+
+zℓ(x). (3) Using class means as prototype representations is stan-dard in feature-space classification and metric-based learn-ing [32]. All prototypes are computed using the pretrained model (before any edits) and are kept fixed during surgery. Recomputing prototypes after each layer update would re-quire an iterative procedure with repeated forward passes and would change the target directions across steps. We note that our method can be easily extended beyond the uti-lization of the standard class means as prototype represen-tations to capture more complex class distributions if appli-cation requires. 
+
+Forget directions via retain-span residual (multi-1D). 
+
+For each stage ℓ, stack retain prototypes as columns: 
+
+Rℓ = μℓc1 , . . . , μℓc|C r |
+
+ ∈ Rdℓ×|C r |. (4) For each forget class f ∈ F , we compute a retain-span residual 
+
+dℓf = μℓf − Rℓ(Rℓ)†μℓf , (5) and normalize 
+
+qℓf = dℓf
+
+∥dℓf ∥2
+
+, (6) skipping any f for which ∥dℓf ∥2 is below a small numeri-cal tolerance. Our construction is motivated by subspace-based editing and orthogonal representation editing meth-ods, which isolate target information in a low-dimensional direction or subspace while reducing interference with un-related behavior [3, 7, 33]. Let Qℓ stack the resulting directions as columns: 
+
+Qℓ = qℓf1 , . . . , q ℓfK
+
+ ∈ Rdℓ×K , (7) where K ≤ |F| after skipping near-zero residuals. We then form an orthonormal basis of span( Qℓ) using QR decom-position: eQℓ = orth( Qℓ), (8) where eQℓ has orthonormal columns. 
+
+Projection surgery on the next operator. Let W ℓ+1 ∈
+
+Rmℓ×dℓ be the matrix form of the weight tensor of Tℓ+1 
+
+in the edit space of stage ℓ. We remove sensitivity to the subspace spanned by the forget directions via 
+
+W ℓ+1 ′
+
+= W ℓ+1 
+
+I − αℓ eQℓ eQℓ⊤
+
+. (9) This projection-style update is aligned with prior subspace-editing approaches that suppress targeted directions while preserving the remaining representational space [3, 7, 33]. We keep the bias bℓ+1 unchanged. For operators whose weights are stored as tensors, we apply Eq. (9) to the flat-tened matrix W ℓ+1 and reshape back. 
+
+Layer coefficient from probe separability and depth. 
+
+The magnitude is controlled by αℓ ∈ [0 , 1] , shared across all forget classes at stage ℓ. We set αℓ using a scalar probe that measures how well stage ℓ separates the union of for-get classes from retain. Let hℓ(x) be a fixed-dimensional pooled summary of the stage-ℓ activation (e.g., global aver-age pooling when the activation is a tensor). Following the standard use of linear probes to assess the separability of in-termediate representations [1], we train a logistic classifier with labels y = 1 for x ∈ D F and y = 0 for x ∈ D r :
+
+pℓ(y=1 | x) = σ w⊤ 
+
+> ℓ
+
+hℓ(x) + bℓ
+
+, (10) and denote its held-out accuracy by aℓ ∈ [0 , 1] .We convert aℓ to a probe-based strength with chance baseline 0.5:
+
+αprobe  
+
+> ℓ
+
+= min 
+
+n
+
+1, max {0, 2aℓ − 1}
+
+o
+
+. (11) To enforce small edits in early stages and larger edits in deeper stages, we apply a deterministic depth ramp: 
+
+αdepth  
+
+> ℓ
+
+= ℓL , (12) and set 
+
+αℓ = αprobe  
+
+> ℓ
+
+· αdepth  
+
+> ℓ
+
+. (13) Eq. (11)–(13) introduce no tunable hyperparameters. More analysis of α in A.7. 
+
+One-shot editing over all stages. We compute {μℓc},
+
+{μℓf }f ∈F , { eQℓ}, and {αℓ} once from the pretrained model and apply Eq. (9) sequentially for ℓ = L, . . . , 1 (deep to shallow), producing θ′. The overall procedure is there-fore post-hoc, gradient-free, and one-shot, matching the ef-ficiency goal of retrain-free class-unlearning methods while operating through structured weight editing rather than iter-ative optimization [23, 29, 30]. 
+
+## 4. Experimental Setup 
+
+Datasets and forgetting protocol. We evaluate class unlearning on four image-classification benchmarks with increasing visual complexity and label cardinality: MNIST [26], CIFAR-10, CIFAR-100 [24], and Tiny ImageNet [36]. For each run, we specify a forget-class set F and treat all remaining classes as retain classes, following the standard class-unlearning setting studied in prior work [23]. We consider both single-class and multi-class forgetting. For MNIST and CIFAR-10, single-class forgetting consists of five runs, each forgetting one class, while multi-class forgetting consists of one run with two randomly selected forget classes. For CIFAR-100 and Tiny ImageNet, single-class forgetting again consists of five runs, each forgetting one class, while multi-class forgetting consists of one run in which 5% of classes are randomly selected as forget classes. For each dataset-architecture pair, the same forget-set configuration is used across all compared methods. Results for single-class forgetting are averaged over the five runs unless otherwise noted. 
+
+Models and stage definition. We evaluate three archi-tectures: a custom 5-layer convolutional network (CNN-5) A.2, ResNet-18 [17], and ViT [12]. Each model is first trained on the full training set to obtain a pretrained baseline prior to unlearning. To apply DAMP consistently across architectures, we expose each network through a unified 
+
+L = 5 stage abstraction. For CNN-5, the five convolutional blocks define the stages. For ResNet-18, the stages corre-spond to the stem followed by the four residual groups. For ViT, the transformer blocks are partitioned into five ordered groups. At each stage, DAMP edits the next learnable op-erator, as defined in Sec. 3. Detailed DAMP pseudocode is provided in Alg. S1. 
+
+Compared methods. We compare against the follow-ing baselines: (i) Baseline, the original model trained on the full dataset before unlearning; (ii) Retrain, retraining from scratch on retain-only data, used as the gold-standard 
+
+as-if-never-seen reference; (iii) GAU [28], gradient-ascent unlearning, which increases forget loss while encourag-ing retention of non-forget performance; (iv) KDU [4], knowledge-distillation unlearning, which distills retain be-havior from the original model while pushing forget out-puts toward a uniform distribution; (v) DD-FT [10], classi-Table 1. Machine unlearning results for single-class and multi-class forgetting scenarios. We report retain accuracy ( Racc) and forget accuracy ( Facc), where higher Racc and lower Facc are better. Our approach mostly matches prior methods, while achieving selectivity closer to that of the retrained network, showing that DAMP can erase forget-class representations from hidden layers while remaining competitive with other methods in terms of both forget-class and retain-class accuracy. 
+
+Single-Class Multi-Class MNIST CIFAR-10 CIFAR-100 Tiny-ImageNet MNIST CIFAR-10 CIFAR-100 Tiny-ImageNet Arch. Method Racc Facc Racc Facc Racc Facc Racc Facc Racc Facc Racc Facc Racc Facc Racc Facc 
+
+> CNN-5
+
+Baseline 99.55 99.78 89.60 82.50 67.53 44.00 54.92 26.00 99.56 99.59 89.66 87.10 67.57 58.33 54.78 54.67 Retrained 99.51 0.00 90.70 0.00 67.86 0.00 54.85 0.00 99.65 0.00 92.94 0.00 68.13 0.00 54.69 0.00 GAU [28] 83.28 0.00 81.58 0.00 59.17 0.00 49.68 0.00 67.19 0.00 76.70 0.07 7.38 0.00 19.83 0.00 KDU [4] 99.40 87.67 89.34 35.50 65.29 15.00 49.98 8.00 99.59 82.71 91.76 48.67 65.13 29.00 50.57 14.00 DD-FT [10] 99.60 0.00 89.43 0.00 64.65 0.00 50.78 0.00 99.52 0.00 92.54 0.00 64.97 0.00 50.69 0.00 LM [2] 99.63 0.00 90.90 0.00 67.71 0.00 54.97 0.00 99.69 0.00 93.04 0.00 67.96 0.00 54.92 0.00 RandRelabel [27] 99.49 0.00 90.39 0.00 67.08 0.00 53.74 0.00 99.70 0.00 92.43 0.00 66.85 0.33 53.19 0.00 SSD [14] 99.55 0.00 94.09 0.00 66.18 0.00 54.80 0.00 99.56 0.00 89.66 0.00 44.71 0.00 54.94 0.00 SalUn [13] 99.60 0.00 90.63 0.00 67.80 0.00 54.20 0.00 99.80 0.00 92.53 0.00 67.45 1.00 54.39 0.00 
+
+DAMP (Ours) 99.47 0.00 90.33 0.00 67.35 0.00 50.38 0.00 99.37 0.00 90.34 0.00 67.42 0.00 34.68 0.00 
+
+> ResNet-18
+
+Baseline 99.42 99.33 84.80 75.60 59.65 38.00 53.44 42.00 99.46 99.28 84.61 82.17 59.64 52.67 53.34 56.00 Retrained 99.42 0.00 85.96 0.00 59.05 0.00 53.12 0.00 99.72 0.00 87.96 0.00 59.55 0.00 53.15 0.00 GAU [28] 28.23 0.00 59.08 0.00 3.70 0.00 7.15 0.00 40.83 0.00 49.31 0.00 1.19 0.00 0.51 0.00 KDU [4] 99.09 86.77 83.79 36.40 55.08 11.00 47.37 16.00 99.17 92.44 87.10 62.73 53.24 25.00 49.21 28.00 DD-FT [10] 99.30 0.00 85.44 0.00 55.78 0.00 48.99 0.00 99.59 0.00 88.21 0.00 56.85 0.00 48.91 0.00 LM [2] 99.47 0.00 86.82 0.00 59.76 0.00 53.49 0.00 99.58 0.00 89.36 0.00 60.01 0.00 53.45 0.00 RandRelabel [27] 99.54 0.00 86.32 0.00 58.48 0.00 50.67 0.00 99.61 0.00 88.51 0.00 58.46 0.00 51.29 0.00 SSD [14] 99.07 0.00 65.11 0.00 31.90 0.00 25.51 0.00 99.43 0.00 66.31 0.00 30.51 0.00 25.55 0.00 SalUn [13] 99.22 0.00 63.96 0.00 30.12 0.00 26.15 0.00 99.23 0.00 69.07 0.00 30.63 0.00 25.82 0.00 
+
+DAMP (Ours) 99.70 0.00 86.20 0.00 59.34 0.00 52.80 0.00 99.63 0.00 83.92 0.00 60.84 0.00 52.12 0.00 
+
+> ViT
+
+Baseline 99.02 98.88 73.89 76.50 48.11 27.00 37.60 20.00 98.89 99.31 74.44 73.47 48.03 43.67 37.48 39.33 Retrained 98.95 0.00 76.88 0.00 50.18 0.00 37.57 0.00 98.77 0.00 79.10 0.00 46.80 0.00 37.07 0.00 GAU [28] 99.33 0.00 80.29 0.00 48.97 0.00 35.13 0.00 99.11 0.00 83.46 0.00 47.46 0.00 34.57 0.00 KDU [4] 99.10 23.88 74.32 56.30 48.94 0.00 37.90 0.00 99.13 22.19 76.16 55.67 49.60 2.00 38.71 6.00 DD-FT [10] 99.20 0.00 79.44 0.00 49.88 0.00 36.63 0.00 99.44 0.00 83.29 0.00 50.28 0.00 36.86 0.00 LM [2] 99.10 0.00 77.81 0.00 48.16 0.00 37.66 0.00 99.14 0.00 82.49 0.00 48.25 0.00 37.63 0.00 RandRelabel [27] 99.53 0.00 82.61 0.00 52.11 0.00 39.09 0.00 99.54 0.00 85.61 0.00 51.87 0.00 38.98 0.00 SSD [14] 99.07 0.00 75.39 0.00 45.91 0.00 37.71 0.00 98.89 0.00 76.39 0.00 48.04 0.00 37.67 0.00 SalUn [13] 99.57 0.00 82.48 0.00 51.95 0.00 39.67 0.00 99.32 0.00 85.21 0.00 51.48 0.67 39.26 0.00 
+
+DAMP (Ours) 99.18 0.00 76.47 0.00 48.02 0.00 37.51 0.00 99.17 0.00 80.16 0.00 47.96 0.00 37.40 0.00 
+
+fier reinitialization followed by fine-tuning on retain-only data; (vi) LM [2], inference-time logit masking of the forget classes; (vii) RandRelabel [27], relabeling forget examples with randomly sampled retain-class labels fol-lowed by fine-tuning; (viii) SSD [14], selective synap-tic dampening, which suppresses weights identified as im-portant to the forget data without full retraining; and (ix) SalUn [13], saliency unlearning, which uses gradient-based weight saliency to guide targeted forgetting while preserv-ing retain-task behavior. These baselines span most of the main fine-tuning, gradient, distillation, masking, relabeling, saliency, and representation-unlearning families commonly used in class-unlearning evaluations [6, 23]. 
+
+Training and evaluation. All methods are evaluated from the same pretrained baseline for each dataset– architecture pair. Retrain is trained on retain-only data, and all post-hoc unlearning methods use the same retain/forget partition and matched training budget for each run. We re-port retain accuracy on the retain-class test split and for-get accuracy on the forget-class test split [6, 23]. Because output-level forgetting can reflect either representational re-moval or classifier-head suppression, we additionally eval-uate selectivity, layer-wise representational similarity, and final-layer bias shifts (Secs. A.3–A.8). Full training hyper-parameters are provided in A.1. 
+
+## 5. Results 
+
+We evaluate DAMP on standard class-unlearning bench-marks using retain accuracy and forget accuracy summa-rized in Table 1 and Figs. 1 and 3. Across single-class and multi-class settings, DAMP consistently achieves a strong retain-forget tradeoff and closely matches retraining. This trend holds across MNIST, CIFAR-10, CIFAR-100, and Tiny-ImageNet, and across CNN-5, ResNet-18, and ViT ar-chitectures. In contrast, KDU often leaves substantial resid-ual forget-class accuracy, while GAU frequently reduces re-tain performance more aggressively. DD-FT, although it achieves performance close to the retrained network, has a higher computational cost than most of the other meth-ods. LM performs well, but it only affects the logits of the forgotten class set, meaning it has no effect on the represen-tations. RandRelabel also performs close to the retrained network, but it alters the geometry of the problem by redi-recting the forgotten class to a random class. SSD con-sistently suppresses forget-class accuracy to zero, but this strong forgetting is frequently accompanied by significant degradation in retain accuracy, particularly on CIFAR-100 and Tiny-ImageNet. SalUn likewise attains near-zero forget accuracy and performs reasonably well in some CNN-5 and ViT cases, yet its retain performance is less stable across architectures and datasets, especially for ResNet-18. We also evaluated the compared methods under adver-sarial perturbation attacks, as provided in Sec. A.4., we show that methods with similar output-level forgetting can differ substantially in retained-class robustness and in resid-ual vulnerability on forgotten classes. In particular, DAMP 
+
+maintains strong adversarial retain performance while keep-ing adversarial forget accuracy at zero. 
+
+5.1. Detailed Analyses 
+
+Fig. S8 studies the effect of the depth-aware scaling fac-tor α, which controls the strength of the projection applied at each layer. The figure shows that this scaling is not a cosmetic design choice: weaker projection leaves substan-tial residual forget performance, whereas stronger projec-tion increases damage to retained classes. The dynamic set-ting yields a better operating point between these two fail-ure modes, achieving zero forget accuracy without the cor-responding loss in retain accuracy seen at more aggressive settings. This result supports the main design of DAMP by showing that layer-dependent projection strength is neces-sary to balance forgetting against preservation, rather than treating all layers identically. Fig. S9 isolates a different failure mode. By explicitly sweeping the final-layer bias of the forget class, forget accu-racy can be reduced substantially through output-level sup-pression alone. However, this reduction does not imply that the model has removed forget-class information from its in-ternal representations; it only makes the class less likely to be predicted at the classifier head. As discussed in [19], when the network sees one class less often than the others, it starts to reduce the bias for that class without changing the feature extraction weights. Table S2 evaluates continual unlearning, where classes are forgotten sequentially over multiple rounds rather than in a single step. This setting is more demanding because er-rors can accumulate: a method may leave residual informa-tion from earlier forget classes, or progressively damage re-tained performance after repeated updates. The table shows that DAMP remains close to retraining across rounds, main-taining high retain accuracy while keeping both newly for-get accuracy (NF) and all-forget accuracy (AF) near zero. Finally, Fig. S11 extends the evaluation beyond classifi-cation and tests whether the same unlearning behavior ap-pears in dense prediction. The segmentation examples com-pare the baseline model, retraining, DAMP , and compet-ing baselines on representative images. The key question is not only whether the forgotten category is suppressed, but whether this can be done without degrading surrounding re-tained regions. In these examples, DAMP produces out-puts that are visually correct: forgotten regions are removed more cleanly, while the spatial structure and semantic co-herence of retained classes are better preserved. 
+
+## 6. Limitations 
+
+The current formulation of our method has several limita-tions, which may need to be addressed for other application settings. In particular, under our setting, the representation of a class can be approximated largely by its mean feature vector, and class representations are assumed to be, mostly, linearly separable. These assumptions may not hold for highly multimodal, anisotropic distributions. Our frame-work could be extended to address this by expanding the computations to estimate class-specific subspaces that ac-count for covariance-sensitive directions. Importantly, the present formulation remains a practical and effective start-ing point because, in deeper layers, class information often concentrates in a relatively low-dimensional set of direc-tions. Hence, our formulation is an efficient and stable ap-proach for many class-erasure scenarios, preserving shared features among retained classes, while also being extensible to cases where the mean feature vector alone is insufficient. 
+
+## 7. Conclusion 
+
+This work argues that class unlearning should be evalu-ated beyond output accuracy, since apparent forgetting can arise from classifier-head suppression while forget-class ev-idence remains encoded in deep representations. We intro-duced DAMP , a gradient-free, one-shot, depth-aware pro-jection method that removes forget-specific directions from pretrained networks. Across multiple benchmarks and ar-chitectures, DAMP more closely approximates retraining than several prior baselines, improving selective forgetting, preserving retain-class utility, and reducing residual forget-class structure in deep layers. These findings suggest that structured representation editing is a promising direction for scalable and more faithful machine unlearning, while future work should extend the method to settings with more com-plex, multimodal class geometry. Acknowledgments 
+
+The authors thank their affiliated institutions for support. Arman Hatami (AH) and Ilya E. Monosov (IEM) were sup-ported by the National Institute of Mental Health (NIMH) under grant R01 MH128344. Romina Aalishah (RA) was supported by the Johns Hopkins Department of Electrical and Computer Engineering. AH led the project and developed DAMP. RA con-tributed to the development and testing of DAMP and par-ticipated in writing the manuscript. IEM advised the de-velopment of DAMP, assisted with manuscript preparation, and secured funding for the project. We are grateful to all members of the Laboratory of Adaptive and Maladaptive Intelligence (LAMI) for the helpful discussions that improved this manuscript. 
+
+## References 
+
+[1] Guillaume Alain and Yoshua Bengio. Understanding inter-mediate layers using linear classifier probes. arXiv preprint arXiv:1610.01644 , 2016. 6 [2] Thomas Baumhauer, Pascal Sch¨ ottle, and Matthias Zep-pelzauer. Machine unlearning: Linear filtration for logit-based classifiers. Machine Learning , 111(9):3203–3226, 2022. 3, 7, 6 [3] Shristi Das Biswas, Arani Roy, and Kaushik Roy. Cure: Con-cept unlearning via orthogonal representation editing in dif-fusion models. In The Thirty-ninth Annual Conference on Neural Information Processing Systems , 2025. 6 [4] Jacopo Bonato, Marco Cotogni, and Luigi Sabetta. Is retain set all you need in machine unlearning? restoring perfor-mance of unlearned models with out-of-distribution images. In European Conference on Computer Vision , pages 1–19. Springer, 2024. 3, 6, 7 [5] Lucas Bourtoule, Varun Chandrasekaran, Christopher A Choquette-Choo, Hengrui Jia, Adelin Travers, Baiwu Zhang, David Lie, and Nicolas Papernot. Machine unlearning. In 
+
+2021 IEEE symposium on security and privacy (SP) , pages 141–159. IEEE, 2021. 1, 2, 3 [6] Xavier F Cadet, Anastasia Borovykh, Mohammad Malekzadeh, Sara Ahmadi-Abhari, and Hamed Had-dadi. Deep unlearn: Benchmarking machine unlearning for image classification. In 2025 IEEE 10th European Symposium on Security and Privacy (EuroS&P) , pages 939–962. IEEE, 2025. 1, 2, 3, 7 [7] Yuchen Cai and Ding Cao. O-edit: Orthogonal subspace editing for language model sequential editing. arXiv preprint arXiv:2410.11469 , 2024. 6 [8] Yinzhi Cao and Junfeng Yang. Towards making systems for-get with machine unlearning. In 2015 IEEE symposium on security and privacy , pages 463–480. IEEE, 2015. 1, 3 [9] Min Chen, Weizhuo Gao, Gaoyang Liu, Kai Peng, and Chen Wang. Boundary unlearning. arXiv preprint arXiv:2303.11570 , 2023. 4 [10] Rishav Chourasia and Neil Shah. Forget unlearning: To-wards true data-deletion in machine learning. In Interna-tional conference on machine learning , pages 6028–6073. PMLR, 2023. 3, 6, 7 [11] Vikram S Chundawat, Ayush K Tarun, Murari Mandal, and Mohan Kankanhalli. Zero-shot machine unlearning. IEEE Transactions on Information Forensics and Security , 18: 2345–2354, 2023. 1, 3 [12] Alexey Dosovitskiy, Lucas Beyer, Alexander Kolesnikov, Dirk Weissenborn, Xiaohua Zhai, Thomas Unterthiner, Mostafa Dehghani, Matthias Minderer, Georg Heigold, Syl-vain Gelly, et al. An image is worth 16x16 words: Trans-formers for image recognition at scale. arXiv preprint arXiv:2010.11929 , 2020. 6 [13] Chongyu Fan, Jiancheng Liu, Yihua Zhang, Eric Wong, Den-nis Wei, and Sijia Liu. Salun: Empowering machine unlearn-ing via gradient-based weight saliency in both image classi-fication and generation. arXiv preprint arXiv:2310.12508 ,2023. 3, 4, 7, 6 [14] Jack Foster, Stefan Schoepf, and Alexandra Brintrup. Fast machine unlearning without retraining through selective synaptic dampening. In Proceedings of the AAAI conference on artificial intelligence , pages 12043–12051, 2024. 1, 3, 4, 7, 6 [15] Laura Graves, Vineel Nagisetty, and Vijay Ganesh. Amne-siac machine learning. In Proceedings of the Thirty-Fifth AAAI Conference on Artificial Intelligence (AAAI-21) , pages 11516–11524, 2021. 3 [16] Jamie Hayes, Ilia Shumailov, Eleni Triantafillou, Amr Khal-ifa, and Nicolas Papernot. Inexact unlearning needs more careful evaluations to avoid a false sense of privacy. In 
+
+2025 IEEE Conference on Secure and Trustworthy Machine Learning (SaTML) , pages 497–519. IEEE, 2025. 2, 3, 4 [17] Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun. Deep residual learning for image recognition. In Proceed-ings of the IEEE conference on computer vision and pattern recognition , pages 770–778, 2016. 6 [18] Zhengbao He, Tao Li, Xinwen Cheng, Zhehao Huang, and Xiaolin Huang. Towards natural machine unlearning. IEEE Transactions on Pattern Analysis and Machine Intelligence ,2025. 3, 4 [19] Geoffrey Hinton, Oriol Vinyals, and Jeff Dean. Distill-ing the knowledge in a neural network. arXiv preprint arXiv:1503.02531 , 2015. 4, 8 [20] Zhehao Huang, Xinwen Cheng, JingHao Zheng, Haoran Wang, Zhengbao He, Tao Li, and Xiaolin Huang. Unified gradient-based machine unlearning with remain geometry enhancement. Advances in Neural Information Processing Systems , 37:26377–26414, 2024. 3 [21] Jinghan Jia, Jiancheng Liu, Parikshit Ram, Yuguang Yao, Gaowen Liu, Yang Liu, Pranay Sharma, and Sijia Liu. Model sparsity can simplify machine unlearning. Advances in Neu-ral Information Processing Systems , 36:51584–51605, 2023. 3, 4 [22] Junyaup Kim and Simon S. Woo. Efficient two-stage model retraining for machine unlearning. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) Workshops , pages 4361–4369, 2022. 3 [23] Sangamesh Kodge, Gobinda Saha, and Kaushik Roy. Deep unlearning: Fast and efficient gradient-free class forgetting. 
+
+Transactions on Machine Learning Research , 2024. 3, 4, 6, 7[24] Alex Krizhevsky and Geoffrey Hinton. Learning multiple layers of features from tiny images. Technical report, Uni-versity of Toronto, 2009. 6 [25] Meghdad Kurmanji, Peter Triantafillou, Jamie Hayes, and Eleni Triantafillou. Towards unbounded machine unlearn-ing. Advances in neural information processing systems , 36: 1957–1987, 2023. 1, 3 [26] Yann LeCun, L´ eon Bottou, Yoshua Bengio, and Patrick Haffner. Gradient-based learning applied to document recog-nition. Proceedings of the IEEE , 86(11):2278–2324, 2002. 6[27] Junde Li and Swaroop Ghosh. Random relabeling for effi-cient machine unlearning. arXiv preprint arXiv:2305.12320 ,2023. 3, 7, 6 [28] Ioannis Mavrothalassitis, Pol Puigdemont, Noam Itzhak Levi, and Volkan Cevher. Ascent fails to forget. arXiv preprint arXiv:2509.26427 , 2025. 3, 6, 7 [29] Kevin Meng, David Bau, Alex Andonian, and Yonatan Be-linkov. Locating and editing factual associations in gpt. Ad-vances in neural information processing systems , 35:17359– 17372, 2022. 5, 6 [30] Kevin Meng, Arnab Sen Sharma, Alex Andonian, Yonatan Belinkov, and David Bau. Mass-editing memory in a trans-former. arXiv preprint arXiv:2210.07229 , 2022. 5, 6 [31] Nazanin Mohammadi Sepahvand, Eleni Triantafillou, Hugo Larochelle, Doina Precup, James J Clark, Daniel M Roy, and Gintare Karolina Dziugaite. Selective unlearning via repre-sentation erasure using domain adversarial training. In The Thirteenth International Conference on Learning Represen-tations , 2025. 3, 4 [32] Jake Snell, Kevin Swersky, and Richard Zemel. Prototypical networks for few-shot learning. Advances in neural informa-tion processing systems , 30, 2017. 5 [33] Rheeya Uppaal, Apratim Dey, Yiting He, Yiqiao Zhong, and Junjie Hu. Model editing as a robust and denoised vari-ant of dpo: A case study on toxicity, 2024. arXiv preprint arXiv:2405.13967. 6 [34] Laurens van der Maaten and Geoffrey Hinton. Visualizing data using t-sne. Journal of Machine Learning Research , 9 (86):2579–2605, 2008. 4, 3 [35] Weiqi Wang, Zhiyi Tian, Chenhan Zhang, and Shui Yu. Ma-chine unlearning: A comprehensive survey. arXiv preprint arXiv:2405.07406 , 2024. 1, 2, 3 [36] Jiayu Wu, Qixiang Zhang, and Guoxi Xu. Tiny imagenet challenge. Technical report , 2017. 6 [37] Jason Yosinski, Jeff Clune, Yoshua Bengio, and Hod Lipson. How transferable are features in deep neural networks? Ad-vances in neural information processing systems , 27, 2014. 2, 4 [38] Yu Zhou, Dian Zheng, Qijie Mo, Renjie Lu, Kun-Yu Lin, and Wei-Shi Zheng. Decoupled distillation to erase: A general unlearning method for any class-centric tasks. In Proceed-ings of the Computer Vision and Pattern Recognition Con-ference , pages 20350–20359, 2025. 1, 3 [39] Jianing Zhu, Bo Han, Jiangchao Yao, Jianliang Xu, Gang Niu, and Masashi Sugiyama. Decoupling the class label and the target concept in machine unlearning. arXiv preprint arXiv:2406.08288 , 2024. 4 Class Unlearning via Depth-Aware Removal of Forget-Specific Directions 
+
+# Supplementary Material 
+
+## A. Additional Analyses and Supplementary Results 
+
+A.1. Implementation detail 
+
+All experiments were run on a single NVIDIA A100 GPU with 80 GB memory. We used PyTorch with a fixed random seed of 42 for Python, NumPy, and CUDA; CuDNN was set to deterministic mode and benchmarking was disabled. Data loading used 4 workers. For baseline training and re-training, CNN-5, ResNet-18 were optimized with SGD with momentum 0.9. On MNIST, these models were trained for 30 epochs with learning rate 0.01 and weight decay 10 −4,without cosine scheduling. On CIFAR-10, CIFAR-100, and Tiny ImageNet, they were trained for 50 epochs with learn-ing rate 0.1 and weight decay 5×10 −4, using cosine anneal-ing. ViT models were optimized with AdamW. On MNIST, ViT used learning rate 10 −3, weight decay 0.05, and 30 epochs. On CIFAR-10 and CIFAR-500, ViT used learning rate 5 × 10 −4, weight decay 0.05, and 100 epochs. On Tiny ImageNet, ViT used learning rate 3 × 10 −4, weight decay 0.05, and 200 epochs. The training batch size was 128 and the evaluation batch size was 256 for all datasets. For unlearning baselines, GAU was run for 10 epochs using Adam with learning rate 10 −4 and loss LGAU =CE(retain) − λ CE(forget) , with λ = 0.1. KDU was run for 10 epochs using Adam with learning rate 10 −4,temperature T = 4 .0, and forget-loss weight λ = 0 .5; it matched the teacher on retain samples via KL divergence and pushed forget samples toward the uniform distribution. DD-FT reinitialized the final classifier layer and fine-tuned the full network on retain data for 10 epochs using Adam with learning rate 5 × 10 −4. RandRelabel was run for 10 epochs using Adam with learning rate 10 −4, where forget-class labels were randomly reassigned to retain classes dur-ing training. LM was implemented as inference-time logit masking by setting the logits of forget classes to −∞ , with-out any weight updates. SSD was implemented as Selec-tive Synaptic Dampening by estimating the diagonal Fisher information on the full training set and on the forget set. Parameters satisfying Fforget /F train > α were selected with α = 25 .0, and selected parameters were dampened as θ ← θ/  1 + λ F forget /F train 
+
+ with λ = 1 .0. SSD used no optimizer-based fine-tuning or weight-update epochs. SalUn was run for 10 epochs using Adam with learn-ing rate 10 −4. A saliency mask was first computed from the absolute gradients of the forget-set loss, and the top 
+
+50% most salient weights were retained (saliency thresh-old τ = 0 .5). During fine-tuning, forget-class labels were randomly reassigned to retain classes, and gradients on non-salient weights were zeroed so that only salient weights were updated. For all methods, hyperparameters were ad-justed for certain datasets and architectures to achieve the best balance between retention and forgetting accuracy. 
+
+DAMP details. Class-wise edit means were computed from clean training data. For each layer, forget-class di-rections were obtained as residuals after projection onto the span of retain-class means, with residual threshold 
+
+ϵ = 10 −8. Multiple forget directions were orthonormal-ized with QR decomposition. The layer-wise edit strength was set as αℓ = αprobe ,ℓ · αdepth ,ℓ , where αprobe ,ℓ =clip(2 aℓ − 1, 0, 1) was derived from the accuracy aℓ of a logistic-regression probe trained on GAP features, and 
+
+αdepth ,ℓ = ( ℓ + 1) /5; since L = 5 . Edits were applied in reverse layer order using the closed-form update W ′ =
+
+W (I − αℓQQ ⊤). Logistic-regression probes used scikit-learn with lbfgs , class weight="balanced" , C =1.0, max iter =1000, and an 80/20 train/test split after feature standardization. In some experiments, α was man-ually increased by a fixed constant to amplify the effect of weight surgery. For example, for Tiny ImageNet with ViT, all α values were increased by 3.0. The dynamic layer-wise scaling was still preserved, since earlier layers should be edited less than deeper layers. 
+
+A.2. Custom CNN-5 architecture. 
+
+For all datasets, we used the same lightweight 5-stage con-volutional network, denoted CNN-5 . The network supports variable input channels and numbers of output classes, and is instantiated with 1 input channel for MNIST and 3 input channels for CIFAR-10, CIFAR-100, and Tiny ImageNet. Each stage consists of a convolution, batch normalization, and ReLU activation, with max-pooling applied in the first three stages. The architecture is: 
+
+Stage 1: Conv( Cin , 64 , 3×3) → BN → ReLU → Pool 
+
+Stage 2: Conv(64 , 128 , 3×3) → BN → ReLU → Pool 
+
+Stage 3: Conv(128 , 256 , 3×3) → BN → ReLU → Pool 
+
+Stage 4: Conv(256 , 256 , 3×3) → BN → ReLU 
+
+Stage 5: Conv(256 , 128 , 3×3) → BN → ReLU 
+
+All convolutions use padding 1, and Pool denotes 
+
+MaxPool(2) . The classifier head is 
+
+AdaptiveAvgPool(1) → Flatten → Linear(128 , n c),
+
+where nc is the number of classes. A.3. Layer-wise Selectivity Metric 
+
+To quantify the tradeoff between forget-class removal and retain-class preservation, we define a layer-wise selectivity 
+
+score. At layer ℓ, selectivity is computed as 
+
+Selectivity ℓ =
+
+
+
+AUC baseline forget ,ℓ − AUC method forget ,ℓ 
+
+
+
+−
+
+
+
+ACC baseline retain ,ℓ − ACC method retain ,ℓ 
+
+
+
+.
+
+(14) The first term measures forget removal , namely how much the method reduces forget-vs-retain linear separability rela-tive to the baseline model. The second term measures retain damage , namely how much retain-only classification accu-racy degrades relative to the baseline. Thus, higher selectiv-ity indicates a more desirable operating point: the method removes more linearly accessible forget information while incurring less damage to the retained representation struc-ture. 
+
+A.4. Unlearning Results under FGSM and PGD Evaluation 
+
+In the main paper, we evaluate unlearning primarily through clean retain and forget accuracy, together with deeper rep-resentational analyses. To further assess whether the com-pared methods remain stable under adversarial perturba-tions, Table S1 reports results under FGSM and PGD eval-uation. Specifically, we report retain accuracy (Retain, ↑)and forget accuracy (Forget, ↓) under both attacks for each method. These results show that DAMP achieves retain accu-racy under both attack types that is closer to the retrained network, while keeping forget accuracy at zero, whereas other methods show vulnerability, especially in retain per-formance under attack. 
+
+A.5. Full Representational Dissimilarity Matrices 
+
+In the main paper, Fig. 3 reports the difference between the representational dissimilarity matrix (RDM) of each method and the retrained reference model. To provide the underlying representation structure directly, Fig. S6 shows the full RDMs for the compared methods at the same deep layer (layer 5). These plots offer a more complete view of how forget-class structure and retained-class geometry are organized in feature space after unlearning. 
+
+A.6. t-SNE Visualization of Deep Representations 
+
+To complement the RDM-based analysis, in Fig. S7, we also visualize deep-layer representations using t-SNE [34]. For each method, we extract features from the same layer used in the representational analysis and project them into two dimensions using a shared t-SNE configuration. This visualization provides an intuitive view of how forget, re-tain, and novel classes are arranged after unlearning.                                                   
+
+> Table S1. Unlearning results under FGSM and PGD evaluation. We report retain accuracy (Retain, ↑) and forget accuracy (For-get, ↓) for each method. LM performance is close to DAMP ,but it sets the logits of the forgotten classes to −∞ only during inference, meaning there is no representational unlearning. Method FGSM PGD Retain Forget Retain Forget Baseline 80.9111 84.0 64.0 68.2 Retrained 80.1778 0.0 66.2111 0.0 GAU [28] 25.0667 0.0 20.0222 0.0 KDU [4] 80.2889 32.4 63.8667 14.6 DD-FT [10] 78.2333 0.0 59.1889 0.0 LM [2] 82.0222 0.0 65.2222 0.0 RandRelabel [27] 80.0556 0.0 61.8667 0.0 SSD [14] 81.5333 0.1 64.6444 0.0 SalUn [13] 80.1889 0.0 63.4889 0.0
+> DAMP (Ours) 81.9333 0.0 65.0778 0.0
+
+Relative to retraining, an effective unlearning method should reduce the separability of the forget class without unnecessarily disrupting the structure of retained classes. Also, the unlearned networks should treat the novel and forget classes similarly, because the network should no longer retain high-level semantic information about the for-get class. Nevertheless, the two should not be expected to behave identically: the model has already learned the low-level features of the forget class, whereas a novel class may contain low-level patterns the model has never encountered. Consequently, the network may preserve more low-level feature knowledge for the forget class than for the novel class. We emphasize that t-SNE is used only as a qualita-tive diagnostic, since it does not faithfully preserve global geometry. Our primary evidence remains the RDM analysis and the quantitative results in the main paper. 
+
+A.7. Effect of Depth-Aware Scaling 
+
+A central component of DAMP is the depth-aware scaling factor α, which controls the strength of the projection across layers. Fig. S8 presents the retain–forget tradeoff under dif-ferent settings of α. The results show that the proposed scaling yields a favorable operating point, balancing strong forgetting with preservation of retained knowledge. This analysis supports the choice used in the main experiments. 
+
+A.8. Additional Final-Layer Bias Analysis 
+
+The paper shows that several baselines suppress forgetting at the output level by strongly shifting the classifier bias of the forget class, rather than genuinely removing forget-class evidence from the internal representation. Fig. S9 extends this analysis by sweeping the final-layer bias and measur-ing the resulting behavior. The figure further highlights that 0                             
+
+> 50
+> 100
+> 150
+> 200
+> 250
+> Sample Index
+> Baseline Retrained DAMP GAU KDU
+> 050 100 150 200 250
+> Sample Index
+> 0
+> 50
+> 100
+> 150
+> 200
+> 250
+> Sample Index
+> DD-FT
+> 050 100 150 200 250
+> Sample Index
+> LM
+> 050 100 150 200 250
+> Sample Index
+> RandRelabel
+> 050 100 150 200 250
+> Sample Index
+> SSD
+> 050 100 150 200 250
+> Sample Index
+> SalUn
+> 0.10
+> 0.28
+> 0.45
+> 0.63
+> 0.80
+> 0.98
+> Cosine similarity
+
+Figure S6. Full representational dissimilarity matrices (RDMs) comparing DAMP with the baseline, Gradient Ascent Unlearning (GAU), knowledge-distillation unlearning (KDU), Data Deletion Fine-Tuning (DD-FT), Logit Masking (LM), Random Relabeling (RandRelabel), Selective Synaptic Dampening (SSD), and Saliency Unlearning (SalUn) for a 5-layer CNN (CNN-5) on CIFAR-10; retain classes 4 (Deer), 5 (Dog), 7 (Horse), 8 (Ship) and forget class 6 (Frog). Baseline Retrained DAMP GAU KDU 
+
+DD-FT LM RandRelabel SSD SalUn      
+
+> Deer Dog Frog (forget) Horse Ship Truck (novel)
+
+Figure S7. t-SNE visualization of deep-layer (layer 5) features after class unlearning. We project the same representations used in the RDM analysis into two dimensions for qualitative comparison across methods. The forget class is highlighted separately from retained and novel classes. DAMP yields a feature layout that more closely resembles retraining while reducing the visual separability of the forget class, whereas several baselines either preserve stronger forget-class clustering or introduce greater distortion among retained classes. Results are comparing DAMP with the baseline, Gradient Ascent Unlearning (GAU), knowledge-distillation unlearning (KDU), Data Deletion Fine-Tuning (DD-FT), Logit Masking (LM), Random Relabeling (RandRelabel), Selective Synaptic Dampening (SSD), and Saliency Unlearning (SalUn) for a 5-layer CNN (CNN-5) on CIFAR-10; retain classes 4 (Deer), 5 (Dog), 7 (Horse), 8 (Ship) and forget class 6 (Frog) and novel class 9 (Truck). 
+
+output suppression alone can artificially reduce forget accu-racy while leaving deeper representations insufficiently un-learned. However, as we show in Fig. S10, DAMP does not use this shortcut and achieves unlearning without relying on bias shift. Even when it has the same strong bias shift as the retrained network, the results remain unchanged. 0 20 40 60 80 100 
+
+Forget-class accuracy 
+
+91.0 
+
+91.5 
+
+92.0 
+
+92.5 
+
+93.0 
+
+93.5 
+
+94.0 
+
+> Retain-class accuracy
+
+Baseline 
+
+Retrained 
+
+DAMP (Dynamic) 
+
+> α=0.00
+> α=0.05
+> α=0.10 α=0.20
+> α=0.30
+> α=0.50
+> α=0.75
+> α=1.00
+> α=1.50
+
+0 20 40 60 80 
+
+Forget-class accuracy 
+
+89.6 
+
+89.8 
+
+90.0 
+
+90.2 
+
+90.4 
+
+90.6 
+
+90.8 
+
+91.0 
+
+91.2 
+
+Baseline 
+
+Retrained 
+
+DAMP (Dynamic) α=0.00 
+
+> α=0.05
+> α=0.10
+> α=0.20
+> α=0.30
+> α=0.50
+> α=0.75
+> α=1.00
+> α=1.50
+
+Figure S8. Left: CNN-5 Network. Right: ResNet-18 Network. Effect of the depth-aware scaling factor α on the retain-forget tradeoff. We vary the projection strength and report the resulting balance between retain accuracy and forget accuracy. The selected setting used in 
+
+DAMP achieves strong forgetting while maintaining high retain performance, illustrating the benefit of depth-aware scaling. Results are shown on CIFAR-10; retain classes 4 (Deer), 5 (Dog), 7 (Horse), 8 (Ship) and forget class 6 (Frog). 0 4 8 12 16 20    
+
+> Bias shift
+> 0
+> 20
+> 40
+> 60
+> 80
+> 100
+> Test accuracy  (%)
+> Retain ± 1 std
+> Mean retain accuracy
+> Forget accuracy (class 6: frog)
+> = 5.5
+> forget 19%
+> retain 90%
+
+Figure S9. Additional bias-sweep analysis for the final classifier layer. We vary the bias associated with the forget class and mea-sure the resulting change in model behavior. The results illus-trate that reducing forget-class predictions can often be achieved through output-level suppression alone, reinforcing the need for representational analyses beyond classifier outputs. Results are shown for the CNN-5 architecture on CIFAR-10. 
+
+A.9. Continual Unlearning Results 
+
+Table S2 reports continual unlearning performance on CIFAR-10 across sequential class-forgetting rounds. We report retain accuracy (R), newly forget accuracy (NF), all forget accuracy (AF), and the continuous unlearning score Retrained DAMP     
+
+> (unchanged bias)
+> DAMP
+> (Retrained bias)
+> 0
+> 20
+> 40
+> 60
+> 80
+> 100
+> Accuracy (%)
+> 92.4 92.4 92.4
+> 0.0 0.0 0.0
+> Retain
+> Forget
+
+Figure S10. DAMP achieves forgetting through weight-space pro-jection and representation unlearning alone. Forcing the last-layer biases to match the delta bias of the retrained network leaves re-tain and forget accuracy unchanged, demonstrating that bias plays no role in the forgetting mechanism for DAMP . Results are shown for the CNN-5 architecture on CIFAR-10. 
+
+(CUS) after each round. These results show that DAMP re-mains competitive with retraining throughout the sequential setting, while several baselines either accumulate residual forget-class information or suffer substantial degradation on retained classes. Table S2. Continuous unlearning results after each class-forgetting round on CIFAR-10 for the CNN-5 architec-ture. For each method, we report retain accuracy (R, ↑), newly forget accuracy (NF, ↓), all-forget accuracy (AF, 
+
+↓), and continuous unlearning score (CUS, ↑) after forgetting the class indicated at each round. Method Metric Forget class 1 (air.) 2 (auto.) 3 (bird) 4 (cat) 5 (deer) 6 (dog) 7 (frog) 8 (horse) 9 (ship) Retrained R 89.2 88.7 90.1 94.2 95.0 97.0 97.1 97.5 100.0 NF 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 AF 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 CUS 89.2 88.7 90.1 94.2 95.0 97.0 97.1 97.5 100.0 GAU [28] R 43.5 19.2 30.3 30.8 37.5 40.9 33.4 49.2 1.5 NF 0.0 0.0 0.0 0.0 0.0 19.4 32.3 0.0 49.4 AF 0.0 0.0 0.0 0.0 0.0 3.4 6.6 13.7 17.6 CUS 43.5 19.2 30.3 30.8 37.5 32.9 22.6 49.2 0.8 KDU [4] R 87.6 85.8 88.8 91.3 91.3 92.2 92.8 93.9 97.0 NF 52.3 60.1 47.0 38.3 44.1 24.6 31.0 44.8 59.8 AF 52.3 56.3 59.6 60.7 60.8 52.5 41.8 46.4 53.3 CUS 41.8 34.2 47.0 56.3 51.0 69.5 64.0 51.8 39.0 DD-FT [10] R 88.6 88.5 90.3 93.9 96.1 97.6 98.2 98.0 100.0 NF 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 AF 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 CUS 88.6 88.5 90.3 93.9 96.1 97.6 98.2 98.0 100.0 LM [2] R 89.5 89.3 90.9 95.1 96.5 98.1 98.3 98.0 100.0 NF 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 AF 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 CUS 89.5 89.3 90.9 95.1 96.5 98.1 98.3 98.0 100.0 RandRelabel [27] R 89.5 88.4 89.5 92.6 91.8 93.3 92.8 93.2 95.3 NF 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 AF 0.0 44.5 62.8 67.6 69.4 73.0 74.5 76.8 78.0 CUS 89.5 88.4 89.5 92.6 91.8 93.3 92.8 93.2 95.3 SSD [14] R 86.4 70.8 72.9 77.4 81.0 77.8 70.9 63.7 56.0 NF 0.0 42.3 4.2 37.8 58.3 94.1 98.2 85.4 71.4 AF 0.0 21.2 15.4 20.0 27.9 38.9 47.4 52.2 54.3 CUS 86.4 40.8 69.6 48.1 33.8 4.59 1.28 9.3 16.0 SalUn [13] R 89.5 88.5 89.3 92.4 91.9 93.0 93.1 93.9 94.8 NF 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 AF 0.0 45.7 62.4 67.7 69.2 74.0 74.5 76.8 78.1 CUS 89.5 88.5 89.3 92.4 91.9 93.0 93.1 93.9 94.8 
+
+DAMP (Ours) 
+
+R 89.5 89.1 90.6 94.9 96.0 98.0 98.2 98.2 100.0 NF 0.0 0.0 0.0 0.4 0.0 0.0 0.0 0.0 0.0 AF 0.0 0.0 0.0 0.1 0.0 0.0 0.0 0.0 0.0 CUS 89.5 89.1 90.6 94.5 96.0 98.0 98.2 98.2 100.0 
+
+A.10. Qualitative Segmentation Unlearning Results 
+
+We further provide qualitative results for semantic segmen-tation unlearning in Fig. S11. The figure compares the input image, ground-truth mask, and segmentation outputs pro-duced by the baseline model, retraining, DAMP , and com-peting baselines on representative examples. These exam-ples highlight the visual effect of unlearning beyond aggre-gate accuracy metrics. Compared with retraining, successful unlearning should remove evidence of the forgotten class while preserving the spatial structure and semantic coherence of retained re-Algorithm S1 DAMP : Depth-Aware Model Projection for Class Unlearning 
+
+Require: Baseline model fθ with L layers; forget set F; retain set R; loaders {D c}c∈F ∪R 
+
+Ensure: Unlearned model fθ′
+
+1: Initialize θ′ ← θ
+
+2: for each class c ∈ F ∪ R , layer ℓ, minibatch x ∼ D c do 
+
+3: Compute edit-space vectors z(ℓ)(x): apply GAP if W (ℓ+1) 
+
+is linear, else unfold a(ℓ)(x) into convolutional patches matched to W (ℓ+1) 
+
+4: Accumulate s(ℓ) 
+
+> c
+
++= P z(ℓ)(x), n(ℓ) 
+
+> c
+
++= (batch × loca-tions) 
+
+5: end for 
+
+6: Compute prototypes μ(ℓ) 
+
+> c
+
+← s(ℓ) 
+
+> c
+
+/n (ℓ) 
+
+> c
+
+for all c, ℓ 
+
+7: for each layer ℓ = 1 , . . . , L do 
+
+8: Train linear probe on GAP features {h(ℓ) 
+
+> c
+
+(x)} (forget vs. retain, 80/20 split); obtain accuracy aℓ
+
+9: αℓ ← clip(2 aℓ − 1, 0, 1) · ℓL
+
+10: end for 
+
+11: for ℓ = L, L −1, . . . , 1 do 
+
+12: Form retain matrix R(ℓ) = μ(ℓ)
+
+> r
+
+
+
+> r∈R
+
+13: For each f ∈ F, compute residual d(ℓ) 
+
+> f
+
+= μ(ℓ) 
+
+> f
+
+−
+
+R(ℓ)R(ℓ)†μ(ℓ)
+
+> f
+
+14: Collect Q(ℓ) = {d(ℓ) 
+
+> f
+
+/∥d(ℓ) 
+
+> f
+
+∥ : ∥d(ℓ) 
+
+> f
+
+∥ > ε, f ∈ F} 
+
+15: if Q(ℓ)̸ = ∅ then 
+
+16: eQ(ℓ) ← QR([ q(ℓ) 
+
+> f
+
+]f ∈F )
+
+17: W (ℓ+1) ← W (ℓ+1) 
+
+
+
+I − αℓ eQ(ℓ) eQ(ℓ)⊤
+
+
+
+{flatten conv weights before, reshape after }
+
+18: end if 
+
+19: end for 
+
+20: return fθ′
+
+gions. DAMP produces outputs that are visually closer to retraining, whereas several baselines either retain residual forgotten-class predictions or induce larger distortions in surrounding retained regions. Image 1                     
+
+> Image GT Baseline Retrained DAMP GAU
+> KDU DD-FT LM RandRelabel SSD SalUn
+> Image 2
+> Image GT Baseline Retrained DAMP GAU
+> KDU DD-FT LM RandRelabel SSD SalUn
+
+Figure S11. Qualitative results for semantic segmentation unlearning on two representative examples trying to forget Human category. Dataset is Pascal VOC 2012 semantic segmentation and the network is DeepLabV3 with a ResNet-50 backbone. We show the input image, ground-truth mask (GT), and predictions from the baseline, retraining, Gradient Ascent Unlearning (GAU), knowledge-distillation unlearning (KDU), Data Deletion Fine-Tuning (DD-FT), Logit Masking (LM), Random Relabeling (RandRelabel), Selective Synaptic Dampening (SSD), and Saliency Unlearning (SalUn). DAMP more closely follows the retrained model by suppressing the forgotten regions while preserving the structure of retained classes, whereas several baselines either retain residual forgotten-class predictions or introduce greater degradation in the remaining segmentation regions.

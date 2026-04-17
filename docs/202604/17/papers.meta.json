@@ -1,0 +1,65 @@
+{
+  "label": "2026-04-17",
+  "date": "2026-04-17",
+  "generated_at": "2026-04-17T19:46:37",
+  "count": 4,
+  "papers": [
+    {
+      "paper_id": "202604/17/2604.14808v1-modeling-llm-unlearning-as-an-asymmetric-two-task-learning-problem",
+      "section": "deep",
+      "title_en": "Modeling LLM Unlearning as an Asymmetric Two-Task Learning Problem",
+      "authors": "Zeguan Xiao, Siqing Li, Yong Wang, Xuetao Wei, Jian Yang, Yun Chen, Guanhua Chen",
+      "date": "2026-04-16",
+      "pdf": "https://arxiv.org/pdf/2604.14808v1",
+      "score": "10.0",
+      "evidence": "将大模型遗忘建模为非对称双任务学习",
+      "tldr": "本研究将大语言模型遗忘建模为非对称双任务问题，将保留通用能力视为首要目标，遗忘为辅助目标。为此提出了保留优先的梯度合成框架，并引入SAGO方法，通过符号约束的梯度合成解决梯度冲突。实验表明，SAGO在WMDP等基准上显著提升了模型在遗忘特定知识时的通用能力保持率，证明了优化梯度几何结构是缓解遗忘与保留权衡的关键。",
+      "tags": "query:mu-ce",
+      "abstract_en": "Machine unlearning for large language models (LLMs) aims to remove targeted knowledge while preserving general capability. In this paper, we recast LLM unlearning as an asymmetric two-task problem: retention is the primary objective and forgetting is an auxiliary. From this perspective, we propose a retention-prioritized gradient synthesis framework that decouples task-specific gradient extraction from conflict-aware combination. Instantiating the framework, we adapt established PCGrad to resolve gradient conflicts, and introduce SAGO, a novel retention-prioritized gradient synthesis method. Theoretically, both variants ensure non-negative cosine similarity with the retain gradient, while SAGO achieves strictly tighter alignment through constructive sign-constrained synthesis. Empirically, on WMDP Bio/Cyber and RWKU benchmarks, SAGO consistently pushes the Pareto frontier: e.g., on WMDP Bio (SimNPO+GD), recovery of target model MMLU performance progresses from 44.6% (naive) to 94.0% (+PCGrad) and further to 96.0% (+SAGO), while maintaining comparable forgetting strength. Our results show that re-shaping gradient geometry, rather than re-balancing losses, is the key to mitigating unlearning-retention trade-offs.",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202604/17/2604.15166v1-class-unlearning-via-depth-aware-removal-of-forget-specific-directions",
+      "section": "deep",
+      "title_en": "Class Unlearning via Depth-Aware Removal of Forget-Specific Directions",
+      "authors": "Arman Hatami, Romina Aalishah, Ilya E. Monosov",
+      "date": "2026-04-16",
+      "pdf": "https://arxiv.org/pdf/2604.15166v1",
+      "score": "10.0",
+      "evidence": "通过权重手术从表示中移除特定遗忘方向的类别遗忘方法",
+      "tldr": "针对类卸载中遗忘不彻底、内部表示残留信息的问题，本文提出了一种名为 DAMP 的单次闭式权重手术方法。该方法无需梯度优化，通过在各层投影去除特定于遗忘类的方向，并结合深度感知缩放策略，在保护保留类性能的同时，更有效地清除深层表示中的遗忘类结构，在多种架构和数据集上达到了接近重新训练的效果。",
+      "tags": "query:mu-ce",
+      "abstract_en": "Machine unlearning aims to remove targeted knowledge from a trained model without the cost of retraining from scratch. In class unlearning, however, reducing accuracy on forget classes does not necessarily imply true forgetting: forgotten information can remain encoded in internal representations, and apparent forgetting may arise from classifier-head suppression rather than representational removal. We show that existing class-unlearning methods often exhibit weak or negative selectivity, preserve forget-class structure in deep representations, or rely heavily on final-layer bias shifts. We then introduce DAMP (Depth-Aware Modulation by Projection), a one-shot, closed-form weight-surgery method that removes forget-specific directions from a pretrained network without gradient-based optimization. At each stage, DAMP computes class prototypes in the input space of the next learnable operator, extracts forget directions as residuals relative to retain-class prototypes, and applies a projection-based update to reduce downstream sensitivity to those directions. To preserve utility, DAMP uses a parameter-free depth-aware scaling rule derived from probe separability, applying smaller edits in early layers and larger edits in deeper layers. The method naturally extends to multi-class forgetting through low-rank subspace removal. Across MNIST, CIFAR-10, CIFAR-100, and Tiny ImageNet, and across convolutional and transformer architectures, DAMP more closely resembles the retraining gold standard than some of the prior methods, improving selective forgetting while better preserving retain-class performance and reducing residual forget-class structure in deep layers.",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202604/17/2604.11508v2-not-all-forgetting-is-equal-architecture-dependent-retention-dynamics-in-fine-tuned-image-classifiers",
+      "section": "quick",
+      "title_en": "Not All Forgetting Is Equal: Architecture-Dependent Retention Dynamics in Fine-Tuned Image Classifiers",
+      "authors": "Miit Daga, Swarna Priya Ramu",
+      "date": "2026-04-13",
+      "pdf": "https://arxiv.org/pdf/2604.11508v2",
+      "score": "6.0",
+      "evidence": "追踪微调过程中的样本遗忘动态",
+      "tldr": "本研究探讨了预训练图像分类器在微调过程中的遗忘动态，对比了ResNet-18和DeiT-Small在不同数据集上的表现。通过拟合艾宾浩斯遗忘曲线，发现不同架构遗忘的样本存在显著差异，且个体样本的遗忘具有高度随机性，而类别层面的遗忘则具有语义一致性。研究挑战了样本难度是固有属性的假设，并指出基于样本难度的课程学习或剪枝方法可能难以跨运行泛化。",
+      "tags": "query:mu-ce",
+      "abstract_en": "Fine-tuning pretrained image classifiers is standard practice, yet which individual samples are forgotten during this process, and whether forgetting patterns are stable or architecture dependent, remains unclear. Understanding these dynamics has direct implications for curriculum design, data pruning, and ensemble construction. We track per-sample correctness at every epoch during fine-tuning of ResNet-18 and DeiT-Small on a retinal OCT dataset (7 classes, 56:1 imbalance) and CUB-200-2011 (200 bird species), fitting Ebbinghaus-style exponential decay curves to each sample's retention trace. Five findings emerge. First, the two architectures forget fundamentally different samples: Jaccard overlap of the top 10 percent most-forgotten is 0.34 on OCTDL and 0.15 on CUB-200. Second, ViT forgetting is more structured (mean $R^2 = 0.74$) than CNN forgetting ($R^2 = 0.52$). Third, per-sample forgetting is stochastic across random seeds (Spearman $ρ\\approx 0.01$), challenging the assumption that sample difficulty is an intrinsic property. Fourth, class-level forgetting is consistent and semantically interpretable: visually similar species are forgotten most, distinctive ones least. Fifth, a sample's loss after head warmup predicts its long-term decay constant ($ρ= 0.30$ to $0.50$, $p < 10^{-45}$). These findings suggest that architectural diversity in ensembles provides complementary retention coverage, and that curriculum or pruning methods based on per-sample difficulty may not generalize across runs. A spaced repetition sampler built on these decay constants does not outperform random sampling, indicating that static scheduling cannot exploit unstable per-sample signals.",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202604/17/2604.14375v1-modular-continual-learning-via-zero-leakage-reconstruction-routing-and-autonomous-task-discovery",
+      "section": "quick",
+      "title_en": "Modular Continual Learning via Zero-Leakage Reconstruction Routing and Autonomous Task Discovery",
+      "authors": "Noureddine Kermiche",
+      "date": "2026-04-15",
+      "pdf": "https://arxiv.org/pdf/2604.14375v1",
+      "score": "6.0",
+      "evidence": "为符合 GDPR 删除原始数据",
+      "tldr": "本研究针对持续学习中的灾难性遗忘问题，提出一种模块化架构。该架构通过任务特定专家和基于异常检测的门控机制实现参数隔离。核心创新在于“同步流水线”机制，在原始数据存在时并行完成教师学习、学生蒸馏和路由流形获取，并在学习后立即删除数据以保护隐私。利用紧瓶颈自编码器（TB-AE）在超高维空间中建立拓扑边界，实现无监督的任务发现与检索，有效解决了潜在空间拥挤问题。",
+      "tags": "query:mu-ce",
+      "abstract_en": "Catastrophic forgetting remains a primary hurdle in sequential task learning for artificial neural networks. We propose a silicon-native modular architecture that achieves structural parameter isolation using Task-Specific Experts and a distributed, outlier-based Gatekeeper. Moving beyond traditional sequential consolidation, our framework utilizes a Simultaneous Pipeline where Teacher learning, Student distillation, and Router manifold acquisition occur in parallel while raw data is present in a localized training session. This approach ensures computational efficiency and complies with privacy mandates like GDPR by deleting raw data as soon as a task is learned. We demonstrate that a Tight-Bottleneck Autoencoder (TB-AE) can effectively distinguish semantically crowded manifolds in high-dimensional latent spaces, overcoming the posterior collapse inherent to standard variational methods. By establishing strict topological boundaries, our TB-AE resolves latent space crowding in 4096-D LLM embeddings to provide a robust, unsupervised novelty signal. Furthermore, we validate an Autonomous Retrieval mechanism that confidently identifies returning manifolds, enabling stable lifelong learning without redundant module instantiation. Empirical results demonstrate that our ``Live Distillation'' approach acts as a natural regularizer, achieving strong retention across computer vision and natural language processing domains without suffering a student fidelity gap.",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
