@@ -6,34 +6,34 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-04-17
-- 运行时间：2026-04-17 19:46:29 UTC
+- 最新运行日期：2026-04-18
+- 运行时间：2026-04-18 19:24:19 UTC
 - 运行状态：成功
 - 本次总论文数：4
 - 精读区：2
 - 速读区：2
 
 ### 今日简报（AI）
-深度探索 AI “精准遗忘”技术，涵盖大语言模型与图像分类器的知识擦除新范式。
-重点推荐将 LLM 遗忘视为非对称双任务学习，以及利用深度感知方向移除实现高效类别卸载的突破性方案。
-建议关注机器遗忘（Machine Unlearning）在模型安全与隐私保护中的应用，掌握让 AI 合规“断舍离”的前沿路径。
-- 详情：[/202604/17/README](/202604/17/README)
+今日深度攻克大模型知识动态管理，重点解析实时持续遗忘与细粒度事实锚定前沿技术。
+满分论文 CURaTE 实现了实时知识擦除与保留的平衡，而 FABLE 则为非结构化模型编辑提供了精准的事实锚定方案。
+建议优先研读这两项成果，掌握如何在不损害模型原有能力的前提下，实现“手术级”的知识更新与清理。
+- 详情：[/202604/18/README](/202604/18/README)
 
 ### 精读区论文标签
-1. [Modeling LLM Unlearning as an Asymmetric Two-Task Learning Problem](/202604/17/2604.14808v1-modeling-llm-unlearning-as-an-asymmetric-two-task-learning-problem)  
+1. [CURaTE: Continual Unlearning in Real Time with Ensured Preservation of LLM Knowledge](/202604/18/2604.14644v1-curate-continual-unlearning-in-real-time-with-ensured-preservation-of-llm-knowledge)  
    标签：评分：10.0/10、query:mu-ce
-   evidence：将大模型遗忘建模为非对称双任务学习
-2. [Class Unlearning via Depth-Aware Removal of Forget-Specific Directions](/202604/17/2604.15166v1-class-unlearning-via-depth-aware-removal-of-forget-specific-directions)  
-   标签：评分：10.0/10、query:mu-ce
-   evidence：通过权重手术从表示中移除特定遗忘方向的类别遗忘方法
+   evidence：解决了大语言模型中特定知识的持续和即时遗忘需求。
+2. [FABLE: Fine-grained Fact Anchoring for Unstructured Model Editing](/202604/18/2604.12559v1-fable-fine-grained-fact-anchoring-for-unstructured-model-editing)  
+   标签：评分：9.0/10、query:mu-ce
+   evidence：利用真实文本更新模型的非结构化模型编辑
 
 ### 速读区论文标签
-1. [Not All Forgetting Is Equal: Architecture-Dependent Retention Dynamics in Fine-Tuned Image Classifiers](/202604/17/2604.11508v2-not-all-forgetting-is-equal-architecture-dependent-retention-dynamics-in-fine-tuned-image-classifiers)  
+1. [Towards Lifelong Aerial Autonomy: Geometric Memory Management for Continual Visual Place Recognition in Dynamic Environments](/202604/18/2604.09038v1-towards-lifelong-aerial-autonomy-geometric-memory-management-for-continual-visual-place-recognition-in-dynamic-environments)  
    标签：评分：6.0/10、query:mu-ce
-   evidence：追踪微调过程中的样本遗忘动态
-2. [Modular Continual Learning via Zero-Leakage Reconstruction Routing and Autonomous Task Discovery](/202604/17/2604.14375v1-modular-continual-learning-via-zero-leakage-reconstruction-routing-and-autonomous-task-discovery)  
+   evidence：地理知识的记忆管理与选择性处理
+2. [From Order to Distribution: A Spectral Characterization of Forgetting in Continual Learning](/202604/18/2604.13460v1-from-order-to-distribution-a-spectral-characterization-of-forgetting-in-continual-learning)  
    标签：评分：6.0/10、query:mu-ce
-   evidence：为符合 GDPR 删除原始数据
+   evidence：持续学习中遗忘现象的光谱特征描述
 
 
 <div class="dpr-home-promo-card">

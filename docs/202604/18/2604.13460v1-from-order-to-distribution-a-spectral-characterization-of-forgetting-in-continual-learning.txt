@@ -1,0 +1,2450 @@
+Title: From Order to Distribution: A Spectral Characterization of Forgetting in Continual Learning
+
+URL Source: https://arxiv.org/pdf/2604.13460v1
+
+Published Time: Thu, 16 Apr 2026 00:36:41 GMT
+
+Number of Pages: 28
+
+Markdown Content:
+# From Order to Distribution: A Spectral Characterization of Forgetting in Continual Learning 
+
+Zonghuan Xu 1, Xingjun Ma 1∗
+
+> 1
+
+Institute of Trustworthy Embodied AI, Fudan University, Shanghai, China Shanghai Key Laboratory of Multimodal Embodied AI, Shanghai, China 
+
+2430XH10002@m.fudan.edu.cn , xingjunma@fudan.edu.cn 
+
+## Abstract 
+
+A central challenge in continual learning is forgetting, the loss of performance on previously learned tasks induced by sequential adaptation to new ones. While forgetting has been extensively studied empirically, rigorous theoretical characterizations remain limited. A notable step in this direction is Evron et al. [2022], which analyzes forgetting under random orderings of a fixed task collection in overparameterized linear regression. We shift the perspective from order to distribution. Rather than asking how a fixed task collection behaves under random orderings, we study an exact-fit linear regime in which tasks are sampled i.i.d. from a task distribution Π, and ask how the generating distribution itself governs forgetting. In this setting, we derive an exact operator identity for the forgetting quantity, revealing a recursive spectral structure. Building on this identity, we establish an unconditional upper bound, identify the leading asymptotic term, and, in generic nondegenerate cases, characterize the convergence rate up to constants. We further relate this rate to geometric properties of the task distribution, clarifying what drives slow or fast forgetting in this model. 
+
+## 1 Introduction 
+
+In continual learning, forgetting is usually observed along a sequence of tasks: as new tasks are learned, performance on earlier ones deteriorates. A natural theoretical question is therefore what governs this deterioration. In the exact-fit overparameterized linear regime, the most closely related prior work, Evron et al. [2022], studies this question from an order-based viewpoint: given a fixed collection of tasks, how does forgetting behave under a random ordering? In this paper, we shift the focus from order to distribution. Rather than treating forgetting primarily as a function of a realized task order, we ask how it is governed by the task distribution that generates the tasks. Concretely, we study forgetting in overparameterized linear regression under a shared-solution assumption: each rank-deficient task (Xt, y t) is consistent with a common parameter w⋆,and tasks arrive as i.i.d. draws from a task distribution Π. Learning proceeds by exact fitting: starting from w0 = 0 , at each step we select, among all exact solutions of the current task, the one closest to the previous iterate wt−1. This update is the asymptotic selection rule of gradient-based least-squares training in the consistent overparameterized regime. The resulting sequential process defines iterates w1, w 2, . . . , and our object of study is the 
+
+> ∗
+
+Corresponding author: xingjunma@fudan.edu.cn .Preprint. Under review. 
+
+> arXiv:2604.13460v1 [cs.LG] 15 Apr 2026
+
+forgetting quantity 
+
+F Π(k) := E
+
+[
+
+1
+
+k
+
+> k
+
+∑
+
+> t=1
+
+ℓt(wk)
+
+]
+
+, ℓt(w) := 1
+
+nt
+
+∥Xtw − yt∥22.
+
+This shift from order to distribution matters for two reasons. First, in many continual-learning settings, the natural object is not a fixed task list but a task-generating source with recurring statistical structure. Second, once tasks are modeled as i.i.d. draws from Π, it becomes meaningful to ask which properties of Π make forgetting slow or fast. Our goal is to make this dependence explicit. A key starting point in prior analysis is the projection dynamics 
+
+wt − w⋆ = Pt(wt−1 − w⋆),
+
+which provides a tractable state-level description of sequential exact fitting. However, the quantity we ultimately want to characterize is not the state itself, but the forgetting performance. Writing ek := wk − w⋆, we have 
+
+ℓt(wk) = e⊤ 
+
+> k
+
+Ctek, Ct := 1
+
+nt
+
+X⊤ 
+
+> t
+
+Xt.
+
+Thus, while the projection dynamics describe how the error evolves, they do not by themselves close the analysis for the forgetting quantity. Existing analyses bridge this gap through projector-based residual bounds such as 
+
+∥Xt(w − w⋆)∥22 ≤ ∥ (I − Pt)( w − w⋆)∥22.
+
+This reduction is effective for proving random-order guarantees, but it suppresses the visible covariance Ct that directly determines the loss. In particular, rescaling a task by 
+
+(Xt, y t) 7 → (εX t, εy t) leaves Pt and the exact-fit dynamics unchanged, while multiplying the forgetting loss by ε2. Projector-based quantities therefore do not, by themselves, determine the scale of forgetting or its finer asymptotic behavior. Our objective is therefore to analyze the convergence of F Π(k) itself in the i.i.d. exact-fit model. In particular, we seek a description that identifies the operator structure governing this convergence, yields sharp rate characterizations, and makes explicit how the geometry of the task distribution Π controls slow or fast forgetting. 
+
+Our Contributions. We make four main contributions. 1. From random-order forgetting to distribution-governed forgetting. We refor-mulate forgetting in the exact-fit overparameterized linear regime as a quantity governed by the task distribution Π, rather than by the random ordering of a fixed task collection. This makes the generating distribution itself the central object of analysis, and leads to an exact operator identity for the forgetting quantity that retains the visible task covariance together with the projection dynamics. It makes clear that projector information alone does not determine the scale of actual forgetting. 2. Exact spectral characterization of forgetting. Building on this identity, we derive an exact spectral expansion of F Π(k) that separates decay scales from activation coefficients. This yields an unconditional exponential upper bound, an explicit characterization of the leading asymptotic term, and, in generic nondegenerate regimes, convergence rates that are sharp up to constants. In boundary cases, the expansion also explains when slower behavior, including the classical O(1 /k ) law, reappears. 3. Geometric interpretation of the rate-controlling quantity. We relate the rate-controlling quantity ρΠ to task geometry through principal angles with task null spaces. This yields an interpretable picture: forgetting is slow when important error directions remain weakly visible across tasks, whereas richer and more complementary task families reduce ρΠ and accelerate decay. 4. A fundamental obstruction to uniform positive lower bounds. We show that no unconditional positive lower bound for actual forgetting can hold in general: even commuting projector families may exhibit identically zero actual forgetting. This identifies a basic obstruction to any fully uniform positive lower-bound theory in this regime. 22 Setup 
+
+We work with regression tasks (X, y ), where X ∈ Rn×d and y ∈ Rn, in the overparameterized regime rank (X) < d . As in prior linear analyses, we assume that the tasks share a common solution: there exists w⋆ ∈ Rd such that y = Xw ⋆ for every task under consideration. Given a task (X, y ) and an initialization u ∈ Rd, the task-wise exact-fit update is defined by 
+
+SX,y (u) := arg min w∈Rd 12 ∥w − u∥22 subject to Xw = y. A standard projection calculation gives 
+
+SX,y (u) = u + X+(y − Xu ).
+
+Under the common-solution assumption y = Xw ⋆, this becomes 
+
+SX,y (u) = w⋆ + P (u − w⋆), P := I − X+X. 
+
+Tasks arrive as an i.i.d. stream from a task distribution Π: (X1, y 1), (X2, y 2), . . . i.i.d.
+
+∼ Π.Starting from w0 = 0 , the sequential exact-fit iterates are defined by wt := SXt,y t (wt−1) for 
+
+t ≥ 1. For convenience, we write Pt := I − X+ 
+
+> t
+
+Xt, Ct := 1 
+
+> nt
+
+X⊤ 
+
+> t
+
+Xt, and X⋆ := w⋆w⋆⊤. Since 
+
+Pt is the orthogonal projector onto null( Xt), we also have range( Pt) = null( Xt).Our object of study is the forgetting quantity F Π(k) := E
+
+[ 1
+
+> k
+
+∑kt=1 ℓt(wk)
+
+]
+
+, where ℓt(w) :=  
+
+> 1
+> nt
+
+∥Xtw − yt∥22. We assume throughout that the expectations appearing below are finite; in particular, E∥Ct∥F < ∞.
+
+## 3 Exact Dynamics for Forgetting 
+
+In this section, we expose the operator-spectral structure of forgetting. We first derive an identity for F Π(k), and then build on this identity to obtain a spectral expansion that makes explicit how different spectral levels contribute to forgetting. These results form the basis for the convergence-rate analysis in the next section. To analyze the convergence of forgetting, we would like to work directly with the loss F Π(k)
+
+itself. The difficulty is that, for a fixed past task t, the quantity ℓt(wk) is evaluated at the later iterate wk, and therefore couples the visible structure of task t with the subsequent exact-fit dynamics. The next theorem resolves this coupling by giving an exact loss-level identity for F Π(k).
+
+Theorem 3.1 (Exact forgetting identity) . Let X⋆ := w⋆w⋆⊤ and Ct := 1 
+
+> nt
+
+X⊤ 
+
+> t
+
+Xt. For every symmetric matrix A, define SΠ(A) := E[PtAP t]. This operator is independent of t because the task sequence is i.i.d. Under the common-solution assumption, for every k ≥ 2,
+
+F Π(k) = 1
+
+k
+
+> k−1
+
+∑
+
+> t=1
+
+E tr 
+
+(
+
+Sk−t 
+
+> Π
+
+(Ct) Pt St−1Π (X⋆) Pt
+
+)
+
+.
+
+Proof sketch. Let et := wt − w⋆. By the exact-fit update from Section 2, wt = w⋆ +
+
+Pt(wt−1 − w⋆), hence et = Ptet−1 for every t ≥ 1. Iterating gives et = −PtPt−1 · · · P1w⋆,since e0 = w0 − w⋆ = −w⋆.Fix t ≤ k − 1, and write Rt,k := PkPk−1 · · · Pt+1 and Lt−1 := Pt−1Pt−2 · · · P1, with the convention L0 = I. Then ek = Rt,k et = −Rt,k PtLt−1w⋆. Therefore eke⊤ 
+
+> k
+
+=
+
+Rt,k PtLt−1X⋆L⊤
+
+> t−1
+
+PtR⊤
+
+> t,k
+
+, and so 
+
+ℓt(wk) = 1
+
+nt
+
+∥Xtek∥22 = tr( Cteke⊤ 
+
+> k
+
+) = tr (R⊤
+
+> t,k
+
+CtRt,k Pt Lt−1X⋆L⊤
+
+> t−1
+
+Pt
+
+),
+
+where we used ℓt(wk) = e⊤ 
+
+> k
+
+Ctek = tr( Cteke⊤ 
+
+> k
+
+) and cyclicity of trace. Now take expectations. Since future tasks (Xt+1 , y t+1 ), . . . , (Xk, y k) are independent of the current and past tasks, repeated conditioning over Pt+1 , . . . , P k yields E[R⊤
+
+> t,k
+
+CtRt,k | Xt, y t] = 
+
+Sk−t 
+
+> Π
+
+(Ct). Similarly, repeated conditioning over P1, . . . , P t−1 gives E[Lt−1X⋆L⊤
+
+> t−1
+
+] =
+
+3St−1Π (X⋆). Using these two identities and the independence of past and future given the current task, we obtain 
+
+E ℓt(wk) = E tr 
+
+(
+
+Sk−t 
+
+> Π
+
+(Ct) Pt St−1Π (X⋆) Pt
+
+)
+
+.
+
+Finally, F Π(k) = E
+
+[ 1
+
+> k
+
+∑kt=1 ℓt(wk)
+
+]
+
+. Since ℓk(wk) = 0 by exact fitting on the k-th task, the 
+
+t = k term vanishes, and averaging the identity above over t = 1 , . . . , k − 1 gives the claim. A full proof is given in Appendix B.1. Once the exact forgetting identity is available, the next question is which part of it controls long-run convergence. The dynamics themselves are carried by repeated applications of the operator SΠ, so the natural object to analyze spectrally is SΠ. The remaining task- and target-dependent structure can be aggregated into coefficients that measure how different spectral modes are activated inside the loss. 
+
+Theorem 3.2 (Exact spectral expansion) . Let Sd := {A ∈ Rd×d : A⊤ = A}, equipped with the Frobenius inner product. Let Sd = E1 ⊕ · · · ⊕ E R be the orthogonal decomposition of 
+
+Sd into eigenspaces of SΠ, and let ρ1, . . . , ρ R be the corresponding spectral levels, so that 
+
+SΠ(Y ) = ρr Y for every Y ∈ E r . Let Qr : Sd → E r be the Frobenius-orthogonal projector onto 
+
+Er . For each r, s ∈ { 1, . . . , R }, define the spectral coupling coefficient 
+
+βrs := E tr (Qr (Ct) Pt Qs(X⋆) Pt
+
+),
+
+which measures how the r-th spectral component of the task covariance couples to the s-th spectral component of the shared target inside the loss, and is independent of t. For every 
+
+k ≥ 2,
+
+F Π(k) = 1
+
+k
+
+> R
+
+∑
+
+> r,s =1
+
+βrs Γrs (k).
+
+Moreover, Γrs (k) = ( k − 1) ρ k−1 
+
+> r
+
+if r = s, and Γrs (k) = ρ k−1    
+
+> r−ρk−1
+> s
+> ρr−ρs
+
+if r̸ = s.
+
+Proof sketch. Because Sd = E1 ⊕ · · · ⊕ E R is an orthogonal eigenspace decomposition of 
+
+SΠ, every A ∈ Sd satisfies A = ∑Rr=1 Qr (A), and therefore Sm 
+
+> Π
+
+(A) = ∑Rr=1 ρmr Qr (A) for every integer m ≥ 0.Apply this to the identity from Theorem 3.1. For each t, we have Sk−t 
+
+> Π
+
+(Ct) =
+
+∑Rr=1 ρ k−tr Qr (Ct) and St−1Π (X⋆) = ∑Rs=1 ρ t−1 
+
+> s
+
+Qs(X⋆). Substituting these expansions into the trace and using bilinearity gives 
+
+E tr 
+
+(
+
+Sk−t 
+
+> Π
+
+(Ct) Pt St−1Π (X⋆) Pt
+
+)
+
+=
+
+> R
+
+∑
+
+> r,s =1
+
+ρ k−tr ρ t−1 
+
+> s
+
+E tr (Qr (Ct) Pt Qs(X⋆) Pt
+
+).
+
+By definition, the expectation on the right is βrs , which does not depend on t because the task sequence is i.i.d. Summing over t = 1 , . . . , k − 1 and dividing by k yields 
+
+F Π(k) = 1
+
+k
+
+> R
+
+∑
+
+> r,s =1
+
+βrs k−1∑
+
+> t=1
+
+ρ k−tr ρ t−1 
+
+> s
+
+= 1
+
+k
+
+> R
+
+∑
+
+> r,s =1
+
+βrs Γrs (k).
+
+It remains to evaluate Γrs (k). If r = s, then each term in the sum equals ρ k−1 
+
+> r
+
+, so 
+
+Γrs (k) = ( k − 1) ρ k−1 
+
+> r
+
+. If r̸ = s, then Γrs (k) is a finite geometric sum with ratio ρs/ρ r ,hence Γrs (k) = ρ k−1    
+
+> r−ρk−1
+> s
+> ρr−ρs
+
+. This is exactly the claimed expansion. A full proof is given in Appendix B.2. 
+
+## 4 Convergence Rates and Their Interpretation 
+
+In the previous section, we reduced forgetting to an exact operator-spectral expansion. We begin by using this expansion to identify the spectral contribution governing the leading 4decay behavior of F Π(k). We then ask whether one can obtain unconditional two-sided bounds. The answer is asymmetric: an unconditional upper bound is available, whereas a corresponding unconditional positive lower bound is impossible in general. To identify the asymptotically leading contribution, define 
+
+ρΠ := ∥SΠ∥op ,F ,
+
+and let EΠ := {Y ∈ Sd : SΠ(Y ) = ρΠY } denote the top eigenspace of SΠ. Let QΠ : Sd → E Π
+
+be the Frobenius-orthogonal projector onto EΠ, let ηΠ := ∥SΠ|E⊥
+
+> Π
+
+∥op ,F , and define the top-level activation coefficient by ctop Π (w⋆) := E tr (QΠ(Ct) Pt QΠ(X⋆) Pt
+
+).
+
+Theorem 4.1 (Asymptotic characterization of forgetting) . Assume that ηΠ < ρ Π. Then, as 
+
+k → ∞ ,
+
+F Π(k) = ctop Π (w⋆)ρ k−1Π + O
+
+(
+
+ρ k−1Π
+
+k + η k−1Π
+
+)
+
+.
+
+Proof sketch. Apply Theorem 3.2. Let ρ1, . . . , ρ R be the distinct spectral levels of SΠ,ordered so that ρ1 = ρΠ > ρ 2 ≥ · · · ≥ ρR ≥ 0, and let Q1, . . . , QR be the corresponding orthogonal spectral projectors. Then Q1 = QΠ, ρ1 = ρΠ, and max r≥2 ρr = ηΠ. The exact spectral expansion gives 
+
+F Π(k) = 1
+
+k
+
+> R
+
+∑
+
+> r,s =1
+
+βrs Γrs (k),
+
+where βrs := E tr (Qr (Ct) Pt Qs(X⋆) Pt
+
+) and Γrs (k) := ∑k−1 
+
+> t=1
+
+ρ k−tr ρ t−1 
+
+> s
+
+.The (r, s ) = (1 , 1) term is 
+
+1
+
+k β11 Γ11 (k) = 1
+
+k β11 (k − 1) ρ k−1Π = β11 ρ k−1Π + O
+
+(
+
+ρ k−1Π
+
+k
+
+)
+
+.
+
+Since Q1 = QΠ, we have β11 = ctop Π (w⋆).If s ≥ 2, then 
+
+Γ1s(k) = ρ k−1Π − ρ k−1
+
+> s
+
+ρΠ − ρs
+
+,
+
+so, because ρs ≤ ηΠ < ρ Π, we have Γ1s(k) = O(ρ k−1Π ). After multiplication by the prefactor 
+
+1/k , this contributes O(ρ k−1Π /k ). The same bound holds for Γr1(k) with r ≥ 2.If r, s ≥ 2, then ρr , ρ s ≤ ηΠ. Hence Γrs (k) = O(kη k−1Π ), and after multiplication by 1/k 
+
+these lower-lower terms contribute O(η k−1Π ).Combining the top-top, top-lower, lower-top, and lower-lower contributions gives 
+
+F Π(k) = ctop Π (w⋆)ρ k−1Π + O
+
+(
+
+ρ k−1Π
+
+k + η k−1Π
+
+)
+
+,
+
+as claimed. A full proof is given in Appendix B.3. To understand when the leading coefficient vanishes, we view it as a function of the target direction. For a general vector u ∈ Rd, define Xu := uu ⊤ and 
+
+ctop Π (u) := E tr (QΠ(Ct) Pt QΠ(Xu) Pt
+
+).
+
+Since Xu = uu ⊤ depends quadratically on u, while QΠ, the trace, and the expectation are all linear operations, the map u 7 → ctop Π (u) is a quadratic form on Rd. Therefore there exists a symmetric matrix M top Π ∈ Sd such that 
+
+ctop Π (u) = u⊤M top Π u for every u ∈ Rd.
+
+5Moreover, the leading-term theorem applied with u in place of w⋆ shows that ctop Π (u) ≥ 0 for every u: otherwise the asymptotic expansion would eventually force the nonnegative quantity 
+
+F Π(k) to become negative. Hence M top Π ⪰ 0. Consequently, either ctop Π (·) ≡ 0, or its zero set 
+
+{u ∈ Rd : ctop Π (u) = 0 }
+
+is a proper quadratic variety and therefore has Lebesgue measure zero. In particular, if w⋆ is drawn from any absolutely continuous distribution, then ctop Π (w⋆) > 0 almost surely unless 
+
+ctop Π (·) ≡ 0.Theorem 4.1 identifies the top-level coefficient ctop Π (w⋆) in the exact asymptotic expansion. The discussion above shows that this coefficient is always nonnegative, and that its vanishing is a structured degeneracy. Thus, in the generic case ctop Π (w⋆) > 0, the top eigenspace is genuinely visible in the loss. If in addition ρΠ < 1, then Theorem 4.1 yields 
+
+F Π(k) ≍ ρ k−1Π ,
+
+so the forgetting loss decays exponentially at the spectral rate ρΠ.If ctop Π (w⋆) = 0 , then the diagonal top-eigenspace contribution vanishes, and one returns to the exact spectral expansion F Π(k) = 1
+
+> k
+
+∑Rr,s =1 βrs Γrs (k) to identify the next surviving term. In that expansion, any mixed top-lower term involving a lower spectral level λ < ρ Π has size O(ρ k−1Π /k ), while every lower-lower block is exponentially smaller, of size O( ˆρ k−1) for some ˆρ < ρ Π. Thus vanishing of ctop Π (w⋆) pushes the leading contribution from the diagonal top-top block down to either a mixed top-lower term or a smaller spectral scale. The boundary case ρΠ = 1 should be read separately. If coefficients touching the ρΠ = 1 
+
+eigenspace are present, then there is no exponential decay at all at that level. If the diagonal top coefficient vanishes but mixed top-level coefficients remain, the exact expansion recovers the O(1 /k ) conclusion of Evron et al. [2022]. If all coefficients touching the ρΠ = 1 
+
+eigenspace vanish, then the decay is in fact sharper, namely F Π(k) = O( ˆρ k−1) for some 
+
+ˆρ < 1. Hence the exact-expansion framework subsumes the asymptotic conclusion of Evron et al. [2022] and is generically stronger away from the ρΠ = 1 boundary. The nonnegativity and generic-positivity statement for ctop Π (·) is formalized in Appendix B.4. 
+
+Theorem 4.2 (Data-dependent exponential upper bound) . For every k ≥ 2,
+
+F Π(k) ≤ k − 1
+
+k ρ k−1Π ∥X⋆∥F E∥Ct∥F .
+
+Proof sketch. Starting from Theorem 3.1, 
+
+F Π(k) = 1
+
+k
+
+> k−1
+
+∑
+
+> t=1
+
+E tr 
+
+(
+
+Sk−t 
+
+> Π
+
+(Ct) Pt St−1Π (X⋆) Pt
+
+)
+
+.
+
+For any symmetric matrices A, B and any orthogonal projector P , we have | tr (AP BP )| ≤ ∥A∥F ∥P BP ∥F ≤ ∥ A∥F ∥B∥F . Applying this with A = Sk−t 
+
+> Π
+
+(Ct) and B = St−1Π (X⋆) gives 
+
+F Π(k) ≤ 1
+
+k
+
+> k−1
+
+∑
+
+> t=1
+
+E[∥Sk−t 
+
+> Π
+
+(Ct)∥F ∥St−1Π (X⋆)∥F
+
+] .
+
+Since ∥Sm 
+
+> Π
+
+(A)∥F ≤ ∥ SΠ∥m 
+
+> op ,F
+
+∥A∥F = ρm 
+
+> Π
+
+∥A∥F , we obtain ∥Sk−t 
+
+> Π
+
+(Ct)∥F ≤ ρ k−t 
+
+> Π
+
+∥Ct∥F and 
+
+∥St−1Π (X⋆)∥F ≤ ρ t−1Π ∥X⋆∥F . Multiplying these bounds yields ∥Sk−t 
+
+> Π
+
+(Ct)∥F ∥St−1Π (X⋆)∥F ≤
+
+ρ k−1Π ∥Ct∥F ∥X⋆∥F . Hence 
+
+F Π(k) ≤ 1
+
+k
+
+> k−1
+
+∑
+
+> t=1
+
+ρ k−1Π ∥X⋆∥F E∥Ct∥F .
+
+Because the task sequence is i.i.d., E∥Ct∥F does not depend on t. Summing over t =1, . . . , k − 1 gives 
+
+F Π(k) ≤ k − 1
+
+k ρ k−1Π ∥X⋆∥F E∥Ct∥F ,
+
+6as claimed. A full proof is given in Appendix B.5. Theorem 4.2 shows that the exact forgetting identity can be controlled at a single exponential scale. By definition, SΠ(A) = E[PtAP t] averages one exact-fit projection step at the matrix level, so ρΠ = ∥SΠ∥op ,F is the largest component that can survive such a step, and hence the natural spectral scale for forgetting. The remaining factors in the upper bound, E∥Ct∥F
+
+and ∥X⋆∥F = ∥w⋆∥22, enter as multiplicative prefactors coming from the visible task scale and the size of the shared target. Combined with Theorem 4.1, this shows that in the generic nondegenerate case where ctop Π (w⋆) > 0 and ρΠ < 1, the upper bound and the true asymptotic decay match up to constants. These constants encode task geometry and target activation, whereas the exponential rate itself is governed by ρΠ. This is why ρΠ becomes the main object of study in what follows. To interpret the rate-controlling quantity ρΠ, it is useful to measure how much a nonzero symmetric matrix A is preserved, on average, after one random task update. We therefore define its normalized second-order invisibility score by 
+
+IΠ(A) := E∥PtAP t∥2
+
+> F
+
+∥A∥2
+
+> F
+
+.
+
+Proposition 4.3 (Variational characterization of ρΠ). For every nonzero A ∈ Sd, one has 
+
+0 ≤ I Π(A) ≤ 1. Moreover, 
+
+ρΠ = max 
+
+> A∈Sd, A ̸=0
+
+IΠ(A).
+
+If A = U U ⊤ for some U ∈ Rd×m, then 
+
+IΠ(U U ⊤) = E∥U ⊤PtU ∥2
+
+> F
+
+∥U U ⊤∥2
+
+> F
+
+.
+
+In particular, if E ⊂ Rd is an m-dimensional subspace and ΠE is the orthogonal projector onto E, then 
+
+IΠ(Π E ) = 1
+
+m E∥ΠE PtΠE ∥2 
+
+> F
+
+= 1
+
+m E
+
+> m
+
+∑
+
+> j=1
+
+cos 4(θj (E, null( Xt)) ),
+
+where θ1(E, null (Xt)) , . . . , θ m(E, null (Xt)) are the principal angles between E and null (Xt).
+
+Proof sketch. For every nonzero A ∈ Sd, one has IΠ(A) ≥ 0 because the numerator is nonnegative. Since each Pt is an orthogonal projector, ∥PtAP t∥F ≤ ∥ A∥F , hence IΠ(A) ≤
+
+1. Next, for symmetric matrices A, B ∈ Sd, we have ⟨A, S Π(B)⟩F = E tr (AP tBP t) = 
+
+E tr (PtAP tB) = ⟨SΠ(A), B ⟩F , so SΠ is self-adjoint on Sd with respect to the Frobenius inner product. Moreover, ⟨A, S Π(A)⟩F = E tr (AP tAP t) = E tr (PtAP tPtAP t) = E∥PtAP t∥2 
+
+> F
+
+, where we used P 2 
+
+> t
+
+= Pt and symmetry. Therefore IΠ(A) = ⟨A,S Π(A)⟩F
+
+> ∥A∥2
+> F
+
+. Since SΠ is self-adjoint and positive semidefinite, the Rayleigh–Ritz variational principle gives max A̸=0 IΠ(A) = max A̸=0 ⟨A,S Π(A)⟩F
+
+> ∥A∥2
+> F
+
+= ∥SΠ∥op ,F = ρΠ.Now let A = U U ⊤ for some U ∈ Rd×m. Then PtAP t = PtU U ⊤Pt = ( PtU )( PtU )⊤, so 
+
+∥PtAP t∥2 
+
+> F
+
+= tr ((PtU U ⊤Pt)2) = tr ((U ⊤PtU )2) = ∥U ⊤PtU ∥2 
+
+> F
+
+, because U ⊤PtU is symmet-ric. Hence IΠ(U U ⊤) = E∥U ⊤PtU ∥2 
+
+> F
+> ∥U U ⊤∥2
+> F
+
+.If E ⊂ Rd is an m-dimensional subspace and ΠE is the orthogonal projector onto E, choose 
+
+U ∈ Rd×m with orthonormal columns spanning E. Then ΠE = U U ⊤ and ∥ΠE ∥2 
+
+> F
+
+= tr (Π E ) = 
+
+m, so IΠ(Π E ) = 1 
+
+> m
+
+E∥U ⊤PtU ∥2 
+
+> F
+
+. Since Pt is the orthogonal projector onto null (Xt), the eigenvalues of U ⊤PtU are exactly cos 2(θ1(E, null (Xt))) , . . . , cos 2(θm(E, null (Xt))) , where 
+
+θ1, . . . , θ m are the principal angles between E and null (Xt). Therefore ∥U ⊤PtU ∥2 
+
+> F
+
+=∑mj=1 cos 4(θj (E, null (Xt))) , which yields the stated formula. A full proof is given in Ap-pendix B.6. Proposition 4.3 shows that ρΠ measures the retention side of forgetting: it is large when there exists a nontrivial matrix pattern that is only weakly reduced by a typical task update. 7The subspace formula makes this more concrete: if some subspace E is typically close to the task null spaces null (Xt), then the corresponding principal angles are small, IΠ(Π E ) is close to 1, and hence ρΠ is close to 1. In this sense, slow forgetting is driven by directions that are hard for individual tasks to see. 
+
+Remark 4.4 (Intuition) . If the projectors Pt commute, then one can choose a common orthonormal basis and analyze forgetting one direction at a time. For a direction that is preserved by a random task with probability pi, its contribution at horizon m is proportional to (1 − pi)pmi . For fixed m, this quantity is 0 at both pi = 0 and pi = 1 , and is maximized at 
+
+pi = mm+1 . Thus the directions that matter most for finite-horizon forgetting are neither fully visible nor fully invisible, but those that are preserved most of the time while still being seen occasionally by the loss. 
+
+Remark 4.5 (Task richness, visibility, and slow identification) . A low-rank task is easy to interpolate because its affine solution set w⋆ + null (Xt) is large. But this same slack weakens identifiability of the common solution: if tasks are too simple or too homogeneous, then many error modes remain nearly invisible, ρΠ stays close to 1, and forgetting decays only on a long timescale. The slow decay therefore reflects slow approach to w⋆, not stronger overwriting by later tasks. This point is already visible in the isotropic fixed-rank model. If range (X⊤ 
+
+> t
+
+) is uniformly distributed among r-dimensional subspaces with fixed r, and if Ad = udu⊤ 
+
+> d
+
+for a unit vector ud,then IΠd (Ad) = E∥Pt,d ud∥42 = (d−r)( d−r+2)  
+
+> d(d+2)
+
+= 1 − 2rd +O(d−2). Hence ρΠ,d ≥ 1− 2rd +O(d−2),so the visible decay timescale cannot be shorter than order d/r . Writing ρΠ,d = 1 − εd, one has heuristically F Π(k) ≈ ρ k−1Π,d ≈ e−εd(k−1) , and in the present fixed-rank isotropic regime the bound above suggests εd ≍ r/d . Thus F Π(k) ≈ exp (−c kr d
+
+) at the level of scaling heuristics. In this sense, when tasks are sufficiently complementary, progress is controlled by the cumulative visible information, namely the number of tasks times the number of visible directions per task, and one expects noticeable decay only after about kr ≍ d.Two task families can have the same rank r and the same number of tasks k, yet behave very differently if one family repeatedly probes the same visible directions while the other explores complementary ones. The precise control parameter is k(1 − ρΠ,d ), whereas kr is only a convenient surrogate in regimes where 1 − ρΠ,d ≍ r/d . Thus, from a high-dimensional viewpoint, slow forgetting should not be attributed to ambient dimension alone. It appears when task complexity or diversity does not keep pace with dimension, leaving increasingly invisible high-dimensional error modes and driving ρΠ,d toward 1.By contrast, enriching the task family, either by increasing rank (Xt) or by making the visible subspaces more diverse while keeping d fixed, typically reduces ρΠ and accelerates forgetting decay, even though fitting the enlarged collection of tasks may look harder from a per-task viewpoint. The notable point here is that it already appears at the level of forgetting itself: even if one cares only about fitting previously seen tasks, richer and more complementary tasks help because they force the iterates to move toward the common solution rather than merely interpolate each task on the surface. 
+
+Proposition 4.6 (Commuting projector laws can have zero actual forgetting) . If all projectors in the support of Π commute, then F Π(k) = 0 for every k ≥ 1.
+
+Proof sketch. Let et := wt − w⋆. By the exact-fit dynamics, et = Ptet−1, hence ek =
+
+−PkPk−1 · · · P1w⋆. Fix t ≤ k. If the projectors commute, then Pt can be moved to the front, so ek = Pt
+
+( − Pk · · · Pt+1 Pt−1 · · · P1w⋆). Therefore ek ∈ range (Pt) = null (Xt), and hence 
+
+Xtek = 0 . Since yt = Xtw⋆, we have ℓt(wk) = 1 
+
+> nt
+
+∥Xt(wk − w⋆)∥22 = 1 
+
+> nt
+
+∥Xtek∥22 = 0 . As this holds for every t ≤ k, it follows that F Π(k) = E
+
+[ 1
+
+> k
+
+∑kt=1 ℓt(wk)
+
+]
+
+= 0 . A full proof is given in Appendix B.7. Proposition 4.6 shows that an unconditional positive lower bound cannot hold in general. Even when the projector law is nontrivial, commuting task families may produce no actual forgetting at all. Thus any lower bound that is meant to hold uniformly over all task distributions must fail without additional assumptions. 8(a) Bound tightness. (b) Rate comparison. 
+
+> (c) Task-family richness.
+
+Figure 1: Synthetic experiments in the realizable exact-fit setting. Panel (a) compares empirical forgetting with the explicit upper bound and a coarse projector-based O(1 /k )
+
+baseline in the shared-null-spike family. Panel (b) compares the empirical local decay rate with the analytic ρΠ in the same family. Panel (c) shows the effect of task-family richness in the angle-richness reservoir family using a dense 30 -point sweep of L: larger richness L
+
+decreases ρΠ and lowers long-horizon empirical forgetting. 
+
+## 5 Experiments 
+
+We evaluate the theory in realizable linear synthetic settings with ambient dimension d = 192 ,task rank r = 48 , i.i.d. tasks, and a shared solution w⋆. Panels (a) and (b) use the shared-null-spike family, in which a parameter α controls how often the task family hides the shared target direction; this lets us test, separately, whether the explicit upper bound is tight and whether the theoretical rate ρΠ matches the observed decay speed. Panel (c) uses the angle-richness reservoir family and varies only the richness parameter L, which controls how diverse the task family is inside u⊥ while the remaining geometry is held fixed. Across all panels, empirical forgetting is averaged over independent i.i.d. task sequences, and full implementation details are deferred to Appendix D. Figure 1a shows that the explicit bound already tracks the empirical forgetting curve on the correct scale and is far more informative than the coarse projector-based O(1 /k ) baseline. Figure 1b then tests the rate prediction directly by comparing the analytic ρΠ with empirical local decay rates extracted from adjacent horizons, and the two are consistently close across the four regimes. Finally, Figure 1c isolates the effect of task-family richness with matched dense sweeps on both the theoretical and empirical sides: as L increases, the family becomes more diverse, the theoretical rate ρΠ drops, and the long-horizon empirical forgetting falls in parallel. Taken together, the three panels support the main prediction of the theory: the framework captures both the scale of forgetting and its dominant decay rate, while also explaining how lack of diversity in the task distribution slows forgetting. 96 Conclusion 
+
+We developed an exact loss-level spectral theory of forgetting in overparameterized linear regression with i.i.d. tasks drawn from a distribution Π. The theory yields an unconditional exponential upper bound, an exact characterization of the leading asymptotic term, and, in generic nondegenerate regimes, sharp asymptotic rates up to constants. It also identifies the structural mechanisms behind slow forgetting: when task richness is weak relative to model dimension, ρΠ approaches 1, pushing forgetting to longer horizons. Finally, it delineates the boundary cases in which the leading term vanishes or ρΠ = 1 , explains the reappearance of slower laws such as O(1 /k ), and shows that no unconditional positive lower bound can hold in full generality. 
+
+## 7 Related Work 
+
+Catastrophic forgetting has been widely studied across task-, domain-, and class-incremental continual learning settings; broad overviews appear in Parisi et al. [2019], Delange et al. [2022], Wang et al. [2024], van de Ven et al. [2022], Mai et al. [2022]. On the practical side, representative approaches include replay, regularization, parameter isolation or expansion, complementary-systems-style replay, and Bayesian or variational methods [Lopez-Paz and Ranzato, 2017, Aljundi et al., 2018, Kirkpatrick et al., 2017, Zenke et al., 2017, Li and Hoiem, 2018, Aljundi et al., 2017, Mallya and Lazebnik, 2018, Yoon et al., 2018, Nguyen et al., 2018, Benzing, 2022, Buzzega et al., 2020, Arani et al., 2022, Li et al., 2023, Peng et al., 2025, Lee et al., 2024, Bonnet et al., 2025]. Recent empirical analyses have also revisited the roles of training regimes, linear mode connectivity, width, and evaluation assumptions in shaping observed forgetting [Mirzadeh et al., 2020, 2021, 2022, Lesort et al., 2023]. Our focus is instead on the theory of forgetting in overparameterized linear models. The closest prior line studies exact-fit or overparameterized linear regimes through projector dynamics, task order, and explicit geometric calculations. Evron et al. [2022] analyzes exact-fit continual linear regression and derives worst-case, cyclic, and random-order guaran-tees; subsequent work extends this direction to forgetting-generalization tradeoffs, random orthogonal task transforms, linear classification, sharper cyclic bounds, task similarity versus overparameterization, and newer questions about task ordering, replay, and regularization schedules [Lin et al., 2023, Goldfarb and Hand, 2023, Evron et al., 2023, Jeong et al., 2023, Goldfarb et al., 2024, Jung et al., 2025a, Goldfarb and Hand, 2025, Tsipory et al., 2025, Mahdaviyeh et al., 2025, Levinstein et al., 2025, Karpel et al., 2026]. Relative to this order-centric literature, our paper asks a different question: for i.i.d. tasks drawn from a distribution Π, how does the task distribution itself determine forgetting? Complementary theoretical analyses study forgetting through task similarity, overlap, teacher– student dynamics, statistical mechanics, replay or sketching, and regularization-based con-tinual updates [Doan et al., 2021, Lee et al., 2021, Asanuma et al., 2021, Heckel, 2022, Hiratani, 2024, Ding et al., 2024, Zhao et al., 2024, Banayeeanzade et al., 2024, Cai and Diakonikolas, 2024, Alvarez et al., 2025, Li and Hiratani, 2025, Jung et al., 2025b]. These works substantially broaden the modeling picture beyond the exact-fit consistent setting considered here, including noisy, underparameterized, replay-based, memory-constrained, or more general evolving-task regimes, but they do not yield the distribution-level operator identity and spectral characterization developed in this paper. Our setting is also related to projection methods and randomized Kaczmarz dynamics, where convergence is governed by products of projections or randomized row actions [Ginat, 2018, Strohmer and Vershynin, 2009, Needell, 2010, Needell and Tropp, 2014, Oswald and Zhou, 2015]; rank-one updates are further connected to normalized least-mean-square filtering [Haykin, 2002, Sankaran and Beex, 2000]. More broadly, recent work has explored statistical-physics, PDE-style, low-rank, and information-theoretic perspectives on forgetting [Mori et al., 2025, Yang et al., 2025, Steele, 2026, Cheng, 2026]. Our contribution is to show that, in the exact-fit linear regime, forgetting can be formulated as a distribution-governed quantity with an exact loss-level operator characterization. 10 References 
+
+Rahaf Aljundi, Punarjay Chakravarty, and Tinne Tuytelaars. Expert gate: Lifelong learning with a network of experts. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition , pages 3366–3375, 2017. Rahaf Aljundi, Francesca Babiloni, Mohamed Elhoseiny, Marcus Rohrbach, and Tinne Tuytelaars. Memory aware synapses: Learning what (not) to forget. In Proceedings of the European Conference on Computer Vision (ECCV) , pages 139–154, 2018. Veronica Alvarez, Santiago Mazuelas, and Jose A. Lozano. Supervised learning with evolving tasks and performance guarantees. CoRR , abs/2501.05089, 2025. doi: 10.48550/arXiv. 2501.05089. URL https://arxiv.org/abs/2501.05089 .Elahe Arani, Fahad Sarfraz, and Bahram Zonooz. Learning fast, learning slow: A general continual learning method based on complementary learning system. In ICLR , 2022. doi: 10.48550/arXiv.2201.12604. URL https://arxiv.org/abs/2201.12604 .Haruka Asanuma, Shiro Takagi, Yoshihiro Nagano, Yuki Yoshida, Yasuhiko Igarashi, and Masato Okada. Statistical mechanical analysis of catastrophic forgetting in continual learning with teacher and student networks. Journal of the Physical Society of Japan , 90 (10):104001, 2021. Mohammadamin Banayeeanzade, Mahdi Soltanolkotabi, and Mohammad Rostami. The-oretical insights into overparameterized models in multi-task and replay-based contin-ual learning. CoRR , abs/2408.16939, 2024. doi: 10.48550/arXiv.2408.16939. URL 
+
+https://arxiv.org/abs/2408.16939 .Frederik Benzing. Unifying importance based regularisation methods for continual learning. In Proceedings of The 25th International Conference on Artificial Intelligence and Statistics ,volume 151 of Proceedings of Machine Learning Research , pages 2372–2396. PMLR, 2022. Djohan Bonnet, Kellian Cottart, Tifenn Hirtzlin, Tarcisius Januel, Elisa Vianello, Thomas Dalgaty, and Damien Querlioz. Bayesian continual learning and forgetting in neural networks. Nature Communications , 16(1):9614, 2025. Pietro Buzzega, Matteo Boschini, Angelo Porrello, Davide Abati, and Simone Calderara. Dark experience for general continual learning: a strong, simple baseline. In NeurIPS ,2020. doi: 10.48550/arXiv.2004.07211. URL https://arxiv.org/abs/2004.07211 .Xufeng Cai and Jelena Diakonikolas. Last iterate convergence of incremental methods and applications in continual learning. CoRR , abs/2403.06873, 2024. doi: 10.48550/arXiv. 2403.06873. URL https://arxiv.org/abs/2403.06873 .Ran Cheng. Context channel capacity: An information-theoretic framework for understanding catastrophic forgetting. arXiv preprint arXiv:2603.07415 , 2026. Matthias Delange, Rahaf Aljundi, Marc Masana, Sarah Parisot, Xu Jia, Aleš Leonardis, Gregory Slabaugh, and Tinne Tuytelaars. A continual learning survey: Defying forgetting in classification tasks. IEEE Transactions on Pattern Analysis and Machine Intelligence ,44(7):3366–3385, 2022. Meng Ding, Kaiyi Ji, Di Wang, and Jinhui Xu. Understanding forgetting in continual learning with linear regression. In Ruslan Salakhutdinov, Zico Kolter, Katherine Heller, Adrian Weller, Nuria Oliver, Jonathan Scarlett, and Felix Berkenkamp, editors, Proceedings of the 41st International Conference on Machine Learning , volume 235 of Proceedings of Machine Learning Research , pages 10978–11001. PMLR, 21–27 Jul 2024. URL https: //proceedings.mlr.press/v235/ding24c.html .Thang Doan, Mehdi Abbana Bennani, Bogdan Mazoure, Guillaume Rabusseau, and Pierre Alquier. A theoretical analysis of catastrophic forgetting through the NTK overlap matrix. In Proceedings of The 24th International Conference on Artificial Intelligence and Statistics ,pages 1072–1080. PMLR, 2021. 11 Itay Evron, Edward Moroshko, Rachel Ward, Nathan Srebro, and Daniel Soudry. How catastrophic can catastrophic forgetting be in linear regression? In Po-Ling Loh and Maxim Raginsky, editors, Proceedings of Thirty Fifth Conference on Learning Theory ,volume 178 of Proceedings of Machine Learning Research , pages 4028–4079. PMLR, 02–05 Jul 2022. URL https://proceedings.mlr.press/v178/evron22a.html .Itay Evron, Edward Moroshko, Gon Buzaglo, Maroun Khriesh, Badea Marjieh, Nathan Srebro, and Daniel Soudry. Continual learning in linear classification on separable data. In ICML ,pages 9440–9484, 2023. URL https://proceedings.mlr.press/v202/evron23a.html .Omer Ginat. The method of alternating projections. arXiv preprint arXiv:1809.05858 , 2018. Daniel Goldfarb and Paul Hand. Analysis of catastrophic forgetting for random orthogonal transformation tasks in the overparameterized regime. In AISTATS , pages 2975–2993, 2023. URL https://proceedings.mlr.press/v206/goldfarb23a.html .Daniel Goldfarb and Paul Hand. Analysis of overparameterization in continual learning under a linear model. CoRR , abs/2502.10442, 2025. doi: 10.48550/arXiv.2502.10442. URL 
+
+https://arxiv.org/abs/2502.10442 .Daniel Goldfarb, Itay Evron, Nir Weinberger, Daniel Soudry, and Paul Hand. The joint effect of task similarity and overparameterization on catastrophic forgetting: An analytical model. In ICLR , 2024. doi: 10.48550/arXiv.2401.12617. URL https://arxiv.org/abs/ 2401.12617 .Simon S. Haykin. Adaptive Filter Theory . Prentice Hall, 4 edition, 2002. Reinhard Heckel. Provable continual learning via sketched jacobian approximations. In 
+
+AISTATS , 2022. doi: 10.48550/arXiv.2112.05095. URL https://arxiv.org/abs/2112. 05095 .Naoki Hiratani. Disentangling and mitigating the impact of task similarity for continual learning. In Advances in Neural Information Processing Systems 37 , 2024. Halyun Jeong, Mark Kong, Deanna Needell, William Swartworth, and Rachel Ward. Nearly optimal bounds for cyclic forgetting. In NeurIPS , 2023. URL https://proceedings.neurips.cc/paper_files/paper/2023/file/ d72ae75abaa70a3b19c5d4f436c680d1-Paper-Conference.pdf .Hyunji Jung, Hanseul Cho, and Chulhee Yun. Convergence and implicit bias of gradient descent on continual linear classification. In ICLR , 2025a. doi: 10.48550/arXiv.2504.12712. URL https://arxiv.org/abs/2504.12712 .Yu-Gyeong Jung, Hwok-Aun Lee, Wenlong Carl Chen, Thomas Mollenhoff, Yingzhen Li, and Juho Lee. Compact memory for continual logistic regression. CoRR , abs/2511.09167, 2025b. doi: 10.48550/arXiv.2511.09167. URL https://arxiv.org/abs/2511.09167 .Gilad Karpel, Edward Moroshko, Ran Levinstein, Ron Meir, Daniel Soudry, and Itay Evron. Optimal L2 regularization in high-dimensional continual linear regression. CoRR ,abs/2601.13844, 2026. URL https://arxiv.org/abs/2601.13844 .James Kirkpatrick, Razvan Pascanu, Neil Rabinowitz, Joel Veness, Guillaume Desjardins, Andrei A. Rusu, Kieran Milan, John Quan, Tiago Ramalho, Agnieszka Grabska-Barwinska, et al. Overcoming catastrophic forgetting in neural networks. Proceedings of the National Academy of Sciences , 114(13):3521–3526, 2017. Sebastian Lee, Sebastian Goldt, and Andrew Saxe. Continual learning in the teacher-student setup: Impact of task similarity. In Proceedings of the 38th International Conference on Machine Learning , pages 6109–6119. PMLR, 2021. Soochan Lee, Hyeonseong Jeon, Jaehyeon Son, and Gunhee Kim. Learning to continually learn with the Bayesian principle. In Proceedings of the 41st International Conference on Machine Learning , volume 235 of Proceedings of Machine Learning Research , pages 26621–26639. PMLR, 2024. 12 Timothée Lesort, Oleksiy Ostapenko, Pau Rodríguez, Diganta Misra, Md Rifat Arefin, Laurent Charlin, and Irina Rish. Challenging common assumptions about catastrophic forgetting and knowledge accumulation. In Proceedings of The 2nd Conference on Lifelong Learning Agents , pages 43–65. PMLR, 2023. Ran Levinstein, Amit Attia, Matan Schliserman, Uri Sherman, Tomer Koren, and Daniel Soudry. Optimal rates in continual linear regression via increasing regularization. CoRR ,abs/2506.06501, 2025. doi: 10.48550/arXiv.2506.06501. URL https://arxiv.org/abs/ 2506.06501 .D. Li, Tianqi Wang, Bingrong Xu, Kenji Kawaguchi, Zhigang Zeng, and Ponnuthu-rai Nagaratnam Suganthan. IF2Net: Innately forgetting-free networks for contin-ual learning. CoRR , abs/2306.10480, 2023. doi: 10.48550/arXiv.2306.10480. URL 
+
+https://arxiv.org/abs/2306.10480 .Zhizhong Li and Derek Hoiem. Learning without forgetting. IEEE Transactions on Pattern Analysis and Machine Intelligence , 40(12):2935–2947, 2018. Ziyan Li and Naoki Hiratani. Optimal task order for continual learning of multiple tasks. In ICML , 2025. doi: 10.48550/arXiv.2502.03350. URL https://arxiv.org/abs/2502. 03350 .Sen Lin, Peizhong Ju, Yingbin Liang, and Ness B. Shroff. Theory on forgetting and generalization of continual learning. In ICML , pages 21078–21100, 2023. URL https: //proceedings.mlr.press/v202/lin23f.html .David Lopez-Paz and Marc’Aurelio Ranzato. Gradient episodic memory for continual learning. In Advances in Neural Information Processing Systems , volume 30, pages 6467–6476, 2017. Yasaman Mahdaviyeh, James Lucas, Mengye Ren, Andreas S. Tolias, Richard S. Zemel, and Toniann Pitassi. Replay can provably increase forgetting. CoRR , abs/2506.04377, 2025. doi: 10.48550/arXiv.2506.04377. URL https://arxiv.org/abs/2506.04377 .Zheda Mai, Ruiwen Li, Jihwan Jeong, David Quispe, Hyunwoo Kim, and Scott Sanner. Online continual learning in image classification: An empirical survey. Neurocomputing ,2022. doi: 10.1016/j.neucom.2021.10.021. URL https://doi.org/10.1016/j.neucom. 2021.10.021 .Arun Mallya and Svetlana Lazebnik. PackNet: Adding multiple tasks to a single network by iterative pruning. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition , pages 7765–7773, 2018. Seyed Iman Mirzadeh, Mehrdad Farajtabar, Razvan Pascanu, and Hassan Ghasemzadeh. Understanding the role of training regimes in continual learning. In Advances in Neural Information Processing Systems , volume 33, pages 7308–7320, 2020. Seyed Iman Mirzadeh, Mehrdad Farajtabar, Dilan Gorur, Razvan Pascanu, and Hassan Ghasemzadeh. Linear mode connectivity in multitask and continual learning. In ICLR ,2021. URL https://openreview.net/pdf?id=Fmg_fQYUejf .Seyed Iman Mirzadeh, Arslan Chaudhry, Huiyi Hu, Razvan Pascanu, Dilan Gorur, and Mehrdad Farajtabar. Wide neural networks forget less catastrophically. In Proceedings of the 39th International Conference on Machine Learning . PMLR, 2022. Francesco Mori, Stefano Sarao Mannelli, and Francesca Mignacco. Optimal protocols for continual learning via statistical physics and control theory. Journal of Statistical Mechanics: Theory and Experiment , 2025. doi: 10.1088/1742-5468/adf296. URL https: //doi.org/10.1088/1742-5468/adf296 .Deanna Needell. Randomized Kaczmarz solver for noisy linear systems. BIT Numerical Mathematics , 50(2):395–403, 2010. Deanna Needell and Joel A. Tropp. Paved with good intentions: Analysis of a randomized block Kaczmarz method. Linear Algebra and its Applications , 441:199–221, 2014. 13 Cuong V. Nguyen, Yingzhen Li, Thang D. Bui, and Richard E. Turner. Variational continual learning. In International Conference on Learning Representations , 2018. Peter Oswald and Weizhi Zhou. Convergence analysis for Kaczmarz-type methods in a Hilbert space framework. Linear Algebra and its Applications , 478:131–161, 2015. German I. Parisi, Ronald Kemker, Jose L. Part, Christopher Kanan, and Stefan Wermter. Continual lifelong learning with neural networks: A review. Neural Networks , 113:54–71, 2019. Liangzu Peng, Juan Elenter, Joshua Agterberg, Alejandro Ribeiro, and Rene Victor Valqui Vi-dal. LoRanPAC: Low-rank random features and pre-trained models for bridging theory and practice in continual learning. In ICLR , 2025. doi: 10.48550/arXiv.2410.00645. URL 
+
+https://arxiv.org/abs/2410.00645 .Sundar G. Sankaran and A. A. Louis Beex. Convergence behavior of affine projection algorithms. IEEE Transactions on Signal Processing , 48(4):1086–1096, 2000. Brady Steele. Subspace geometry governs catastrophic forgetting in low-rank adaptation. 
+
+arXiv preprint arXiv:2603.02224 , 2026. Thomas Strohmer and Roman Vershynin. A randomized Kaczmarz algorithm with ex-ponential convergence. Journal of Fourier Analysis and Applications , 15(2):262–278, 2009. Matan Tsipory, Ran Levinstein, Itay Evron, Ming Kong, Deanna Needell, and Daniel Soudry. Are greedy task orderings better than random in continual linear regression? CoRR ,abs/2510.19941, 2025. doi: 10.48550/arXiv.2510.19941. URL https://arxiv.org/abs/ 2510.19941 .Gido M. van de Ven, Tinne Tuytelaars, and Andreas S. Tolias. Three types of incremental learning. Nature Machine Intelligence , 2022. doi: 10.1038/s42256-022-00568-3. URL 
+
+https://doi.org/10.1038/s42256-022-00568-3 .Liyuan Wang, Xingxing Zhang, Hang Su, and Jun Zhu. A comprehensive survey of continual learning: Theory, method and application. IEEE Transactions on Pattern Analysis and Machine Intelligence , 2024. doi: 10.1109/TPAMI.2024.3367329. URL https://doi.org/ 10.1109/TPAMI.2024.3367329 .Haoming Yang, Ali Hasan, and Vahid Tarokh. Parabolic continual learning. arXiv preprint arXiv:2503.02117 , 2025. Jaehong Yoon, Eunho Yang, Jeongtae Lee, and Sung Ju Hwang. Lifelong learning with dy-namically expandable networks. In International Conference on Learning Representations ,2018. Friedemann Zenke, Ben Poole, and Surya Ganguli. Continual learning through synaptic intelligence. In Proceedings of the 34th International Conference on Machine Learning ,pages 3987–3995. PMLR, 2017. Xuyang Zhao, Hui-Yuan Wang, Weiran Huang, and Wei Lin. A statistical theory of regularization-based continual learning. In ICML , 2024. doi: 10.48550/arXiv.2406.06213. URL https://arxiv.org/abs/2406.06213 .14 A Preliminaries 
+
+This supplementary material is organized into five parts. Appendix A collects the background facts used repeatedly in the proofs. Appendix B gives complete proofs of the main results in the paper. Appendix C records additional results that are closely related to the current paper, especially the projection-based line of analysis and its limits. Appendix D gives a fully specified description of the synthetic experiments in the main text. Appendix E summarizes the numerical procedures used to estimate the main distribution-level quantities and their computational complexity. For navigation, the correspondence with the main text is as follows: Theorem 3.1 is expanded in Appendix B, Theorem 3.2 and Theorem 4.1 are proved there next, Theorem 4.2 and Proposition 4.3 are also expanded there, Appendix C develops the projection-based line beyond the main text, Appendix D specifies the exact synthetic protocol behind Figures 1a, 1b, and 1c, and Appendix E records the general numerical estimation procedures used for the key quantities in the paper. 
+
+A.1 Exact-fit projection update Lemma A.1 (Exact-fit update under a common solution) . Let (X, y ) be a regression task with y = Xw ⋆, and let P := I − X+X. If 
+
+SX,y (u) := arg min 
+
+> w∈Rd
+
+12 ∥w − u∥22 subject to Xw = y, 
+
+then 
+
+SX,y (u) = u + X+(y − Xu ) = w⋆ + P (u − w⋆).
+
+Proof. The constrained minimization is equivalent to 
+
+min 
+
+> z∈Rd
+
+12 ∥z∥22 subject to Xz = y − Xu, 
+
+after substituting z = w − u. The minimum-norm solution is z = X+(y − Xu ), so 
+
+SX,y (u) = u + X+(y − Xu ).
+
+Under the common-solution assumption y = Xw ⋆, this becomes 
+
+u + X+X(w⋆ − u) = u + ( I − P )( w⋆ − u) = w⋆ + P (u − w⋆).
+
+A.2 Basic properties of SΠ
+
+Lemma A.2 (Self-adjointness and positivity of SΠ). Let SΠ : Sd → Sd be defined by 
+
+SΠ(A) = E[PtAP t]. Then: (i) SΠ is self-adjoint with respect to the Frobenius inner product. (ii) SΠ is positive semidefinite, that is, 
+
+⟨A, S Π(A)⟩F = E∥PtAP t∥2 
+
+> F
+
+≥ 0 for all A ∈ Sd.
+
+(iii) SΠ preserves positive semidefiniteness: if A ⪰ 0, then SΠ(A) ⪰ 0.Proof. For A, B ∈ Sd,
+
+⟨A, S Π(B)⟩F = E tr( AP tBP t) = E tr( PtAP tB) = ⟨SΠ(A), B ⟩F ,
+
+so SΠ is self-adjoint. Also, 
+
+⟨A, S Π(A)⟩F = E tr( AP tAP t) = E tr( PtAP tPtAP t) = E∥PtAP t∥2 
+
+> F
+
+≥ 0,
+
+because P 2 
+
+> t
+
+= Pt and PtAP t is symmetric. Finally, if A ⪰ 0, then PtAP t ⪰ 0 for every t,hence its expectation SΠ(A) is also positive semidefinite. 15 A.3 Principal-angle identity Lemma A.3 (Principal-angle formula) . Let E ⊂ Rd be an m-dimensional subspace, and let U ∈ Rd×m have orthonormal columns spanning E. If P is the orthogonal projector onto another subspace N ⊂ Rd, then 
+
+∥U ⊤P U ∥2 
+
+> F
+
+=
+
+> m
+
+∑
+
+> j=1
+
+cos 4(θj (E, N )) ,
+
+where θ1(E, N ), . . . , θ m(E, N ) are the principal angles between E and N .Proof. The matrix U ⊤P U is symmetric positive semidefinite. Its eigenvalues are the squared singular values of the restriction of P to E, namely cos 2(θ1(E, N )) , . . . , cos 2(θm(E, N )) .Therefore 
+
+∥U ⊤P U ∥2 
+
+> F
+
+= tr ((U ⊤P U )2) =
+
+> m
+
+∑
+
+> j=1
+
+cos 4(θj (E, N )) .
+
+## B Full Proofs 
+
+The main text already contains readable proofs of the core results. For completeness, we collect full versions here in one place. 
+
+B.1 Proof of Theorem 3.1 Restatement. For every k ≥ 2,
+
+F Π(k) = 1
+
+k
+
+> k−1
+
+∑
+
+> t=1
+
+E tr 
+
+(
+
+Sk−t 
+
+> Π
+
+(Ct) Pt St−1Π (X⋆) Pt
+
+)
+
+.
+
+Proof. Let et := wt − w⋆. By Lemma A.1, 
+
+et = Ptet−1, e0 = −w⋆.
+
+Hence 
+
+et = −PtPt−1 · · · P1w⋆.
+
+Fix t ≤ k − 1. Write 
+
+Rt,k := PkPk−1 · · · Pt+1 , Lt−1 := Pt−1Pt−2 · · · P1,
+
+with L0 = I. Then 
+
+ek = Rt,k et = −Rt,k PtLt−1w⋆,
+
+and therefore 
+
+eke⊤ 
+
+> k
+
+= Rt,k PtLt−1X⋆L⊤
+
+> t−1
+
+PtR⊤
+
+> t,k
+
+.
+
+Using ℓt(wk) = e⊤ 
+
+> k
+
+Ctek = tr( Cteke⊤ 
+
+> k
+
+) and cyclicity of trace, we obtain 
+
+ℓt(wk) = tr (R⊤
+
+> t,k
+
+CtRt,k Pt Lt−1X⋆L⊤
+
+> t−1
+
+Pt
+
+).
+
+Now condition on the current task. Because future tasks are independent of the present and past, 
+
+E[R⊤
+
+> t,k
+
+CtRt,k | Xt, y t
+
+] = Sk−t 
+
+> Π
+
+(Ct).
+
+Similarly, since the past tasks are i.i.d. and independent of the current task, 
+
+E[Lt−1X⋆L⊤
+
+> t−1
+
+] = St−1Π (X⋆).
+
+Substituting these two identities and averaging over the current task yields 
+
+E ℓt(wk) = E tr 
+
+(
+
+Sk−t 
+
+> Π
+
+(Ct) Pt St−1Π (X⋆) Pt
+
+)
+
+.
+
+16 Finally, 
+
+F Π(k) = E
+
+[
+
+1
+
+k
+
+> k
+
+∑
+
+> t=1
+
+ℓt(wk)
+
+]
+
+.
+
+The last term vanishes because the k-th task is fit exactly, so ℓk(wk) = 0 . Summing over 
+
+t = 1 , . . . , k − 1 proves the claim. 
+
+B.2 Proof of Theorem 3.2 Restatement. If Sd = E1 ⊕ · · · ⊕ E R is the orthogonal eigenspace decomposition of SΠ,with spectral levels ρ1, . . . , ρ R and Frobenius projectors Q1, . . . , QR, then 
+
+F Π(k) = 1
+
+k
+
+> R
+
+∑
+
+> r,s =1
+
+βrs Γrs (k),
+
+where 
+
+βrs := E tr (Qr (Ct) Pt Qs(X⋆) Pt
+
+)
+
+and 
+
+Γrs (k) = 
+
+
+
+(k − 1) ρ k−1 
+
+> r
+
+, r = s, ρ k−1 
+
+> r
+
+− ρ k−1
+
+> s
+
+ρr − ρs
+
+, r̸ = s. 
+
+Proof. Because SΠ is self-adjoint on Sd, the spectral theorem gives 
+
+A =
+
+> R
+
+∑
+
+> r=1
+
+Qr (A), Sm 
+
+> Π
+
+(A) = 
+
+> R
+
+∑
+
+> r=1
+
+ρmr Qr (A)
+
+for every A ∈ Sd and m ≥ 0.Apply this to the identity from Theorem 3.1: 
+
+Sk−t 
+
+> Π
+
+(Ct) = 
+
+> R
+
+∑
+
+> r=1
+
+ρk−tr Qr (Ct), St−1Π (X⋆) = 
+
+> R
+
+∑
+
+> s=1
+
+ρt−1 
+
+> s
+
+Qs(X⋆).
+
+Substituting these expansions into the trace and using bilinearity, 
+
+E tr 
+
+(
+
+Sk−t 
+
+> Π
+
+(Ct) Pt St−1Π (X⋆) Pt
+
+)
+
+=
+
+> R
+
+∑
+
+> r,s =1
+
+ρk−tr ρt−1 
+
+> s
+
+E tr (Qr (Ct) Pt Qs(X⋆) Pt
+
+)
+
+=
+
+> R
+
+∑
+
+> r,s =1
+
+ρk−tr ρt−1 
+
+> s
+
+βrs .
+
+Summing over t and dividing by k gives the claimed expansion. It remains to evaluate Γrs (k) := ∑k−1 
+
+> t=1
+
+ρk−tr ρt−1 
+
+> s
+
+. If r = s, each term equals ρk−1 
+
+> r
+
+, so 
+
+Γrr (k) = ( k − 1) ρk−1 
+
+> r
+
+.
+
+If r̸ = s, this is a finite geometric sum: 
+
+Γrs (k) = ρk−1
+
+> rk−1
+
+∑
+
+> t=1
+
+( ρs
+
+ρr
+
+)t−1
+
+= ρk−1 
+
+> r
+
+− ρk−1
+
+> s
+
+ρr − ρs
+
+.
+
+B.3 Proof of Theorem 4.1 Restatement. Assume ηΠ < ρ Π. Then, as k → ∞ ,
+
+F Π(k) = ctop Π (w⋆)ρ k−1Π + O
+
+(
+
+ρ k−1Π
+
+k + η k−1Π
+
+)
+
+.
+
+17 Proof. Apply Theorem 3.2. Order the spectral levels as 
+
+ρ1 = ρΠ > ρ 2 ≥ · · · ≥ ρR ≥ 0,
+
+and write Q1 = QΠ. Then max r≥2 ρr = ηΠ, and 
+
+F Π(k) = 1
+
+k
+
+> R
+
+∑
+
+> r,s =1
+
+βrs Γrs (k).
+
+The top-top term is 
+
+1
+
+k β11 Γ11 (k) = 1
+
+k β11 (k − 1) ρk−1Π = β11 ρk−1Π + O
+
+(
+
+ρk−1Π
+
+k
+
+)
+
+.
+
+Since Q1 = QΠ, we have β11 = ctop Π (w⋆).If s ≥ 2, then 
+
+Γ1s(k) = ρk−1Π − ρk−1
+
+> s
+
+ρΠ − ρs
+
+= O(ρk−1Π ),
+
+because ρs ≤ ηΠ < ρ Π. Multiplying by 1/k gives O(ρk−1Π /k ). The same estimate holds for 
+
+Γr1(k) with r ≥ 2.If r, s ≥ 2, then ρr , ρ s ≤ ηΠ, so 
+
+Γrs (k) = O(kη k−1Π ),
+
+and the prefactor 1/k reduces this to O(ηk−1Π ).Combining the top-top, mixed, and lower-lower contributions yields 
+
+F Π(k) = ctop Π (w⋆)ρk−1Π + O
+
+(
+
+ρk−1Π
+
+k + ηk−1Π
+
+)
+
+.
+
+B.4 Deferred positivity statement for the top coefficient Proposition B.1 (Nonnegativity and generic positivity of the top coefficient) . Assume 
+
+ηΠ < ρ Π. For each u ∈ Rd, let 
+
+Xu := uu ⊤, ctop Π (u) := E tr (QΠ(Ct) Pt QΠ(Xu) Pt
+
+).
+
+Then ctop Π (u) ≥ 0 for every u ∈ Rd. Moreover, there exists a symmetric positive-semidefinite matrix M top Π ∈ Sd such that 
+
+ctop Π (u) = u⊤M top Π u for every u ∈ Rd.
+
+Consequently, either ctop Π (·) ≡ 0, or its zero set is a proper quadratic variety and therefore has Lebesgue measure zero. Proof. Fix u ∈ Rd. Keep the X-marginal induced by Π (equivalently, the law of Pt and Ct), and define a new realizable task law Π(u) by drawing Xt from that marginal and setting 
+
+yt := Xtu. Then SΠ(u) = SΠ, so ρΠ(u) = ρΠ, ηΠ(u) = ηΠ, and QΠ(u) = QΠ. Writing F Π 
+
+> u
+
+(k)
+
+for the corresponding forgetting quantity under Π(u), Theorem 4.1 applied to this modified law gives 
+
+F Π 
+
+> u
+
+(k) = ctop Π (u)ρk−1Π + O
+
+(
+
+ρk−1Π
+
+k + ηk−1Π
+
+)
+
+,
+
+where F Π 
+
+> u
+
+(k) ≥ 0 is the corresponding forgetting quantity. Dividing by ρk−1Π and using 
+
+ηΠ < ρ Π, we obtain 
+
+F Π 
+
+> u
+
+(k)
+
+ρk−1Π
+
+= ctop Π (u) + O
+
+( 1
+
+k +
+
+( ηΠ
+
+ρΠ
+
+)k−1)
+
+.
+
+18 Taking k → ∞ yields ctop Π (u) ≥ 0.Now u 7 → Xu = uu ⊤ is quadratic in u, and the map X 7 → E tr (QΠ(Ct) Pt QΠ(X) Pt) is linear in X. Therefore u 7 → ctop Π (u) is a quadratic form. Hence there exists a symmetric matrix 
+
+M top Π such that 
+
+ctop Π (u) = u⊤M top Π u. 
+
+Since this quantity is nonnegative for every u, the matrix M top Π is positive semidefinite. If M top Π = 0 , then ctop Π (·) ≡ 0. Otherwise M top Π has at least one positive eigenvalue, so the set 
+
+{u : ctop Π (u) = 0 } is the null set of a nonzero quadratic polynomial, hence a proper quadratic variety of Lebesgue measure zero. 
+
+B.5 Proof of Theorem 4.2 Restatement. For every k ≥ 2,
+
+F Π(k) ≤ k − 1
+
+k ρk−1Π ∥X⋆∥F E∥Ct∥F .
+
+Proof. Starting from Theorem 3.1, 
+
+F Π(k) = 1
+
+k
+
+> k−1
+
+∑
+
+> t=1
+
+E tr 
+
+(
+
+Sk−t 
+
+> Π
+
+(Ct) Pt St−1Π (X⋆) Pt
+
+)
+
+.
+
+For symmetric matrices A, B and an orthogonal projector P ,
+
+| tr( AP BP )| ≤ ∥ A∥F ∥P BP ∥F ≤ ∥ A∥F ∥B∥F .
+
+Therefore 
+
+F Π(k) ≤ 1
+
+k
+
+> k−1
+
+∑
+
+> t=1
+
+E[∥Sk−t 
+
+> Π
+
+(Ct)∥F ∥St−1Π (X⋆)∥F
+
+] .
+
+Since ∥SΠ∥op ,F = ρΠ,
+
+∥Sk−t 
+
+> Π
+
+(Ct)∥F ≤ ρk−t 
+
+> Π
+
+∥Ct∥F , ∥St−1Π (X⋆)∥F ≤ ρt−1Π ∥X⋆∥F .
+
+Multiplying these estimates gives 
+
+∥Sk−t 
+
+> Π
+
+(Ct)∥F ∥St−1Π (X⋆)∥F ≤ ρk−1Π ∥Ct∥F ∥X⋆∥F .
+
+Hence 
+
+F Π(k) ≤ 1
+
+k
+
+> k−1
+
+∑
+
+> t=1
+
+ρk−1Π ∥X⋆∥F E∥Ct∥F = k − 1
+
+k ρk−1Π ∥X⋆∥F E∥Ct∥F .
+
+B.6 Proof of Proposition 4.3 Restatement. For every nonzero A ∈ Sd,
+
+0 ≤ I Π(A) ≤ 1, ρΠ = max 
+
+> A∈Sd, A ̸=0
+
+IΠ(A).
+
+Moreover, for A = U U ⊤,
+
+IΠ(U U ⊤) = E∥U ⊤PtU ∥2
+
+> F
+
+∥U U ⊤∥2
+
+> F
+
+,
+
+and for an m-dimensional subspace E,
+
+IΠ(Π E ) = 1
+
+m E
+
+> m
+
+∑
+
+> j=1
+
+cos 4(θj (E, null( Xt))) .
+
+19 Proof. The inequalities 0 ≤ I Π(A) ≤ 1 are immediate from 
+
+IΠ(A) = E∥PtAP t∥2
+
+> F
+
+∥A∥2
+
+> F
+
+and the projector inequality ∥PtAP t∥F ≤ ∥ A∥F .By Lemma A.2, 
+
+⟨A, S Π(A)⟩F = E∥PtAP t∥2 
+
+> F
+
+,
+
+so 
+
+IΠ(A) = ⟨A, S Π(A)⟩F
+
+∥A∥2
+
+> F
+
+.
+
+Since SΠ is self-adjoint and positive semidefinite, the Rayleigh–Ritz variational principle gives 
+
+max  
+
+> A̸=0
+
+IΠ(A) = ∥SΠ∥op ,F = ρΠ.
+
+If A = U U ⊤, then 
+
+PtAP t = ( PtU )( PtU )⊤,
+
+hence 
+
+∥PtAP t∥2 
+
+> F
+
+= tr ((PtU U ⊤Pt)2) = tr ((U ⊤PtU )2) = ∥U ⊤PtU ∥2 
+
+> F
+
+.
+
+This proves the second identity. Finally, if U has orthonormal columns spanning E, then ΠE = U U ⊤ and ∥ΠE ∥2 
+
+> F
+
+= tr (Π E ) = 
+
+m. Therefore 
+
+IΠ(Π E ) = 1
+
+m E∥U ⊤PtU ∥2 
+
+> F
+
+.
+
+Lemma A.3 identifies the right-hand side with 
+
+1
+
+m E
+
+> m
+
+∑
+
+> j=1
+
+cos 4(θj (E, null( Xt))) ,
+
+which is the claimed geometric formula. 
+
+B.7 Proof of Proposition 4.6 Restatement. If all projectors in the support of Π commute, then F Π(k) = 0 for every 
+
+k ≥ 1.
+
+Proof. Let et = wt − w⋆. Then 
+
+ek = −PkPk−1 · · · P1w⋆.
+
+Fix t ≤ k. If all projectors commute, then Pt can be moved to the front: 
+
+ek = Pt
+
+( − Pk · · · Pt+1 Pt−1 · · · P1w⋆).
+
+Hence ek ∈ range( Pt) = null( Xt), so Xtek = 0 . Therefore 
+
+ℓt(wk) = 1
+
+nt
+
+∥Xt(wk − w⋆)∥22 = 1
+
+nt
+
+∥Xtek∥22 = 0 .
+
+Since this holds for every t ≤ k, averaging over t gives F Π(k) = 0 .
+
+## C Additional Results 
+
+This section collects results that are closely related to the current paper but are not needed in the main line of the argument. They come from the earlier projection-based route to random-order forgetting. The point of recording them here is twofold: first, they show how far that route can be pushed; second, they make clear why projector-level quantities alone are insufficient to characterize actual loss-valued forgetting. 20 C.1 Projection-based surrogates 
+
+Throughout this section, assume in addition that ∥Xt∥2 ≤ 1 almost surely and ∥w⋆∥2 ≤ 1.Define the residual surrogate 
+
+RΠ(k) := E
+
+[
+
+1
+
+k
+
+> k−1
+
+∑
+
+> t=1
+
+∥(I − Pt)Pk · · · P1∥22
+
+]
+
+.
+
+Let ¯P := E[Pt], fm := E∥(I − P )Pm · · · P1∥2 
+
+> F
+
+,
+
+where P, P 1, . . . , P m are i.i.d. projector samples from Π.
+
+Proposition C.1 (Residual surrogate upper-bounds forgetting) . Under the additional normalization ∥Xt∥2 ≤ 1 and ∥w⋆∥2 ≤ 1,
+
+F Π(k) ≤ R Π(k).
+
+Proof. For each t ≤ k,
+
+ℓt(wk) = 1
+
+nt
+
+∥Xt(wk − w⋆)∥22 ≤ ∥ Xt∥22 ∥wk − w⋆∥22.
+
+More sharply, since Pt = I − X+ 
+
+> t
+
+Xt,
+
+∥Xt(wk − w⋆)∥22 ≤ ∥ (I − Pt)( wk − w⋆)∥22.
+
+Now wk − w⋆ = −Pk · · · P1w⋆, and ∥w⋆∥2 ≤ 1, so 
+
+ℓt(wk) ≤ ∥ (I − Pt)Pk · · · P1∥22.
+
+Averaging over t and expectations yields the claim. 
+
+Proposition C.2 (Exact Frobenius-chain formula) . For every m ≥ 0,
+
+fm = tr (Sm 
+
+> Π
+
+(I − ¯P )).
+
+Equivalently, if 
+
+κ1 := tr( ¯P ), κm := tr (Sm−1Π ( ¯P )) (m ≥ 2) ,
+
+then 
+
+fm = κm − κm+1 ≥ 0.
+
+Moreover, the sequence {fm}m≥0 is non-increasing. Proof. Using symmetry and idempotence of the projectors, 
+
+fm = E tr (P1 · · · Pm(I − P )Pm · · · P1
+
+).
+
+First average over the independent copy P , replacing I − P by I − ¯P . Then average successively over Pm, . . . , P 1. Each step applies the map A 7 → E[PtAP t] = SΠ(A), hence 
+
+fm = tr (Sm 
+
+> Π
+
+(I − ¯P )).
+
+Expanding I − P = I − ¯P − (P − ¯P ) with an extra independent copy Pm+1 gives 
+
+fm = E tr( P1 · · · Pm · · · P1) − E tr( P1 · · · PmPm+1 Pm · · · P1) = κm − κm+1 .
+
+Finally, if Am := Sm 
+
+> Π
+
+(I − ¯P ), then Am ⪰ 0 by Lemma A.2, and 
+
+fm+1 = tr( SΠ(Am)) = tr( ¯P A m) ≤ tr( Am) = fm,
+
+because 0 ⪯ ¯P ⪯ I.
+
+Proposition C.3 (Projection-based transfer bound) . For every k ≥ 2, letting h := ⌈(k −
+
+1) /2⌉,
+
+RΠ(k) ≤ 4fh.
+
+Consequently, under the additional normalization assumptions, 
+
+F Π(k) ≤ 4fh.
+
+21 Proof. For 1 ≤ t ≤ k − 1, define 
+
+rk,t := E∥(I − Pt)Pk · · · P1∥22.
+
+As in the random-order proof of Evron et al. [2022], one expands around the position of Pt
+
+and uses (a + b)2 ≤ 2a2 + 2 b2 to obtain 
+
+rk,t ≤ 2(ak−1 + amax {k−t,t −1}
+
+),
+
+where 
+
+am := E∥(I − P )Pm · · · P1∥22.
+
+Since am ≤ fm and fm is non-increasing, every term on the right-hand side is at most fh.Averaging over t gives 
+
+RΠ(k) ≤ 4fh.
+
+The bound for F Π(k) then follows from Proposition C.1. 
+
+Corollary C.4 (One-step forgetting and pairwise overlap) . The one-step Frobenius surrogate satisfies 
+
+f1 = tr( ¯P ) − tr( ¯P 2).
+
+If λ1, . . . , λ d ∈ [0 , 1] are the eigenvalues of ¯P , then 
+
+f1 =
+
+> d
+
+∑
+
+> i=1
+
+λi(1 − λi).
+
+Proof. Apply Proposition C.2 with m = 1 :
+
+f1 = κ1 − κ2 = tr( ¯P ) − tr( ¯P 2).
+
+Diagonalizing ¯P yields the eigenvalue formula. 
+
+Corollary C.5 (Exponential decay from spectral diffuseness) . Let λΠ := ∥ ¯P ∥2. Then 
+
+fm ≤ λm−1Π f1 for every m ≥ 1.
+
+Consequently, for h = ⌈(k − 1) /2⌉,
+
+F Π(k) ≤ R Π(k) ≤ 4λh−1Π f1.
+
+Proof. Let Am := Sm 
+
+> Π
+
+(I − ¯P ) ⪰ 0. Then 
+
+fm+1 = tr( SΠ(Am)) = tr( ¯P A m) ≤ ∥ ¯P ∥2 tr( Am) = λΠfm.
+
+Iterating proves the first claim, and Proposition C.3 yields the forgetting bound. 
+
+Corollary C.6 (Recovering the coarse O(1 /k ) rate) . Let νΠ := tr( ¯P ) = E tr( Pt). Then 
+
+fm ≤ νΠ
+
+m for every m ≥ 1,
+
+and therefore 
+
+F Π(k) ≤ R Π(k) ≤ 8νΠ
+
+k − 1 .
+
+Proof. Since fm = κm − κm+1 and fm is non-increasing, 
+
+mf m ≤
+
+> m
+
+∑
+
+> s=1
+
+fs = κ1 − κm+1 ≤ κ1 = νΠ.
+
+Thus fm ≤ νΠ/m . Combining this with Proposition C.3 gives 
+
+F Π(k) ≤ R Π(k) ≤ 4fh ≤ 4νΠ
+
+h ≤ 8νΠ
+
+k − 1 .
+
+22 C.2 Special projection families Proposition C.7 (Exact formula for commuting projector laws) . Assume all projectors in the support of Π commute. Then there exists an orthonormal basis in which each projector is diagonal: 
+
+Pα = diag( ξα, 1, . . . , ξ α,d ), ξα,i ∈ { 0, 1}.
+
+Let 
+
+pi := P(ξα,i = 1) .
+
+Then for every m ≥ 0,
+
+fm =
+
+> d
+
+∑
+
+> i=1
+
+pmi (1 − pi).
+
+Hence, with h = ⌈(k − 1) /2⌉,
+
+F Π(k) ≤ R Π(k) ≤ 4
+
+> d
+
+∑
+
+> i=1
+
+phi (1 − pi).
+
+Proof. In the common eigenbasis, 
+
+(I − P )Pm · · · P1 = diag ((1 − ξi)ξm,i · · · ξ1,i 
+
+)di=1 .
+
+Therefore 
+
+∥(I − P )Pm · · · P1∥2 
+
+> F
+
+=
+
+> d
+
+∑
+
+> i=1
+
+(1 − ξi)ξm,i · · · ξ1,i .
+
+Taking expectations and using independence across the i.i.d. projector samples yields 
+
+fm =
+
+> d
+
+∑
+
+> i=1
+
+(1 − pi)pmi .
+
+The forgetting bound follows from Proposition C.3. 
+
+Proposition C.8 (Rank-one projector laws) . Assume every projector in the support of Π
+
+has rank one, so 
+
+Pα = uαu⊤ 
+
+> α
+
+, ∥uα∥2 = 1 .
+
+Define the second and fourth directional moments 
+
+M := E[uαu⊤ 
+
+> α
+
+] = ¯P , H := E[(uαu⊤ 
+
+> α
+
+) ⊗ (uαu⊤ 
+
+> α
+
+)].
+
+If α, β are independent samples from Π, then 
+
+f1 = 1 − tr( M 2) = 1 − E[(u⊤ 
+
+> α
+
+uβ )2],
+
+and for every m ≥ 0,
+
+fm = ⟨vec( I), H m vec( I − M )⟩.
+
+Proof. Because every projector has trace one, Corollary C.4 gives 
+
+f1 = tr( ¯P ) − tr( ¯P 2) = 1 − tr( M 2).
+
+If Pα = uαu⊤ 
+
+> α
+
+and Pβ = uβ u⊤ 
+
+> β
+
+, then 
+
+tr( PαPβ ) = ( u⊤ 
+
+> α
+
+uβ )2,
+
+so the pairwise-overlap form follows by averaging over independent samples. For the full chain, Proposition C.2 yields 
+
+fm = tr (Sm 
+
+> Π
+
+(I − ¯P )).
+
+Vectorizing matrices gives 
+
+vec( PαXP α) = ( Pα ⊗ Pα) vec( X),
+
+23 hence the superoperator SΠ is represented by H on vectorized matrices. Therefore 
+
+vec (Sm 
+
+> Π
+
+(I − ¯P )) = Hm vec( I − M ),
+
+and pairing with vec( I) recovers the trace: 
+
+fm = ⟨vec( I), vec( Sm 
+
+> Π
+
+(I − ¯P )) ⟩ = ⟨vec( I), H m vec( I − M )⟩.
+
+Proposition C.9 (Two-component mixture decomposition for one-step forgetting) . Suppose 
+
+Π = qΠA + (1 − q)Π B , 0 ≤ q ≤ 1,
+
+with mean projectors ¯PA := EΠA [Pα], ¯PB := EΠB [Pα].
+
+Let 
+
+νA := tr( ¯PA), νB := tr( ¯PB ),
+
+and define the within- and cross-mode overlaps 
+
+κAA := tr( ¯P 2
+
+> A
+
+), κBB := tr( ¯P 2 
+
+> B
+
+), κAB := tr( ¯PA ¯PB ).
+
+Then the one-step surrogate obeys 
+
+f1(Π) = qν A + (1 − q)νB
+
+−
+
+(
+
+q2κAA + (1 − q)2κBB + 2 q(1 − q)κAB 
+
+)
+
+.
+
+Proof. By Corollary C.4, 
+
+f1(Π) = tr( ¯P ) − tr( ¯P 2), ¯P = q ¯PA + (1 − q) ¯PB .
+
+Expanding the trace linearly gives 
+
+tr( ¯P ) = qν A + (1 − q)νB .
+
+Expanding the square gives 
+
+tr( ¯P 2) = q2κAA + (1 − q)2κBB + 2 q(1 − q)κAB .
+
+Substituting these two identities proves the formula. 
+
+C.3 What the projection line misses Proposition C.10 (Projector statistics are blind to loss scale) . Fix any realizable task law 
+
+Π, and for ε > 0 define a rescaled law Π(ε) by 
+
+(Xt, y t) 7 → (εX t, εy t).
+
+Then: (i) the exact-fit projector law is unchanged, so Pt, ¯P , SΠ, ρΠ, and all projection-based quantities in this section are the same under Π and Π(ε);(ii) the actual forgetting loss scales by ε2, namely 
+
+F Π(ε)
+
+(k) = ε2F Π(k).
+
+Proof. The Moore–Penrose pseudoinverse satisfies (εX )+ = ε−1X+, hence 
+
+I − (εX )+(εX ) = I − X+X. 
+
+Therefore every projector Pt is unchanged by the rescaling, and so are all statistics built only from the projector law. On the other hand, for any iterate wk,
+
+ℓ(ε) 
+
+> t
+
+(wk) = 1
+
+nt
+
+∥εX twk − εy t∥22 = ε2ℓt(wk).
+
+Averaging over t and expectations gives 
+
+F Π(ε)
+
+(k) = ε2F Π(k).
+
+24 Proposition C.10 explains the role of the current paper. Projection-based quantities can capture random-order contraction properties and sometimes yield useful upper bounds, but they do not determine the scale of actual loss-valued forgetting. That scale depends on the visible covariance Ct and the target-dependent matrix X⋆, which is why the loss-level identity of Theorem 3.1 is necessary. Viewed by resolution, the projection line retains increasingly coarse summaries of the family geometry: 
+
+SΠ =⇒ { fm}m≥0 =⇒ f1 =⇒ ¯P =⇒ νΠ.
+
+The present paper keeps the full loss-level object Sk−t 
+
+> Π
+
+(Ct) Pt St−1Π (X⋆) Pt, whereas the coarse random-order O(1 /k ) law only retains the last scalar νΠ. Appendix C shows that the projection route already sees a substantial amount of geometry, but Proposition C.10 shows that it cannot determine actual forgetting on its own. 
+
+## D Experimental Reproducibility 
+
+The released reproduction package is minimal: beyond README.md and .gitignore , the only code files needed for Figures 1a to 1c are common.py , synthetic_experiments.py ,
+
+make_claim1_bound_compare.py , make_claim1_rho_comparison.py ,
+
+run_claim1_longhorizon.sh , run_geometry_richness_sweep.py , and 
+
+make_geometry_richness_figure.py . The experiment uses a realizable linear set-ting with ambient dimension d = 192 and task rank r = 48 . For each α ∈ { 0.2, 0.4, 0.6, 0.8},the script fixes a family seed 5000 + i and a run seed 7000 + i, where i ∈ { 0, 1, 2, 3} is the index of α. It first samples a unit vector u ∈ Rd from the family seed and sets the shared solution to w⋆ = u. For each task t, it then samples an orthonormal basis Qt ∈ Rd×r for the visible subspace: with probability α, Qt is sampled uniformly among rank-r subspaces orthogonal to u, and with probability 1 − α, it is sampled uniformly among all rank-r
+
+subspaces. Concretely, the implementation draws a Gaussian matrix G ∈ Rd×(r+5) , replaces 
+
+G by G − u(u⊤G) when orthogonality to u is required, applies a QR decomposition, and keeps the first r orthonormal columns; if the sampled matrix is numerically rank-deficient, the draw is repeated. We then define 
+
+Xt = Q⊤ 
+
+> t
+
+, yt = Q⊤ 
+
+> t
+
+w⋆,
+
+so every task shares the same solution w⋆. Equivalently, if Pt = I − QtQ⊤ 
+
+> t
+
+, then the exact-fit dynamics are 
+
+wt = w⋆ + Pt(wt−1 − w⋆), w0 = 0 .
+
+For this synthetic instantiation we evaluate forgetting through 
+
+F Π(k) = E
+
+[
+
+1
+
+k
+
+> k
+
+∑
+
+> t=1
+
+ℓt(wk)
+
+]
+
+, ℓt(w) = 1
+
+r ∥Q⊤ 
+
+> t
+
+(w − w⋆)∥22.
+
+The code follows Algorithm 1 exactly. For each α, the experiment stores the empirical curve ̂
+
+F Π(k) at the seven horizons in K. Figure 1a then compares this curve with the explicit upper bound from Theorem 4.2 and with the coarse O(1 /k ) baseline. In this synthetic setting, 
+
+X⋆ = w⋆w⋆⊤ and ∥w⋆∥2 = 1 , so ∥X⋆∥F = 1 . Also, Ct = 1 
+
+> r
+
+X⊤ 
+
+> t
+
+Xt = 1 
+
+> r
+
+QtQ⊤ 
+
+> t
+
+is a rescaled rank-r orthogonal projector, hence ∥Ct∥F = 1 /√r. Therefore the explicit upper bound used in Figure 1a is 
+
+UΠ(k) = k − 1
+
+k ρk−1Π
+
+1
+
+√r .
+
+The coarse baseline plotted in the released script is 
+
+Bcoarse (k) = 8( d − r)
+
+k − 1 ,
+
+which is the projection-based O(1 /k ) corollary instantiated at νΠ = d − r.Here ρΠ is computed analytically for each value of α. Let m = d − r, and define 
+
+μ1 := md , μ2 := m(m + 2) 
+
+d(d + 2) , b := μ1 − μ2
+
+d − 1 ,
+
+25 Algorithm 1 Synthetic shared-null-spike experiment used in Figures 1a and 1b 
+
+Require: d = 192 , r = 48 , A = {0.2, 0.4, 0.6, 0.8}, K = {4, 8, 16 , 32 , 64 , 128 , 256 }, N = 400  
+
+> 1:
+
+for all α ∈ A do  
+
+> 2:
+
+Sample a unit vector u ∈ Rd and set w⋆ ← u 
+
+> 3:
+
+for all k ∈ K do  
+
+> 4:
+
+for j = 1 , . . . , N do  
+
+> 5:
+
+e ← − w⋆, Q ← ∅  
+
+> 6:
+
+for t = 1 , . . . , k do  
+
+> 7:
+
+With probability α, sample Qt uniformly among rank-r subspaces of u⊥ 
+
+> 8:
+
+Otherwise sample Qt uniformly among all rank-r subspaces of Rd 
+
+> 9:
+
+Append Qt to Q 
+
+> 10:
+
+e ← e − Qt(Q⊤ 
+
+> t
+
+e) 
+
+> 11:
+
+end for  
+
+> 12:
+
+fj (k) ← 1
+
+> kr
+
+∑ 
+
+> Q∈Q
+
+∥Q⊤e∥22 
+
+> 13:
+
+end for 
+
+> 14:
+
+̂ F Π(k) ← 1
+
+> N
+
+∑Nj=1 fj (k) 
+
+> 15:
+
+end for  
+
+> 16:
+
+end for  
+
+> 17:
+
+return {̂ F Π(k) : α ∈ A , k ∈ K} 
+
+β := m − 1
+
+d − 1 , c2 := m(d(m + 1) − 2) 
+
+d(d + 2)( d − 1) , γ := (m − 1)(( d − 1) m − 2) (d − 1)( d + 1)( d − 2) .
+
+Then 
+
+Mα =
+
+( α + (1 − α)μ2 (1 − α)b
+
+(1 − α)( μ1 − μ2) αβ + (1 − α)( μ1 − b)
+
+)
+
+,
+
+and 
+
+λ+(Mα) := tr( Mα) + √tr( Mα)2 − 4 det( Mα)2 ,λmix := αβ + (1 − α)c2, λtr := αγ + (1 − α)c2.
+
+The analytic rate used in both figures is 
+
+ρΠ = max {λ+(Mα), λ mix , λ tr 
+
+}.
+
+Figure 1b compares this analytic ρΠ with the empirical local decay rate 
+
+ˆρloc = exp 
+
+(
+
+log ̂ F Π(ki+1 ) − log ̂ F Π(ki)
+
+ki+1 − ki
+
+)
+
+,
+
+computed from adjacent horizons ki < ki+1 . The experiment driver synthetic_experiments.py writes a cached claim1_summary.json ;
+
+make_claim1_bound_compare.py and make_claim1_rho_comparison.py read that summary and regenerate the two paper figures. Running run_claim1_longhorizon.sh 
+
+from the repository root reproduces the cached summary and then regenerates both figures from that summary. For Figure 1c, we use the angle-richness reservoir family introduced in the geometry exper-iment code. We again fix d = 192 , r = 48 , and w⋆ = u, but now each task null space is constructed as 
+
+Nt = span( nt) ⊕ Ht, nt = cos( θ) u + sin( θ) vt,
+
+where vt is sampled from an L-dimensional reservoir subspace RL ⊂ u⊥, and Ht is an 
+
+(m − 1) -dimensional random complement inside RL ∩ v⊥ 
+
+> t
+
+, with m = d − r. The visible subspace basis Qt is then sampled as an orthonormal basis of N ⊥ 
+
+> t
+
+, and we again set Xt = Q⊤ 
+
+> t
+
+,
+
+yt = Q⊤ 
+
+> t
+
+w⋆. In the main-text richness figure we fix θ = 30 ◦ and sweep 30 values of L
+
+between 144 and 191 for both the theoretical rate ρΠ and the empirical forgetting sum-mary at horizon k = 1024 . The horizons are {4, 8, 16 , 32 , 64 , 128 , 256 , 512 , 1024 }; each empirical point averages over 24 independent task sequences, and each value of ρΠ is esti-mated from 32 sampled projectors. The released script run_geometry_richness_sweep.py 
+
+writes geometry_richness_sweep.json , and make_geometry_richness_figure.py reads this summary and renders Figure 1c. 26 E Numerical Computation and Practical Estimation 
+
+Appendix D specifies the exact protocol used for the figures in the main text. The present section addresses a different question: how the main distribution-level quantities in the paper can be computed or approximated in a general i.i.d. task family, and what the resulting computational costs are. We distinguish three levels of objects. First, theoretical quantities 
+
+such as F Π(k), ρΠ, and IΠ(A) are defined directly from the law Π. Second, sample-based operator estimates approximate these quantities from finitely many sampled tasks. Third, 
+
+finite-horizon empirical diagnostics summarize Monte Carlo forgetting curves, but are not themselves theorem-level objects. Throughout this section, d is the ambient dimension, r is the visible rank, Kmax is the largest horizon of interest, N is the number of sampled task trajectories used for empirical forgetting curves, M is the number of sampled projectors used for operator-level Monte Carlo estimates, T is the number of power-iteration steps, and s := rank( A) when A is low rank. We assume that each task is represented by an orthonormal visible basis Qt ∈ Rd×r ,so that Pt = I − QtQ⊤ 
+
+> t
+
+, and that matrix products involving Pt are implemented through the low-rank factor Qt rather than by forming Pt densely. Table 1: Numerical estimation procedures for the main quantities in the paper. The bounds assume low-rank projector application through Qt ∈ Rd×r .
+
+Quantity Numerical procedure Time complexity Memory Remarks ̂
+
+F Π(k) Roll out N i.i.d. trajectories once to Kmax ,then checkpoint requested horizons 
+
+O(N K max dr ) O(d + H) H: number of stored horizons. Empirical approxima-tion of the forgetting curve. ̂
+
+SM (A) = 
+
+> 1
+> M
+
+∑Mj=1 Pj AP j
+
+Sample M projectors and apply the empirical operator to a dense test matrix 
+
+O(M d 2r) per apply 
+
+O(M dr + d2) Basic Monte Carlo approxima-tion to SΠ.̂
+
+ρ Π Power iteration on ̂ SM , or analytic evaluation when available 
+
+O(T M d 2r) O(M dr + d2) ρΠ is atheorem quantity; the main text uses analytic values when possible. ̂
+
+IΠ(A) Average ∥Pj AP j ∥2 
+
+> F
+
+/∥A∥2
+
+> F
+
+over M sampled projectors 
+
+O(M d 2r) for dense A;
+
+O(M drs ) for rank-s A O(M dr + ds ) For 
+
+A = ΠE ,this gives the align-ment score. Structured families may ad-mit closed forms. ̂
+
+ρ loc Post-process an empirical forgetting curve by adjacent-horizon log differences 
+
+O(H) O(H) Finite-horizon diagnostic only; not a substitute for ρΠ.
+
+27 Table 1 emphasizes a basic distinction in the paper. The operator-level quantities ρΠ and 
+
+IΠ(A) are often easier to estimate numerically than the full loss-valued forgetting curve, because they depend only on sampled projectors and not on long task trajectories. However, by Proposition C.10, projector statistics alone do not determine the scale of actual forgetting. This is why the main theorems are stated at the loss level and why the empirical forgetting curve remains a separate object to compute. Among the quantities in Table 1, the leading-rate quantity ρΠ is the most stable spectral target: when a closed form is available, it should be evaluated analytically, and otherwise it can be estimated from repeated applications of ̂ SM . By contrast, the leading coefficient 
+
+ctop Π (w⋆) requires estimating the top eigenspace itself and then projecting both Ct and X⋆
+
+onto that eigenspace; in general this is numerically more delicate than estimating ρΠ, which is why the main text does not rely on direct coefficient estimation. The practical implementation choices in the released code follow the same principle. For empirical forgetting curves, a single rollout is carried to Kmax and all requested horizons are read off by checkpointing, instead of restarting the simulation independently for each 
+
+k. For operator quantities, tasks are stored through low-rank visible bases Qt, and all projector applications are executed as low-rank updates. These choices change wall-clock cost substantially but do not change the underlying estimators. Finally, it is important to separate theorem quantities from diagnostics. The rate ρΠ is defined by the operator SΠ, and when a closed form is available it should be computed analytically. By contrast, adjacent-horizon rates such as ̂ρ loc are only empirical finite-horizon summaries: they may be noisy, they need not be monotone, and they are not interchangeable with ρΠ. Their role is diagnostic rather than definitional. 28

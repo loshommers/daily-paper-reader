@@ -1,0 +1,571 @@
+Title: CURaTE: Continual Unlearning in Real Time with Ensured Preservation of LLM Knowledge
+
+URL Source: https://arxiv.org/pdf/2604.14644v1
+
+Published Time: Fri, 17 Apr 2026 00:45:27 GMT
+
+Number of Pages: 25
+
+Markdown Content:
+# CURaTE: Continual Unlearning in Real Time with Ensured Preservation of LLM Knowledge 
+
+Seyun Bae 1,2 Seokhan Lee 2 Eunho Yang 2*1KT Corporation 
+
+> 2
+
+KAIST 
+
+seyun.bae@kt.com {seyun.bae, shlee_2, eunhoy}@kaist.ac.kr 
+
+Abstract 
+
+The inability to filter out in advance all poten-tially problematic data from the pre-training of large language models has given rise to the need for methods for unlearning specific pieces of knowledge after training. Existing tech-niques overlook the need for continuous and immediate action, causing them to suffer from degraded utility as updates accumulate and pro-tracted exposure of sensitive information. To address these issues, we propose Continual 
+
+Unlearning in Real Time with Ensured Preser-vation of LLM Knowledge ( CURaTE ). Our method begins by training a sentence embed-ding model on a dataset designed to enable the formation of sharp decision boundaries for determining whether a given input prompt cor-responds to any stored forget requests. The similarity of a given input to the forget requests is then used to determine whether to answer or return a refusal response. We show that even with such a simple approach, not only does CU-RaTE achieve more effective forgetting than existing methods, but by avoiding modification of the language model parameters, it also main-tains near perfect knowledge preservation over any number of updates and is the only method capable of continual unlearning in real-time. 
+
+1 Introduction 
+
+The vast amount of text that is indiscriminately scraped from corpora on the web in order to train large language models makes it infeasible to effec-tively filter out in advance all the data that could later become the source of contention, such as copy-righted content, sensitive or dangerous information, and false information. This has given rise to a plethora of techniques for modifying a pre-trained large language model such that it unlearns specific problematic pieces of information that were con- 
+
+> *Corresponding author.
+> †Code is available at https://github.com/bsu1313/ CURaTE .
+
+tained in its training data (Jang et al., 2022; Liu et al., 2025). The problem with most current approaches is that they start by defining the task of unlearning nar-rowly to include only methods that involve directly modifying the weights of the LLM (Zhang et al., 2024; Jia et al., 2024). This inevitably results in severe performance degradation due to catastrophic forgetting, a problem that only becomes worse with every new update in the continual setting. In ad-dition, current methods do not take into account the time required to carry out the unlearning pro-cess. Methods that are inefficient in this regard risk exposing sensitive information while the process is underway. The solution proposed in this paper, is to widen the scope of possible techniques by introducing the concept of behavioral unlearning 
+
+which encompasses a broader class of methods and subsumes the traditional methods—which we term 
+
+parametric unlearning . For behavioral unlearning, the goal is not so much to erase the knowledge from the language model per se , but rather to ensure the language model does not output information that has been flagged to be problematic—and to do so in a timely manner, while ensuring that no other knowledge is lost in the process. To solve this more usefully defined problem, we introduce Continual Unlearning in Real Time with Ensured Preservation of LLM Knowledge (CURaTE ). Prior to LLM deployment, CURaTE 
+
+trains an unlearning sentence embedding model on a synthetically generated dataset with hard neg-atives designed to enable fine-grained classifica-tion between user queries related to the forget set ,and those that are unrelated. After the LLM is deployed, CURaTE continuously adds the embed-dings of any received forget requests to its embed-ding database in real-time and compares them with the embedding of the current user query. Then based on this comparison, we decide whether the LLM should provide a response to the user query 
+
+> arXiv:2604.14644v1 [cs.CL] 16 Apr 2026
+
+or refuse. Importantly, since the unlearning embed-der does not require any additional training post-deployment—and in particular, does not need to use either the forget set or the retain set for train-ing, the entire process achieves significantly faster unlearning compared to prior approaches. More-over, because the weights of the LLM remain un-modified, CURaTE allows for near perfect utility preservation. As a result, not only does our method substantially outperform all other unlearning meth-ods in the continual setting (which is the setting most relevant to real world applications), it is the first method we are aware of that is capable of pro-cessing ongoing forget requests in real-time with minimal degradation of model performance as re-quests accumulate over time. In summary, the contributions of our work are as follows: • We introduce CURaTE , an unlearning frame-work that entails virtually no overhead for pro-cessing new forget requests and thus constitutes the first unlearning method capable of handling continual, sequential forget requests in real-time. • Through experiments across multiple bench-marks, we demonstrate that by leaving the weights of the LLM unmodified, CURaTE is able to largely circumvent the catastrophic for-getting problem faced by existing methods and achieve near perfect preservation of LLM knowl-edge, even after processing a long succession of continual forget requests. • We demonstrate superiority over prior state-of-the-art (SOTA) unlearning methods in additional aspects such as the ability of our method to gen-eralize to any unlearning task after training on a single dataset (whereas existing methods typi-cally require retraining on every new forget and 
+
+retain set ), and robustness to paraphrased vari-ants of sentences in the forget set .
+
+2 Related Work 
+
+Conventional Unlearning. Methods that only use the forget set for training are called Gradient Ascent (GA) (Jang et al., 2022). These methods train the target LLM to minimize a loss on the 
+
+forget set defined as the positive log likelihood of the text in the forget set , thereby minimizing the likelihood of generating the information contained in the forget set . Other methods add to this loss by including a term for the negative log likelihood of the text in the retain set , which acts as a regularizer forcing the LLM to not only forget the information in the forget set but to also explicitly remember the information in the retain set . These methods are known as Gradient Difference (GradDiff) (Liu et al., 2022). A third approach, called Preference Optimization (PO) (Maini et al., 2024), uses a loss that encompasses terms for both the forget set and the retain set , but instead of using the positive log likelihood on the forget set , it uses the negative log likelihood on alternate refusal responses to the questions in the forget set .Negative Preference Optimization (NPO) (Zhang et al., 2024) uses the loss from Direct Preference Optimization (DPO) (Rafailov et al., 2023) but with only negative examples (instead of pairs of positive and negative examples). More recent work includes SOUL (Jia et al., 2024), which is not of itself a distinct unlearning method, but rather an improvement that adds second-order optimization to existing methods. These methods tend to have weak performance on knowledge preservation metrics as modifying weights inevitably results in catastrophic forgetting. 
+
+Weight Preserving Unlearning. Existing approaches that avoid modifying LLM weights include In-Context Unlearning (ICUL) (Pawelczyk et al., 2023) which adds data points from the forget set with perturbed labels as in-context examples to the LLM prompt, and guardrail methods (Thaker et al., 2024) that add a filtering step by querying an auxiliary LLM to detect whether the output of the target LLM is related to any data in the 
+
+forget set . These methods generally have low performance except for very large foundation models and they are not scalable as the increasing size of the forget set will eventually cause issues due to context length limitations (Liu et al., 2023). Perhaps the method that bears the greatest resemblance to our own is GUARD (Deng et al., 2025). This method also trains a model to classify user queries as being either related or unrelated to the forget set . However, the classifier they use is specific to the forget set it was trained on and thus needs to be retrained for every new set of forget requests, which precludes the possibility of real-time unlearning and makes it less suitable for the continual setting. 
+
+Continual Unlearning. Two methods that are particularly relevant to the present work are O3 (Gao et al., 2025) and UniErase (Yu et al., 2025), both of which were designed specifically to address unlearning in the continual setting. The former works by training an orthogonal low-rank adapter (LoRA) (Hu et al., 2021) to unlearn the information in the forget set , and then trains an out-of-distribution (OOD) detector to determine how much weight to give to the adapter during inference based on how close the input query is to the data in the forget set . The latter method adds an unlearning token “ <UNL> " to the tokenizer vocabulary of the LLM and uses prompt tuning (Lester et al., 2021) to train the model to output refusal responses whenever an input query is followed by “ <UNL> ". It then uses model editing methods (Meng et al., 2022; Fang et al., 2024) to modify the weights of the LLM such that when questions from the forget set are input to the language model, it generates “ <UNL> " as the first token. As these methods both modify the weights of the target LLM (or its adapter), they are still subject to the problem of catastrophic forgetting. 
+
+3 Method for Real-time Continual Unlearning 
+
+3.1 Problem Formulation 
+
+To formalize our task, we begin by denoting D as the entirety of the data used to train the large lan-guage model G that serves as the starting point for unlearning. D can be partitioned into two splits, the forget split Df and the retain split Dr, where the former represents all the data that needs to be forgotten and Dr = D\Df represents the rest of the data, which needs to be preserved by the lan-guage model. The gold standard of what we are trying to achieve with unlearning is a model G∗
+
+that has been trained in the same manner as G, but on Dr only. Such a model would not contain any knowledge of the data in Df since it was never trained on Df and it could be expected to contain roughly the same amount of knowledge about Dr
+
+as G, since it is assumed to have undergone the same training process on those data points. In most real world applications, G∗ is just a theoretical ideal that cannot be obtained in practice since modern LLMs are too large and costly to retrain from scratch. Hence, this objective is approximated by performance metrics on Df
+
+that gauge how effectively the data in Df has been forgotten and performance metrics on Dr
+
+that measure how well the rest of the data has been preserved. Most unlearning techniques involve modifying the weights of G to obtain an approximation bG ≈ G∗, which subjects the language model to heavy drops in performance on 
+
+Dr as the weight updates give rise to catastrophic forgetting (Luo et al., 2023), a problem that is worsened in the continual setting described below. Our method on the other hand, does not modify 
+
+G at all, thus preserving its existing knowledge in tact and leaving the potential for achieving the same performance on Dr as G an open possibility. 
+
+Continual setting. To closer align our task with scenarios likely to be encountered in the real world, we additionally extend the unlearning task to the continual setting where the forget requests arrive successively and need to be processed cumulatively in sequence. Hence, we start with an initial partition Df0 , Dr0 = D\Df0
+
+to which we apply our unlearning techniques and evaluate. Then the forget set is expanded to include new requests resulting in a new partition 
+
+Df1 , Dr1 = D\Df1 such that Df0 ⊂ Df1 and we perform further unlearning on the same model to reflect the additional requests and evaluate once more. The goal is to maintain high performance on the forget and retain objectives over each stage until the final set of forget requests and final partition DfN , DrN = D\DfN . If finetuning is applied to G post-deployment to add new information, D itself may also expand, but for simplicity we assume that D is fixed. Most existing unlearning methods use the en-tire forget split for training, hence the forget set 
+
+used for training is simply Df . Methods that also make use of the retain split for training cannot use the entire split since it is too vast, so they typi-cally use a small subset consisting of counterex-amples to the forget set which is termed the retain set Dretain ⊂ Dr. For evaluation, again typically the entire forget split Df is used to test forgetting effectiveness, whereas to test preservation of knowl-edge, various subsets of Dr are used, including the 
+
+retain set as well as utility datasets that are com-pletely unrelated to the forget set to test general knowledge capacity, such as “World Facts" in the TOFU benchmark (Maini et al., 2024) and Wino-Grande (Sakaguchi et al., 2019) in the RETURN benchmark (Liu et al., 2024). Other         
+
+> Forget
+> Embeddings
+> Real -time
+> User Embedder
+> Output score
+> 𝑠 max
+> REFUSAL RESPONSE
+> SAMPLING FROM
+> 𝑠 max >𝛿
+> 𝑠 max ≤𝛿
+> “I have no idea …”
+> “Sure, .. “
+> Prompt
+> Output
+> Embeddings
+> Search
+> Thresholding
+> : what kind of bats do they use in college baseball?
+> : What type of bats are utilized in college baseball games?
+> Type -1 Positive Pair ( Label = 1)
+> Before LLM  Deployment  After LLM  Deployment
+> : What type of bats are utilized in college baseball games?
+> : what kind of gloves do they use in college baseball?
+> : what kind of bats do they use in college baseball?
+> : What kind of bats are used in professional baseball?
+> Sampled from seed dataset Generated from Assigned label
+> Collect all
+> three type datasets
+> Embedder
+> Contrastive Loss
+> ℒ
+> Input Training
+> Users
+> Forget request
+> Real -time
+> Update
+
+𝐹 
+
+𝑈 
+
+> 𝑈 (𝑓 )
+> 𝑈 (𝑝 )
+
+𝑝 
+
+𝑓 
+
+𝑝 
+
+> 𝑈
+> 𝐺 𝑠
+
+𝐺   
+
+> 𝑄
+> 𝑅
+> 𝑞 𝑠
+> 𝑞 𝑐
+> 𝑞 𝑠
+> 𝑞 𝑝
+> 𝑇 ∗
+> 𝑞′ 𝑐
+> 𝑞 𝑝
+> 𝑦
+> Type -2 Negative Pair ( Label = 0)
+> Type -3 Negative Pair ( Label = 0)
+
+Figure 1: An overview of the CURaTE framework. CURaTE consists of a training phase carried out prior to deployment (upper part) and a three-step inference process after deployment (lower part). In the training phase, the embedder U is trained on three types of synthetic data generated from a seed dataset (training does not require any data from the forget set or retain set ). For inference, real-time continual unlearning is enabled through three steps: (i) embed q, embed-and-store f , ( ii ) retrieval and thresholding, and ( iii ) decision on whether the LLM responds or refuses. Since the LLM’s weights remain unchanged, we are able to maintain a high level of utility preservation. 
+
+3.2 Pre-deployment Training 
+
+We now describe the first step of the CURaTE 
+
+framework, which involves training the unlearning sentence embedder U . Before deployment of the large language model G, it is unknown what forget requests f may arise, or what prompts p may be issued to G. Therefore, U must learn a representa-tion that effectively distinguishes and generalizes over any possible future p and f , taking this un-certainty into account. It must also be robust to variations of the forget set , e.g., paraphrased sen-tences that convey the same information as those in the forget set should still trigger refusal to respond. To meet the above requirements, we build training data of three types through the following process. First, we collect the questions from a seed QA dataset Q = {qs
+
+> 1
+
+, q s
+
+> 2
+
+, . . . , q sn}, e.g., Natural Ques-tions (Kwiatkowski et al., 2019), where each qsi rep-resents the question from the question-answer pair 
+
+(qsi , a si ). For each question qs, we apply transforma-tions as illustrated in Figure 1 to generate two vari-ants of the question, Gs(τ1(qs)) = ( qp, q c), where 
+
+τ1(·) is an input prompt template for a surrogate LLM Gs. Here qp represents a paraphrased variant of qs and qc represents a contrastive variant. qp is thus a rephrasing of qs that should elicit the same response from the target LLM G. Coupled with 
+
+qs, (qs, q p) constitutes a positive pair with label 
+
+yp = 1 , which we term type-1 data. In contrast, qc
+
+is a question designed to exhibit high lexical or syn-tactic overlap with qs but differ in semantic mean-ing. Together with qs, the pair (qs, q c) serves as a hard-negative example with label yc = 0 , which we term type-2 data. Following the same procedure, we obtain the contrastive sample of qp via τ2(·),denoted as q′c = Gs(τ2(qp)) , which paired with qp
+
+as (qp, q ′c) forms an instance of type-3 data labeled with y′c = 0 , thereby functioning as an additional hard-negative sample along with the type-2 data. We apply the three types of data augmentation to every sample in Q, and construct the dataset T ∗ =
+
+{[( qsi , q pi ), y pi ], [( qsi , q ci ), y ci ], [( qpi , q ′ci ), y ′ci ]}ni=1 for training the embedder U . We use T ∗ to finetune a pre-trained sentence embedding model (Reimers and Gurevych, 2019) using the following con-trastive loss (Hadsell et al., 2006): 
+
+L(T ) = 12|T |
+
+X
+
+> (q,q ′,y )∈T
+
+h
+
+y · dU (q, q ′)2 +(1 − y)· max  0, m − dU (q, q ′)2i
+
+,
+
+(1) 
+
+where dU denotes a distance metric in the embed-ding space of U (·), which is the cosine distance in our case defined as dU (q, q ′) = 1 − U (q)·U (q′)   
+
+> ∥U(q)∥ ∥ U(q′)∥
+
+.
+
+T ⊂ T ∗ is a batch of samples from the training dataset and m is an appropriately chosen margin. The loss serves to decrease the distance between positive examples and increase the distance be-tween negative examples up to the margin m. The hard-negative samples in our dataset are designed to represent difficult edge cases, thereby enabling the embedder to form more fine-grained and pre-cise decision boundaries in the embedding space. It should be noted that all of the above training is conducted without using any of the forget sets or 
+
+retain sets , and hence, contrary to existing methods, the datasets used to evaluate our method are all out-of-domain. After deployment, the single trained U
+
+model can operate across any given forgetting task and domain without any additional training and its effectiveness is not limited to any particular forget 
+
+and retain set . This demonstrates that our method, by finetuning a broadly pre-trained sentence embed-ding model using a domain-independent training objective, is able to produce an embedder that has learned a task-agnostic notion of semantic related-ness that transfers across heterogeneous domains. 
+
+3.3 Post-deployment Inference 
+
+Once G is deployed, CURaTE performs unlearn-ing and inference through the following three steps. (i): Given the m-th forget sample fm, its embed-ding f emb  
+
+> m
+
+= U (fm) is generated and stored in the set of forget embeddings F . The update of F is carried out immediately in real-time upon arrival of fm and can be expressed as              
+
+> F={femb 1, . . . , f emb
+> m−1}⇒F←F∪ { femb
+> m}.(2)
+
+This instantaneous operation constitutes the en-tirety of our unlearning process post-deployment and stands in stark contrast to the heavy opti-mization procedures employed by other methods to unlearn a given set of forget requests. Asyn-chronously, whenever a user prompt p is input to G, it is projected into the embedding space as 
+
+pemb = U (p). (ii ): For each embedding f emb  
+
+> i
+
+in F ,we compute its cosine similarity score si with re-spect to pemb , and obtain the score set S = {si}mi=1 ,where si ∈ [−1, 1] . Using S, we identify the el-ement fj ∈ F most related to p by taking an el-ement with the maximum score sj = smax , and check whether it exceeds a given threshold δ. In this process, the user queries sent to the LLM and forget requests are all handled continuously and in real-time, without mutual interference. ( iii ): The final response rres returned to the user is defined as follows:          
+
+> rres =
+> 
+> G(p),if smax < δ ,
+> a sampled element from R, if smax ≥δ ,
+> (3)
+
+where R is a predefined set of refusal expres-sions such as “I don’t know" or “I can’t answer that question". If smax < δ , we determine that p is unrelated to any information in the current forget set , and thus return the regular generated output for p using G. In contrast, if smax ≥ δ, we deter-mine that p is closely related to some information in the forget set and therefore decline to answer p.In this case, a refusal response is sampled from R
+
+and returned as rres (Appendix L). Note that the parameters of G are not modified at any step of this process. This guarantees knowledge preserva-tion within G thereby preventing the occurrence of catastrophic forgetting, which is key to our method being able to maintain such high performance on the retain and utility datasets after processing an arbitrary number of successive forget requests. 
+
+4 Experiments 
+
+4.1 Experimental Setup Benchmarks. We conduct unlearning experiments in the continual setting using four widely used benchmarks. (1) Privacy Data Unlearning : The RETURN benchmark (Liu et al., 2024) consists of synthetically generated question-answer pairs related to real world individuals with Wikipedia pages. The goal is to forget selected details (not all) about a subset of the individuals. We posit a scenario where out of the 30 target individu-als, three individuals issue forget requests at each stage, resulting in a total of 10 stages of contin-ual unlearning. (2) Fictitious Authors Unlearn-ing : TOFU (Maini et al., 2024) is an unlearning benchmark that fine-tunes a pre-trained language model on QA pairs about completely fabricated authors to ensure that none of the data in the for-get set exists in the pre-training data. The task is then to unlearn information about a selection of the fake authors. We divide the authors into three groups, resulting in a three-stage continual unlearning setup. (3) False Information Unlearn-ing : TruthfulQA (Lin et al., 2021) is a benchmark designed to assess whether LLMs provide factually grounded answers to misleading questions across diverse topics (i.e., whether they avoid generating misinformation). We adopt a continual unlearning setting in which all the questions are partitioned into three stages and used as the forget set . Further details about the evaluation datasets can be found in Appendix C.1 (4) General Science Knowledge Un-learning : We adopt the setting in Gao et al. (2025) which uses a subset of the ScienceQA dataset (Lu et al., 2022) as the forget set to sequentially unlearn (a) Forget set ↓ (b) Retain set used ↑ (c) Retain set not used ↑   
+
+> (d) Non-target ↑(e) Near utility ↑(f) WinoGrande ↑
+> Figure 2: Continual unlearning results on RETURN. (a) indicates performance on the unlearning target, while (b)–(f) indicate performance on data that we aim to preserve (details in Appendix C.1).
+
+four scientific topics: biology, physics, chemistry, and economics. At each stage, one topic is added to the forget set and the remaining topics make up the retain set .It should be noted that for the forget set used for evaluation, we replace the questions with paraphrased variants as this is a more realistic assumption for real world use cases and using the same questions verbatim from the original forget set would be trivial for our method to solve with 100% accuracy by setting the decision boundary threshold δ to 1. Also, for each benchmark we add a synthetically generated near utility dataset containing examples designed to be similar in appearance to sentences in the forget set , but distinct in meaning (and hence should not be subject to forgetting—they are edge cases designed to test the locality of the forgetting mechanism). The detailed procedure for generating these datasets is outlined in Appendix K. 
+
+Evaluation Metrics. As our method does not modify any weights of the LLM, it does not alter the probability distribution output by the LLM, which renders probability-based metrics such as the Truth Ratio (Maini et al., 2024) meaningless for our case. Hence for most evaluation datasets we use ROUGE-L (Lin, 2004) to measure the similarity between the generated response and the ground truth answer. In cases where we are able to extract an exact answer from the generated response using simple parsing, such as the WinoGrande dataset (Sakaguchi et al., 2019) and the ScienceQA benchmark (Lu et al., 2022), we calculate accuracy using an exact match criterion. 
+
+Baselines. We selected GA (Jang et al., 2022), GradDiff (Liu et al., 2022), PO (Maini et al., 2024), NPO (Zhang et al., 2024), SO-PO (Jia et al., 2024), GUARD (Deng et al., 2025), O3 (Gao et al., 2025), and UniErase (Yu et al., 2025) as our baselines. Base indicates the target model prior to unlearning, which serves as an upper bound for knowledge preservation performance. UniErase only works on data given in (subject, relation, object) triplet form i.e. questions and answers about people, so we exclude it from our experiments for TruthfulQA and ScienceQA. The training configuration of U , the details of τ1 and 
+
+τ2, and results for other models are presented in Appendices C.2, J, and N respectively. 
+
+4.2 Privacy Data Unlearning 
+
+Figure 2 presents our experimental results on the RETURN benchmark. The gradient-based and preference optimization methods exhibit a strong tendency towards overforgetting—they are success-ful in unlearning the knowledge related to the forget set but at the cost of significant degradation in per-formance on unrelated knowledge. We can clearly see a sharp drop-off from the base model as the stages progress—as expected due to catastrophic forgetting. GUARD, O3 and UniErase preserve knowledge to some extent, but fail to sufficiently unlearn the target knowledge. CURaTE , on the other hand, achieves effective unlearning of the data from the forget set with negligible degradation in performance on the other datasets across all ten stages of evaluation. 
+
+4.3 Fictitious Authors Unlearning 
+
+Table 1 presents our results on the TOFU bench-mark. The only method that appears to remain competitive with our method across all three stages is UniErase. However, the apparent strength of this method—which still lags CURaTE in over-all performance—should be weighed against the inability of UniErase to handle any data that does not conform to its strict (subject, object, relation) format, which is a significant limitation, as well as its inability to process forget requests in real-time. 
+
+4.4 False Information Unlearning 
+
+Table 2 reports the results for TruthfulQA. The objective in this case is to prevent the dissemina-tion of false information contained in the forget set . However, minimizing similarity to a particu-lar incorrect answer can be gamed: the model may simply produce a different incorrect response while remaining untruthful. Hence, instead of measur-ing the similarity of the response to the answers in the forget set , we measure its similarity to a set of refusal responses (the pairwise maximum from the set) such as “I don’t know" as our indication of success. This inherently restricts our evaluation to methods that are capable of optimizing towards a desired response (i.e. it excludes gradient ascent methods that only optimize away from an undesir-able response). From the table we can see again that CURaTE has much stronger performance than existing methods and that its advantage grows with each stage of evaluation. 
+
+4.5 General Science Knowledge Unlearning 
+
+Figure 3 presents our results on the ScienceQA benchmark. The only method that is able to main-tain comparable performance to CURaTE on the knowledge preservation datasets across all stages of evaluation is O3. However, we can see that its performance on the forget set is unusually poor. We found that this is due to O3 being unable to gener-alize to paraphrased variants of the questions in the 
+
+forget set . While it is able to achieve much lower scores of 20.7%, 4.6%, 10.1%, and 11.8% across the four stages of the original forget set , it is surpris-ingly brittle against even slight changes in wording and thus cannot be said to have truly forgotten the information in the forget set . So again CURaTE      
+
+> (a) Forget set ↓(b) Retain set ↑
+> (c) Near utility ↑(d) OpenbookQA ↑
+> Figure 3: Continual unlearning results on ScienceQA. (a) shows the unlearning target, while (b)–(d) illustrate performance on data that should be preserved.
+
+is the only method able to achieve effective for-getting while maintaining near perfect knowledge preservation across each stage of evaluation. 
+
+4.6 Ablation study 
+
+Table 3 presents a comparison of the classification performance of U in the first and final stages of all benchmarks under various ablations, in order to examine the importance of each component of our method. 
+
+Contribution of the Proposed Dataset. In this table, the top row corresponds to the vanilla pre-trained sentence embedding model without any fine-tuning, while the bottom row uses our full method with synthetic data and contrastive fine-tuning. Training with our datasets (bottom row) improved the F1 score over the baseline (top row) by 7.7% in the final stage. This improvement can be attributed to the use of contrastive loss on the three types of augmented data, which enables the formation of sharper decision boundaries on un-learning data and thereby enhances classification performance. 
+
+Impact of the Three Data Types. We tested the importance of having the three types of data augmentation by training with only two types. As the resulting dataset contained only two thirds (12k samples) the number of samples in the original dataset, we conducted an additional experiment using only 12k samples from the original dataset (with all three data types) to control for the effect of dataset size. As we can see from the table, us-ing only two data types leads to a slight drop in F1 score and this drop is not due to the reduction in number of samples as the performance of the 12k control dataset does not show a similar drop Table 1: Results on the TOFU benchmark. F.G. (forget set ), R.T. (retain set ), N.U. (near utility ), R.A. (Real-Authors), and W.F. (World Facts) are reported; the best results are highlighted in blue , and the second-best are underlined, excluding near-zero values on F.G. caused by over-forgetting.                                                                                                                                                                        
+
+> TOFU dataset for LLaMA2-7B-chat Stage 1 Stage 2 Stage 3 Method F.G. ↓R.T. ↑N.U. ↑R.A. ↑W.F. ↑F.G. ↓R.T. ↑N.U. ↑R.A. ↑W.F. ↑F.G. ↓R.T. ↑N.U. ↑R.A. ↑W.F. ↑
+> Base 0.496 0.973 0.620 0.940 0.913 0.518 0.973 0.617 0.940 0.913 0.509 0.973 0.599 0.940 0.913 GA 0.390 0.715 0.574 0.855 0.821 0.211 0.320 0.488 0.576 0.785 0.003 0.003 0.005 0.000 0.006 GradDiff 0.242 0.424 0.550 0.763 0.812 0.001 0.002 0.003 0.000 0.003 0.000 0.000 0.000 0.000 0.000 PO 0.110 0.873 0.598 0.923 0.883 0.111 0.801 0.533 0.692 0.862 0.181 0.860 0.570 0.897 0.877 NPO 0.072 0.874 0.608 0.930 0.892 0.031 0.796 0.601 0.912 0.900 0.065 0.815 0.593 0.914 0.895 SO-PO 0.094 0.837 0.586 0.899 0.896 0.118 0.808 0.592 0.922 0.868 0.120 0.791 0.562 0.916 0.873 GUARD 0.121 0.773 0.573 0.909 0.896 0.112 0.798 0.536 0.872 0.883 0.129 0.775 0.553 0.891 0.876 O3 0.128 0.338 0.564 0.651 0.905 0.070 0.093 0.198 0.095 0.282 0.083 0.093 0.163 0.079 0.219 UniErase 0.047 0.947 0.603 0.906 0.930 0.058 0.943 0.610 0.899 0.930 0.062 0.942 0.587 0.889 0.905
+> CURaTE 0.046 0.969 0.620 0.940 0.913 0.055 0.969 0.615 0.940 0.913 0.043 0.961 0.597 0.940 0.913
+
+Table 2: Results on TruthfulQA benchmark. R.F. (re-fusal answers), N.U. (near utility ), and C.Q. (Com-monsenseQA) are reported; best: blue ; second-best: underlined.                        
+
+> TruthfulQA dataset for LLaMA2-7B-chat Stage 1 Stage 2 Stage 3 Method R.F. ↑N.U. ↑C.Q. ↑R.F. ↑N.U. ↑C.Q. ↑R.F. ↑N.U. ↑C.Q. ↑
+> Base 0.5351 0.6919 0.8256 0.5378 0.7067 0.8256 0.5367 0.7006 0.8256 PO 0.9030 0.0637 0.3790 0.9389 0.0373 0.2968 0.9792 0.0340 0.3243 SO-PO 0.9019 0.2195 0.6059 0.8634 0.3115 0.4962 0.8216 0.3144 0.5392 O3 0.9869 0.3691 0.2685 0.9980 0.2585 0.2010 0.9995 0.3702 0.2647
+> CURaTE 0.9942 0.6068 0.8231 0.9882 0.6072 0.8190 0.9855 0.5932 0.8149
+
+(and even slightly improves upon the original 18k dataset). 
+
+Effectiveness of Hard Negatives. To evaluate the impact of generating hard-negative samples for the type-2 and type-3 data, we constructed an alternate dataset where qc and q′c were semantically distinct from qs and qp, but also had no lexical or structural overlap with the latter. Specifically, 
+
+qc and q′c were randomly sampled from the seed dataset excluding qs. Experimental results show that constructing hard-negative samples with our proposed method improves the F1 score by 25.3% 
+
+in the final stage, compared to the case without hard negatives. 
+
+Generalization across Seed Datasets. To test the robustness of our method across different seed datasets, we tried switching the seed dataset to Triv-iaQA (Joshi et al., 2017). From the table we can see that switching the seed dataset does not com-promise the classification performance and in fact, using TriviaQA shows slightly improved perfor-mance over Natural Questions. Dropping any component of our proposed train-ing data configuration still allows our model U to correctly classify queries that should be refused (forgotten) as indicated by the high recall, but it also leads to over-forgetting as indicated by the 
+
+Table 3: Classification performance of U on the four benchmarks (RETURN, TOFU, TruthfulQA and Sci-enceQA). In Config, the columns indicate whether the three data types (one positive, two negative) setting is used, whether hard-negative samples are used, the size of the training dataset, and which dataset was used as the seed (NQ denotes Natural Questions, TQ denotes TriviaQA). The top row corresponds to the vanilla sen-tence embedding model without any finetuning, gray regions correspond to settings with all components of our method being applied, and the best F1 performance is emphasized in bold .
+
+Config multi-qa-mpnet-base-dot-v1 All types H.N. Size Seed Precision Recall F1 
+
+✗ ✗ 0k ✗ 0.7831 0.9388 0.8489 
+
+✗ ✗ 12k NQ 0.5202 0.9979 0.6809 
+
+✓ ✗ 18k NQ 0.5805 0.9976 0.7296 
+
+✗ ✓ 12k NQ 0.8591 0.9577 0.9042 
+
+✓ ✓ 12k NQ 0.8988 0.9368 0.9157 
+
+✓ ✓ 18k TQ 0.8746 0.9619 0.9144 
+
+✓ ✓ 18k NQ 0.9005 0.9310 0.9142 
+
+precipitous drops in precision. Therefore, all com-ponents of our proposed training data configura-tion are necessary to achieve an effective balance between forgetting and knowledge preservation. A comparison of classification performance with GUARD are provided in Appendix A and results using different base models for the sentence em-bedder are given in Appendix D. The sensitivity of the F1 score to the threshold δ is analyzed in Appendix F. 
+
+4.7 Unlearning Efficiency 
+
+In Table 4 we show the average unlearning time per stage on the RETURN benchmark as well as any extra processing time for inference as an average per query for the final stage. From the table we can see that CURaTE exhibits overwhelmingly faster unlearning time compared to all other baselines and Table 4: Measured efficiency of unlearning and infer-ence post-LLM deployment on RETURN. Our method highlighted in bold (gray region).                    
+
+> Post-deployment efficiency (s) Method Unlearning time Inference overhead
+> GA 195.6 0GradDiff 229.5 0PO 178.8 0NPO 249.4 0SO-PO 209.4 0GUARD 2.8 25.5 O3 327.6 0.05 UniErase 323.2 0
+> CURaTE 0.04 0.01
+
+is the only method capable of real-time processing of both forget requests and user queries. Due to the required search and retrieval of related forget requests, CURaTE does incur additional overhead for inference, but as reported in the table this cost is negligible. GUARD comes relatively close, but is not quite real-time for unlearning, while incurring significant latency for inference due to its heavy use of beam search—a cost that will grow dramat-ically with the size of the LLM being deployed. It should be noted that these times do not include the additional delay incurred by the baselines due to hyperparameter search. The efficiency of our method, with respect to both speed and storage, can be improved even further by making use of compression techniques as outlined in Appendix E. 
+
+5 Conclusion 
+
+We showed that existing LLM unlearning ap-proaches suffer from catastrophic forgetting and are inadequate for the continual real-time process-ing required in real world settings. To address this, we proposed CURaTE , which trains an unlearn-ing sentence embedder on a three-type dataset with hard-negative samples, prior to LLM deployment, without requiring a forget set or a retain set . At inference time, CURaTE is able to handle new for-get requests and user queries in real-time without modifying the LLM weights. Experiments on four benchmarks demonstrate that CURaTE maintains performance on utility datasets nearly identical to the pre-unlearning base model while achieving ef-fective generalization in forgetting, establishing it as the most reliable method among all baselines and the first method capable of operating in real-time. 
+
+Limitations 
+
+As with all existing unlearning methods, our method does not provide a fail-safe guarantee against leakage of information that has been flagged as problematic. By adjusting the threshold, we can control how much to emphasize reduction of false negatives but this cannot be fully elimi-nated with our method alone. In addition, although we included experiments with paraphrased variants of the original forget requests, we have not fully tested methods for jailbreaking our system and fu-ture research could explore adversarial techniques for bypassing the sentence embedder to gain ac-cess to the forbidden information. In a real world setting, we could expect forget requests to number in the thousands or millions, and although the per-formance of our method has not shown any signs of decline after ten stages of continual unlearning (unlike all other existing methods), to prove that it still holds up after a much greater volume of successive forget requests would require further experimentation. 
+
+Acknowledgement 
+
+This work was supported by Institute for Informa-tion & communications Technology Planning & Evaluation(IITP)grant funded by the Korea govern-ment(MSIT) (RS-2019-II190075, Artificial Intelli-gence Graduate School Program(KAIST)). 
+
+References 
+
+Jianlv Chen, Shitao Xiao, Peitian Zhang, Kun Luo, Defu Lian, and Zheng Liu. 2024. M3-embedding: Multi-linguality, multi-functionality, multi-granularity text embeddings through self-knowledge distillation. In 
+
+Annual Meeting of the Association for Computational Linguistics .Zhijie Deng, Chris Liu, Zirui Pang, Xinlei He, Lei Feng, Qi Xuan, Zhaowei Zhu, and Jiaheng Wei. 2025. Guard: Generation-time llm unlearning via adaptive restriction and detection. ArXiv , abs/2505.13312. Junfeng Fang, Houcheng Jiang, Kun Wang, Yunshan Ma, Xiang Wang, Xiangnan He, and Tat-Seng Chua. 2024. Alphaedit: Null-space constrained knowledge editing for language models. ArXiv , abs/2410.02355. Chongyang Gao, Lixu Wang, Kaize Ding, Chenkai Weng, Xiao Wang, and Qi Zhu. 2025. On large lan-guage model continual unlearning. In The Thirteenth International Conference on Learning Representa-tions .Raia Hadsell, Sumit Chopra, and Yann LeCun. 2006. Dimensionality reduction by learning an invariant mapping. In 2006 IEEE computer society confer-ence on computer vision and pattern recognition (CVPR’06) , volume 2, pages 1735–1742. IEEE. J. Edward Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-Zhu, Yuanzhi Li, Shean Wang, and Weizhu Chen. 2021. Lora: Low-rank adaptation of large language models. ArXiv , abs/2106.09685. Joel Jang, Dongkeun Yoon, Sohee Yang, Sungmin Cha, Moontae Lee, Lajanugen Logeswaran, and Minjoon Seo. 2022. Knowledge unlearning for mitigating privacy risks in language models. In Annual Meeting of the Association for Computational Linguistics .Jinghan Jia, Yihua Zhang, Yimeng Zhang, Jiancheng Liu, Bharat Runwal, James Diffenderfer, Bhavya Kailkhura, and Sijia Liu. 2024. Soul: Unlocking the power of second-order optimization for llm un-learning. arXiv preprint arXiv:2404.18239 .Mandar Joshi, Eunsol Choi, Daniel S Weld, and Luke Zettlemoyer. 2017. Triviaqa: A large scale distantly supervised challenge dataset for reading comprehen-sion. arXiv preprint arXiv:1705.03551 .Tom Kwiatkowski, Jennimaria Palomaki, Olivia Red-field, Michael Collins, Ankur Parikh, Chris Alberti, Danielle Epstein, Illia Polosukhin, Jacob Devlin, Ken-ton Lee, and 1 others. 2019. Natural questions: a benchmark for question answering research. Trans-actions of the Association for Computational Linguis-tics , 7:453–466. Brian Lester, Rami Al-Rfou, and Noah Constant. 2021. The power of scale for parameter-efficient prompt tuning. In Conference on Empirical Methods in Nat-ural Language Processing .Chin-Yew Lin. 2004. Rouge: A package for automatic evaluation of summaries. In Annual Meeting of the Association for Computational Linguistics .Stephanie Lin, Jacob Hilton, and Owain Evans. 2021. Truthfulqa: Measuring how models mimic human falsehoods. arXiv preprint arXiv:2109.07958 .B. Liu, Qian Liu, and Peter Stone. 2022. Con-tinual learning and private unlearning. ArXiv ,abs/2203.12817. Nelson F. Liu, Kevin Lin, John Hewitt, Ashwin Paran-jape, Michele Bevilacqua, Fabio Petroni, and Percy Liang. 2023. Lost in the middle: How language mod-els use long contexts. Transactions of the Association for Computational Linguistics , 12:157–173. Sijia Liu, Yuanshun Yao, Jinghan Jia, Stephen Casper, Nathalie Baracaldo, Peter Hase, Yuguang Yao, Chris Yuhao Liu, Xiaojun Xu, Hang Li, and 1 others. 2025. Rethinking machine unlearning for large lan-guage models. Nature Machine Intelligence , pages 1–14. Zhenhua Liu, Tong Zhu, Chuanyuan Tan, and Wenliang Chen. 2024. Learning to refuse: Towards mitigating privacy risks in llms. ArXiv , abs/2407.10058. Pan Lu, Swaroop Mishra, Tanglin Xia, Liang Qiu, Kai-Wei Chang, Song-Chun Zhu, Oyvind Tafjord, Peter Clark, and Ashwin Kalyan. 2022. Learn to explain: Multimodal reasoning via thought chains for science question answering. Advances in Neural Information Processing Systems , 35:2507–2521. Yun Luo, Zhen Yang, Fandong Meng, Yafu Li, Jie Zhou, and Yue Zhang. 2023. An empirical study of catastrophic forgetting in large language mod-els during continual fine-tuning. arXiv preprint arXiv:2308.08747 .Pratyush Maini, Zhili Feng, Avi Schwarzschild, Zachary Chase Lipton, and J. Zico Kolter. 2024. Tofu: A task of fictitious unlearning for llms. ArXiv ,abs/2401.06121. Kevin Meng, David Bau, Alex Andonian, and Yonatan Belinkov. 2022. Locating and editing factual asso-ciations in gpt. In Neural Information Processing Systems .Meta AI. 2024. Llama 3 model card. 
+
+https://github.com/meta-llama/llama3/ blob/main/MODEL_CARD.md .Todor Mihaylov, Peter Clark, Tushar Khot, and Ashish Sabharwal. 2018. Can a suit of armor conduct elec-tricity? a new dataset for open book question answer-ing. arXiv preprint arXiv:1809.02789 .Martin Pawelczyk, Seth Neel, and Himabindu Lakkaraju. 2023. In-context unlearning: Lan-guage models as few shot unlearners. ArXiv ,abs/2310.07579. Rafael Rafailov, Archit Sharma, Eric Mitchell, Ste-fano Ermon, Christopher D. Manning, and Chelsea Finn. 2023. Direct preference optimization: Your language model is secretly a reward model. ArXiv ,abs/2305.18290. Nils Reimers and Iryna Gurevych. 2019. Sentence-bert: Sentence embeddings using siamese bert-networks. 
+
+arXiv preprint arXiv:1908.10084 .Keisuke Sakaguchi, Ronan Le Bras, Chandra Bhagavat-ula, and Yejin Choi. 2019. Winogrande. Communi-cations of the ACM , 64:99 – 106. Victor Sanh, Lysandre Debut, Julien Chaumond, and Thomas Wolf. 2019. Distilbert, a distilled version of bert: smaller, faster, cheaper and lighter. ArXiv ,abs/1910.01108. Kaitao Song, Xu Tan, Tao Qin, Jianfeng Lu, and Tie-Yan Liu. 2020. Mpnet: Masked and permuted pre-training for language understanding. ArXiv ,abs/2004.09297. Alon Talmor, Jonathan Herzig, Nicholas Lourie, and Jonathan Berant. 2018. Commonsenseqa: A question answering challenge targeting commonsense knowl-edge. arXiv preprint arXiv:1811.00937 .Pratiksha Thaker, Yash Maurya, and Virginia Smith. 2024. Guardrail baselines for unlearning in llms. 
+
+ArXiv , abs/2403.03329. Hugo Touvron, Louis Martin, Kevin Stone, Peter Al-bert, Amjad Almahairi, Yasmine Babaei, Nikolay Bashlykov, Soumya Batra, Prajjwal Bhargava, Shruti Bhosale, and 1 others. 2023. Llama 2: Open foun-dation and fine-tuned chat models. arXiv preprint arXiv:2307.09288 .An Yang, Anfeng Li, Baosong Yang, Beichen Zhang, Binyuan Hui, Bo Zheng, Bowen Yu, Chang Gao, Chengen Huang, Chenxu Lv, Chujie Zheng, Dayi-heng Liu, Fan Zhou, Fei Huang, Feng Hu, Hao Ge, Haoran Wei, Huan Lin, Jialong Tang, and 41 others. 2025. Qwen3 technical report. Miao Yu, Liang Lin, Guibin Zhang, Xinfeng Li, Junfeng Fang, Ningyu Zhang, Kun Wang, and Yang Wang. 2025. Unierase: Unlearning token as a universal era-sure primitive for language models. arXiv preprint arXiv:2505.15674 .Ruiqi Zhang, Licong Lin, Yu Bai, and Song Mei. 2024. Negative preference optimization: From catastrophic collapse to effective unlearning. arXiv preprint arXiv:2404.05868 .A Discussion on the Cost of Retain Sets 
+
+Table 5: Retain set sizes for methods requiring them in unlearning experiments on four benchmarks.           
+
+> Retain set RETURN TOFU TruthfulQA ScienceQA Total Size 150 3800 817 1827 6594
+
+The retain set is a dataset that, paired with the 
+
+forget set , is used by some unlearning methods to train the target LLM. Its role is to act as a regular-izer to preserve existing knowledge during training and as such, it consists of a collection of representa-tive examples of the knowledge or information that should be preserved. For example, GradDiff, NPO, PO, and SO-PO all employ a loss on the retain set 
+
+during optimization for unlearning. In GUARD, a classifier is trained by using samples from the for-get set as positive examples and samples from the 
+
+retain set as negative examples. However, employ-ing a retain set necessitates the securing of data of sufficient quantity and quality (Gao et al., 2025), which can be highly time consuming. This intro-duces an additional source of latency to the post-deployment unlearning process and thus, avoiding reliance on a retain set is crucial in real-time sce-narios. Our approach does away with the need for a retain set and thus entirely dispenses with the cost of collecting and training the datasets shown in Table 5, thereby enabling unlearning that is both efficient and effective. 
+
+B Performance Comparison with GUARD 
+
+Table 6: Classification performance of U and GUARD on the three benchmarks RETURN, TOFU, and Sci-enceQA.                    
+
+> First Stage Last Stage Method Precision Recall F1 Precision Recall F1 GUARD 0.2755 0.9638 0.3872 0.3470 0.9404 0.4743
+> CURaTE 0.9369 0.8935 0.9101 0.9189 0.9223 0.9196
+
+From Table 6 we can see that GUARD has high recall but very low precision, indicating a strong tendency towards overforgetting. Thus the classi-fier is fairly inaccurate and the reason its perfor-mance on ROUGE-L and accuracy metrics do not show as severe a drop is that, upon predicting a positive example, it does not block the response of 
+
+G entirely as we do, but only the words from the re-trieved forget request. This is a safer, albeit slower, method of inference that to some extent offsets the weak performance of the classifier, and it could be combined with our more accurate classifier for even more selective blockage of information. 
+
+C Experimental Setup Details 
+
+C.1 Datasets and Split 
+
+In this section we provide more details about the datasets used for evaluation (and for training in the case of baselines that use the forget set and retain set for training). All scientific artifacts in this paper were used in accordance with the corresponding licenses found in the original papers or websites. Their use in this paper has been confirmed to be consistent with the intended use as stated in the relevant documentation. 
+
+(1) Privacy Data Unlearning : For each indi-vidual in the RETURN benchmark (Liu et al., 2024), there are 20 synthetically generated QA pairs. Among the 60 sampled individuals, half are designated as targets and the other half as non-targets. For each target individual, 10 QA pairs are assigned to the forget set (assumed to contain sensitive information about the target individual) and the remaining 10 QA pairs are assigned to the 
+
+retain set (assumed not to contain any sensitive information about the target individual). The retain set is further split into two subsets with 5 QA pairs apiece: retain set used, which is used for training (if required by the unlearning method), and retain set not used, which is excluded from training. We create 10 stages of continual unlearning by assign-ing 3 of the 30 target individuals to each stage. For utility data, we use WinoGrande (Sakaguchi et al., 2019). 
+
+(2) Fictitious Authors Unlearning : For TOFU (Maini et al., 2024), we divide the 20 au-thors from the largest forget split, ’forget10’ into groups of 10, 5, and 5, resulting in a three-stage continual unlearning setup. The retain set consists of 400 samples from authors outside of the forget set , and the utility data used are the Real Authors and World Facts datasets. 
+
+(3) False Information Unlearning : From Truth-fulQA (Lin et al., 2021) we split all the questions into three stages for continual unlearning and add them sequentially to the forget set . The retain set 
+
+is separately generated using prompts for near util-ity as described in Appendix K, while the general utility evaluation is conducted on the Common-senseQA validation split. Table 7: Complete training configuration for the unlearning sentence embedder U .          
+
+> Component Setting
+> Base sentence encoder sentence-transformers/multi-qa-mpnet-base-dot-v1
+> Training objective Contrastive loss ( sentence_transformers.losses.ContrastiveLoss )Distance metric Cosine distance ( SiameseDistanceMetric.COSINE_DISTANCE )Margin 0.5
+> Optimizer LR 2e-5
+> Warmup steps 100
+> Epochs 1
+> Batch size 16
+> Dataloader shuffle=True
+
+Table 8: Benchmarks, model sizes, and unlearning targets used in our experiments.               
+
+> Benchmark Model Size Unlearning Target
+> RETURN 1B meta-llama/Llama-3.2-1B-Instruct 7B meta-llama/Llama-2-7b-chat-hf TOFU 1B open-unlearning/tofu_Llama-3.2-1B-Instruct_full 7B open-unlearning/tofu_Llama-2-7b-chat-hf_full TruthfulQA 1B meta-llama/Llama-3.2-1B-Instruct 7B meta-llama/Llama-2-7b-chat-hf ScienceQA 1B laurel1313/llama3.2_base_scienceqa 7B gcyzsl/O3_LLAMA2_ScienceQA
+
+(4) General Science Knowledge Unlearning :The ScienceQA dataset (Lu et al., 2022) consists of 26 topics in total. Of these we unlearn biology, physics, chemistry, and economics sequentially in that order. At each stage, all of the remaining topics (that have not been added to the forget set ) make up the retain set . The utility data are drawn from the validation split of CommonsenseQA (Talmor et al., 2018) and test split of OpenbookQA (Mihaylov et al., 2018). 
+
+C.2 Training Configuration 
+
+We employed ‘multi-qa-mpnet-base-dot-v1’ (Reimers and Gurevych, 2019) as the base model for the unlearning sentence embedder 
+
+U . This model has only around 109 million parameters so our training cost is orders of magnitude smaller than existing gradient-based approaches, which train the target LLM. We used 6,000 seed samples from the Natural Questions dataset (Kwiatkowski et al., 2019) to generate the data for training U . The parameter δ was set to 0.9 for RETURN and ScienceQA, and 0.8 for TOFU and TruthfulQA. In Table 7 we list all the hyperparameter settings we used to train the unlearning sentence embedder 
+
+U . We trained U with three types of augmented data as described above, using the Natural Ques-tions dataset as the seed. In our approach, model training is conducted prior to LLM deployment. Due to compute constraints, all experimental results were obtained from a single run. The eval-uation was carried out by calculating ROUGE-L using the rouge-score 0.1.2 package. 
+
+C.3 Unlearning Target Base Models 
+
+For the unlearning target, we used finetuned ver-sions of Llama2-7B (Touvron et al., 2023) on the TOFU and ScienceQA benchmarks and the pre-trained version on all other benchmarks as detailed in Table 8. Experiments were carried out on two A100 GPUs. 
+
+D Robustness Across Unlearning Sentence Embedder models 
+
+In Table 9 we compare the results of conducting the same experiments as presented in Table 3 with two alternative base models (Sanh et al., 2019; Chen et al., 2024; Song et al., 2020) for the sentence embedder. As we can see from the table, all com-ponents of our proposed method are necessary to achieve optimal results for all three base models. Also it is clear that the performance of our method is robust to the choice of base model as the results remain fairly high for each of the alternative mod-els. 
+
+E Scalability Analysis of the Forget Embedding DB 
+
+When the size of the forget DB increases, man-aging scalability in terms of both time and space Table 9: Results for alternative base models for the sentence embedder.                                                                                                    
+
+> Config multi-qa-mpnet-base-dot-v1 all-distilroberta-v1 bge-base-en-v1.5 All types H.N. Size Seed Precision Recall F1 Precision Recall F1 Precision Recall F1
+> ✗✗0k ✗0.7831 0.9388 0.8489 0.8297 0.8350 0.8279 0.7740 0.9479 0.8271
+> ✗✗12k NQ 0.5202 0.9979 0.6809 0.5763 0.9971 0.7285 0.5348 0.9974 0.6934
+> ✓✗18k NQ 0.5805 0.9976 0.7296 0.6555 0.9959 0.7897 0.5911 0.9967 0.7382
+> ✗✓12k NQ 0.8591 0.9577 0.9042 0.8749 0.8346 0.8521 0.7522 0.9572 0.8357
+> ✓✓12k NQ 0.8988 0.9368 0.9157 0.9027 0.8795 0.8891 0.8131 0.9610 0.8705
+> ✓✓18k TQ 0.8746 0.9619 0.9144 0.8904 0.9001 0.8937 0.8196 0.9668 0.8829
+> ✓✓18k NQ 0.9005 0.9310 0.9142 0.9054 0.8528 0.8766 0.8081 0.9582 0.8672
+
+Table 10: Performance and compression statistics for different feature compression methods. As our compression strategies, we applied (1) PCA to reduce the feature dimensionality to 32, (2) 8-bit quantization, and (3) K-means–based instance compression that reduces the number of samples by 90%.                                    
+
+> DB Size Compression Type Method Size (MB) Avg. Comp. Ratio ( ×)Precision Recall F1 F1 Drop (%)
+> M×KNone None 11.573 00.9005 0.9310 0.9142 0
+> M×K′Feature PCA ( k=32 )+ Quantize (8-bit) 0.508 20.1 0.8803 0.9227 0.9009 1.46
+> M′×K′Instance PCA ( k=32 )+ Quantize (8bit) + K-means (90%) 0.496 20.7 0.8683 0.8987 0.8825 3.47
+
+becomes a critical consideration. Our method in-herently incurs computational and storage costs that scale linearly with the number of forget re-quests M and the feature size K. However, the framework is amenable to various compression techniques, which can effectively reduce both space and time overhead, thereby substantially improv-ing scalability. These compression strategies can be categorized into two types: (I) feature com-pression , which reduces the feature size from K to 
+
+K′, and (II) instance compression , which reduces the number of samples from M to M ′. For exam-ple, as shown in Table 10, applying PCA-based feature compression to reduce the dimensionality to k = 32 and using 8-bit quantization decreased the overall storage footprint by approximately 20 ×,while the F1 score dropped by less than 1.5% . This demonstrates that our method can achieve even stronger computational and spatial scalability 
+
+for large scale forget DBs with the aid of appro-priate compression techniques. The search could be streamlined even further by making use of fast similarity search engines such as FAISS, which could enable operation in real-time in large-scale data environments. To further validate this point, we additionally measured retrieval latency with FAISS on large for-get DBs containing 200K and 1M embeddings of dimension 768. At 200K entries, FAISS requires only around 5ms per query, and even at 1M entries, approximate search reduces latency from 623 ms for exact inner-product search to 115 ms per query, providing a 5.4× speedup while maintaining Re-call@10 of approximately 0.79 . These results sug-gest that, although exhaustive linear scan becomes inefficient at scale, standard ANN-based retrieval remains practical even for million-scale forget DBs. Moreover, since the latency of LLM generation typically dominates the overall response time, this retrieval overhead is small enough to remain com-patible with real-time deployment. In practice, if the number of forget requests grows substantially beyond this regime, many of them could also be absorbed through periodic retraining. Importantly, this scalability is itself a notable advantage of our approach: unlike prior methods that often suffer from catastrophic forgetting even with moderately sized forget sets, our method remains applicable at much larger scales. 
+
+F Analysis of F1 Score Sensitivity to Threshold 
+
+Figure 4 illustrates the sensitivity of the perfor-mance of our proposed method as measured by the F1 score on the four listed datasets to the threshold 
+
+δ. We can see that values between 0.7 and 0.9 tend to achieve the best results and a small amount of hyperparameter tuning is required to find the opti-mal value for each new dataset. However, it should be noted that this is the only hyperparameter that Figure 4: The F1 score resulting from each value of the threshold δ from 0.01 to 0.99 in intervals of 0.01 on four different datasets. 
+
+needs to be tuned with our method—which is far less than existing methods—and that tuning δ can be carried out purely through inference, whereas hyperparameter tuning for other methods require multiple rounds of training (which is far more time consuming and expensive). Moreover, our analysis also suggests that the method is not overly brittle to the exact choice of δ.Across all tested benchmarks, performance remains relatively stable over a fairly broad interval, approx-imately δ ∈ [0 .7, 0.9] , indicating that the decision boundary learned by the embedder is reasonably well separated. This observation is particularly im-portant in continual real world deployment, where a labeled validation set may not be available for every newly arriving batch of forget requests. In such cases, a fixed default threshold can serve as a practical operating point. In our experiments, using 
+
+δ = 0 .8 uniformly across all datasets led to only a limited drop from the best achievable F1 score, while still maintaining strong overall performance (0.96 for TOFU, 0.90 for TruthfulQA, 0.80 for Sci-enceQA, and 0.84 for RETURN), with all scores remaining at or above 0.80. Another advantage of our approach is that δ provides a transparent and in-terpretable control over the trade-off between false positives and false negatives. Unlike parametric unlearning methods, whose hyperparameters can affect model behavior in complex and often opaque ways, our single scalar threshold offers a direct mechanism for conservative deployment: practi-tioners may choose a higher-safety operating point by favoring refusal, or adjust the threshold using unlabeled deployment-time signals such as refusal-rate stability. 
+
+G Robustness to Jailbreak Attacks 
+
+To further assess the robustness of CURaTE , we conducted additional experiments against several representative jailbreak strategies on the final stage of the RETURN dataset. In particular, we evalu-ated persona-based attacks, payload splitting, and base64-encoded prompts. Our results show that 
+
+CURaTE remains fairly robust against persona-based jailbreaks. Specifically, it achieves a Recall of 78% at a threshold of 0.8, and 96% at a more conservative threshold of 0.7. This suggests that the method can effectively identify a large fraction of attacks that rely on role-playing or instruction reframing to circumvent safeguards. Payload split-ting proved more challenging. At a threshold of 0.8, CURaTE achieves a Recall of 41%, indicating that splitting malicious intent across multiple seg-ments can weaken detection. However, when the threshold is relaxed to 0.7, the method still blocks over 65% of such attacks. These results suggest that while CURaTE retains partial robustness to fragmented attack formulations, this attack class remains a more difficult setting. As expected for a semantic embedding-based filter, base64 encoding substantially reduces detection performance under the current implementation. Because base64 con-verts the original text into a non-natural-language representation, it largely removes the semantic cues on which the embedder relies. This failure mode is consistent with the design of embedding-based detectors and highlights an important limitation of relying on semantic representations alone. Over-all, these findings indicate that CURaTE provides meaningful robustness against several practical jail-break strategies, particularly persona-based attacks, but also reveal limitations for obfuscated inputs such as payload splitting and encoding-based trans-formations. This observation motivates the use of complementary safeguards, such as lightweight preprocessing steps to identify encoded or other-wise transformed inputs prior to embedding. More broadly, our results suggest that no single defense is sufficient in isolation, and that combining seman-tic filtering with preprocessing-based detection is a promising direction for future work. 
+
+H Dataset Statistics 
+
+Table 11 shows the sizes of the datasets we used in our experiments. Table 11: Size of datasets used for unlearning and eval-uation                          
+
+> ScienceQA TOFU
+> biology physics chemistry economic forget10 retain real-authors world facts Size 1192 595 403 237 400 400 100 117
+> RETURN TruthfulQA WinoGrande CommonsenseQA OpenbookQA
+> Size 1200 817 1267 1221 500
+
+I Real World Scenarios for Continuous Forgetting 
+
+Continuous forgetting naturally arises in real-world deployment settings where forget requests arrive sequentially over time, rather than being known in advance. In such settings, the model must continu-ously update its forget set after deployment. One representative scenario is regulatory compliance, such as the “Right to be Forgotten” under GDPR. Since users may request deletion of personal infor-mation at arbitrary times, retraining or fine-tuning the model for each request is often computationally impractical and may introduce unacceptable delay. This motivates methods that can respond imme-diately to new forget requests without modifying model weights. Another important scenario is en-terprise deployment, where access to proprietary or confidential information may change dynamically. For instance, information may need to be forgotten when contracts are revoked, employees leave, or internal documents become newly restricted. In these cases, the forget set evolves continuously, and the system should adapt without degrading performance on unrelated knowledge. Continuous forgetting is also relevant in safety-critical settings. Retracted scientific findings, outdated medical rec-ommendations, or emerging harmful content may need to be suppressed as soon as they are iden-tified. Because such content is discovered incre-mentally, forgetting must operate in a continual manner. Overall, these cases highlight that contin-ual forgetting is a practically important capability for deployed LLM systems, especially when re-quests are asynchronous, unpredictable, and time sensitive. 
+
+J Prompt for Three type Dataset Generation 
+
+Figure 5 illustrates the core Python code and input prompt templates used for generating the three-type datasets. To enhance generalization, not only inter-rogative sentences but also declarative sentences are generated with a certain probability. The blue text in the upper figure represents the core prompt of τ1(·), while the blue text in the lower figure represents the core prompt of τ2(·).
+
+K Prompt for Near Utility Data Generation 
+
+The near utility datasets are constructed by using the questions in the forget set as a seed and prompt-ing GPT-4o to generate new questions that are lexi-cally or structurally similar while remaining seman-tically distinct (and thus having a different answer from the original question). Figure 6 presents the core GPT-4o input prompts required for generating the near utility dataset. For datasets related to people, such as RETURN and TOFU, additional prompts were incorporated to prevent the generation of false information about the original persons mentioned in the sentences. In the case of ScienceQA, the data were generated in accordance with its original format, where one option must be selected among multiple choices. For instance, starting from the seed question of TruthfulQA: “What are some EU countries with big reserves of oil?” , which is selected as a knowl-edge unlearning target, we constructed a near util-ity variant: “What are some EU countries known for their large wine production?” . This transfor-mation preserves the structural form and domain similarity to the seed, while shifting the seman-tic focus to a closely related but distinct topic. In contrast, a more general utility dataset such as Com-monsenseQA contains broader knowledge-based questions, for example: “What continent has the most castles?” . Unlike near utility data, which stays in close proximity to the seed data, questions from CommonsenseQA are used to evaluate gen-eral knowledge that is not necessarily tied to the original seed data. 
+
+L Refusal Response Sampling 
+
+Figure 7 presents the 229 samples used as the re-fusal expression set R. We generated diverse ex-pressions using GPT-4o. These expressions are utilized not only for our model but also for ap-proaches such as PO and O3, which minimize the loss of refusal responses for inputs in the forget set .Figure 5: Prompt and code for generating the three types of data based on the seed dataset. The input prompt of Gs
+
+required for generation is highlighted in blue. Figure 6: Core prompt and code for generating the near utility evaluation datasets on the four benchmarks RETURN, TOFU, TruthfulQA and ScienceQA Figure 7: The set R consists of 229 refusal expressions, all generated using GPT-4o. Figure 8: Generated responses from CURaTE and other baselines on the forget set from stage 10 of the RETURN benchmark. 
+
+M Qualitative Results 
+
+In this section we show the text responses from all methods to some sample queries taken from the final stage of the RETURN benchmark. As mentioned above, we use a paraphrased vari-ant of the original query to test performance on the forget set as using the original query would be trivial for our method to solve (and using the paraphrased query is a good way to test robust-ness of forgetting against changes in wording). In Figure 8 we can observe first-hand the effects of catastrophic forgetting as after 10 stages of unlearn-ing, the gradient-based methods have degraded to the point of generating no output at all. The PO-based methods are still able to generate a coher-ent response and O3 gives an acceptable, albeit repetitive, refusal response. We can see GUARD’s beam search with penalty is causing it to generate rambling text, and UniErase, although it refuses to answer at first, later attempts to give an answer—an incorrect answer, but an answer nonetheless. Our method gives a clean, coherent refusal, as expected. In Figure 9 we can see that after 10 stages of unlearning, almost all the baselines have forgotten the information related to this query from the retain set that was used for training. GUARD produces a partially correct answer by naming Gunnar Fischer as one of Bergman’s cinematographers, but it also hallucinates, naming Ingrid Thulin as another cine-matographer (whereas Ingrid Thulin was an actress, not a cinematographer). The only method that is able to produce a correct answer is CURaTE .Figure 10 shows the responses to a query from the retain set that was not used for training. Again almost all baselines fail to produce an answer— 
+
+CURaTE and GUARD are the only methods able to provide an acceptable response. In Figure 11 we show the responses to a query from the non-target dataset, which means it relates to an individual who is presumed not to have made any forget requests. In this case a few more methods were able to re-call the required information but now GUARD is unable to remember. Figure 12 shows a query from the near utility 
+
+dataset and we can see that it is designed to resem-ble the original query from the forget set (“How many films did Ingmar Bergman direct?") in Fig-ure 8 while remaining distinct in meaning. The methods that haven’t completely collapsed from catastrophic forgetting are able to answer correctly in this case. Finally, in Figure 13 we show a query from the WinoGrande utility dataset, which in our experi-ments is intended to detect any decline in general capabilities. The gradient-based methods gener-ate repetitive, incoherent text, while the rest of the methods are able to produce the correct answer. Figure 9: Generated responses from CURaTE and other baselines on the retain set (used) from stage 10 of the RETURN benchmark. 
+
+Figure 10: Generated responses from CURaTE and other baselines on the retain set (not used) from stage 10 of the RETURN benchmark. 
+
+Figure 11: Generated responses from CURaTE and other baselines on the non-target dataset from stage 10 of the RETURN benchmark. Figure 12: Generated responses from CURaTE and other baselines on the near utility dataset from stage 10 of the RETURN benchmark. 
+
+Figure 13: Generated responses from CURaTE and other baselines on the WinoGrande dataset from stage 10 of the RETURN benchmark. N Additional Experimental Results 
+
+This section reports additional experimental results using the smaller LLaMA-3.2-1B model (Meta AI, 2024) and Qwen3-1.7B (Yang et al., 2025). 
+
+N.1 Privacy Data Unlearning 
+
+In Figure 14 we can see that for LLaMA-3.2-1B, gradient-based methods exhibit the same phe-nomenon of overforgetting as in the case of the 7B model. O3 shows even worse performance on the forget set , indicating greater difficulty in for-getting the necessary information. Of all baselines, UniErase seems to have the best performance on the forget set and on distant utility datasets (i.e. WinoGrande), but suffers increasingly worse per-formance as the knowledge preservation datasets move closer to the forget set in distribution. This indicates an inability to distinguish between ex-amples belonging to the forget set and edge cases outside the forget set . Our method, again, shows the most consistent results with near perfect utility preservation. Table 12 presents the continual unlearning re-sults on RETURN for Qwen3-1.7B. The overall trend is consistent with the observations from Fig-ure 14: most gradient-based baselines either suffer from severe over-forgetting or fail to maintain sta-ble utility across stages. In particular, methods such as GA, GradDiff, and NPO collapse entirely by the last stage, while PO and SO-PO retain only limited performance. UniErase remains relatively competitive on the last-stage utility metrics, but still shows substantially worse forgetting perfor-mance and less stable preservation compared to our method. In contrast, CURaTE achieves the best forgetting performance while preserving near per-fect utility in both the first and last stages, demon-strating the most robust balance between forgetting and knowledge retention under continual unlearn-ing. 
+
+N.2 General Science Knowledge Unlearning 
+
+In Figure 15 we see again that O3 is the only method able to maintain comparable performance with our method on the knowledge preservation datasets but it is not robust to paraphrased vari-ants of the forget set . Again our method shows the strongest knowledge preservation performance, hugging the baseline on most datasets, while show-ing highly effective performance on the forget set 
+
+across all stages. 
+
+N.3 Fictitious Authors Unlearning 
+
+From Table 13 we can see that UniErase has much worse performance, particularly on the retain set ,as compared with its results for the 7B model. This indicates that UniErase, along with its other limita-tions, does not generalize well to smaller models. No other method comes close to the performance of 
+
+CURaTE , which again outperforms all baselines on almost all metrics. 
+
+N.4 False Information Unlearning 
+
+From Table 14 we can see that, although the refusal scores for the baselines improved in some cases compared with the 7B model, knowledge preser-vation scores dropped precipitously all across the board. Our method, on the other hand, was able to maintain nearly identical scores to the Base model on the CommonsenseQA utility dataset, while be-ing the only method able to avoid total performance collapse on the near utility datasets. (a) Forget set ↓ (b) Retain set used ↑ (c) Retain set not used ↑   
+
+> (d) Non-target ↑(e) Near utility ↑(f) WinoGrande ↑
+
+Figure 14: Continual unlearning results on RETURN. (a) indicates performance on the unlearning target, while (b)–(f) indicate performance on data that we aim to preserve. Table 12: Continual unlearning results on RETURN for Qwen3-1.7B. F.G. (forget set ), R.U. (retain set used), R.N. 
+
+(retain set not used), N.T. (non-target), and N.U. (near utility ) are reported; the best results are highlighted in blue ,and the second-best are underlined, excluding near-zero values on F.G. caused by over-forgetting. 
+
+RETURN dataset for Qwen3-1.7B First Stage Last Stage Method F.G. ↓ R.U. ↑ R.N. ↑ N.T. ↑ N.U. ↑ F.G. ↓ R.U. ↑ R.N. ↑ N.T. ↑ N.U. ↑
+
+Base 0.606 0.647 0.495 0.607 0.753 0.612 0.614 0.577 0.607 0.806 GA 0.387 0.434 0.331 0.489 0.656 0.000 0.000 0.000 0.000 0.000 GradDiff 0.187 0.334 0.268 0.327 0.496 0.000 0.000 0.000 0.000 0.000 PO 0.435 0.330 0.396 0.464 0.742 0.099 0.081 0.070 0.090 0.239 NPO 0.526 0.521 0.442 0.534 0.419 0.000 0.000 0.000 0.000 0.000 SO-PO 0.165 0.103 0.067 0.072 0.117 0.097 0.091 0.085 0.088 0.194 GUARD 0.118 0.196 0.194 0.273 0.232 0.095 0.205 0.208 0.270 0.230 UniErase 0.183 0.162 0.109 0.604 0.735 0.403 0.419 0.403 0.598 0.799 
+
+CURaTE 0.117 0.647 0.495 0.607 0.753 0.085 0.575 0.560 0.607 0.806       
+
+> (a) Forget set ↓(b) Retain set ↑(c) Near utility ↑
+> (d) OpenbookQA ↑(e) CommonsenseQA ↑
+
+Figure 15: Continual unlearning re-sults on ScienceQA. (a) shows the unlearning target, while (b)–(e) illus-trate performance on data that should be preserved. Table 13: Continual unlearning results on the TOFU. F.G. (forget set ), R.T. (retain set ), N.U. (near utility ), R.A. 
+
+(Real-Authors), and W.F. (World Facts) are reported; the best results are highlighted in blue , and the second-best are underlined, excluding near-zero values on F.G. caused by over-forgetting. 
+
+TOFU dataset for LLaMA-3.2-1B-Instruct Stage 1 Stage 2 Stage 3 Method F.G. ↓ R.T. ↑ N.U. ↑ R.A. ↑ W.F. ↑ F.G. ↓ R.T. ↑ N.U. ↑ R.A. ↑ W.F. ↑ F.G. ↓ R.T. ↑ N.U. ↑ R.A. ↑ W.F. ↑
+
+Base 0.415 0.767 0.575 0.840 0.821 0.440 0.767 0.575 0.840 0.821 0.434 0.769 0.554 0.840 0.821 GA 0.307 0.499 0.434 0.449 0.551 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 GradDiff 0.321 0.508 0.450 0.459 0.598 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 PO 0.069 0.673 0.523 0.757 0.828 0.072 0.602 0.456 0.590 0.783 0.090 0.626 0.472 0.620 0.768 NPO 0.350 0.696 0.565 0.764 0.819 0.325 0.645 0.551 0.654 0.802 0.240 0.606 0.523 0.355 0.798 SO-PO 0.106 0.624 0.543 0.762 0.828 0.116 0.594 0.501 0.687 0.781 0.146 0.590 0.490 0.647 0.791 GUARD 0.142 0.583 0.484 0.799 0.781 0.146 0.608 0.491 0.802 0.780 0.148 0.618 0.504 0.797 0.788 O3 0.067 0.256 0.542 0.627 0.798 0.047 0.069 0.237 0.110 0.439 0.030 0.036 0.174 0.014 0.373 UniErase 0.042 0.472 0.561 0.747 0.802 0.039 0.276 0.550 0.757 0.818 0.038 0.167 0.541 0.722 0.801 
+
+CURaTE 0.042 0.765 0.575 0.840 0.821 0.052 0.765 0.573 0.840 0.821 0.043 0.759 0.552 0.840 0.821 
+
+Table 14: Continual unlearning results on TruthfulQA, where R.F. denotes refusal answers, N.U. denotes near utility , and C.Q. denotes, CommonsenseQA; the best results are shown in blue , and the second-best are underlined .
+
+TruthfulQA dataset for LLaMA-3.2-1B-Instruct Stage 1 Stage 2 Stage 3 Method R.F. ↑ N.U. ↑ C.Q. ↑ R.F. ↑ N.U. ↑ C.Q. ↑ R.F. ↑ N.U. ↑ C.Q. ↑
+
+Base 0.5412 0.6666 0.6535 0.5376 0.6781 0.6535 0.5370 0.6626 0.6535 PO 0.9822 0.0476 0.2439 0.9535 0.0726 0.2198 0.8918 0.0589 0.2180 SO-PO 0.9780 0.0620 0.4174 0.8961 0.0975 0.1936 0.9018 0.0741 0.2103 O3 0.9883 0.0726 0.1309 0.9985 0.0618 0.0493 0.9988 0.0588 0.1203 
+
+CURaTE 0.9924 0.5839 0.6506 0.9880 0.5830 0.6474 0.9847 0.5575 0.6438

@@ -1,0 +1,65 @@
+{
+  "label": "2026-04-18",
+  "date": "2026-04-18",
+  "generated_at": "2026-04-18T19:24:27",
+  "count": 4,
+  "papers": [
+    {
+      "paper_id": "202604/18/2604.14644v1-curate-continual-unlearning-in-real-time-with-ensured-preservation-of-llm-knowledge",
+      "section": "deep",
+      "title_en": "CURaTE: Continual Unlearning in Real Time with Ensured Preservation of LLM Knowledge",
+      "authors": "Seyun Bae, Seokhan Lee, Eunho Yang",
+      "date": "2026-04-16",
+      "pdf": "https://arxiv.org/pdf/2604.14644v1",
+      "score": "10.0",
+      "evidence": "解决了大语言模型中特定知识的持续和即时遗忘需求。",
+      "tldr": "针对大语言模型预训练数据中敏感信息难以彻底清除的问题，本文提出CURaTE框架，旨在实现实时且持续的遗忘。该方法通过训练专门的句子嵌入模型来识别输入是否匹配遗忘请求，并据此决定是否拒绝回答。由于无需修改模型参数，CURaTE在实现高效遗忘的同时，能完美保留模型的原有知识，并支持在持续更新场景下的实时响应，解决了传统方法性能衰减和处理滞后的痛点。",
+      "tags": "query:mu-ce",
+      "abstract_en": "The inability to filter out in advance all potentially problematic data from the pre-training of large language models has given rise to the need for methods for unlearning specific pieces of knowledge after training. Existing techniques overlook the need for continuous and immediate action, causing them to suffer from degraded utility as updates accumulate and protracted exposure of sensitive information. To address these issues, we propose Continual Unlearning in Real Time with Ensured Preservation of LLM Knowledge (CURaTE). Our method begins by training a sentence embedding model on a dataset designed to enable the formation of sharp decision boundaries for determining whether a given input prompt corresponds to any stored forget requests. The similarity of a given input to the forget requests is then used to determine whether to answer or return a refusal response. We show that even with such a simple approach, not only does CURaTE achieve more effective forgetting than existing methods, but by avoiding modification of the language model parameters, it also maintains near perfect knowledge preservation over any number of updates and is the only method capable of continual unlearning in real-time.",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202604/18/2604.12559v1-fable-fine-grained-fact-anchoring-for-unstructured-model-editing",
+      "section": "deep",
+      "title_en": "FABLE: Fine-grained Fact Anchoring for Unstructured Model Editing",
+      "authors": "Peng Wang, Biyu Zhou, Xuehai Tang, Jizhong Han, Songlin Hu",
+      "date": "2026-04-14",
+      "pdf": "https://arxiv.org/pdf/2604.12559v1",
+      "score": "9.0",
+      "evidence": "利用真实文本更新模型的非结构化模型编辑",
+      "tldr": "针对非结构化模型编辑中存在的“整体记忆而缺乏细粒度事实访问”的问题，本文提出了FABLE框架。该框架采用分层解耦策略，先在浅层网络锚定离散事实，再在深层进行微调以保证文本生成的一致性。此外，研究者还推出了UnFine诊断基准。实验证明，FABLE在提升细粒度问答准确性的同时，保持了领先的整体编辑性能，有效解决了生成过程对底层事实表达的干扰。",
+      "tags": "query:mu-ce",
+      "abstract_en": "Unstructured model editing aims to update models with real-world text, yet existing methods often memorize text holistically without reliable fine-grained fact access. To address this, we propose FABLE, a hierarchical framework that decouples fine-grained fact injection from holistic text generation. FABLE follows a two-stage, fact-first strategy: discrete facts are anchored in shallow layers, followed by minimal updates to deeper layers to produce coherent text. This decoupling resolves the mismatch between holistic recall and fine-grained fact access, reflecting the unidirectional Transformer flow in which surface-form generation amplifies rather than corrects underlying fact representations. We also introduce UnFine, a diagnostic benchmark with fine-grained question-answer pairs and fact-level metrics for systematic evaluation. Experiments show that FABLE substantially improves fine-grained question answering while maintaining state-of-the-art holistic editing performance. Our code is publicly available at https://github.com/caskcsg/FABLE.",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202604/18/2604.09038v1-towards-lifelong-aerial-autonomy-geometric-memory-management-for-continual-visual-place-recognition-in-dynamic-environments",
+      "section": "quick",
+      "title_en": "Towards Lifelong Aerial Autonomy: Geometric Memory Management for Continual Visual Place Recognition in Dynamic Environments",
+      "authors": "Xingyu Shao, Zhiqiang Yan, Liangzheng Sun, Mengfan He, Chao Chen, Jinhui Zhang, Chunyu Li, Ziyang Meng",
+      "date": "2026-04-10",
+      "pdf": "https://arxiv.org/pdf/2604.09038v1",
+      "score": "6.0",
+      "evidence": "地理知识的记忆管理与选择性处理",
+      "tldr": "针对无人机在动态环境下的长期视觉地点识别（VPR）难题，本文提出一种异构几何记忆管理框架。该框架通过“学习与处置”流水线，结合静态卫星锚点和动态经验回放缓冲区，有效缓解了持续学习中的灾难性遗忘。通过空间约束分配和多样性驱动的缓冲区选择策略，在21个任务序列的基准测试中显著提升了空间泛化能力和知识保留率，证明了结构特征覆盖在终身航空自主中的关键作用。",
+      "tags": "query:mu-ce",
+      "abstract_en": "Robust geo-localization in changing environmental conditions is critical for long-term aerial autonomy. While visual place recognition (VPR) models perform well when airborne views match the training domain, adapting them to shifting distributions during sequential missions triggers catastrophic forgetting. Existing continual learning (CL) methods often fail here because geographic features exhibit severe intra-class variations. In this work, we formulate aerial VPR as a mission-based domain-incremental learning (DIL) problem and propose a novel heterogeneous memory framework. To respect strict onboard storage constraints, our \"Learn-and-Dispose\" pipeline decouples geographic knowledge into static satellite anchors (preserving global geometric priors) and a dynamic experience replay buffer (retaining domain-specific features). We introduce a spatially-constrained allocation strategy that optimizes buffer selection based on sample difficulty or feature space diversity. To facilitate systematic assessment, we provide three evaluation criteria and a comprehensive benchmark derived from 21 diverse mission sequences. Extensive experiments demonstrate that our architecture significantly boosts spatial generalization; our diversity-driven buffer selection outperforms the random baseline by 7.8% in knowledge retention. Unlike class-mean preservation methods that fail in unstructured environments, maximizing structural diversity achieves a superior plasticity-stability balance and ensures order-agnostic robustness across randomized sequences. These results prove that maintaining structural feature coverage is more critical than sample difficulty for resolving catastrophic forgetting in lifelong aerial autonomy.",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202604/18/2604.13460v1-from-order-to-distribution-a-spectral-characterization-of-forgetting-in-continual-learning",
+      "section": "quick",
+      "title_en": "From Order to Distribution: A Spectral Characterization of Forgetting in Continual Learning",
+      "authors": "Zonghuan Xu, Xingjun Ma",
+      "date": "2026-04-15",
+      "pdf": "https://arxiv.org/pdf/2604.13460v1",
+      "score": "6.0",
+      "evidence": "持续学习中遗忘现象的光谱特征描述",
+      "tldr": "本文针对持续学习中的遗忘问题，将研究视角从固定任务的排序转向任务的生成分布。在超参数化线性回归的精确拟合机制下，通过分析从分布中独立同分布采样的任务序列，推导出遗忘量的精确算子恒等式，揭示了其递归谱结构，并给出了遗忘率与任务分布几何属性之间的理论关联。",
+      "tags": "query:mu-ce",
+      "abstract_en": "A central challenge in continual learning is forgetting, the loss of performance on previously learned tasks induced by sequential adaptation to new ones. While forgetting has been extensively studied empirically, rigorous theoretical characterizations remain limited. A notable step in this direction is \\citet{evron2022catastrophic}, which analyzes forgetting under random orderings of a fixed task collection in overparameterized linear regression. We shift the perspective from order to distribution. Rather than asking how a fixed task collection behaves under random orderings, we study an exact-fit linear regime in which tasks are sampled i.i.d.\\ from a task distribution~$Π$, and ask how the generating distribution itself governs forgetting. In this setting, we derive an exact operator identity for the forgetting quantity, revealing a recursive spectral structure. Building on this identity, we establish an unconditional upper bound, identify the leading asymptotic term, and, in generic nondegenerate cases, characterize the convergence rate up to constants. We further relate this rate to geometric properties of the task distribution, clarifying what drives slow or fast forgetting in this model.",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,169 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-04-18T19:23:24.233092+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 2,
+    "deep_cap": 6,
+    "deep_selected": 2,
+    "quick_candidates": 2,
+    "quick_skim_target": 11,
+    "quick_selected": 2
+  },
+  "deep_dive": [
+    {
+      "id": "2604.14644v1",
+      "title": "CURaTE: Continual Unlearning in Real Time with Ensured Preservation of LLM Knowledge",
+      "abstract": "The inability to filter out in advance all potentially problematic data from the pre-training of large language models has given rise to the need for methods for unlearning specific pieces of knowledge after training. Existing techniques overlook the need for continuous and immediate action, causing them to suffer from degraded utility as updates accumulate and protracted exposure of sensitive information. To address these issues, we propose Continual Unlearning in Real Time with Ensured Preservation of LLM Knowledge (CURaTE). Our method begins by training a sentence embedding model on a dataset designed to enable the formation of sharp decision boundaries for determining whether a given input prompt corresponds to any stored forget requests. The similarity of a given input to the forget requests is then used to determine whether to answer or return a refusal response. We show that even with such a simple approach, not only does CURaTE achieve more effective forgetting than existing methods, but by avoiding modification of the language model parameters, it also maintains near perfect knowledge preservation over any number of updates and is the only method capable of continual unlearning in real-time.",
+      "authors": [
+        "Seyun Bae",
+        "Seokhan Lee",
+        "Eunho Yang"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.LG"
+      ],
+      "published": "2026-04-16T05:49:10+00:00",
+      "link": "https://arxiv.org/pdf/2604.14644v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "Addresses the need for continuous and immediate unlearning of specific knowledge in LLMs.",
+      "llm_evidence_cn": "解决了大语言模型中特定知识的持续和即时遗忘需求。",
+      "llm_evidence": "解决了大语言模型中特定知识的持续和即时遗忘需求。",
+      "canonical_evidence": "解决了大语言模型中特定知识的持续和即时遗忘需求。",
+      "llm_tldr_en": "Introduces CURaTE for real-time continual unlearning in LLMs while preserving general model utility.",
+      "llm_tldr_cn": "提出CURaTE方法，实现大语言模型的实时持续遗忘，同时确保模型原有知识不受损。",
+      "llm_tldr": "提出CURaTE方法，实现大语言模型的实时持续遗忘，同时确保模型原有知识不受损。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Efficient data removal from trained machine learning models",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.12559v1",
+      "title": "FABLE: Fine-grained Fact Anchoring for Unstructured Model Editing",
+      "abstract": "Unstructured model editing aims to update models with real-world text, yet existing methods often memorize text holistically without reliable fine-grained fact access. To address this, we propose FABLE, a hierarchical framework that decouples fine-grained fact injection from holistic text generation. FABLE follows a two-stage, fact-first strategy: discrete facts are anchored in shallow layers, followed by minimal updates to deeper layers to produce coherent text. This decoupling resolves the mismatch between holistic recall and fine-grained fact access, reflecting the unidirectional Transformer flow in which surface-form generation amplifies rather than corrects underlying fact representations. We also introduce UnFine, a diagnostic benchmark with fine-grained question-answer pairs and fact-level metrics for systematic evaluation. Experiments show that FABLE substantially improves fine-grained question answering while maintaining state-of-the-art holistic editing performance. Our code is publicly available at https://github.com/caskcsg/FABLE.",
+      "authors": [
+        "Peng Wang",
+        "Biyu Zhou",
+        "Xuehai Tang",
+        "Jizhong Han",
+        "Songlin Hu"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-04-14T10:41:36+00:00",
+      "link": "https://arxiv.org/pdf/2604.12559v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "unstructured model editing to update models with real-world text",
+      "llm_evidence_cn": "利用真实文本更新模型的非结构化模型编辑",
+      "llm_evidence": "利用真实文本更新模型的非结构化模型编辑",
+      "canonical_evidence": "利用真实文本更新模型的非结构化模型编辑",
+      "llm_tldr_en": "Introduces FABLE, a framework for fine-grained fact injection and knowledge update in Transformer models.",
+      "llm_tldr_cn": "提出FABLE框架，用于在Transformer模型中进行细粒度的事实注入和知识更新。",
+      "llm_tldr": "提出FABLE框架，用于在Transformer模型中进行细粒度的事实注入和知识更新。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Model editing for knowledge update and correction",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2604.09038v1",
+      "title": "Towards Lifelong Aerial Autonomy: Geometric Memory Management for Continual Visual Place Recognition in Dynamic Environments",
+      "abstract": "Robust geo-localization in changing environmental conditions is critical for long-term aerial autonomy. While visual place recognition (VPR) models perform well when airborne views match the training domain, adapting them to shifting distributions during sequential missions triggers catastrophic forgetting. Existing continual learning (CL) methods often fail here because geographic features exhibit severe intra-class variations. In this work, we formulate aerial VPR as a mission-based domain-incremental learning (DIL) problem and propose a novel heterogeneous memory framework. To respect strict onboard storage constraints, our \"Learn-and-Dispose\" pipeline decouples geographic knowledge into static satellite anchors (preserving global geometric priors) and a dynamic experience replay buffer (retaining domain-specific features). We introduce a spatially-constrained allocation strategy that optimizes buffer selection based on sample difficulty or feature space diversity. To facilitate systematic assessment, we provide three evaluation criteria and a comprehensive benchmark derived from 21 diverse mission sequences. Extensive experiments demonstrate that our architecture significantly boosts spatial generalization; our diversity-driven buffer selection outperforms the random baseline by 7.8% in knowledge retention. Unlike class-mean preservation methods that fail in unstructured environments, maximizing structural diversity achieves a superior plasticity-stability balance and ensures order-agnostic robustness across randomized sequences. These results prove that maintaining structural feature coverage is more critical than sample difficulty for resolving catastrophic forgetting in lifelong aerial autonomy.",
+      "authors": [
+        "Xingyu Shao",
+        "Zhiqiang Yan",
+        "Liangzheng Sun",
+        "Mengfan He",
+        "Chao Chen",
+        "Jinhui Zhang",
+        "Chunyu Li",
+        "Ziyang Meng"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.CV",
+        "cs.LG"
+      ],
+      "published": "2026-04-10T06:58:30+00:00",
+      "link": "https://arxiv.org/pdf/2604.09038v1",
+      "tags": [
+        "keyword:MU CE"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Memory management and selective disposal of geographic knowledge",
+      "llm_evidence_cn": "地理知识的记忆管理与选择性处理",
+      "llm_evidence": "地理知识的记忆管理与选择性处理",
+      "canonical_evidence": "地理知识的记忆管理与选择性处理",
+      "llm_tldr_en": "A memory framework for aerial visual recognition that manages and disposes of knowledge to meet storage constraints.",
+      "llm_tldr_cn": "一种用于航空视觉识别的记忆框架，通过管理和处理知识以满足存储限制。",
+      "llm_tldr": "一种用于航空视觉识别的记忆框架，通过管理和处理知识以满足存储限制。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Selective forgetting in neural networks",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2604.13460v1",
+      "title": "From Order to Distribution: A Spectral Characterization of Forgetting in Continual Learning",
+      "abstract": "A central challenge in continual learning is forgetting, the loss of performance on previously learned tasks induced by sequential adaptation to new ones. While forgetting has been extensively studied empirically, rigorous theoretical characterizations remain limited. A notable step in this direction is \\citet{evron2022catastrophic}, which analyzes forgetting under random orderings of a fixed task collection in overparameterized linear regression. We shift the perspective from order to distribution. Rather than asking how a fixed task collection behaves under random orderings, we study an exact-fit linear regime in which tasks are sampled i.i.d.\\ from a task distribution~$Π$, and ask how the generating distribution itself governs forgetting. In this setting, we derive an exact operator identity for the forgetting quantity, revealing a recursive spectral structure. Building on this identity, we establish an unconditional upper bound, identify the leading asymptotic term, and, in generic nondegenerate cases, characterize the convergence rate up to constants. We further relate this rate to geometric properties of the task distribution, clarifying what drives slow or fast forgetting in this model.",
+      "authors": [
+        "Zonghuan Xu",
+        "Xingjun Ma"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-04-15T04:29:00+00:00",
+      "link": "https://arxiv.org/pdf/2604.13460v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "spectral characterization of forgetting in continual learning",
+      "llm_evidence_cn": "持续学习中遗忘现象的光谱特征描述",
+      "llm_evidence": "持续学习中遗忘现象的光谱特征描述",
+      "canonical_evidence": "持续学习中遗忘现象的光谱特征描述",
+      "llm_tldr_en": "Provides a theoretical analysis of how task distributions govern catastrophic forgetting in neural networks.",
+      "llm_tldr_cn": "对任务分布如何支配神经网络中的灾难性遗忘进行了理论分析。",
+      "llm_tldr": "对任务分布如何支配神经网络中的灾难性遗忘进行了理论分析。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Selective forgetting in neural networks",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
