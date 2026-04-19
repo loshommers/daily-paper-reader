@@ -1,6 +1,9 @@
 * <a class="dpr-sidebar-root-link" href="#/">首页</a>
 * <a class="dpr-sidebar-root-link dpr-sidebar-noactive-link" href="javascript:void(0)" data-dpr-hash="#/tutorial/README">使用教程</a>
 * Daily Papers
+  * 2026-04-19 <!--dpr-date:20260419-->
+    * 速读区
+      * <a class="dpr-sidebar-item-link dpr-sidebar-item-structured" href="#/202604/19/2604.12342v1-cola-a-choice-leakage-attack-framework-to-expose-privacy-risks-in-subset-training" data-sidebar-item="{&quot;title&quot;: &quot;CoLA: A Choice Leakage Attack Framework to Expose Privacy Risks in Subset Training&quot;, &quot;link&quot;: &quot;https://arxiv.org/abs/2604.12342v1-cola-a-choice-leakage-attack-framework-to-expose-privacy-risks-in-subset-training&quot;, &quot;score&quot;: &quot;6.0&quot;, &quot;tags&quot;: [{&quot;kind&quot;: &quot;query&quot;, &quot;label&quot;: &quot;mu-ce&quot;}], &quot;evidence&quot;: &quot;子集训练数据选择中的隐私风险与信息泄露&quot;}">CoLA: A Choice Leakage Attack Framework to Expose Privacy Risks in Subset Training</a>
   * 2026-04-18 <!--dpr-date:20260418-->
     * 精读区
       * <a class="dpr-sidebar-item-link dpr-sidebar-item-structured" href="#/202604/18/2604.14644v1-curate-continual-unlearning-in-real-time-with-ensured-preservation-of-llm-knowledge" data-sidebar-item="{&quot;title&quot;: &quot;CURaTE: Continual Unlearning in Real Time with Ensured Preservation of LLM Knowledge&quot;, &quot;link&quot;: &quot;https://arxiv.org/abs/2604.14644v1-curate-continual-unlearning-in-real-time-with-ensured-preservation-of-llm-knowledge&quot;, &quot;score&quot;: &quot;10.0&quot;, &quot;tags&quot;: [{&quot;kind&quot;: &quot;query&quot;, &quot;label&quot;: &quot;mu-ce&quot;}], &quot;evidence&quot;: &quot;解决了大语言模型中特定知识的持续和即时遗忘需求。&quot;}">CURaTE: Continual Unlearning in Real Time with Ensured Preservation of LLM Knowledge</a>

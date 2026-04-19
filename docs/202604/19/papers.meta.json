@@ -1,0 +1,23 @@
+{
+  "label": "2026-04-19",
+  "date": "2026-04-19",
+  "generated_at": "2026-04-19T19:26:18",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202604/19/2604.12342v1-cola-a-choice-leakage-attack-framework-to-expose-privacy-risks-in-subset-training",
+      "section": "quick",
+      "title_en": "CoLA: A Choice Leakage Attack Framework to Expose Privacy Risks in Subset Training",
+      "authors": "Qi Li, Cheng-Long Wang, Yinzhi Cao, Di Wang",
+      "date": "2026-04-14",
+      "pdf": "https://arxiv.org/pdf/2604.12342v1",
+      "score": "6.0",
+      "evidence": "子集训练数据选择中的隐私风险与信息泄露",
+      "tldr": "本文提出了CoLA框架，系统研究了子集训练中的隐私泄露风险。研究挑战了“减少训练样本能降低隐私风险”的直觉，指出数据选择过程本身会通过侧信道或模型输出泄露敏感信息。通过定义TM-MIA和SP-MIA两种攻击场景，CoLA揭示了不仅是训练数据，连参与筛选但未被选中的数据也面临隐私威胁，证明了现有模型低估了子集训练对整个机器学习供应链的隐私风险。",
+      "tags": "query:mu-ce",
+      "abstract_en": "Training models on a carefully chosen portion of data rather than the full dataset is now a standard preprocess for modern ML. From vision coreset selection to large-scale filtering in language models, it enables scalability with minimal utility loss. A common intuition is that training on fewer samples should also reduce privacy risks. In this paper, we challenge this assumption. We show that subset training is not privacy free: the very choices of which data are included or excluded can introduce new privacy surface and leak more sensitive information. Such information can be captured by adversaries either through side-channel metadata from the subset selection process or via the outputs of the target model. To systematically study this phenomenon, we propose CoLA (Choice Leakage Attack), a unified framework for analyzing privacy leakage in subset selection. In CoLA, depending on the adversary's knowledge of the side-channel information, we define two practical attack scenarios: Subset-aware Side-channel Attacks and Black-box Attacks. Under both scenarios, we investigate two privacy surfaces unique to subset training: (1) Training-membership MIA (TM-MIA), which concerns only the privacy of training data membership, and (2) Selection-participation MIA (SP-MIA), which concerns the privacy of all samples that participated in the subset selection process. Notably, SP-MIA enlarges the notion of membership from model training to the entire data-model supply chain. Experiments on vision and language models show that existing threat models underestimate subset-training privacy risks: the expanded privacy surface leaks both training and selection membership, extending risks from individual models to the broader ML ecosystem.",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
