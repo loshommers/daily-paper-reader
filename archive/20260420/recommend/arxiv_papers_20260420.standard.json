@@ -1,0 +1,209 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-04-20T19:51:00.366040+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 3,
+    "deep_cap": 6,
+    "deep_selected": 3,
+    "quick_candidates": 2,
+    "quick_skim_target": 11,
+    "quick_selected": 2
+  },
+  "deep_dive": [
+    {
+      "id": "2604.15829v1",
+      "title": "Beyond Text Prompts: Precise Concept Erasure through Text-Image Collaboration",
+      "abstract": "Text-to-image generative models have achieved impressive fidelity and diversity, but can inadvertently produce unsafe or undesirable content due to implicit biases embedded in large-scale training datasets. Existing concept erasure methods, whether text-only or image-assisted, face trade-offs: textual approaches often fail to fully suppress concepts, while naive image-guided methods risk over-erasing unrelated content. We propose TICoE, a text-image Collaborative Erasing framework that achieves precise and faithful concept removal through a continuous convex concept manifold and hierarchical visual representation learning. TICoE precisely removes target concepts while preserving unrelated semantic and visual content. To objectively assess the quality of erasure, we further introduce a fidelity-oriented evaluation strategy that measures post-erasure usability. Experiments on multiple benchmarks show that TICoE surpasses prior methods in concept removal precision and content fidelity, enabling safer, more controllable text-to-image generation. Our code is available at https://github.com/OpenAscent-L/TICoE.git",
+      "authors": [
+        "Jun Li",
+        "Lizhi Xiong",
+        "Ziqiang Li",
+        "Weiwei Jiang",
+        "Zhangjie Fu",
+        "Yong Li",
+        "Guo-Sen Xie"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.CR"
+      ],
+      "published": "2026-04-17T08:32:39+00:00",
+      "link": "https://arxiv.org/pdf/2604.15829v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "Precise concept erasure in text-to-image generative models",
+      "llm_evidence_cn": "文本生成图像模型中的精确概念擦除",
+      "llm_evidence": "文本生成图像模型中的精确概念擦除",
+      "canonical_evidence": "文本生成图像模型中的精确概念擦除",
+      "llm_tldr_en": "Proposes TICoE for precise concept removal in generative models while preserving unrelated content.",
+      "llm_tldr_cn": "提出TICoE框架，在保持无关内容的同时精确擦除生成模型中的特定概念。",
+      "llm_tldr": "提出TICoE框架，在保持无关内容的同时精确擦除生成模型中的特定概念。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Concept erasure and removal from pre-trained models",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.15847v1",
+      "title": "CiPO: Counterfactual Unlearning for Large Reasoning Models through Iterative Preference Optimization",
+      "abstract": "Machine unlearning has gained increasing attention in recent years, as a promising technique to selectively remove unwanted privacy or copyrighted information from Large Language Models that are trained on a massive scale of human data. However, the emergence of Large Reasoning Models (LRMs), which emphasize long chain-of-thought (CoT) reasoning to address complex questions, presents a dilemma to unlearning: existing methods either struggle to completely eliminate undesired knowledge from the CoT traces or degrade the reasoning performances due to the interference with the reasoning process. To this end, we introduce Counterfactual Unlearning through iterative Preference Optimization (CiPO), a novel framework that redefines unlearning as the targeted intervention of the CoT reasoning in LRMs. More specifically, given a desired unlearning target answer, CiPO instructs LRMs to generate a logically valid counterfactual reasoning trace for preference tuning. As the LRM adjusts to the counterfactual trace, CiPO iteratively updates the preference learning data to increase the discrepancy from the original model. This iterative loop ensures both desirable unlearning and smooth optimization, effectively mitigating the dilemma. Experiments on challenging benchmarks demonstrate that CiPO excels at unlearning, completely removing knowledge from both the intermediate CoT steps and the final answer, while preserving the reasoning abilities of LRMs.",
+      "authors": [
+        "Junyi Li",
+        "Yongqiang Chen",
+        "Ningning Ding"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-04-17T08:56:36+00:00",
+      "link": "https://arxiv.org/pdf/2604.15847v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "counterfactual unlearning to selectively remove unwanted privacy or copyrighted information",
+      "llm_evidence_cn": "通过反事实遗忘选择性删除无用的隐私或版权信息",
+      "llm_evidence": "通过反事实遗忘选择性删除无用的隐私或版权信息",
+      "canonical_evidence": "通过反事实遗忘选择性删除无用的隐私或版权信息",
+      "llm_tldr_en": "Introduces CiPO for effective unlearning in reasoning models without degrading CoT performance.",
+      "llm_tldr_cn": "为推理模型引入CiPO框架，在不降低思维链性能的情况下实现有效遗忘。",
+      "llm_tldr": "为推理模型引入CiPO框架，在不降低思维链性能的情况下实现有效遗忘。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Machine unlearning techniques and algorithms in deep learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.15482v1",
+      "title": "Harmonizing Multi-Objective LLM Unlearning via Unified Domain Representation and Bidirectional Logit Distillation",
+      "abstract": "Large Language Models (LLMs) unlearning is crucial for removing hazardous or privacy-leaking information from the model. Practical LLM unlearning demands satisfying multiple challenging objectives simultaneously: removing undesirable knowledge, preserving general utility, avoiding over-refusal of neighboring concepts, and, crucially, ensuring robustness against adversarial probing attacks. However, existing unlearning methods primarily focus on a limited subset of these goals, typically unlearning efficacy and utility preservation while overlooking robustness and boundary behaviors. Naively extending these methods to multi-objective settings may lead to unlearning task interference. We propose a novel multi-objective unlearning framework that harmonizes multiple unlearning objectives through a data and optimization co-design: We standardize training corpora into a unified data representation to reduce the domain gap, and then introduce a bidirectional distillation method that simultaneously elicits desired behavior from a context-instructed teacher while suppressing undesirable behavior in the student model. Theoretical and empirical analyses show that our method aligns domain distributions and converts seemingly irrelevant unlearning tasks into cooperative optimization. Evaluation demonstrates state-of-the-art performance, which enables balanced and reliable unlearning across diverse, challenging requirements.",
+      "authors": [
+        "Yisheng Zhong",
+        "Sijia Liu",
+        "Zhuangdi Zhu"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-04-16T19:09:17+00:00",
+      "link": "https://arxiv.org/pdf/2604.15482v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "harmonizing multi-objective LLM unlearning and ensuring robustness",
+      "llm_evidence_cn": "协调多目标LLM遗忘并确保鲁棒性",
+      "llm_evidence": "协调多目标LLM遗忘并确保鲁棒性",
+      "canonical_evidence": "协调多目标LLM遗忘并确保鲁棒性",
+      "llm_tldr_en": "Addresses multi-objective interference in LLM unlearning to improve efficacy, utility, and adversarial robustness.",
+      "llm_tldr_cn": "解决LLM遗忘中的多目标干扰问题，提升遗忘效能、效用保留及对抗鲁棒性。",
+      "llm_tldr": "解决LLM遗忘中的多目标干扰问题，提升遗忘效能、效用保留及对抗鲁棒性。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "State of the art methods for machine unlearning and concept erasure",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2604.15794v1",
+      "title": "Self-Distillation as a Performance Recovery Mechanism for LLMs: Counteracting Compression and Catastrophic Forgetting",
+      "abstract": "Large Language Models (LLMs) have achieved remarkable success, underpinning diverse AI applications. However, they often suffer from performance degradation due to factors such as catastrophic forgetting during Supervised Fine-Tuning (SFT), quantization, and pruning. In this work, we introduce a performance recovery framework based on Self-Distillation Fine-Tuning (SDFT) that effectively restores model capabilities. Complementing this practical contribution, we provide a rigorous theoretical explanation for the underlying recovery mechanism. We posit that an LLM's generative capability fundamentally relies on the high-dimensional manifold constructed by its hidden layers. To investigate this, we employ Centered Kernel Alignment (CKA) to quantify the alignment between student and teacher activation trajectories, leveraging its invariance to orthogonal transformations and scaling. Our experiments demonstrate a strong correlation between performance recovery and manifold alignment, substantiating the claim that self-distillation effectively aligns the student's high-dimensional manifold with the optimal structure represented by the teacher. This study bridges the gap between practical recovery frameworks and geometric representation theory, offering new insights into the internal mechanisms of self-distillation.",
+      "authors": [
+        "Chi Liu",
+        "Xin Chen",
+        "Xu Zhou",
+        "Fangbo Tu",
+        "Srinivasan Manoharan"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI",
+        "cs.CL"
+      ],
+      "published": "2026-04-17T07:55:38+00:00",
+      "link": "https://arxiv.org/pdf/2604.15794v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "counteracting catastrophic forgetting in LLMs",
+      "llm_evidence_cn": "对抗LLM中的灾难性遗忘",
+      "llm_evidence": "对抗LLM中的灾难性遗忘",
+      "canonical_evidence": "对抗LLM中的灾难性遗忘",
+      "llm_tldr_en": "Uses self-distillation to recover performance lost to catastrophic forgetting during fine-tuning and compression.",
+      "llm_tldr_cn": "利用自蒸馏技术恢复因微调和压缩导致的灾难性遗忘所损失的模型性能。",
+      "llm_tldr": "利用自蒸馏技术恢复因微调和压缩导致的灾难性遗忘所损失的模型性能。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Selective forgetting in neural networks",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2604.16197v1",
+      "title": "Sketching the Readout of Large Language Models for Scalable Data Attribution and Valuation",
+      "abstract": "Data attribution and valuation are critical for understanding data-model synergy for Large Language Models (LLMs), yet existing gradient-based methods suffer from scalability challenges on LLMs. Inspired by human cognition, where decision making relies on a focused readout of relevant memories rather than replaying all pathways, we introduce RISE (Readout Influence Sketching Estimator). Instead of computing and indexing gradients across the entire LLM, RISE focuses on influence hotspots at the output layer, where influence signals concentrate, and the gradient admits a decomposed outer-product form. This enables a dual-channel representation combining a lexical residual channel (RH) and a semantic projected-error channel (GH). Applying CountSketch projections to these channels achieves strong compression while maintaining accurate attribution. Across the OLMo (1B-32B) and Pythia (14M-6.9B) families, RISE reduces index storage by up to 112$\\times$ compared to RapidIn and scales to 32B parameters LLM, where gradient-based baselines such as RapidIn and ZO-Inf become memory-infeasible. We evaluate RISE on two paradigms: (1) retrospective attribution, retrieving influential training examples for specific predictions, and (2) prospective valuation, scoring candidate data utility zero-shot. We validate RISE on three tasks: Howdy backdoor data detection, Finance-Medical domain separation, and Brain Rot high-quality data selection. In a closed-loop Brain Rot study, continued pretraining on RISE-selected data yields consistent downstream improvements. Overall, RISE provides a practical and scalable primitive for influence analysis and training-data selection in modern large language models.",
+      "authors": [
+        "Yide Ran",
+        "Jianwen Xie",
+        "Minghui Wang",
+        "Wenjin Zheng",
+        "Denghui Zhang",
+        "Chuan Li",
+        "Zhaozhuo Xu"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-04-17T16:07:11+00:00",
+      "link": "https://arxiv.org/pdf/2604.16197v1",
+      "tags": [
+        "keyword:MU CE",
+        "query:MU CE"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Scalable data attribution for understanding data-model synergy",
+      "llm_evidence_cn": "用于理解数据与模型协同作用的可扩展数据归因",
+      "llm_evidence": "用于理解数据与模型协同作用的可扩展数据归因",
+      "canonical_evidence": "用于理解数据与模型协同作用的可扩展数据归因",
+      "llm_tldr_en": "Introduces RISE for efficient data attribution in LLMs, which is a prerequisite for targeted data removal.",
+      "llm_tldr_cn": "提出RISE方法实现大模型的高效数据归因，这是精准数据删除的前提。",
+      "llm_tldr": "提出RISE方法实现大模型的高效数据归因，这是精准数据删除的前提。",
+      "llm_tags": [
+        "query:mu-ce"
+      ],
+      "matched_query_tag": "query:mu-ce",
+      "matched_query_text": "Efficient data removal from trained machine learning models",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

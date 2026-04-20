@@ -1,0 +1,362 @@
+Title: Harmonizing Multi-Objective LLM Unlearning via Unified Domain Representation and Bidirectional Logit Distillation
+
+URL Source: https://arxiv.org/pdf/2604.15482v1
+
+Published Time: Mon, 20 Apr 2026 00:10:46 GMT
+
+Number of Pages: 14
+
+Markdown Content:
+Preprint. Under review. 
+
+# Harmonizing Multi-Objective LLM Unlearning via Unified Domain Representation and Bidirectional Logit Distillation 
+
+Yisheng Zhong 
+
+George Mason University 
+
+yzhong7@gmu.edu 
+
+Sijia Liu 
+
+Michigan State University 
+
+liusiji5@msu.edu 
+
+Zhuangdi Zhu 
+
+George Mason University 
+
+zzhu24@gmu.edu 
+
+## Abstract 
+
+Large Language Models (LLMs) unlearning is crucial for removing haz-ardous or privacy-leaking information from the model. Practical LLM unlearning demands satisfying multiple challenging objectives simultane-ously: removing undesirable knowledge, preserving general utility, avoid-ing over-refusal of neighboring concepts, and, crucially, ensuring robust-ness against adversarial probing attacks. However, existing unlearning methods primarily focus on a limited subset of these goals, typically un-learning efficacy and utility preservation while overlooking robustness and boundary behaviors. Naively extending these methods to multi-objective settings may lead to unlearning task interference. We propose a novel multi-objective unlearning framework that harmonizes multiple unlearn-ing objectives through a data and optimization co-design: We standardize training corpora into a unified data representation to reduce the domain gap, and then introduce a bidirectional distillation method that simulta-neously elicits desired behavior from a context-instructed teacher while suppressing undesirable behavior in the student model. Theoretical and empirical analyses show that our method aligns domain distributions and converts seemingly irrelevant unlearning tasks into cooperative optimiza-tion. Evaluation demonstrates state-of-the-art performance, which enables balanced and reliable unlearning across diverse, challenging requirements. 
+
+## 1 Introduction 
+
+Unlearning is an effective method for removing targeted knowledge from Large Language Models (LLMs) without the prohibitive cost of retraining from scratch. It has important implications in enhancing the security, privacy, and factuality of LLMs by eliminating hazardous, copyrighted, or privacy-leaking information from the model’s parameters. Consequently, LLM unlearning significantly benefits high-stakes domains such as science, healthcare, and legal applications, where the strict adherence to data compliance and safety boundaries is non-negotiable. Emerging efforts have been made to address the core challenging goals of unlearning: balancing unlearning efficacy ( i.e. , effectively removing undesirable knowledge) while pre-serving model utility on unrelated tasks and domains. Despite encouraging progress of unlearning spanning tuning-based (Yao et al., 2024; Nguyen et al., 2025; Xu et al., 2023; Zhong et al., 2025) and in-context optimization methods (Pawelczyk et al.; Takashiro et al., 2025; Muresanu et al., 2025), this line of research has largely overlooked two critical practical challenges: First, seemingly unlearned knowledge can still be elicited through sophisticated adversarial probing, such as prefilling attacks (Andriushchenko et al., 2024), (attacks that bypass refusal guardrails by forcefully seeding the model’s output with an affirmative prefix, 
+
+e.g. , “ Sure, here are the detailed instructions: ’) which thus exposing a fundamental robustness gap. Meanwhile, concepts semantically adjacent to the unlearning target ( e.g. , knowledge of restricted biological weapons versus general biomedical science) are often collateral casual-ties of the forgetting process. While prior work evaluates retention performance on held-out tasks, the subtler question of performance on neighboring domains remains underexplored, giving rise to the phenomenon of over-refusal .1
+
+> arXiv:2604.15482v1 [cs.LG] 16 Apr 2026
+
+Preprint. Under review. As real-world applications demand models to be robust against multiple attack vectors simultaneously, practical LLM unlearning needs to simultaneously satisfy a set of intricate, seemingly conflicting objectives: precisely removing undesirable knowledge while preserv-ing general model utility ( Obj1 ), avoiding over-refusal of neighboring concepts ( Obj2 ), and maintaining robustness against latent prefilling attacks ( Obj3 ). Existing benchmarks, such as WMDP and RWKU (Li et al., 2024b; Jin et al., 2024), partially cover this spectrum of unlearning objectives. Meanwhile, prior unlearning algorithms typically address only one angle of the problem while leaving others unexamined. Our investigation revealed that a naive extension of previous unlearning methods to tackle these simultaneous goals leads to either catastrophic forgetting of general utility or a complete failure to defend against adversarial elicitation. Some works have proposed reconciling unlearning goals through gradient editing (Li et al., 2025) or seeking orthogonal update directions to mitigate conflicts (Jin et al., 2025), yet they overlook a root cause of gradient conflict: the domain gap manifested in data representations across unlearning objectives. We propose that a unified solution to practical LLM unlearning requires effort along two complementary directions: (1) addressing the unlearning domain gap in data representation, where each unlearning task (domain) Tk can be characterized by a natural language prompt 
+
+pk encoding the intended model behavior ( i.e. , the unlearning intention), paired with repre-sentative samples x ∈ T k from that domain; and (2) an effective unlearning optimization method A(Tk) that directly learns from such data. Guided by this data-optimization dual principle, we propose a novel and lightweight un-learning framework. On the data side, we introduce data standardization, which projects the training corpora for all unlearning goals into a unified data representation, thereby reducing the domain gap across unlearning tasks. On the optimization side, we introduce a bidirectional distillation method, in which the intention prompt pk instructs a frozen teacher LLM, and goal-specific distillation is applied to the student (unlearning) model, which simultaneously imitates the teacher’s desired behavior while suppressing undesirable behavior in the student. Our contributions are summarized as follows: (1) We identify and systematically analyze the practical multi-objective LLM unlearning problem, characterizing the joint demands of unlearning efficacy, robustness to attacks, and avoidance of over-refusal. (2) We pro-pose a unified framework combining data standardization with contrastive anchors and a Chain of Thought (CoT)-instructed bidirectional distillation method, enabling cooper-ative optimization across seemingly conflicting unlearning goals. (3) Through rigorous gradient analysis, we empirically prove how our data standardization and dual distillation mechanisms harmonize gradients of multiple unlearning tasks and promote synergistic optimization. (4) Our method achieves state-of-the-art results on both established and ex-tended benchmarks ( e.g. , MUSE-Book, WMDP-Cyber), reducing the prefilling attack success rate to an unprecedented 16.0% while preventing over-refusal in adjacent domains. (5) We augment these existing benchmarks with new training data and evaluation sets targeting these previously underexplored aspects of unlearning, including boundary behavior on neighboring domains, over-refusal measurement, and robustness to prefilling attacks. 
+
+## 2 LLM Unlearning Preliminary 
+
+Core Objective of LLM Unlearning : LLM unlearning aims to remove specific undesirable knowledge from the model while preserving its general capabilities. Beyond inference time filtering or in-context strategies (Pawelczyk et al., 2023; Takashiro et al., 2025) that might be difficult to scale, most existing approaches rely on training-based optimization. A common formulation defines unlearning through two objectives: min  
+
+> θ
+
+L ≡ L forget (D f ; θ) + Lretain (Dr; θ), (1) where θ denotes model parameters, D f is the forget set that contains undesirable knowledge, and Dr is the retain set that represents general knowledge, usually irrelevant to D f . An ideal model refuses queries that relate to D f and responds normally to other inputs. Prior work focuses on how to balance these two terms, since their gradients, ∇θ Lunlearn vs. ∇θ Lretain ,2Preprint. Under review. often conflict and lead to unstable updates (Jin et al., 2025; Pan et al., 2025). While this dual view captures the core requirement, it may not fully reflect the practical unlearning needs. 
+
+Blurred Boundary Behavior and Over Refusal . A critical yet underexplored issue resides near the boundary of the forget domain (Li et al., 2024c; Eldan & Russinovich, 2023). In practice, many benign concepts share semantic proximity with the target knowledge. An overcorrected model may extend refusal behavior beyond D f to neighboring domains 
+
+N (D f ). This leads to over-refusal , where valid queries receive incorrect rejection. For example, when a model removes knowledge about the Harry Potter series, it may also reject related but harmless topics such as Fantastic Beasts .
+
+Adversarial Probing Attack Against LLM Unlearning. Another challenge faced by un-learning arises in adversarial settings, attributed to the superior context-conditioning ability of LLMs. Consider a prefilling attack, where the adversary constructs a malicious prefix and injects it into the model input to steer the output toward undesirable responses. Formally, given an input sequence composed of a user query xq and a prefix context xp, an LLM π
+
+generates outputs y conditioned on the full context: π(y | xq, xp). An attacker designs a prefix xadv p so that the conditional output shifts toward a targeted behavior, even when the prefix itself appears benign, e.g., by encouraging the model to generate an answer with affirmative prefixes, “Sure, here are the detailed responses: ”). 
+
+## 3 Methodology: A Data-Optimization Co-Design Framework 
+
+The challenges outlined above have motivated us to extend the scope of LLM unlearning beyond the standard dual-objective formulation. We consider a multi-goal unlearning setting where the unlearning LLM, parameterized by θ, needs to simultaneously satisfy three distinct objectives, denoted Tk ∈ { 1, 2, 3 }:• Obj1 (Target Unlearning & General Utility): removing undesirable knowledge while preserving general model capabilities. This is usually empirically captured by optimizing 
+
+L(θ) in Eq (1) using forgetting data D f and irrelevant retain dataset Dr.• Obj2 (Neighboring Domain Retention): Avoiding over-refusal of benign concepts se-mantically adjacent to the unlearning target: min θ L2(θ) ≡ Ex∼N (D f )
+
+h
+
+l(πθ (x)) 
+
+i
+
+.• Obj3 (Adversarial Context Robustness): Maintaining robustness against unlearning con-tent elicitation, especially prefilling prompt attacks: min θ Ex∼D f
+
+h
+
+max xadv p l(πθ (x, xadv p )) 
+
+i
+
+.
+
+3.1 Motivating Observation: Semantically Coherent yet Gradient-Isolated Unlearning 
+
+Prior unlearning methods, including Gradient Ascent (GA) (Neel et al., 2021) and alignment-style optimization such as NPO and its extensions (Zhang et al., 2024a; Fan et al., 2025b), primarily focus on addressing Obj1 . A straightforward extension of the prior unlearning approach to achieving these simultaneous goals is to construct a joint unlearning loss: min θ ∑k Lk(θ), where each objective can be achieved by a tailored loss function lk, such as optimizing GA loss on forgetting domain, and supervised fine-tuning (SFT) loss on desirable model responses ( e.g., a refusal response of “Sorry, I do not know.”). Meanwhile, the representative format of training samples is largely overlooked in existing unlearning approaches. Most methods apply verbatim, token-wise training directly on raw text, such as book chapters or descriptive passages, where the knowledge targeted for unlearning or retention is diluted across lengthy contexts. Moreover, the forget and retain sets often appear in diverging formats. For instance, D f may consist of lengthy descriptive passages while Dr contains structured question-answering pairs. This observation raises a key question: Does directly combining per-objective optimization meth-ods alone lead to synergistic learning? To answer this, we conducted a pilot empirical analysis by profiling the gradient cosine similarity, cos (∇θ Li, ∇θ Lj), across the three unlearning ob-jectives (i, j) during the early stages of standard training. To isolate the effect of data format from that of loss function design, we applied the same optimization method described in Section 3.4 for all three unlearning goals. For more concentrated comparison, we primarily 3Preprint. Under review. 
+
+Figure 1: Overview of our Multi-Objective Unlearning Framework. Left: We investigate the practical LLM unlearning needs, which require simultaneously handling target erasure ( D f ), neighboring domain retention ( N (D f )), and general utility ( Dr) across heterogeneous data sources. Naively optimizing each goal leads to undesirable task-gradient updates. Middle: We standardize diverse training data into a unified representation to close the domain gap and shift diverse unlearning gradients toward synergistic optimization. Right: We then apply an asymmetric teacher-student 
+
+bidirectional distillation architecture that resolves optimization conflicts by simultaneously suppressing undesirable student logits and encouraging teacher-like behavior. 
+
+applied the gradient similarity measurement to model parameters located at the final three decoder layers of Llama 3.2 3B Instruct. As shown in the “Baseline” column of Figure 2, the gradient similarities between all objective pairs are near zero ( cos ≈ 0.04 ∼ 0.08). While orthogonal gradients are often desirable in general multi-task settings where tasks are semantically unre-lated , this conflicts with our unlearning setting, where multiple objectives should converge on a shared semantic goal from complementary angles. Under such near-zero gradient similarity, the objectives do not reinforce one another, which further produces empirically observable interference among the unlearning goals (Sec. 5.2). Obj1 -- Obj2 Obj1 -- Obj3 Obj2 -- Obj3   
+
+> 0
+> 20
+> 40
+> 60
+> 80
+> 100
+> Gradient Cosine Similarity (%)
+> 4.1% 8.0% 4.5%
+> 96.4%
+> (+92.3%)
+> 59.3%
+> (+51.2%)
+> 60.7%
+> (+56.2%)
+> Baseline (Non-standardized)
+> Ours (Standardized)
+
+Figure 2: Empirical gradient cosine similarity across unlearning objectives (evaluated on the MUSE-Book benchmark). The baseline with heterogeneous data formats results in near-orthogonal (conflicting) updates. In contrast, our data standardization shifts the gradient updates into a highly synergistic regime. 
+
+To improve multi-task unlearning, some prior work aims to reduce tasks’ gradient interference through orthogonal gradient-update (Pan et al., 2025; Cao et al., 2022) that operate directly in pa-rameter space. In contrast, we propose that one overlooked bottleneck in multi-task unlearning stems from the domain gap manifested in data repre-sentations . In standard pipelines, these objectives inherently rely on highly divergent data formats. For instance, Obj1 (target erasure) training data typically utilizes raw, unstructured text from existing benchmarks, while Obj3 relies on struc-tured QA pairs extended from these datasets. These divergence in data representation lead to a major domain moving distance across tasks Tk
+
+(Ben-David et al., 2006; Kifer et al., 2004), which will theoretically enlarge the domain adaptation gap across these unlearning goals. 
+
+3.2 Representational Alignment via Data Standardization 
+
+To resolve the multi-goal unlearning challenge at their domain source, we address the data side of our dual principle through Representational Alignment . Instead of relying on heterogeneous data formats, we project the training corpora across all unlearning goals into a unified Question-Answering (QA) format. Concretely, we achieve this standardization through an LLM-assisted data construction pipeline. For Obj1 (Target Erasure & General 4Preprint. Under review. Utility), raw unstructured forgetting corpora ( e.g. , specific character entities from the Harry Potter series, or technical passages from WMDP) are systematically parsed and rephrased into focused QA pairs to isolate the specific knowledge targeted for erasure. This has addi-tional benefits of consolidating the information density in training data, which were largely diluted in grammar and lexical details. Concurrently, the general retain set is constructed by uniformly sampling broad-domain knowledge from Wikipedia and formulating it into a matching QA structure. For Obj2 (Neighboring Domain Retention), to accurately define and construct the neighboring domain set N (D f ), we prompt an LLM to generate concepts that are semantically adjacent to but strictly outside the unlearning domain D f based on the published benchmark taxonomy. These extracted concepts are also standardized into QA pairs. For Obj3 (Adversarial Robustness), we approximate the inner maximization problem of adversarial prefilling: given a forgetting sample x, we employ the LLM (Gemini 3 Pro) to iteratively improve an adversarial prefix xadv p that will maximally elicit the undesirable knowledge from the target model πθ .
+
+Data Standardization Tightens the Unlearning Bound: Theoretically, by enforcing a con-sistent data representation, our method mitigates the structural discrepancies among un-learning domains, which also draws a connection to an improved generalization bound (Ben-David et al., 2006). Specifically, consider the multi-objective unlearning problem as a multi-source domain adaptation task, where each individual unlearning objective corre-sponds to a source domain Tk, and the target domain T represents their ensemble, i.e. , the joint multi-objective unlearning goal. Let h : X → Y be a hypothesis (model) over such domains, and H ⊆ { h} denote the hypothesis class. dH∆H( ˜Dk, ˜D) denotes the divergence measured over the symmetric-difference hypothesis space between the k-th source domain ˜Dk and the target domain ˜ D. Then, with probability at least 1 − δ:
+
+LT (h) ≡ L T
+
+1
+
+K ∑
+
+> k
+
+hk
+
+!
+
+≤ 1
+
+K ∑
+
+> k
+
+ˆLT k(hk) + 1
+
+K ∑ k  dH∆H( ˜Dk, ˜ D) + λk
+
+ + C, (2) where C is governed by the number of training samples and the VC-dimension of H. This bound reveals that the overall unlearning performance depends not only on the individual objective losses ˆLTk (hk), but also on the distributional divergence between each source and the target domain. In our setting, minimizing dH∆H( ˜Dk, ˜D) across unlearning domains directly tightens this bound, which aligns with the theoretical justification to serve as a principled path towards multi-objective unlearning optimization. Empirically, this standardization ensures that the gradient updates for all seemingly isolated goals operate on a shared, harmonized geometric space. The impact of this data repre-sentation alignment is quantitatively validated in Table 2: the gradient updates of each unlearning goal shift dramatically to strong positive correlations ( e.g. , +92.29% improvement between Obj1 and Obj2) after data standardization (the “Ours” column in Figure 2), which thus enables synergistic optimization across diverse unlearning objectives. 
+
+3.3 Sharpening Unlearning Domain Boundaries via Contrastive Anchor Samples 
+
+While standardization aligns the optimization trajectory across multiple unlearning goals, the LLM still requires precise semantic boundaries to prevent the pervasive issue of over-refusal on neighboring domains. To resolve this ambiguity, we augment each objective’s training set with contrastive anchor pairs , each consisting of a positive example that the model should preserve or reject for the right reasons, and a negative example that sits near the decision boundary but belongs to a safe semantic territory. Concretely: Obj1 Anchors contrast target hazardous knowledge against factually adjacent but benign world knowledge, so the model learns to distinguish what to erase from what to retain. Obj2 Anchors are constructed between a restricted unlearning concept ( e.g., cyber-weaponry synthesis) and a semantically neighboring legitimate concept ( e.g., general computer security principles). Obj3 Anchors 
+
+oppose a malicious prefilling prefix against a benign continuation, so the model develops robustness to adversarial elicitation without suppressing legitimate completions. These contrastive pairs act analogously to support vectors to help sculpt a more precise decision boundary during optimization, which defines the local geometry of the decision surface and prevents the forgetting signal from bleeding into adjacent safe regions. 5Preprint. Under review. 
+
+3.4 Fine-Grained Multi-Goal Unlearning via Bidirectional Top-K Logit Distillation 
+
+Up to now, with the data representations aligned and boundaries anchored, we address the 
+
+optimization side by proposing a Bidirectional Top-K Logit Distillation mechanism. Consider 
+
+πk 
+
+> ref
+
+as a desirable reference model for each of the above unlearning tasks {T k}, we reformat the proposed multi-goal unlearning problem as an imitation learning objective, min  
+
+> θ
+
+ETk ∼{T } 
+
+> h
+
+Ex∼T k
+
+> h
+
+D[πθ (·| x)∥πk
+
+> ref
+
+(·| x)] ii 
+
+,where D[p∥q] can be a legitimate distance measure between two probabilities of p and q,such as the KL divergence or any f -divergence. 
+
+Construction of reference model: For each unlearning goal k, we utilize a lightweight natural language intention prompt , pk, which encodes the desired model behavior. A frozen teacher LLM, πre f , is steered by pk and instructed via Chain of Thought (CoT) to establish safe and contextualized semantic boundaries. In this work, we focus on conceptual unlearn-ing, where the unlearning intention and scope can be naturally described by instructions, in contrast to entry-level unlearning (Maini et al., 2024b). Then the student model, πθ , receives only the input x without the intention prompt, forcing it to internalize the target behavior. To achieve precise unlearning without distorting the global vocabulary distribution, we conduct distillation selectively on two critical sets of token logits: Cteach K (the Top-K logits from the teacher) and Cstud K (the Top-K logits spontaneously generated by the student). 
+
+> D
+
+[πθ ∥πref ] ≡ Ldual = Ex 
+
+> 
+
+# ∑
+
+> i∈Cref
+> K
+
+Lsim  
+
+>  gi
+> θ
+
+(x), gi
+
+> ref
+
+(x)| {z }
+
+> Encouraging teacher imitation
+
++α Ex 
+
+> 
+
+# ∑
+
+> j∈Cθ
+> K
+
+Lsim  
+
+>  gj
+> θ
+
+(x), gj
+
+> ref
+
+(x)| {z }
+
+> Suppressing student’s undesirable behavior
+> (3)
+
+where g(·) represents the logit outputs and Lsim denotes the Smooth L1 distance. This asymmetric mechanism operates bi-directionally: 1) It encourages the student model toward the teacher’s safe utility manifold by imitating the teacher’s top probabilities, and meanwhile 2) explicitly suppresses the student’s high-confidence hazardous logits ( i.e. , the stubborn target knowledge), achieving precise memory erasure. Unlike prior distillation work that operates on the normalized logit probability space (Hinton et al., 2015; Gu et al.), or uni-directional distillation (Zhong et al., 2026), our method achieves more effective, precise distillation effects (Section 5.3). Ultimately, this data-optimization framework enables the model to synergistically unlearn target data, maintain utility for neighboring data, and resist pre-filling attacks in a highly efficient manner. 
+
+## 4 Related Work 
+
+LLM Unlearning. Efforts to unlearn knowledge from LLMs can be broadly categorized into in-context methods (Pawelczyk et al., 2024; Liu et al., 2024), which steer model behavior at inference time without parameter updates, and training-based methods (Jang et al., 2023; Zhang et al., 2024b; Li et al., 2024a; Choi et al., 2024; Eldan & Russinovich, 2023; Maini et al., 2024a; Fan et al., 2025b; Wang et al., 2025b; Pan et al., 2025; Jin et al., 2025), which modify model weights to enforce forgetting. Recently, an emerging line of work has investigated the critical impact of data design and selection on unlearning performance (Chang & Lee, 2025; Xu et al., 2026). However, methods in this paradigm mostly focus on a setting captured by our Obj1 , i.e., a dual-objective setting comprising a forgetting domain and an irrelevant general domain. They largely overlook the complex boundary behaviors and adversarial vulnerabilities inherent in real-world deployments. 
+
+Unlearning Robustness. A critical dimension of unlearning is the robustness of the “for-gotten” state. Prior works have highlighted vulnerabilities against parameterized attacks, such as relearning attacks where fine-tuning on a handful of examples restores the erased capabilities (Fan et al., 2025a; Hu et al., 2024; Qi et al.). Furthermore, recent studies demon-strate that unlearned knowledge can still be extracted via contextualized attacks, which perfectly aligns with our setting. For instance, Shumailov et al. (2024) and Łucki et al. (2024) formalized in-context un-unlearning and adversarial jailbreaks, where sophisticated contextual elicitation strategies can bypass unlearning guardrails (Xue et al., 2024). 6Preprint. Under review. 
+
+LLM Knowledge Distillation. Knowledge distillation (KD) has been extensively lever-aged to transfer capabilities across LLMs (Li et al., 2025; Gu et al.). In the context of unlearning, while KD is commonly employed as a regularization penalty on the retain set to mitigate catastrophic forgetting (Zhang et al., 2024b; Jang et al., 2023; Yao et al., 2024), utilizing distillation as the primary mechanism to directly enforce forgetting remains highly underexplored. Specifically, (Zhong et al., 2026) proposed DUET, a uni-directional unlearn-ing distillation method for aligning a student model with a prompt-steered teacher. Building upon this foundation, our work extends distillation into a bidirectional framework with richer and more explicit supervision signals. 
+
+LLM Unlearning Benchmarks. Evaluation remains a fundamental challenge in LLM unlearning. Early benchmarks such as TOFU (Maini et al., 2024a) and MUSE (Shi et al., 2024b) focused primarily on exact memorization and general utility. While more recent benchmarks like WMDP (Li et al., 2024a) and RWKU (Jin et al., 2024) introduce high-risk capabilities and partially discuss unlearning robustness, they lack a systematic investigation into boundary behaviors, conceptual unlearning conflicts, and the collateral damage to neighboring domains. Our experimental setup bridges this gap by augmenting existing benchmarks with structured evaluations (Obj1–Obj3) that capture the holistic demands of practical unlearning: efficacy, neighboring domain retention, and adversarial defense. 
+
+## 5 Experiments 
+
+In this section, we empirically evaluate how the proposed underlying representational alignment and assymetric bidirectional unlearning distillation translate into improved unlearning performance relative to state-of-the-art unlearning methods. We also provide a fine-grained ablation study to validate the necessity of our designed components. 
+
+5.1 Experimental Setup Dataset Construction and Metrics. We evaluated our framework across two distinct knowledge domains: the MUSE-Book benchmark ( i.e., Harry Potter (HP)) (Shi et al., 2024a), which represents copyrighted narrative knowledge, and the WMDP-Cyber benchmark (Li et al., 2024c), which represents hazardous, restricted knowledge. We applied the following evaluation metrics to reflect our three unlearning objectives, and additionally reported the 
+
+MMLU scores (Hendrycks et al., 2020) to monitor the unlearned model’s general capability. • Obj1 (Target Unlearning & General Utility): We measured the unlearning efficacy on target knowledge ( Forget ↓) and preservation on general knowledge ( Retain ↑), evaluated on open-ended questions, using the ROUGE scores against reference targets as the metric; • Obj2 (Neighboring Domain Retention): We measured the model’s ability to preserve knowledge on this benign neighboring domain while avoiding over-refusal . In particular, to obtain a fine-grained evaluation of the model’s performance on this task, we used a Multi-Choice Question (MCQ) format for evaluation, where each query includes plausible yet confusing options, refusal options ( e.g., “I do not know”), and the ground-truth answer option. We adopted the Retain Acc ↑ as the main metric. • Obj3 (Robustness Against Adversarial Prompts): We prefilled each query related to the unlearning domain with an adversarial prefilling prompt. We adopted the Attack Success Rate ( ASR ↓) to indicate the rate at which the target model is manipulated with malicious prefixes. Evaluation queries for this task are drawn from the same unlearning domain but are disjoint from those in Obj1. 
+
+Unlearning Baselines and Upper Bound. We compare our method against three categories of approaches to clearly distinguish between different unlearning paradigms: 1. In Context Unlearning Methods :• Teacher with Oracle Prompt Router (Upper Bound): An idealized configuration under optimal, non-conflicting conditions. We approximate this by assuming a perfect oracle router that assigns the exact goal-specific intention prompt ( pm) to steer the base model for each corresponding query. • Ensemble Teacher , which concatenates all intention prompts into a single instruction to steer the base model, acting as a practical alternative to the oracle router. 7Preprint. Under review. 2. Training Based Unlearning Methods: DUET (Distilled from the Ensemble Teacher): An unlearned model trained using the distillation method in DUET (Zhong et al., 2026) to imitate the Ensemble Teacher. Supervised Fine-Tuning: A standard training approach that maximizes the generation of desirable responses (Touvron et al., 2023), including producing refusal responses for forget or adversarial queries, and accurate answers for retention and neighboring queries. It serves as a fundamental baseline for comparison. 
+
+Gradient Ascent (GA) (Jang et al., 2023), SimNPO (Fan et al., 2025b), and FLAT (Wang et al., 2025a): unlearning methods primarily proposed for addressing Obj1. 3. Multi-Objective Unlearning with Gradient Editing: These two methods below were originally designed to address the forget-retention tradeoff (Obj1). We extended their methods to handle three objectives. Especially: NGDiff (Jin et al., 2025) addresses un-learning objective conflicts by utilizing normalized gradient differences and an adaptive learning rate; MOLLM (Pan et al., 2025) employs gradient projection mechanisms to explicitly balance different unlearning objectives. 
+
+5.2 Main Results 
+
+The main results on the MUSE-Book (Harry Potter) benchmark are reported in Table 1. To provide a comprehensive view of multi-dimensional trade-offs on the WMDP-Cyber benchmark, we visualized performance across all objectives using a radar chart in Figure 3. These two main results show that our proposed framework effectively achieves multi-goal unlearning while mitigating the performance imbalances observed in prior methods.                                                                                    
+
+> Method Obj1 (Unlearn) Obj2 (Neighbor Domain) Obj3 (Adv Robustness) MMLU ↑Overall Performance ↑Forget ↓General ↑Retain Acc ↑ASR ↓
+> Base Model 32.1 84.3 57.28 70.5 60.8 0.00 GA ( ⋆)36.9 85.0 55.9 70.0 36.45 -29.33 SimNPO ( ⋆)21.4 43.1 57.7 70.5 60.40 -30.48 FLAT ( ⋆)0.7 58.3 42.7 39.0 58.92 20.44 SFT 0.3 49.6 50.7 1.5 50.2 48.92 NGDiff 13.6 83.3 37.7 17.9 60.8 50.52 MOLLM 19.9 83.6 57.4 69.2 60.8 12.92 Ensemble Teacher (ET) 6.2 60.9 26.8 13.5 60.3 28.52 DUET (w/ ET) 3.2 71.3 26.8 39.5 49.9 5.52
+> Ours 2.7 78.1 58.5 12.5 59.2 80.82
+> Upper Bound 2.1 80.1 58.5 6.7 60.7 90.72
+
+Table 1: Main unlearning results on the MUSE-Book benchmark. We also reported the aggregated 
+
+Overall Performance shift, defined relative to the base model. Methods marked with ’ ⋆’ are trained on Obj1 due to their inherent design and are not readily extendable to multi-goal settings. 
+
+Shortcomings of Naive Baselines. As observed in Table 1, while the Ensemble Teacher achieves moderate forgetting, it suffers a significant drop in retention compared to the Upper Bound. Since both configurations employ in-context unlearning, this degradation clearly indicates that concatenating multiple intention prompts leads to internal intention interference; the LLM struggles to satisfy these instructions simultaneously. Furthermore, even after applying standard distillation, DUET exhibited persistent trade-offs with a notable degradation in Obj3 ASR (39.5%) and MMLU (49.9%). Finally, SFT aggressively destroys the target knowledge (Obj1 Forget drops to 0.3) while effectively defending against prefilling attacks (ASR drops to 1.5%). However, this result comes at the cost of catastrophic 
+
+over-refusal , with degraded general utility (Obj1 and Obj2 Retain collapse to 49.6 and 50.7, respectively, and MMLU plummets to 50.2). 
+
+Imbalanced Trade-offs in Gradient Editing Methods. While NGDiff and MOLLM address multi-objective conflicts through gradient scalarization and orthogonal projection without data standardization, they exhibit weakened unlearning robustness. On the HP benchmark, MOLLM remains highly vulnerable to prefilling attacks (ASR 69.2%) and shows limited effectiveness in unlearning QA targets (Obj1 Forget 19.9). Similarly, NGDiff notably un-derperforms on both ASR (17.9%) and target forgetting (Obj1 Forget 13.6). Although both methods retain strong performance on Retain and MMLU, this is largely because they fail to sufficiently remove hazardous representations. In contrast, our method achieves strong synergy across objectives. By unifying data repre-sentations and leveraging intention-prompted bidirectional distillation, we substantially 8Preprint. Under review. reduce prefilling ASR to 12.5%, outperforming gradient editing-based methods by an im-mense margin while effectively erasing target knowledge (Obj1 Forget 2.7). Simultaneously, our method strictly prevents over-refusal, maintaining high retention accuracy on general and neighboring domains (Obj1 Retain 78.1%, Obj2 Retain Acc 58.9%), which matches the Upper Bound performance. Obj1 Retain 
+
+> Obj2 Retain
+> MMLU 100 − Obj3 ASR
+> 100 − Obj1 Forget
+> 20
+> 40
+> 60
+> 80
+> 100
+> Upper Bound
+> Ensemble Teacher
+> SFT
+> NGDiff
+> MOLLM
+> Ours
+
+Figure 3: Multi-dimensional performance on the 
+
+WMDP-Cyber benchmark. The radar chart illus-trates the trade-offs across five metrics axes (Forget 
+
+↓, Retain ↑, Neighbor Retain Acc ↑, ASR ↓, MMLU 
+
+↑), normalized for visualization. 
+
+Performance on WMDP-Cyber. The re-sults in Figure 3 reinforce the above findings in the hazardous knowledge domain. The Upper Bound forms a large, well-balanced polygon that represents ideal performance across all objectives. Baselines such as SFT achieve strong security but exhibit a pronounced collapse along the retention axes. Conversely, methods like MOLLM and NGDiff preserve utility but degrade substantially on ASR and unlearning objec-tives. Our framework is the only approach that maintains a balanced performance pro-file, effectively mitigating hazardous knowl-edge and adversarial attacks while preserv-ing the integrity of neighboring-domain retention. 
+
+5.3 Ablation Study                       
+
+> Method Obj1 Obj2 Obj3 MMLU Overall Perf. Forget General Retain ASR Ours 2.7 78.1 58.5 12.5 58.2 79.82
+> Ours w/
+> DUET Loss 3.19 74.0 57.6 12.5 58.2 74.33 Ours w/
+> BILD Loss 3.9 82.3 56.3 23.5 58.3 69.72
+
+Table 2: Ablation study replacing our asym-metric bidirectional distillation with a sym-metric BILD objective. To evaluate the effects of our bidirectional top-K logit distillation, we conducted a comparative analysis against a state-of-the-art symmetric distillation approach, the bi-directional Logits Difference (BILD) loss (Li et al., 2025). BILD constructs pairwise logit differences within an active vocabu-lary and normalizes them into probability distributions via a Softmax function, then minimizes their KL divergence: LBiLD ∝
+
+DKL (pt ∥ ps) + DKL (ps ∥ pt), where pt and 
+
+ps denote the Softmax-normalized probability distributions of the teacher and student top-K logits, respectively. While effective for standard capability transfer, this normalized KL approach fundamentally only aligns the relative distances (rankings) between tokens. In contrast, our method explicitly minimizes differences in magnitude using a Smooth L1 
+
+distance applied directly tostance directly on the unnormalized logits. As demonstrated in Table 2, replacing our method with BILD leads to a significant regression in unlearning efficacy (Obj1 Forget rises to 3.9) and adversarial robustness (ASR almost doubles to 23.5%). This ablation empirically proves our claim that, in the context of unlearn-ing, aligning only the relative ranking of logits is insufficient. The performance gains over DUET with uni-directional distillation further indicate that effectively unlearning targeted knowledge requires our asymmetric distillation strategy, which explicitly suppresses the student’s high-confidence logits toward the teacher’s logits. 
+
+## 6 Conclusion 
+
+We propose a unified framework for multi-goal LLM unlearning that addresses the funda-mental trade-offs between knowledge removal, adversarial robustness, boundary domain retention, and general utility preservation. By leveraging intention-prompted bidirectional distillation and unified data representations, our approach effectively eliminates targeted knowledge while maintaining strong performance on retained domains. Extensive experi-ments on MUSE-Book and WMDP-Cyber demonstrate that our method achieves balanced, state-of-the-art performance across all objectives, significantly outperforming existing base-lines that suffer from imbalanced trade-offs or superficial unlearning. These results highlight the importance of structured distillation and data alignment for reliable unlearning, offering a practical and scalable solution for deploying safer and more controllable language models. 9Preprint. Under review. 
+
+## Reproducibility Statement 
+
+To facilitate reproducibility, the complete source code, datasets, and pretrained model check-points are anonymized and available at: https://anonymous.4open.science/r/MULE-662D .
+
+## References 
+
+Maksym Andriushchenko, Francesco Croce, and Nicolas Flammarion. Jailbreaking leading safety-aligned llms with simple adaptive attacks. arXiv preprint arXiv:2404.02151 , 2024. Shai Ben-David, John Blitzer, Koby Crammer, and Fernando Pereira. Analysis of repre-sentations for domain adaptation. Advances in neural information processing systems , 19, 2006. Zihao Cao, Jianzong Wang, Shijing Si, Zhangcheng Huang, and Jing Xiao. Machine unlearn-ing method based on projection residual. In 2022 IEEE 9th International Conference on Data Science and Advanced Analytics (DSAA) , pp. 1–8. IEEE, 2022. Hwan Chang and Hwanhee Lee. Which retain set matters for llm unlearning? a case study on entity unlearning. In Findings of the Association for Computational Linguistics: ACL 2025 ,pp. 5966–5982, 2025. Minseok Choi, Daniel Rim, Dohyun Lee, and Jaegul Choo. Snap: Unlearning selective knowl-edge in large language models with negative instructions. arXiv preprint arXiv:2406.12329 ,2024. URL https://arxiv.org/abs/2406.12329 .Ronen Eldan and Mark Russinovich. Who’s harry potter? approximate unlearning in llms, 2023. URL https://arxiv.org/abs/2310.02238 .Chongyu Fan, Jinghan Jia, Yihua Zhang, Anil Ramakrishna, Mingyi Hong, and Sijia Liu. Towards llm unlearning resilient to relearning attacks: A sharpness-aware minimization perspective and beyond. ICML , 2025a. Chongyu Fan, Jiancheng Liu, Licong Lin, Jinghan Jia, Ruiqi Zhang, Song Mei, and Sijia Liu. Simplicity prevails: Rethinking negative preference optimization for llm unlearning. 
+
+arXiv preprint arXiv:2410.07163 , 2025b. URL https://arxiv.org/abs/2410.07163 .Yuxian Gu, Li Dong, Furu Wei, and Minlie Huang. Minillm: Knowledge distillation of large language models. In The Twelfth International Conference on Learning Representations .Dan Hendrycks, Collin Burns, Steven Basart, Andy Zou, Mantas Mazeika, Dawn Song, and Jacob Steinhardt. Measuring massive multitask language understanding. International Conference on Learning Representations , 2020. Geoffrey Hinton, Oriol Vinyals, and Jeff Dean. Distilling the knowledge in a neural network. 
+
+arXiv preprint arXiv:1503.02531 , 2015. Shengyuan Hu, Yiwei Fu, Zhiwei Steven Wu, and Virginia Smith. Jogging the memory of unlearned llms through targeted relearning attacks. arXiv preprint arXiv:2406.13356 , 2024. URL https://arxiv.org/abs/2406.13356 .Joel Jang, Dongkeun Yoon, Sohee Yang, Sungmin Cha, Moontae Lee, Lajanugen Logeswaran, and Minjoon Seo. Knowledge unlearning for mitigating privacy risks in language models. In Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (ACL) , pp. 14389–14408, 2023. URL https://aclanthology.org/2023.acl-long.805 .Xiaomeng Jin, Zhiqi Bu, Bhanukiran Vinzamuri, Anil Ramakrishna, Kai-Wei Chang, Volkan Cevher, and Mingyi Hong. Unlearning as multi-task optimization: A normalized gradient difference approach with an adaptive learning rate. In Proceedings of the 2025 Conference of the Nations of the Americas Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 1: Long Papers) , pp. 11278–11294, 2025. 10 Preprint. Under review. Zhuoran Jin, Pengfei Cao, Chenhao Wang, Zhitao He, Hongbang Yuan, Jiachun Li, Yubo Chen, Kang Liu, and Jun Zhao. Rwku: Benchmarking real-world knowledge unlearning for large language models. The Thirty-eight Conference on Neural Information Processing Systems Datasets and Benchmarks Track , 2024. Daniel Kifer, Shai Ben-David, and Johannes Gehrke. Detecting change in data streams. In 
+
+VLDB , volume 4, pp. 180–191. Toronto, Canada, 2004. Minchong Li, Feng Zhou, and Xiaohui Song. Bild: Bi-directional logits difference loss for large language model distillation. In Proceedings of the 31st International Conference on Computational Linguistics , pp. 1168–1182, 2025. Nathaniel Li, Alexander Pan, Anjali Gopal, Summer Yue, Daniel Berrios, Alice Gatti, Justin D. Li, Ann-Kathrin Dombrowski, Shashwat Goel, Gabriel Mukobi, et al. The wmdp bench-mark: Measuring and reducing malicious use with unlearning. In Proceedings of the 41st International Conference on Machine Learning (ICML) , volume 235 of Proceedings of Machine Learning Research , pp. 28525–28550, 2024a. URL https://proceedings.mlr.press/v235/ li24bc.html .Nathaniel Li, Alexander Pan, Anjali Gopal, Summer Yue, Daniel Berrios, Alice Gatti, Justin D. Li, Ann-Kathrin Dombrowski, Shashwat Goel, Long Phan, Gabriel Mukobi, Nathan Helm-Burger, Rassin Lababidi, Lennart Justen, Andrew B. Liu, Michael Chen, Isabelle Barrass, Oliver Zhang, Xiaoyuan Zhu, Rishub Tamirisa, Bhrugu Bharathi, Adam Khoja, Zhenqi Zhao, Ariel Herbert-Voss, Cort B. Breuer, Samuel Marks, Oam Patel, Andy Zou, Mantas Mazeika, Zifan Wang, Palash Oswal, Weiran Lin, Adam A. Hunt, Justin Tienken-Harder, Kevin Y. Shih, Kemper Talley, John Guan, Russell Kaplan, Ian Steneker, David Campbell, Brad Jokubaitis, Alex Levinson, Jean Wang, William Qian, Kallol Krishna Karmakar, Steven Basart, Stephen Fitz, Mindy Levine, Ponnurangam Kumaraguru, Uday Tupakula, Vijay Varadharajan, Ruoyu Wang, Yan Shoshitaishvili, Jimmy Ba, Kevin M. Esvelt, Alexandr Wang, and Dan Hendrycks. The wmdp benchmark: Measuring and re-ducing malicious use with unlearning, 2024b. URL https://arxiv.org/abs/2403.03218 .Nathaniel Li, Alexander Pan, Anjali Gopal, Summer Yue, Daniel Berrios, Alice Gatti, Justin D Li, Ann-Kathrin Dombrowski, Shashwat Goel, Long Phan, et al. The wmdp benchmark: Measuring and reducing malicious use with unlearning. Proceedings of Machine Learning Research , 2024c. Chris Liu, Zeyu Li, Yujia Wei, Peizhuo Wang, Chen Li, Wei Zhang, Song Li, Malik Magdon-Ismail, and Yang Liu. Large language model unlearning via embedding-corrupted prompts. In Advances in Neural Information Processing Systems (NeurIPS) , 2024. URL 
+
+https://arxiv.org/abs/2406.07933 .Jakub Ł ucki, Boyi Wei, Yangsibo Huang, Peter Henderson, Florian Tram `er, and Javier Rando. An adversarial perspective on machine unlearning for ai safety. arXiv preprint arXiv:2409.18025 , 2024. Pratyush Maini, Zhili Feng, Avi Schwarzschild, Zachary C. Lipton, and J. Zico Kolter. Tofu: A task of fictitious unlearning for llms. First Conference on Language Modeling , 2024a. Pratyush Maini, Shrey Jain, et al. Tofu: A task of fictitious unlearning for llms. arXiv preprint arXiv:2401.06121 , 2024b. URL https://arxiv.org/abs/2401.06121 .Andrei Ioan Muresanu, Anvith Thudi, Michael R. Zhang, and Nicolas Papernot. Fast exact unlearning for in-context learning data for LLMs. In Aarti Singh, Maryam Fazel, Daniel Hsu, Simon Lacoste-Julien, Felix Berkenkamp, Tegan Maharaj, Kiri Wagstaff, and Jerry Zhu (eds.), Proceedings of the 42nd International Conference on Machine Learning , volume 267 of Proceedings of Machine Learning Research , pp. 45272–45288. PMLR, 13–19 Jul 2025. URL 
+
+https://proceedings.mlr.press/v267/muresanu25a.html .Seth Neel, Aaron Roth, and Saeed Sharifi-Malvajerdi. Descent-to-delete: Gradient-based methods for machine unlearning. In Vitaly Feldman, Katrina Ligett, and Sivan Sabato (eds.), Proceedings of the 32nd International Conference on Algorithmic Learning Theory , volume 11 Preprint. Under review. 132 of Proceedings of Machine Learning Research , pp. 931–962. PMLR, 16–19 Mar 2021. URL 
+
+https://proceedings.mlr.press/v132/neel21a.html .Thanh Tam Nguyen, Thanh Trung Huynh, Zhao Ren, Phi Le Nguyen, Alan Wee-Chung Liew, Hongzhi Yin, and Quoc Viet Hung Nguyen. A survey of machine unlearning. ACM Transactions on Intelligent Systems and Technology , 16(5):1–46, 2025. Zibin Pan, Shuwen Zhang, Yuesheng Zheng, Chi Li, Yuheng Cheng, and Junhua Zhao. Multi-objective large language model unlearning. In ICASSP 2025-2025 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP) , pp. 1–5. IEEE, 2025. Martin Pawelczyk, Seth Neel, and Himabindu Lakkaraju. In-context unlearning: Language models as few-shot unlearners. In Forty-first International Conference on Machine Learning .Martin Pawelczyk, Seth Neel, and Himabindu Lakkaraju. In-context unlearning: Language models as few shot unlearners. arXiv preprint arXiv:2310.07579 , 2023. Martin Pawelczyk, Seth Neel, and Himabindu Lakkaraju. In-context unlearning: Language models as few shot unlearners, 2024. URL https://arxiv.org/abs/2310.07579 .Xiangyu Qi, Yi Zeng, Tinghao Xie, Pin-Yu Chen, Ruoxi Jia, Prateek Mittal, and Peter Hen-derson. Fine-tuning aligned language models compromises safety, even when users do not intend to! In The Twelfth International Conference on Learning Representations .Weijia Shi, Ari Holtzman, Colin Raffel, et al. Muse: Machine unlearning six-way evaluation for language models. arXiv preprint arXiv:2407.06460 , 2024a. URL https://arxiv.org/ abs/2407.06460 .Weijia Shi, Jaechan Lee, Yangsibo Huang, Sadhika Malladi, Jieyu Zhao, Ari Holtzman, Daogao Liu, Luke Zettlemoyer, Noah A Smith, and Chiyuan Zhang. Muse: Machine unlearning six-way evaluation for language models. The Thirteenth International Conference on Learning Representations , 2024b. Ilia Shumailov, Jamie Hayes, Eleni Triantafillou, Guillermo Ortiz-Jimenez, Nicolas Papernot, Matthew Jagielski, Itay Yona, Heidi Howard, and Eugene Bagdasaryan. Ununlearning: Unlearning is not sufficient for content regulation in advanced generative ai, 2024. URL 
+
+https://arxiv.org/abs/2407.00106 .Shota Takashiro, Takeshi Kojima, Andrew Gambardella, Qi Cao, Yusuke Iwasawa, and Yutaka Matsuo. Answer when needed, forget when not: Language models pretend to forget via in-context knowledge unlearning. In Wanxiang Che, Joyce Nabende, Ekaterina Shutova, and Mohammad Taher Pilehvar (eds.), Findings of the Association for Computational Linguistics: ACL 2025 , pp. 24872–24885, Vienna, Austria, July 2025. Association for Com-putational Linguistics. ISBN 979-8-89176-256-5. doi: 10.18653/v1/2025.findings-acl.1276. URL https://aclanthology.org/2025.findings-acl.1276/ .Hugo Touvron, Louis Martin, Kevin Stone, Peter Albert, Amjad Almahairi, Yasmine Babaei, Nikolay Bashlykov, Soumya Batra, Prajjwal Bhargava, Shruti Bhosale, Dan Bikel, Lukas Blecher, Cristian Canton Ferrer, Moya Chen, Guillem Cucurull, David Esiobu, Jude Fernandes, Jeremy Fu, Wenyin Fu, Brian Fuller, Cynthia Gao, Vedanuj Goswami, Naman Goyal, Anthony Hartshorn, Saghar Hosseini, Rui Hou, Hakan Inan, Marcin Kardas, Viktor Kerkez, Madian Khabsa, Isabel Kloumann, Artem Korenev, Punit Singh Koura, Marie-Anne Lachaux, Thibaut Lavril, Jenya Lee, Diana Liskovich, Yinghai Lu, Yuning Mao, Xavier Martinet, Todor Mihaylov, Pushkar Mishra, Igor Molybog, Yixin Nie, Andrew Poulton, Jeremy Reizenstein, Rashi Rungta, Kalyan Saladi, Alan Schelten, Ruan Silva, Eric Michael Smith, Ranjan Subramanian, Xiaoqing Ellen Tan, Binh Tang, Ross Taylor, Adina Williams, Jian Xiang Kuan, Puxin Xu, Zheng Yan, Iliyan Zarov, Yuchen Zhang, Angela Fan, Melanie Kambadur, Sharan Narang, Aurelien Rodriguez, Robert Stojnic, Sergey Edunov, and Thomas Scialom. Llama 2: Open foundation and fine-tuned chat models, 2023. URL https://arxiv.org/abs/2307.09288 .12 Preprint. Under review. Yaxuan Wang, Jiaheng Wei, Chris Yuhao Liu, Jinlong Pang, Quan Liu, Ankit Parag Shah, Yujia Bao, Yang Liu, and Wei Wei. LLM unlearning via loss adjust-ment with only forget data. In International Conference on Learning Representa-tions (ICLR) , 2025a. URL https://proceedings.iclr.cc/paper files/paper/2025/file/ 6b315c0b736711b56f33cbacfb6d5d67-Paper-Conference.pdf .Yaxuan Wang, Jiaheng Wei, Chris Yuhao Liu, Jinlong Pang, Quan Liu, Ankit Parag Shah, Yujia Bao, Yang Liu, and Wei Wei. LLM unlearning via loss adjustment with only forget data. The Thirteenth International Conference on Learning Representations , 2025b. Heng Xu, Tianqing Zhu, Lefeng Zhang, Wanlei Zhou, and Philip S. Yu. Machine unlearning: A survey. ACM Comput. Surv. , 56(1), August 2023. ISSN 0360-0300. doi: 10.1145/3603620. URL https://doi.org/10.1145/3603620 .Xiaoyu Xu, Minxin Du, Zitong Li, Zi Liang, Zhibiao Guo, Shiyu Zhang, Peizhao Hu, Qingqing Ye, and Haibo Hu. From domains to instances: Dual-granularity data synthesis for llm unlearning. arXiv preprint arXiv:2601.04278 , 2026. Zhiyu Xue, Guangliang Liu, Bocheng Chen, Kristen Marie Johnson, and Ramtin Pedarsani. No free lunch for defending against prefilling attack by in-context learning. arXiv preprint arXiv:2412.12192 , 2024. Yuanshun Yao, Xiaojun Xu, and Yang Liu. Large language model unlearning. Advances in Neural Information Processing Systems , 37:105425–105475, 2024. Ruiqi Zhang, Licong Lin, Yu Bai, and Song Mei. Negative preference optimization: From catastrophic collapse to effective unlearning. Conference on Language Modeling , 2024a. Yuhan Zhang, Weize Chen, et al. Negative preference optimization for catastrophic forgetting in llm unlearning. arXiv preprint arXiv:2404.05868 , 2024b. URL https: //arxiv.org/abs/2404.05868 .Yisheng Zhong, Zhengbang Yang, and Zhuangdi Zhu. Hierarchical federated unlearning for large language models, 2025. URL https://arxiv.org/abs/2510.17895 .Yisheng Zhong, Zhengbang Yang, and Zhuangdi Zhu. Duet: Distilled llm unlearning from an efficiently contextualized teacher. ICLR , 2026. 
+
+## A Appendix 
+
+A.1 Detailed Quantitative Results on WMDP-Cyber 
+
+This section provides the comprehensive numerical data (Table 3) that serves as the basis for the multi-dimensional analysis presented in Figure 3 of the main text. The WMDP-Cyber benchmark evaluates the model’s ability to remove hazardous cybersecurity knowledge while maintaining general utility and adversarial robustness. 
+
+Analysis of Existing Paradigms. As shown in Table 3, different unlearning paradigms exhibit distinct performance characteristics. In-context methods, such as the Ensemble Teacher, provide a training-free alternative but often face challenges in maintaining general utility (Retain: 64.4). While its distilled counterpart (DUET) restores some utility, it remains sensitive to adversarial probing (ASR: 24.7%). Tuning-based baselines like Refusal Tuning (SFT) demonstrate a strong defensive posture but tend to lead to a more conservative model behavior. Meanwhile, advanced gradient-based methods such as NGDiff and MOLLM excel at preserving general utility and neighboring domains, yet they encounter inherent difficulties in fully neutralizing hazardous information under adversarial conditions, with ASR remaining at 40.0% and 35.3% respectively. 
+
+Performance of the Proposed Framework. Our framework, which integrates data stan-dardization with bidirectional distillation, aims to achieve a more balanced performance across these competing objectives. By aligning the representational space and employing 13 Preprint. Under review. an asymmetric optimization strategy, our method effectively reduces the target knowledge (Obj1 Forget: 8.1) and significantly enhances adversarial defense (ASR: 5.1%). Notably, these gains in unlearning efficacy are achieved while maintaining a high level of general utility (MMLU: 56.9) and neighboring domain integrity (Retain Acc: 88.8%), demonstrating a performance profile that closely aligns with the idealized Upper Bound across the evaluated dimensions.                                                                  
+
+> Method Obj1 (Unlearn) Obj2 (Neighbor Domain) Obj3 (Adv Robustness) MMLU ↑Overall Performance ↑Forget ↓General ↑Retain Acc ↑ASR ↓
+> Base Model 68.5 88.1 96.3 60.7 59.9 0.00 Ensemble Teacher (ET) 20.8 64.4 86.0 50.7 59.4 23.20 DUET (w/ ET) 25.5 91.1 95.3 24.7 50.6 71.70 SFT 34.2 87.1 95.3 44.7 57.4 45.80 NGDiff 17.3 63.8 90.6 40.0 59.88 41.88 MOLLM 17.2 66.3 89.7 35.3 59.77 48.17
+> Ours 8.1 89.1 88.8 5.1 56.9 106.50
+> Upper Bound 6.7 93.1 90.7 3.3 59.9 118.60
+
+Table 3: Main unlearning results on the WMDP-Cyber benchmark. We also reported the aggregated 
+
+Overall Performance shift, defined relative to the base model. 
+
+14

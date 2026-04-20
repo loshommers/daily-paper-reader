@@ -6,26 +6,37 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-04-19
-- 运行时间：2026-04-19 19:26:09 UTC
+- 最新运行日期：2026-04-20
+- 运行时间：2026-04-20 19:51:58 UTC
 - 运行状态：成功
-- 本次总论文数：1
-- 精读区：0
-- 速读区：1
+- 本次总论文数：5
+- 精读区：3
+- 速读区：2
 
 ### 今日简报（AI）
-今日深入剖析子集训练中的隐私隐患，重点关注新提出的 CoLA 攻击框架。
-该研究揭示了攻击者如何利用模型输出推断特定数据是否被选入训练集，暴露了选择性训练的泄露风险。
-建议开发者在进行数据筛选或主动学习时，警惕样本选择偏好可能带来的隐私安全威胁。
-- 详情：[/202604/19/README](/202604/19/README)
+今日深度攻克大模型“精准擦除”与“反事实遗忘”两大核心难题，产出两篇满分技术解析。
+重点推荐图文协作的概念擦除方案及推理模型的迭代偏好优化，实现了更精细的模型内容控制。
+建议关注自蒸馏与数据归因技术，了解如何在大模型压缩后有效恢复性能并追溯数据价值。
+- 详情：[/202604/20/README](/202604/20/README)
 
 ### 精读区论文标签
-- 本次无精读推荐。
+1. [Beyond Text Prompts: Precise Concept Erasure through Text-Image Collaboration](/202604/20/2604.15829v1-beyond-text-prompts-precise-concept-erasure-through-text-image-collaboration)  
+   标签：评分：10.0/10、query:mu-ce
+   evidence：文本生成图像模型中的精确概念擦除
+2. [CiPO: Counterfactual Unlearning for Large Reasoning Models through Iterative Preference Optimization](/202604/20/2604.15847v1-cipo-counterfactual-unlearning-for-large-reasoning-models-through-iterative-preference-optimization)  
+   标签：评分：10.0/10、query:mu-ce
+   evidence：通过反事实遗忘选择性删除无用的隐私或版权信息
+3. [Harmonizing Multi-Objective LLM Unlearning via Unified Domain Representation and Bidirectional Logit Distillation](/202604/20/2604.15482v1-harmonizing-multi-objective-llm-unlearning-via-unified-domain-representation-and-bidirectional-logit-distillation)  
+   标签：评分：9.0/10、query:mu-ce
+   evidence：协调多目标LLM遗忘并确保鲁棒性
 
 ### 速读区论文标签
-1. [CoLA: A Choice Leakage Attack Framework to Expose Privacy Risks in Subset Training](/202604/19/2604.12342v1-cola-a-choice-leakage-attack-framework-to-expose-privacy-risks-in-subset-training)  
+1. [Self-Distillation as a Performance Recovery Mechanism for LLMs: Counteracting Compression and Catastrophic Forgetting](/202604/20/2604.15794v1-self-distillation-as-a-performance-recovery-mechanism-for-llms-counteracting-compression-and-catastrophic-forgetting)  
    标签：评分：6.0/10、query:mu-ce
-   evidence：子集训练数据选择中的隐私风险与信息泄露
+   evidence：对抗LLM中的灾难性遗忘
+2. [Sketching the Readout of Large Language Models for Scalable Data Attribution and Valuation](/202604/20/2604.16197v1-sketching-the-readout-of-large-language-models-for-scalable-data-attribution-and-valuation)  
+   标签：评分：6.0/10、query:mu-ce
+   evidence：用于理解数据与模型协同作用的可扩展数据归因
 
 
 <div class="dpr-home-promo-card">
